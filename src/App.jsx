@@ -68,7 +68,7 @@ function Sun({ vortex }) {
         <div className="command-deck">
           <div className="radar-map">🗺️</div>
           <div className="readouts">
-            <p>> SATURN: ORIGINAL MUSIC</p>
+            <p>{"&gt; SATURN: ORIGINAL MUSIC"}</p>
             <p>AMETHYST: ANGI'S VAULT</p>
             <p>VENUS: CURATED MIXES</p>
             <p>MERCURY: LIVE SETS</p>
