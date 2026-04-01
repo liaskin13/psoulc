@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 function Entry() {
   const navigate = useNavigate();
@@ -8,7 +8,9 @@ function Entry() {
     if (e.key === 'Enter') {
       const value = e.target.value.trim();
       if (value === '0528') {
-        navigate('/sun');
+        navigate('/slingshot?user=d&dest=sun');
+      } else if (value === '4096') {
+        navigate('/slingshot?user=angi&dest=amethyst');
       } else if (value === '7677') {
         navigate('/black-star');
       } else if (value === '1111') {
@@ -23,7 +25,7 @@ function Entry() {
 
   return (
     <div className="entry">
-      <input type="text" onKeyDown={handleInput} placeholder="Type into the Void" autoFocus />
+      <input type="text" onKeyDown={handleInput} autoFocus />
     </div>
   );
 }
@@ -62,6 +64,20 @@ function Sun({ vortex }) {
           <button className="console-btn">Add Mix</button>
           <button className="console-btn">Spawn Moon</button>
           {vortex && <p>The Salt is set; let the Spirit speak. We are now in the New Silence.</p>}
+        </div>
+        <div className="command-deck">
+          <div className="radar-map">🗺️</div>
+          <div className="readouts">
+            <p>> SATURN: ORIGINAL MUSIC</p>
+            <p>AMETHYST: ANGI'S VAULT</p>
+            <p>VENUS: CURATED MIXES</p>
+            <p>MERCURY: LIVE SETS</p>
+          </div>
+          <div className="navigation">
+            <button>EXPLORE</button>
+            <button>TUNE</button>
+            <button>VOID</button>
+          </div>
         </div>
       </div>
     </>
@@ -149,6 +165,42 @@ function Amethyst() {
   );
 }
 
+function Slingshot() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const user = params.get('user');
+  const dest = params.get('dest');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate(`/${dest}`);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [navigate, dest]);
+
+  return (
+    <div className="slingshot">
+      <div className="binary-core">
+        <div className="sun-core">☀️</div>
+        <div className="black-star-core">⚫</div>
+      </div>
+      <div className={`start-rim ${user === 'd' ? 'saturn-rim' : 'amethyst-rim'}`}>
+        <div className="chakra-warp">
+          <div className="orb red"></div>
+          <div className="orb orange"></div>
+          <div className="orb yellow"></div>
+          <div className="orb green"></div>
+          <div className="orb blue"></div>
+          <div className="orb indigo"></div>
+          <div className="orb violet"></div>
+        </div>
+        <div className="slingshot-path"></div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [globalVortex, setGlobalVortex] = useState(false);
 
@@ -156,7 +208,7 @@ function App() {
     <div className={globalVortex ? 'new-silence' : ''}>
       <Router>
         <Routes>
-          <Route path="/" element={<Entry />} />
+        <Route path="/slingshot" element={<Slingshot />} />
           <Route path="/sun" element={<Sun vortex={globalVortex} />} />
           <Route path="/black-star" element={<BlackStar onPullCord={() => setGlobalVortex(true)} />} />
           <Route path="/saturn" element={<Saturn />} />

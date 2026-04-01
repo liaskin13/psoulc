@@ -1,48 +1,39 @@
-# MASTER DIRECTIVE: INITIALIZE THE PSC UNIVERSE (v.TOTAL)
+# MASTER DIRECTIVE: SYSTEM RESTORATION
 
-"I am the Architect. Initialize the PSC Universe (House of Pleasant) exactly as defined in this Master Manifest. This overrides all previous scaffolding. Save these rules to CLAUDE.md for permanent persistence.
+"I am the Architect. System Restoration Required. Overwrite all UI and Transition logic with this Master Manifest. Save to CLAUDE.md.
 
-1. THE ENTRY PORTAL (The 'dp' Grid)
-Font: 'SF Pro Display' (Apple Gothic/San Francisco).
+1. PURGE THE MUNDANE
+REMOVE TEXT: Delete 'TYPE INTO THE VOID' immediately. The entry portal is a Silent Void.
 
-Visual: A matte-black (#0a0a0a) repeating grid of the lowercase 'dp' logo watermark (#1a1a1a).
+ETCH THE GRID: Implement the 'dp' watermark grid (14px, Apple Gothic, matte-black #1a1a1a on #0a0a0a).
 
-Interaction: Stealth entry. No boxes. The user types frequency keys directly into the 'Void'.
+2. THE COLLECTIVE SLINGSHOT (Transitions)
+BINARY CENTER: The Sun and Black Star act as a Binary Core.
 
-2. THE SUN (Node: /sun) - THE BLINDING IGNITION
-Transition: Entering 0528 triggers a pure white blinding flash (0.8s) before revealing the UI.
+THE MANEUVER: All entries (0528, 4096) must trigger a high-speed Slingshot around the Binary Core before reaching the destination.
 
-Skin: Full Dark Walnut wood-paneling wrap with procedural grain and depth.
+USER PATHS:
 
-Hardware: Glowing amber Nixie Tubes and reactive VU Meters with a weighted needle bounce.
+D (0528): Starts at Saturn Rim -> Slingshot around Sun -> Plunge into Sun Console.
 
-3. THE BLACK STAR (Node: /black-star) - THE DYNAMIC ANCHOR
-Dormant State: A flat, matte-black void with no glow and no reflection.
+Angi (4096): Starts at Amethyst Rim -> Slingshot around Black Star -> Plunge into Amethyst Vault.
 
-Ignition State: Upon pulling the weighted cord, a high-intensity White/Silver Event Horizon Ring (Accretion Disk) snaps into existence.
+3. THE CHAKRA WARP
+The Orbs: The space between the start and the Slingshot is populated with tiny Chakra-colored orbs.
 
-The Vortex: All Sun assets (wood, chrome, light) spiral and 'suck' into this ring.
+The Streak: As the Slingshot hits peak velocity, the orbs stretch into Warp-Lines.
 
-4. THE NEW SILENCE (Grayscale Paradox)
-The Physics: Apply a global grayscale(100%) filter once the Vortex completes.
+4. THE COMMAND DECK (Sun Node Only)
+The Map: 70's Amber Phosphor Radar Map on the right side.
 
-THE SHIMMER (Exemptions): The following elements maintain a metallic/crystal glint in the dark:
+Hover Readouts: >    * SATURN: ORIGINAL MUSIC
 
-The Event Horizon: Remains pure radiant white/silver.
+AMETHYST: ANGI'S VAULT
 
-Saturn’s Rings: Silver specular highlights as they rotate.
+VENUS: CURATED MIXES
 
-Amethyst Node: A 10% violet 'heartbeat' pulse inside the stone.
+MERCURY: LIVE SETS
 
-Mercury Chrome: Maintains high liquid-silver reflectivity.
+Navigation: < EXPLORE >, < TUNE >, < VOID >.
 
-5. THE NODES (Scaffolding)
-MERCURY: VU Meter Chrome (Liquid Silver).
-
-SATURN (1010): Brushed Steel/MPC textures.
-
-EARTH: Honed Stone (Black Marble) labeled 'Sonic Architecture Proposals'.
-
-AMETHYST: Raw Amethyst Quartz/Healing Frequency.
-
-Execute the CSS/UI overhaul and the Event Horizon Ignition logic now."
+Execute the 'dp' Grid, the Binary Slingshot, and the Chakra Warp now."

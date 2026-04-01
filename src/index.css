@@ -35,22 +35,19 @@ body {
 }
 
 .entry::after {
-  content: 'dp';
+  content: 'dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: #1a1a1a; /* Matte black for watermark */
+  font-size: 14px;
+  color: #1a1a1a; /* Matte black */
   line-height: 100px;
   text-align: center;
   pointer-events: none;
   z-index: 1;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', sans-serif;
 }
 
 .entry input {
@@ -277,4 +274,120 @@ body {
 @keyframes rotate {
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Slingshot */
+.slingshot {
+  background: #000;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.binary-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.sun-core, .black-star-core {
+  position: absolute;
+  font-size: 50px;
+}
+
+.sun-core {
+  left: -100px;
+}
+
+.black-star-core {
+  right: -100px;
+}
+
+.start-rim {
+  position: absolute;
+  animation: slingshot 3s ease-in-out;
+}
+
+.saturn-rim {
+  top: 10%;
+  left: 10%;
+}
+
+.amethyst-rim {
+  bottom: 10%;
+  right: 10%;
+}
+
+.chakra-warp {
+  display: flex;
+  flex-direction: column;
+}
+
+.orb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 5px;
+  animation: stretch 3s ease-in-out;
+}
+
+.orb.red { background: red; }
+.orb.orange { background: orange; }
+.orb.yellow { background: yellow; }
+.orb.green { background: green; }
+.orb.blue { background: blue; }
+.orb.indigo { background: indigo; }
+.orb.violet { background: violet; }
+
+@keyframes stretch {
+  0% { transform: scale(1); }
+  50% { transform: scaleX(5) scaleY(1); }
+  100% { transform: scaleX(10) scaleY(0.1); }
+}
+
+.slingshot-path {
+  width: 2px;
+  height: 200px;
+  background: white;
+  animation: path 3s ease-in-out;
+}
+
+@keyframes slingshot {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(50vw, 50vh); }
+  100% { transform: translate(100vw, 100vh); }
+}
+
+@keyframes path {
+  0% { height: 0; }
+  50% { height: 200px; }
+  100% { height: 0; }
+}
+
+/* Command Deck */
+.command-deck {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  color: #ffbf00; /* Amber */
+  font-family: monospace;
+}
+
+.radar-map {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.readouts p {
+  margin: 5px 0;
+}
+
+.navigation button {
+  background: #ffbf00;
+  border: none;
+  color: #000;
+  padding: 5px 10px;
+  margin: 5px;
+  cursor: pointer;
 }
