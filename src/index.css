@@ -4,7 +4,7 @@ body {
   padding: 0;
   background-color: #0a0a0a; /* Matte Black */
   color: #00ff00; /* Green text for 70s mainframe */
-  font-family: 'Courier New', monospace; /* Monospace font */
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', sans-serif; /* Apple Gothic/San Francisco */
   font-size: 16px;
   line-height: 1.5;
 }
@@ -12,13 +12,29 @@ body {
 /* Entry Portal */
 .entry {
   background-color: #0a0a0a;
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0, 255, 0, 0.1) 10px, rgba(0, 255, 0, 0.1) 11px),
-                    repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0, 255, 0, 0.1) 10px, rgba(0, 255, 0, 0.1) 11px);
-  /* Simple grid pattern, can be enhanced with 'dp' logo */
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0, 255, 0, 0.1) 50px, rgba(0, 255, 0, 0.1) 51px),
+                    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0, 255, 0, 0.1) 50px, rgba(0, 255, 0, 0.1) 51px);
+  /* Grid pattern */
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.entry::before {
+  content: 'dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 24px;
+  color: rgba(0, 255, 0, 0.3);
+  line-height: 50px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .entry input {
@@ -30,6 +46,8 @@ body {
   text-align: center;
   outline: none;
   width: 200px;
+  position: relative;
+  z-index: 2;
 }
 
 /* Shadow Gaps - intentional negative space */
@@ -93,10 +111,9 @@ body {
 }
 
 @keyframes stretch-to-star {
-  to {
-    transform: scale(0.1) translate(-50vw, -50vh);
-    opacity: 0;
-  }
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(0.5) rotate(180deg) translate(-25vw, -25vh); }
+  100% { transform: scale(0.1) rotate(360deg) translate(-50vw, -50vh); opacity: 0; }
 }
 
 .vu-meters {
@@ -169,4 +186,24 @@ body {
     transform: scale(0.1) translate(-50vw, -50vh);
     opacity: 0;
   }
+}
+
+.mercury {
+  background-color: #c0c0c0; /* Polished silver */
+  color: #000;
+}
+
+.venus {
+  background-color: rgba(0, 0, 0, 0.7); /* Smoked glass */
+  color: #fff;
+}
+
+.earth {
+  background-color: #2c2c2c; /* Black marble */
+  color: #fff;
+}
+
+.amethyst {
+  background-color: #8a2be2; /* Violet */
+  color: #fff;
 }

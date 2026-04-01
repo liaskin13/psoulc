@@ -111,6 +111,42 @@ function Pluto() {
   );
 }
 
+function Mercury() {
+  return (
+    <div className="container mercury">
+      <h1>The VU Meter Chrome</h1>
+      <p>Liquid, polished silver. High-energy, fast-moving surface. Houses quick-fire sets and radio transmissions.</p>
+    </div>
+  );
+}
+
+function Venus() {
+  return (
+    <div className="container venus">
+      <h1>The Smoked Glass Curator</h1>
+      <p>A secure portal for L to upload and manage curated DJ mixes.</p>
+    </div>
+  );
+}
+
+function Earth() {
+  return (
+    <div className="container earth">
+      <h1>Sonic Architecture Proposals</h1>
+      <p>Black marble and raw concrete.</p>
+    </div>
+  );
+}
+
+function Amethyst() {
+  return (
+    <div className="container amethyst">
+      <h1>The Crystal Frequency</h1>
+      <p>Raw, jagged amethyst quartz. Backlit by a warm, violet tube-amp glow. Houses sound healing.</p>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -120,6 +156,10 @@ function App() {
         <Route path="/black-star" element={<BlackStar />} />
         <Route path="/saturn" element={<Saturn />} />
         <Route path="/moons" element={<Moons />} />
+        <Route path="/mercury" element={<Mercury />} />
+        <Route path="/venus" element={<Venus />} />
+        <Route path="/earth" element={<Earth />} />
+        <Route path="/amethyst" element={<Amethyst />} />
         <Route path="/pluto" element={<Pluto />} />
       </Routes>
     </Router>
