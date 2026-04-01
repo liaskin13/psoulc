@@ -1,59 +1,48 @@
 # MASTER DIRECTIVE: INITIALIZE THE PSC UNIVERSE (v.TOTAL)
 
-"I am the Architect. The Black Star is the anchor. Initialize the PSC Universe (House of Pleasant) exactly as defined in this Master Manifest. This overrides all previous instructions. Save these rules to CLAUDE.md for permanent persistence.
+"I am the Architect. Initialize the PSC Universe (House of Pleasant) exactly as defined in this Master Manifest. This overrides all previous scaffolding. Save these rules to CLAUDE.md for permanent persistence.
 
-1. THE ENTRY PORTAL (The Hidden Grid)
-Visual: A seamless, matte-black-on-black (#0a0a0a) repeating pattern of a small 'dp' logo.
+1. THE ENTRY PORTAL (The 'dp' Grid)
+Font: 'SF Pro Display' (Apple Gothic/San Francisco).
 
-Interface: No login boxes, no buttons. The user types directly into the 'Void' (the grid).
+Visual: A matte-black (#0a0a0a) repeating grid of the lowercase 'dp' logo watermark (#1a1a1a).
 
-The Frequency Keys (Routing Logic):
+Interaction: Stealth entry. No boxes. The user types frequency keys directly into the 'Void'.
 
-0528 → THE SUN (D’s God Mode).
+2. THE SUN (Node: /sun) - THE BLINDING IGNITION
+Transition: Entering 0528 triggers a pure white blinding flash (0.8s) before revealing the UI.
 
-7677 → THE BLACK STAR (L’s Master Admin Vault).
+Skin: Full Dark Walnut wood-paneling wrap with procedural grain and depth.
 
-1111 → SATURN’S MOONS (The Muses: Janet, Erykah, Amerie, Trina).
+Hardware: Glowing amber Nixie Tubes and reactive VU Meters with a weighted needle bounce.
 
-1010 → SATURN (The Collective: DJ & Producer Peers).
+3. THE BLACK STAR (Node: /black-star) - THE DYNAMIC ANCHOR
+Dormant State: A flat, matte-black void with no glow and no reflection.
 
-Default / Incorrect Key → PLUTO (The Filter).
+Ignition State: Upon pulling the weighted cord, a high-intensity White/Silver Event Horizon Ring (Accretion Disk) snaps into existence.
 
-2. THE STELLAR & PLANETARY SURFACE SKINS (Studio-Core)
-THE SUN (Node: /sun): The Studio Bridge. A full Dark Walnut wood-paneling wrap. Interface features glowing analog VU meters (reactive), Nixie tube digital readouts, and backlit square '70s console buttons.
+The Vortex: All Sun assets (wood, chrome, light) spiral and 'suck' into this ring.
 
-THE BLACK STAR (Node: /black-star): The High-Gloss Vault. Modern 'Reboot' Star Trek aesthetic. Glass, white-on-black, ultra-minimalist. This is the gravitational anchor.
+4. THE NEW SILENCE (Grayscale Paradox)
+The Physics: Apply a global grayscale(100%) filter once the Vortex completes.
 
-SATURN (Node: /saturn): The Brushed Steel Vault. Texture of high-end rack gear/MPC. Gilded metallic rings. Houses the 'Originals' and the 'Collective' (1010).
+THE SHIMMER (Exemptions): The following elements maintain a metallic/crystal glint in the dark:
 
-SATURN’S MOONS (Node: /moons): The Backlit Pad Glow. Iridescent, soft-focus luminescence for the 'Love Letters' (1111).
+The Event Horizon: Remains pure radiant white/silver.
 
-MERCURY (Node: /mercury): The VU Meter Chrome. Liquid, polished silver. High-energy, fast-moving surface. Houses quick-fire sets and radio transmissions.
+Saturn’s Rings: Silver specular highlights as they rotate.
 
-AMETHYST (Node: /amethyst): The Crystal Frequency (Angi’s Node). Raw, jagged amethyst quartz. Backlit by a warm, violet tube-amp glow. Houses sound healing.
+Amethyst Node: A 10% violet 'heartbeat' pulse inside the stone.
 
-VENUS (Node: /venus): The Smoked Glass Curator. A secure portal for L to upload and manage curated DJ mixes.
+Mercury Chrome: Maintains high liquid-silver reflectivity.
 
-EARTH (Node: /earth): The Honed Stone Vault. Black marble and raw concrete. Labeled 'Sonic Architecture Proposals'.
+5. THE NODES (Scaffolding)
+MERCURY: VU Meter Chrome (Liquid Silver).
 
-PLUTO (Node: /pluto): The Acoustic Foam Void. Non-reflective, deep-shadow black. The access request filter.
+SATURN (1010): Brushed Steel/MPC textures.
 
-3. THE GOD MODE OVERLAY (0528 Node Only)
-The Component: A weighted, unlabeled tactile physical cord.
+EARTH: Honed Stone (Black Marble) labeled 'Sonic Architecture Proposals'.
 
-The Black Hole Paradox (Silence Mode):
+AMETHYST: Raw Amethyst Quartz/Healing Frequency.
 
-Pulling the cord triggers a visual 'Vortex' where all light and color are sucked into the Black Star (central gravitational point).
-
-The entire UI shifts to Grayscale (100%).
-
-The Ejection: Every creative orbit (Sun, Moons, Saturn, Mercury, Amethyst) is instantly locked. All users (except L) are rerouted to PLUTO.
-
-The Decree: Display: 'The Salt is set; let the Spirit speak. We are now in the New Silence.'
-
-4. GOVERNANCE & TEMPORAL GRID
-The Harvest Peak: August 12th.
-
-The 24-Month Cycle: Maintain the roadmap of 'Make Moves' vs. 'Hold and Hide' (Volatile Silence) periods.
-
-Execute the code generation for the 'dp' Grid, the Key-Logic, the Black Hole Vortex, and the Studio-Core Skins now."
+Execute the CSS/UI overhaul and the Event Horizon Ignition logic now."

@@ -222,4 +222,59 @@ body {
 .amethyst {
   background-color: #8a2be2; /* Violet */
   color: #fff;
+  animation: heartbeat 2s infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; }
+}
+
+/* New Silence */
+.new-silence {
+  filter: grayscale(100%);
+}
+
+.new-silence .event-horizon {
+  filter: grayscale(0);
+}
+
+.new-silence .saturn {
+  filter: grayscale(0);
+  box-shadow: 0 0 20px silver;
+}
+
+.new-silence .amethyst {
+  filter: grayscale(0);
+}
+
+.new-silence .mercury {
+  filter: grayscale(0);
+}
+
+.black-star {
+  background-color: #000000; /* Matte black void */
+  color: #ffffff;
+}
+
+.black-star.ignition {
+  background-color: #ffffff; /* High-intensity white */
+}
+
+.event-horizon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border: 5px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 50px #ffffff, 0 0 100px #c0c0c0;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }

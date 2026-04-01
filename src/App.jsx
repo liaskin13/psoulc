@@ -37,16 +37,10 @@ function SolarFlare({ onComplete }) {
   return <div className="solar-flare"></div>;
 }
 
-function Sun() {
+function Sun({ vortex }) {
   const [flare, setFlare] = useState(true);
-  const [vortex, setVortex] = useState(false);
 
   const completeFlare = () => setFlare(false);
-
-  const triggerVortex = () => {
-    setVortex(true);
-    // In a real app, this would lock orbits and reroute users
-  };
 
   return (
     <>
@@ -65,7 +59,6 @@ function Sun() {
             <span className="nixie">2</span>
             <span className="nixie">8</span>
           </div>
-          <button onClick={triggerVortex} className="cord">Pull the Cord</button>
           <button className="console-btn">Add Mix</button>
           <button className="console-btn">Spawn Moon</button>
           {vortex && <p>The Salt is set; let the Spirit speak. We are now in the New Silence.</p>}
@@ -75,11 +68,20 @@ function Sun() {
   );
 }
 
-function BlackStar() {
+function BlackStar({ onPullCord }) {
+  const [ignition, setIgnition] = useState(false);
+
+  const pullCord = () => {
+    setIgnition(true);
+    onPullCord();
+  };
+
   return (
-    <div className="container black-star">
+    <div className={`container black-star ${ignition ? 'ignition' : ''}`}>
       <h1>The High-Gloss Vault</h1>
       <p>Modern Reboot Star Trek aesthetic. Glass, white-on-black, ultra-minimalist.</p>
+      <button onClick={pullCord} className="cord">Pull the Cord</button>
+      {ignition && <div className="event-horizon"></div>}
     </div>
   );
 }
@@ -148,21 +150,25 @@ function Amethyst() {
 }
 
 function App() {
+  const [globalVortex, setGlobalVortex] = useState(false);
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Entry />} />
-        <Route path="/sun" element={<Sun />} />
-        <Route path="/black-star" element={<BlackStar />} />
-        <Route path="/saturn" element={<Saturn />} />
-        <Route path="/moons" element={<Moons />} />
-        <Route path="/mercury" element={<Mercury />} />
-        <Route path="/venus" element={<Venus />} />
-        <Route path="/earth" element={<Earth />} />
-        <Route path="/amethyst" element={<Amethyst />} />
-        <Route path="/pluto" element={<Pluto />} />
-      </Routes>
-    </Router>
+    <div className={globalVortex ? 'new-silence' : ''}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Entry />} />
+          <Route path="/sun" element={<Sun vortex={globalVortex} />} />
+          <Route path="/black-star" element={<BlackStar onPullCord={() => setGlobalVortex(true)} />} />
+          <Route path="/saturn" element={<Saturn />} />
+          <Route path="/moons" element={<Moons />} />
+          <Route path="/mercury" element={<Mercury />} />
+          <Route path="/venus" element={<Venus />} />
+          <Route path="/earth" element={<Earth />} />
+          <Route path="/amethyst" element={<Amethyst />} />
+          <Route path="/pluto" element={<Pluto />} />
+        </Routes>
+      </Router>
+    </div>
   );
 }
 
