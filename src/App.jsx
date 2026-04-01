@@ -28,16 +28,20 @@ function Entry() {
   );
 }
 
+function SolarFlare({ onComplete }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 800);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return <div className="solar-flare"></div>;
+}
+
 function Sun() {
   const [flare, setFlare] = useState(true);
   const [vortex, setVortex] = useState(false);
 
-  useEffect(() => {
-    if (flare) {
-      const timer = setTimeout(() => setFlare(false), 800);
-      return () => clearTimeout(timer);
-    }
-  }, [flare]);
+  const completeFlare = () => setFlare(false);
 
   const triggerVortex = () => {
     setVortex(true);
@@ -46,9 +50,10 @@ function Sun() {
 
   return (
     <>
-      {flare && <div className="flare"></div>}
+      {flare && <SolarFlare onComplete={completeFlare} />}
       <div className={`container sun ${vortex ? 'grayscale vortex' : ''}`}>
         <div className="wood-panel">
+          <div className="black-star-icon">★</div> {/* Black Star anchor */}
           <h1>The Studio Bridge</h1>
           <div className="vu-meters">
             <div className="vu-meter"></div>
