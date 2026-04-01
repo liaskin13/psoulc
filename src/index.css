@@ -11,27 +11,43 @@ body {
 
 /* Entry Portal */
 .entry {
-  background-color: #0a0a0a;
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0, 255, 0, 0.1) 50px, rgba(0, 255, 0, 0.1) 51px),
-                    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0, 255, 0, 0.1) 50px, rgba(0, 255, 0, 0.1) 51px);
-  /* Grid pattern */
+  background-color: #0a0a0a; /* Deeper black */
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', sans-serif;
 }
 
 .entry::before {
-  content: 'dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp dp';
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  font-size: 24px;
-  color: rgba(0, 255, 0, 0.3);
-  line-height: 50px;
+  background-image: 
+    linear-gradient(rgba(26, 26, 26, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 26, 26, 0.3) 1px, transparent 1px);
+  background-size: 100px 100px;
+  z-index: 1;
+}
+
+.entry::after {
+  content: 'dp';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #1a1a1a; /* Matte black for watermark */
+  line-height: 100px;
   text-align: center;
   pointer-events: none;
   z-index: 1;
