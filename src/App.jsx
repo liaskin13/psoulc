@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
 function Entry() {
@@ -29,7 +29,15 @@ function Entry() {
 }
 
 function Sun() {
+  const [flare, setFlare] = useState(true);
   const [vortex, setVortex] = useState(false);
+
+  useEffect(() => {
+    if (flare) {
+      const timer = setTimeout(() => setFlare(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [flare]);
 
   const triggerVortex = () => {
     setVortex(true);
@@ -37,12 +45,28 @@ function Sun() {
   };
 
   return (
-    <div className={`container sun ${vortex ? 'grayscale' : ''}`}>
-      <h1>The Studio Bridge</h1>
-      <p>Dark Walnut wood-paneling wrap with VU meters and Nixie tubes.</p>
-      <button onClick={triggerVortex} className="cord">Pull the Cord</button>
-      {vortex && <p>The Salt is set; let the Spirit speak. We are now in the New Silence.</p>}
-    </div>
+    <>
+      {flare && <div className="flare"></div>}
+      <div className={`container sun ${vortex ? 'grayscale vortex' : ''}`}>
+        <div className="wood-panel">
+          <h1>The Studio Bridge</h1>
+          <div className="vu-meters">
+            <div className="vu-meter"></div>
+            <div className="vu-meter"></div>
+          </div>
+          <div className="nixie-tubes">
+            <span className="nixie">0</span>
+            <span className="nixie">5</span>
+            <span className="nixie">2</span>
+            <span className="nixie">8</span>
+          </div>
+          <button onClick={triggerVortex} className="cord">Pull the Cord</button>
+          <button className="console-btn">Add Mix</button>
+          <button className="console-btn">Spawn Moon</button>
+          {vortex && <p>The Salt is set; let the Spirit speak. We are now in the New Silence.</p>}
+        </div>
+      </div>
+    </>
   );
 }
 

@@ -40,47 +40,118 @@ body {
   box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.1); /* Subtle green shadow for gaps */
 }
 
-/* Node Skins */
-.sun {
-  background-color: #2c1810; /* Dark Walnut */
-  color: #00ff00;
-}
-
-.black-star {
+/* Flare for Sun Ignition */
+.flare {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background-color: #ffffff;
-  color: #000000;
-  font-family: 'Arial', sans-serif; /* Minimalist */
+  filter: blur(10px);
+  z-index: 1000;
+  animation: flare-fade 0.8s ease-out forwards;
 }
 
-.saturn {
-  background-color: #c0c0c0; /* Brushed Steel */
-  color: #000000;
+@keyframes flare-fade {
+  to {
+    opacity: 0;
+    filter: blur(0);
+  }
 }
 
-.moons {
-  background-color: #ff69b4; /* Iridescent pink for glow */
-  color: #ffffff;
+/* Sun Node */
+.sun {
+  background: linear-gradient(45deg, #2c1810 25%, transparent 25%),
+              linear-gradient(-45deg, #2c1810 25%, transparent 25%),
+              linear-gradient(45deg, transparent 75%, #2c1810 75%),
+              linear-gradient(-45deg, transparent 75%, #2c1810 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  color: #00ff00;
+  position: relative;
 }
 
-.pluto {
-  background-color: #000000; /* Deep shadow black */
-  color: #666666;
+.wood-panel {
+  background: repeating-linear-gradient(
+    90deg,
+    #2c1810,
+    #2c1810 2px,
+    #3d2418 2px,
+    #3d2418 4px
+  );
+  padding: 20px;
+  border-radius: 10px;
 }
 
-/* God Mode Overlay */
-.grayscale {
-  filter: grayscale(100%);
+.vu-meters {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
 }
 
-.cord {
-  background-color: #8b4513; /* Brown for cord */
-  border: none;
+.vu-meter {
+  width: 20px;
+  height: 100px;
+  background-color: #000;
+  border: 1px solid #00ff00;
+  position: relative;
+  overflow: hidden;
+}
+
+.vu-meter::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background-color: #00ff00;
+  animation: vu-jitter 0.5s infinite alternate;
+}
+
+@keyframes vu-jitter {
+  0% { height: 40%; }
+  100% { height: 60%; }
+}
+
+.nixie-tubes {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.nixie {
+  background-color: #ffbf00; /* Amber */
+  color: #000;
+  padding: 10px;
+  margin: 0 5px;
+  border-radius: 5px;
+  font-weight: bold;
+  box-shadow: 0 0 10px #ffbf00;
+}
+
+.console-btn {
+  background-color: rgba(0, 255, 0, 0.5);
+  border: 1px solid #00ff00;
   color: #000;
   padding: 10px 20px;
+  margin: 10px;
   cursor: pointer;
-  font-weight: bold;
+  transition: transform 0.1s;
 }
 
-.cord:hover {
-  background-color: #654321;
+.console-btn:active {
+  transform: scale(0.95);
+}
+
+.vortex {
+  animation: suck-to-center 2s ease-in forwards;
+}
+
+@keyframes suck-to-center {
+  to {
+    transform: scale(0.1) translate(-50vw, -50vh);
+    opacity: 0;
+  }
 }
