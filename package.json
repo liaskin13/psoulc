@@ -22,9 +22,18 @@
   "homepage": "https://github.com/liaskin13/psoulc#readme",
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.2",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "vite": "^8.0.3"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@react-three/postprocessing": "^3.0.4",
+    "@types/three": "^0.183.1",
+    "framer-motion": "^12.38.0",
+    "postprocessing": "^6.39.0",
+    "three": "^0.183.2",
+    "use-sync-external-store": "^1.2.0"
   }
 }

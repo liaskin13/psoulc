@@ -1,0 +1,20 @@
+/* PSC Universe - Sovereign Identity Architecture */
+/* The Sovereign Seal: CSS Architecture for the 'dp' Logo */
+
+/* The 'dp' Logo Specification */
+.psc-seal {
+    font-family: 'Comfortaa', cursive;
+    font-weight: 700; /* Heavy, immovable weight */
+    text-transform: lowercase; /* Mandatory lowercase */
+    letter-spacing: -0.05em; /* Tightened for structural 'Stone' feel */
+    color: var(--burnished-copper); /* Defined in your palette */
+    display: inline-block;
+    line-height: 1;
+}
+
+/* Variable Palette for Reference */
+:root {
+    --midnight-vault: #0A0A0B; /* Deep, atmospheric black */
+    --burnished-copper: #A36942; /* The 'Frequency' highlight */
+    --aged-stone: #4A4A48; /* The 'Material' base */
+}

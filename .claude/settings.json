@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /workspaces/psoulc/src/*.jsx /workspaces/psoulc/src/*.css /workspaces/psoulc/src/*.js /workspaces/psoulc/src/state/*.jsx /workspaces/psoulc/src/entry/*.jsx /workspaces/psoulc/src/console/*.jsx /workspaces/psoulc/src/data/*.js /workspaces/psoulc/src/saturn/*.jsx /workspaces/psoulc/src/mercury/*.jsx /workspaces/psoulc/src/venus/*.jsx /workspaces/psoulc/src/earth/*.jsx /workspaces/psoulc/src/components/*.jsx)",
+      "Bash(grep -n \"sun-orb\\\\|black-star-orb\\\\|sun-node\\\\|black-star-node\" /workspaces/psoulc/src/**/*.jsx /workspaces/psoulc/src/**/*.css)"
+    ]
+  }
+}

@@ -55,7 +55,7 @@ ETCHING: Add a faint, vanishing Chakra-colored trail behind each planet to trace
 
 Render the Celestial Motion and Orbital Gravity now."
 
-I am the Architect. Initialize the 'Master Reel' Vault Interface and God Mode Controls. Save to CLAUDE.md.
+I am the Architect. Initialize the Vault Interface and God Mode Controls. Save to CLAUDE.md.
 
 1. THE VAULT INTERIOR (The Reels)
 AESTHETIC: Replace standard file lists with Rotating 2-inch Master Tape Reels (Brushed Aluminum texture).
@@ -76,7 +76,7 @@ CONTROL: All 'Voided' items must be stored in the Event Horizon database, access
 
 Render the Master Reel Vaults and God Mode Control mechanics now.
 
-I am the Architect. Initialize BPM Physics and the Eternal Archive Logic. Save to CLAUDE.md.
+Initialize BPM Physics and the Eternal Archive Logic. Save to CLAUDE.md.
 
 1. KINETIC REEL PHYSICS (BPM Sync)
 ROTATION: Each Master Reel must rotate at a speed relative to its BPM metadata.
@@ -132,8 +132,3 @@ GRADIENT: Apply a linear gradient to the streak—the head of the line is the Vi
 METADATA: In the Architect's Registry, store the 'Origin Planet' and 'Time of Voiding' as a permanent record.
 
 GHOST LIGHT: When the Architect hovers over the Black Star, display a faint multi-colored nebula representing all the different frequencies currently held in the Archive.
-
-3. THE 528HZ RESET
-Ensure all 'Void' transitions maintain a 528Hz sub-bass hum that pan-modulates from the Sun toward the Black Star.
-
-Execute the Prism-Streak Spaghettification and Registry now.

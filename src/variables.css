@@ -1,0 +1,81 @@
+/* PSC Universe - CSS Variables */
+/* Sovereign Infrastructure - Binary Sovereignty v2 */
+
+:root {
+  /* ── FOUNDATION ─────────────────────────────── */
+  --void-black: #050505;           /* Obsidian Black — universal canvas */
+  --sovereign-white: #F8FAFC;      /* High-Contrast Slate — primary typography */
+  --midnight-vault: #0a0a0a;       /* Deep institutional darkness */
+
+  /* ── AMBER CORE ──────────────────────────────── */
+  --amber-phosphor: #ffbf00;       /* Primary accent — all readouts */
+  --sun-gold: #ffea00;             /* Sun glow, flares */
+  --burnished-copper: #B87333;     /* Imperial metallic accent */
+  --aged-stone: #8B7355;           /* Institutional neutral */
+
+  /* ── TYPOGRAPHY ──────────────────────────────── */
+  --font-display: 'Cormorant Garant', 'Crimson Text', serif;   /* vault titles, planet names */
+  --font-primary: 'Cormorant Garant', serif;                   /* headers */
+  --font-ui: 'Comfortaa', sans-serif;                          /* small UI labels, keypads */
+  --font-mono: 'Space Mono', 'SF Mono', 'Monaco', monospace;  /* BPM, Hz, data readouts */
+  --font-headers: 'Cormorant Garant', 'Crimson Text', serif;   /* legacy alias */
+
+  /* Font Weights */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+
+  /* Kerning Rules for Headers */
+  --kerning-tight: -0.02em;
+  --kerning-normal: 0;
+  --kerning-wide: 0.05em;
+
+  /* Spacing Scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* ── ATMOSPHERIC NOISE ───────────────────────── */
+  --noise-opacity: 0.035;          /* subtle — tactile, not distracting */
+  --noise-blend: overlay;
+
+  /* ── SHADOW GAP (Binary L1 Lagrange) ────────── */
+  --shadow-gap-color: rgba(0, 0, 0, 0.95);
+  --lagrange-glow: rgba(255, 191, 0, 0.08);
+
+  /* ── 70s SOUL STUDIO PALETTE ─────────────────── */
+  --walnut-dark: #3e2723;          /* Dark walnut veneer — console base */
+  --walnut-grain: #5d4037;          /* Medium walnut — texture depth */
+  --burnt-orange: #d2691e;          /* Warm accent — buttons, trim */
+  --mustard-gold: #c5a025;          /* Orbit traces, warm accent */
+  --avocado-green: #556b2f;         /* Soft accent — secondary details */
+  --warm-brass: #b8860b;            /* Brass accents — VU meter bezels */
+  --cream-off-white: #f5f1e8;       /* Warm cream — labels and text */
+  --film-grain-overlay: rgba(0, 0, 0, 0.03); /* Vintage film grain */
+
+  /* ── CHAKRA PLANET COLORS (Warm Earth Tones) ─── */
+  --chakra-mercury: #c5a025;       /* Mustard — liquid silver warmth */
+  --chakra-venus: #d2691e;         /* Burnt orange — dusty warmth */
+  --chakra-earth: #8B7355;         /* Earth brown — soil and stone */
+  --chakra-saturn: #b8860b;        /* Brass — metallic warmth */
+  --chakra-amethyst: #9d7e6a;      /* Warm mauve — analog grain */
+
+  /* ── BLACK STAR CONSOLE ──────────────────────── */
+  --architect-black: #000000;      /* deeper than void — pure event horizon */
+  --event-horizon-red: #8B0000;    /* deep crimson accent for Black Star */
+  --ghost-shadow: rgba(255, 255, 255, 0.08); /* voided item ghost opacity */
+}
