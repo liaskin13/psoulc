@@ -32,6 +32,20 @@ body::before {
   background-repeat: repeat;
 }
 
+/* ── GLOBAL FILM GRAIN + WARM BLOOM ────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.02) 2px, rgba(0, 0, 0, 0.02) 4px);
+  mix-blend-mode: overlay;
+  backdrop-filter: blur(0.5px);
+}
+
 /* ── TYPOGRAPHY HIERARCHY ──────────────────────────── */
 h1, h2, h3,
 .vault-title, .planet-name, .node-name,

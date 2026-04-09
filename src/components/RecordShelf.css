@@ -1,0 +1,175 @@
+/* ════════════════════════════════════════════════════════════════
+   RECORD SHELF — Vinyl Spine Display
+   Dark Walnut Veneer, Dust Overlay, Analog Warmth
+   ════════════════════════════════════════════════════════════════ */
+
+.record-shelf {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  align-items: flex-end;
+  padding: 20px 16px;
+  background: linear-gradient(
+    135deg,
+    var(--walnut-dark) 0%,
+    var(--walnut-grain) 100%
+  );
+  border-radius: 10px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7),
+              inset 0 -2px 8px rgba(255, 255, 255, 0.05),
+              0 6px 16px rgba(0, 0, 0, 0.5);
+  min-height: 280px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+}
+
+/* ── DUST/CRACKLE OVERLAY ──────────────────────────────────────── */
+.record-shelf::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+  pointer-events: none;
+  border-radius: 10px;
+  z-index: 1;
+  opacity: 0.4;
+}
+
+/* ── SHELF FLOOR ─────────────────────────────────────────────── */
+.shelf-floor {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #3e2723 50%, transparent 100%);
+  shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ── VINYL SPINE ────────────────────────────────────────────────– */
+.spine {
+  position: relative;
+  width: 40px;
+  height: 240px;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    var(--spine-highlight, #c5a025) 0%,
+    var(--spine-base, #9d8b7a) 30%,
+    var(--spine-shadow, #5d4037) 100%
+  );
+  border-radius: 2px;
+  box-shadow:
+    inset 1px 0 2px rgba(255, 255, 255, 0.15),
+    inset -1px 0 3px rgba(0, 0, 0, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.4);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.spine-active {
+  transform: translateZ(0) scaleY(1.04);
+  box-shadow:
+    inset 1px 0 2px rgba(255, 255, 255, 0.2),
+    inset -1px 0 3px rgba(0, 0, 0, 0.8),
+    0 0 16px var(--spine-glow, rgba(197, 160, 37, 0.3)),
+    0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+.spine:hover {
+  filter: brightness(1.2);
+}
+
+/* ── SPECULAR HIGHLIGHT (Vinyl gloss) ───────────────────────── */
+.spine-specular {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  border-radius: 2px 2px 0 0;
+  pointer-events: none;
+}
+
+/* ── VINYL LABEL ────────────────────────────────────────────── */
+.spine-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  color: var(--cream-off-white);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.spine-sublabel {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 6px;
+  letter-spacing: 0.08em;
+  color: var(--burnt-orange);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
+/* ── VOID HANDLE (Top edge dot) ───────────────────────────────– */
+.spine-void-handle {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--spine-glow, rgba(210, 105, 30, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.spine:hover .spine-void-handle {
+  opacity: 1;
+  box-shadow: 0 0 6px var(--spine-glow, #d2691e);
+}
+
+/* ── SCROLLBAR (Warm styling) ──────────────────────────────── */
+.record-shelf::-webkit-scrollbar {
+  height: 6px;
+}
+
+.record-shelf::-webkit-scrollbar-track {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.2), transparent);
+}
+
+.record-shelf::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #8b7960, #b8a68f, #8b7960);
+  border-radius: 3px;
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.record-shelf::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #9d8b7a, #c5a025, #9d8b7a);
+}

@@ -1,0 +1,127 @@
+/* ════════════════════════════════════════════════════════════════
+   SYSTEM MAP 2D — Control Panel at Console Center
+   Top-down view of orbiting planets around D (The Sun)
+   ════════════════════════════════════════════════════════════════ */
+
+.system-map-2d {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, var(--walnut-dark) 0%, var(--walnut-grain) 100%);
+  border: 2px solid var(--warm-brass);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8),
+              inset 0 -2px 6px rgba(255, 255, 255, 0.05),
+              0 8px 24px rgba(0, 0, 0, 0.6);
+  min-width: 380px;
+  min-height: 400px;
+  position: relative;
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--warm-brass);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
+}
+
+.map-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.2em;
+  color: var(--mustard-gold);
+  text-shadow: 0 0 6px var(--mustard-gold);
+  text-transform: uppercase;
+}
+
+.map-mode {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  color: var(--cream-off-white);
+  opacity: 0.6;
+}
+
+/* ── SVG CONTAINER ──────────────────────────────────────────────── */
+.map-svg {
+  flex: 1;
+  background: linear-gradient(
+    radial,
+    rgba(62, 39, 35, 0.05) 0%,
+    rgba(62, 39, 35, 0.15) 100%
+  );
+  filter: drop-shadow(inset 0 0 8px rgba(0, 0, 0, 0.3));
+}
+
+/* ── PLANET NODES ─────────────────────────────────────────────── */
+.planet-node {
+  transition: all 0.3s ease;
+}
+
+.planet-node:hover .planet-dot {
+  filter: brightness(1.3) drop-shadow(0 0 8px #c5a025);
+}
+
+.planet-node:hover .planet-glow {
+  opacity: 0.6;
+  animation: glow-pulse 0.8s ease-in-out infinite;
+}
+
+.planet-node:hover .planet-label {
+  opacity: 1;
+}
+
+.planet-node.active .planet-dot {
+  filter: brightness(1.5) drop-shadow(0 0 12px #d2691e);
+}
+
+.planet-node.active .planet-glow {
+  opacity: 1;
+  stroke: #d2691e;
+  animation: glow-pulse 0.6s ease-in-out infinite;
+}
+
+.planet-node.active .planet-label {
+  opacity: 1;
+  fill: #d2691e;
+  text-shadow: 0 0 4px #d2691e;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { r: 0; opacity: 0.6; }
+  50% { r: 0; opacity: 1; }
+}
+
+/* ── FOOTER STATUS ──────────────────────────────────────────────– */
+.map-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border-top: 1px solid var(--warm-brass);
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.vault-status {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--burnt-orange);
+  text-transform: uppercase;
+  text-shadow: 0 0 4px var(--burnt-orange);
+}
+
+.status-active {
+  display: inline-block;
+  margin-left: 8px;
+  color: #ffea00;
+  animation: status-pulse 1s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
