@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -183,21 +184,38 @@ function FlybyScene() {
   );
 }
 
-export default function BinaryFlyby({ onComplete }) {
+export default function BinaryFlyby({ owner, onComplete }) {
   useEffect(() => {
     const timer = setTimeout(onComplete, FLYBY_DURATION * 1000);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
   return (
-    <Canvas
-      camera={{ position: [0, 0, 12], fov: 60, near: 0.1, far: 200 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 100 }}
-      gl={{ antialias: true }}
-      onCreated={({ gl }) => gl.setClearColor(0x000000, 1)}
-    >
-      <FlybyScene />
-    </Canvas>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100 }}>
+      {/* Show architect darkness overlay for L's path */}
+      {owner === 'L' && (
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: '#000000',
+            pointerEvents: 'none',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 0.9, 0.95] }}
+          transition={{ duration: 1.2, ease: [0.05, 0.95, 0.2, 1] }}
+        />
+      )}
+
+      <Canvas
+        camera={{ position: [0, 0, 12], fov: 60, near: 0.1, far: 200 }}
+        style={{ position: 'fixed', inset: 0, zIndex: 100 }}
+        gl={{ antialias: true }}
+        onCreated={({ gl }) => gl.setClearColor(0x000000, 1)}
+      >
+        <FlybyScene />
+      </Canvas>
+    </div>
   );
 }
 

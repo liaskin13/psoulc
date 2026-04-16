@@ -45,18 +45,42 @@
   z-index: 10;
 }
 
+.entry-top-rail {
+  width: 280px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 191, 0, 0.85) 50%, transparent 100%);
+  box-shadow: 0 0 14px rgba(255, 191, 0, 0.5);
+}
+
 /* Minimal singularity dot — no amber glow */
 .singularity-point {
-  width: 6px; height: 6px;
-  background: rgba(255, 255, 255, 0.4);
+  width: 10px; height: 10px;
+  background: rgba(255, 191, 0, 0.85);
   border-radius: 50%;
-  animation: singularity-pulse 2.4s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(255, 191, 0, 0.8);
+  animation: singularity-pulse 2.8s ease-in-out infinite;
   flex-shrink: 0;
+  position: relative;
+}
+
+.singularity-point::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 191, 0, 0.55);
+  animation: radar-ping 3s ease-out infinite;
 }
 
 @keyframes singularity-pulse {
-  0%, 100% { transform: scale(1);   opacity: 0.4; }
-  50%       { transform: scale(1.3); opacity: 0.7; }
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
+@keyframes radar-ping {
+  0% { transform: scale(0.3); opacity: 0.85; }
+  80% { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
 
 /* ─── 4-digit PIN row — individual Nixie-style cells ─── */
@@ -68,18 +92,19 @@
 
 .entry-digit-cell {
   width: 38px; height: 52px;
-  border: 1px solid rgba(200, 200, 200, 0.15);
+  border: 1px solid rgba(255, 191, 0, 0.2);
   border-radius: 4px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .entry-digit-cell.filled {
-  border-color: rgba(200, 200, 200, 0.4);
-  background: rgba(200, 200, 200, 0.03);
+  border-color: rgba(255, 191, 0, 0.7);
+  background: rgba(255, 191, 0, 0.08);
+  box-shadow: inset 0 0 8px rgba(255, 191, 0, 0.15), 0 0 8px rgba(255, 191, 0, 0.2);
 }
 
 .entry-digit-char {
@@ -100,8 +125,9 @@
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.35em;
-  color: rgba(200, 200, 200, 0.15);
+  color: rgba(255, 191, 0, 0.65);
   text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(255, 191, 0, 0.45);
   animation: hint-breathe 4s ease-in-out infinite;
 }
 
@@ -185,34 +211,29 @@
   animation: flash 0.8s ease-out;
 }
 
+/* Radial warp streaks — spokes emanating from center, proper tunnel feel */
 .warp-streaks {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: linear-gradient(45deg, transparent 30%, #ffbf00 50%, transparent 70%);
-  opacity: 0;
-  animation: warp 1.6s ease-out 0.8s;
-}
-
-.solar-plunge {
-  position: absolute;
   top: 50%; left: 50%;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, #ffea00 0%, #ffbf00 50%, transparent 100%);
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  animation: plunge 1.6s ease-out 2.4s;
-}
-
-.dp-logo {
-  position: absolute;
-  top: 50%; left: 50%;
+  width: 200%; height: 200%;
   transform: translate(-50%, -50%);
-  font-family: var(--font-primary);
-  font-size: 8vw;
-  color: #ffbf00;
-  text-shadow: 0 0 20px #ffbf00;
-  animation: dissolve 2.4s ease-out 0s;
+  background:
+    linear-gradient(0deg,   transparent 49.5%, rgba(255,176,40,0.18) 50%, transparent 50.5%),
+    linear-gradient(15deg,  transparent 49.5%, rgba(255,160,20,0.12) 50%, transparent 50.5%),
+    linear-gradient(30deg,  transparent 49.5%, rgba(255,191,0,0.16)  50%, transparent 50.5%),
+    linear-gradient(45deg,  transparent 49.5%, rgba(255,140,0,0.10)  50%, transparent 50.5%),
+    linear-gradient(60deg,  transparent 49.5%, rgba(255,191,0,0.18)  50%, transparent 50.5%),
+    linear-gradient(75deg,  transparent 49.5%, rgba(255,160,20,0.12) 50%, transparent 50.5%),
+    linear-gradient(90deg,  transparent 49.5%, rgba(255,176,40,0.16) 50%, transparent 50.5%),
+    linear-gradient(105deg, transparent 49.5%, rgba(255,140,0,0.10)  50%, transparent 50.5%),
+    linear-gradient(120deg, transparent 49.5%, rgba(255,191,0,0.18)  50%, transparent 50.5%),
+    linear-gradient(135deg, transparent 49.5%, rgba(255,160,20,0.12) 50%, transparent 50.5%),
+    linear-gradient(150deg, transparent 49.5%, rgba(255,176,40,0.16) 50%, transparent 50.5%),
+    linear-gradient(165deg, transparent 49.5%, rgba(255,140,0,0.10)  50%, transparent 50.5%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+  animation: warp-radiate 2.0s ease-out 0.6s;
 }
 
 @keyframes flash {
@@ -221,16 +242,11 @@
   100% { opacity: 0; }
 }
 
-@keyframes warp {
-  0% { opacity: 0; transform: translateX(-100%); }
-  50% { opacity: 1; transform: translateX(0%); }
-  100% { opacity: 0; transform: translateX(100%); }
-}
-
-@keyframes plunge {
-  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-  50% { transform: translate(-50%, -50%) scale(2); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(10); opacity: 0; }
+@keyframes warp-radiate {
+  0%   { opacity: 0;   transform: translate(-50%, -50%) rotate(0deg)   scale(0.5); }
+  20%  { opacity: 0.9; transform: translate(-50%, -50%) rotate(4deg)   scale(0.8); }
+  65%  { opacity: 0.7; transform: translate(-50%, -50%) rotate(8deg)   scale(1.2); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) rotate(12deg)  scale(2.0); }
 }
 
 @keyframes dissolve {
@@ -255,179 +271,122 @@
   overflow: hidden;
 }
 
-/* ─── THREE-LAYER PARALLAX STARFIELD ─── */
-/* Layer 1 — Distant: 1px stars, very low opacity, slowest pan */
-.starfield-far {
-  position: absolute; inset: 0;
-  background-image:
-    radial-gradient(1px 1px at   5px  8px, rgba(255,255,255,0.35), transparent),
-    radial-gradient(1px 1px at  22px 55px, rgba(255,255,255,0.25), transparent),
-    radial-gradient(1px 1px at  48px 15px, rgba(255,255,255,0.45), transparent),
-    radial-gradient(1px 1px at  75px 42px, rgba(255,255,255,0.20), transparent),
-    radial-gradient(1px 1px at  95px 70px, rgba(255,255,255,0.35), transparent),
-    radial-gradient(1px 1px at 120px 25px, rgba(255,255,255,0.28), transparent),
-    radial-gradient(1px 1px at 148px 60px, rgba(255,255,255,0.40), transparent),
-    radial-gradient(1px 1px at 172px 10px, rgba(255,255,255,0.20), transparent),
-    radial-gradient(1px 1px at 195px 45px, rgba(255,255,255,0.35), transparent),
-    radial-gradient(1px 1px at 215px 80px, rgba(255,255,255,0.25), transparent),
-    radial-gradient(1px 1px at 240px 32px, rgba(255,255,255,0.45), transparent),
-    radial-gradient(1px 1px at 265px 68px, rgba(255,255,255,0.18), transparent),
-    radial-gradient(1px 1px at 285px 18px, rgba(255,255,255,0.30), transparent),
-    radial-gradient(1px 1px at 310px 50px, rgba(255,255,255,0.22), transparent),
-    radial-gradient(1px 1px at 335px 85px, rgba(255,255,255,0.38), transparent),
-    radial-gradient(1px 1px at 355px  5px, rgba(255,255,255,0.26), transparent);
-  background-size: 400px 100px;
-  animation: starfield-pan 40s linear infinite;
-}
-
-/* Layer 2 — Mid-field: 1-2px, moderate brightness, medium pan */
-.starfield-mid {
-  position: absolute; inset: 0;
-  background-image:
-    radial-gradient(2px 2px at  35px 20px, rgba(255,255,255,0.60), transparent),
-    radial-gradient(1px 1px at  80px 65px, rgba(200,220,255,0.50), transparent),
-    radial-gradient(2px 2px at 135px 38px, rgba(255,255,255,0.65), transparent),
-    radial-gradient(1px 1px at 190px 58px, rgba(220,240,255,0.45), transparent),
-    radial-gradient(2px 2px at 250px 22px, rgba(255,255,255,0.55), transparent),
-    radial-gradient(1px 1px at 305px 72px, rgba(255,250,220,0.50), transparent),
-    radial-gradient(2px 2px at 355px 42px, rgba(255,255,255,0.60), transparent);
-  background-size: 400px 100px;
-  animation: starfield-pan 22s linear infinite;
-}
-
-/* Layer 3 — Near-field: 2-3px, bright, fastest pan — creates depth */
-.starfield-near {
-  position: absolute; inset: 0;
-  background-image:
-    radial-gradient(3px 3px at  55px 35px, rgba(255,255,255,0.90), transparent),
-    radial-gradient(2px 2px at 130px 72px, rgba(220,230,255,0.80), transparent),
-    radial-gradient(3px 3px at 225px 18px, rgba(255,255,255,0.85), transparent),
-    radial-gradient(2px 2px at 320px 55px, rgba(255,250,220,0.75), transparent);
-  background-size: 400px 100px;
-  animation: starfield-pan 12s linear infinite;
-}
-
-/* ─── SOLAR CORONA — Sun presence implied at viewport center ─── */
-.solar-corona {
+.mission-status-bar {
   position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 30vmin; height: 30vmin;
-  background: radial-gradient(circle,
-    rgba(255,200,50,0.08) 0%,
-    rgba(255,140,0,0.04)  40%,
-    transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
-  animation: corona-pulse 4s ease-in-out infinite alternate;
-}
-
-@keyframes corona-pulse {
-  0%   { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 1;   transform: translate(-50%, -50%) scale(1.12); }
-}
-
-/* ─── SUN-CENTRIC ORBITAL SYSTEM VIEW ─── */
-.solar-system-view {
-  position: absolute; inset: 0;
-  z-index: 2;
-  pointer-events: none;
-}
-
-/* Orbital path ellipses — subtle, dashed */
-.sys-orbit-ring {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 1px dashed rgba(255,176,0,0.12);
-  pointer-events: none;
-}
-.sys-orbit-ring-1 { width: 24vmin;  height: 16vmin; }
-.sys-orbit-ring-2 { width: 44vmin;  height: 30vmin; }
-.sys-orbit-ring-3 { width: 66vmin;  height: 46vmin; }
-.sys-orbit-ring-4 { width: 88vmin;  height: 62vmin; }
-
-/* Rotating orbit arm — zero-size pivot at viewport center */
-.sys-orbit-arm {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 0; height: 0;
-  transform-origin: 0 0;
-  animation: orbit-spin var(--orbit-duration) linear infinite;
-  animation-delay: var(--orbit-delay);
-}
-
-@keyframes orbit-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-/* Chakra trail — arc that sweeps behind each planet.
-   Sits at the orbit arm origin, counter-rotates at the same speed
-   so it stays fixed relative to the orbit path while the planet moves.
-   A conic-gradient arc goes from the planet's chakra color (at 0°) to
-   transparent (at ~90°), creating a vanishing comet-tail effect. */
-.sys-planet-trail {
-  position: absolute;
-  /* Centered at the orbit-arm pivot (viewport center) */
-  left: calc(-1 * var(--orbit-r));
-  top: calc(-1 * var(--orbit-r));
-  width: calc(2 * var(--orbit-r));
-  height: calc(2 * var(--orbit-r));
-  border-radius: 50%;
-  /* Conic sweep: planet-color head → transparent tail over 80° */
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    transparent 270deg,
-    color-mix(in srgb, var(--trail-color, #ffbf00) 35%, transparent 65%) 315deg,
-    color-mix(in srgb, var(--trail-color, #ffbf00) 60%, transparent 40%) 340deg,
-    transparent 360deg
-  );
-  /* Counter-rotate at the same angular speed as the orbit arm to stay
-     anchored at the planet's current position */
-  animation: trail-counter var(--orbit-duration) linear infinite;
-  animation-delay: var(--orbit-delay);
-  pointer-events: none;
-  mask: radial-gradient(circle, transparent 48%, black 49%, black 51%, transparent 52%);
-  -webkit-mask: radial-gradient(circle, transparent 48%, black 49%, black 51%, transparent 52%);
-}
-
-@keyframes trail-counter {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(-360deg); }
-}
-
-/* Planet — sits at the orbital radius along the arm's X axis */
-.sys-planet {
-  position: absolute;
-  left: var(--orbit-r);
-  border-radius: 50%;
-  cursor: default;
-  /* Sphere depth from inset shadow */
-  box-shadow: inset -2px -2px 4px rgba(0,0,0,0.85);
-}
-
-.sys-planet-label {
-  display: none; /* Hidden at orbital scale — revealed on hover */
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: var(--font-primary);
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  height: 28px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 191, 0, 0.35);
+  background: linear-gradient(90deg, rgba(10, 8, 3, 0.88) 0%, rgba(20, 14, 4, 0.78) 100%);
+  font-family: var(--font-mono);
   font-size: 8px;
-  font-weight: 700;
-  color: rgba(255,191,0,0.8);
-  white-space: nowrap;
   letter-spacing: 0.1em;
+  color: rgba(255, 191, 0, 0.86);
+  text-transform: uppercase;
+  text-shadow: 0 0 4px rgba(255, 191, 0, 0.5);
+}
+
+.telemetry-hud {
+  position: absolute;
+  top: 50px;
+  left: 18px;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   pointer-events: none;
 }
 
-.sys-planet:hover .sys-planet-label {
-  display: block;
+.telemetry-leader {
+  width: 44px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 191, 0, 0.95) 0%, rgba(255, 191, 0, 0.2) 100%);
+  box-shadow: 0 0 6px rgba(255, 191, 0, 0.5);
 }
+
+.telemetry-card {
+  border: 1px solid color-mix(in srgb, var(--telemetry-accent, #ffbf00) 65%, black 35%);
+  background: rgba(6, 4, 1, 0.86);
+  padding: 8px 10px;
+  min-width: 220px;
+}
+
+.telemetry-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--telemetry-accent, #ffbf00);
+  margin-bottom: 4px;
+}
+
+.telemetry-line {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.09em;
+  color: rgba(255, 191, 0, 0.82);
+  line-height: 1.4;
+}
+
+.planet-readout {
+  position: absolute;
+  right: 10px;
+  top: 50px;
+  width: 220px;
+  z-index: 23;
+  border: 1px solid rgba(255, 191, 0, 0.38);
+  background: linear-gradient(180deg, rgba(9, 7, 3, 0.9) 0%, rgba(3, 2, 1, 0.92) 100%);
+  padding: 10px;
+}
+
+.planet-readout-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--readout-accent, #ffbf00);
+  margin-bottom: 7px;
+}
+
+.planet-readout-line {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(255, 191, 0, 0.8);
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+}
+
+.planet-readout-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.planet-readout-btn {
+  flex: 1;
+  min-height: 24px;
+  border: 1px solid rgba(255, 191, 0, 0.45);
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 191, 0, 0.88);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.planet-readout-btn.void {
+  border-color: rgba(220, 80, 30, 0.55);
+  color: rgba(255, 120, 80, 0.9);
+}
+
+/* ── Starfield and solar-corona CSS removed — Three.js SpaceWindow
+   handles the starfield via its own <Stars> component with bloom.
+   The arch-starfield-* CSS layers (BlackStarConsole) remain. ── */
 
 .viewport-border {
   position: absolute;
@@ -444,6 +403,7 @@
   color: #ffbf00;
   font-family: var(--font-primary);
   z-index: 10;
+  animation: monitor-flicker 0.16s infinite alternate;
 }
 
 .viewport-focus h2 {
@@ -482,7 +442,7 @@
   font-family: var(--font-primary);
   line-height: 1.6;
   z-index: 10;
-  animation: vacuum-tube-warmup 3s ease-out;
+  animation: vacuum-tube-warmup 3s ease-out, monitor-flicker 0.15s infinite alternate;
 }
 
 .welcome-line {
@@ -537,202 +497,495 @@
   100% { transform: translateX(-400px); }
 }
 
-/* THE ANALOG CONSOLE */
+/* ══════════════════════════════════════════════════════════════════════════
+   THE ANALOG CONSOLE — 70s Soul Studio Bridge Strip
+   Fixed 240px at the bottom. Space fills the other 70% above it.
+   Three zones: POWER (left) · NAVIGATION/SYSTEMS (center) · COMMS (right)
+   ══════════════════════════════════════════════════════════════════════════ */
 .analog-console {
-  flex: 2;
-  background: linear-gradient(
-    135deg,
-    var(--walnut-dark) 0%,
-    var(--walnut-grain) 50%,
-    var(--walnut-dark) 100%
-  ),
-  url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><defs><pattern id='w' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'><path d='M0 0Q25 10 50 0T100 0' stroke='rgba(0,0,0,0.15)' stroke-width='0.5' fill='none'/></pattern></defs><rect width='100' height='100' fill='%235d4037'/><rect width='100' height='100' fill='url(%23w)'/></svg>");
-  background-attachment: fixed;
-  border-top: 3px solid var(--burnt-orange);
+  flex: none;
+  height: 240px;
   position: relative;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2rem;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8),
-              0 4px 16px rgba(0, 0, 0, 0.5);
+  align-items: stretch;
+  overflow: hidden;
+
+  /* Near-black studio surface — warm undertone, not cold grey */
+  background:
+    /* Horizontal scan-line texture — subtle CRT banding */
+    repeating-linear-gradient(
+      180deg,
+      transparent            0px,
+      rgba(0,0,0,0.10)       1px,
+      transparent            2px,
+      transparent            7px
+    ),
+    /* Deep warm black — walnut-toned, lit faintly from above */
+    linear-gradient(180deg,
+      #111009 0%,
+      #0d0b08 30%,
+      #0a0806 70%,
+      #080604 100%
+    );
+
+  /* Raised-panel illusion — cast shadow up into viewscreen */
+  box-shadow:
+    0 -10px 50px rgba(0, 0, 0, 0.95),
+    0 -3px  16px rgba(0, 0, 0, 0.8),
+    inset 0 2px  0 rgba(255, 170, 40, 0.08);
 }
 
+/* Amber bridge rail — the lit seam between space and console */
+.analog-console::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent            0%,
+    rgba(255,170,40,0.55) 12%,
+    rgba(255,185,50,0.85) 50%,
+    rgba(255,170,40,0.55) 88%,
+    transparent           100%
+  );
+  box-shadow:
+    0  1px 8px  rgba(255,176,40,0.35),
+    0  3px 24px rgba(255,150,20,0.12);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ── ZONE DIVIDERS ── */
+/* Thin amber-tinged separators between POWER / CENTER / COMMS zones */
+.console-zone-divider {
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent            0%,
+    rgba(255,160,40,0.18) 15%,
+    rgba(255,160,40,0.22) 50%,
+    rgba(255,160,40,0.18) 85%,
+    transparent           100%
+  );
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* ── ZONE LABEL ── */
+/* Small Space Mono identifier pinned to top of each zone */
+.console-zone-label {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(255, 176, 40, 0.32);
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* ── LEFT ZONE — POWER (120px) ── */
+.console-left {
+  width: 120px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 10px 10px;
+  position: relative; /* contains GodModePullCord absolute positioning */
+  /* overflow: visible — power-down-confirm (min-width:220px) must not be clipped */
+  overflow: visible;
+  z-index: 10; /* confirm dialog floats above center/right zones */
+}
+
+/* ── CENTER ZONE — NAVIGATION / SYSTEMS ── */
 .console-center {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
+  padding: 14px 18px 10px;
+  min-width: 0; /* allow flex shrink below content min-width */
+  overflow: hidden;
 }
 
+/* ── Hardware readout + encoder (D1) ── */
+.readout-navigator {
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+  outline: none;
+}
+
+.readout-screen {
+  border-radius: 4px;
+  border: 1px solid rgba(255, 176, 40, 0.24);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      rgba(0,0,0,0.12) 1px,
+      transparent 2px,
+      transparent 5px
+    ),
+    radial-gradient(ellipse at 50% 30%, rgba(255, 176, 40, 0.08) 0%, rgba(255, 176, 40, 0.02) 30%, rgba(0, 0, 0, 0.55) 100%),
+    #050400;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 5px;
+  box-shadow:
+    inset 0 0 16px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 191, 0, 0.06);
+}
+
+.readout-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.readout-row-last {
+  padding-top: 3px;
+  border-top: 1px solid rgba(255, 191, 0, 0.14);
+}
+
+.readout-k {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: rgba(255, 176, 40, 0.54);
+  text-transform: uppercase;
+}
+
+.readout-v {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 191, 0, 0.88);
+  text-transform: uppercase;
+}
+
+.readout-main {
+  font-family: var(--font-mono);
+  font-size: clamp(12px, 1.5vw, 16px);
+  letter-spacing: 0.14em;
+  color: #ffbf00;
+  text-shadow:
+    0 0 5px rgba(255, 191, 0, 0.8),
+    0 0 14px rgba(255, 176, 40, 0.25);
+  align-self: center;
+}
+
+.encoder-cluster {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.encoder-btn,
+.encoder-push {
+  min-height: 28px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 176, 40, 0.3);
+  background: linear-gradient(180deg, rgba(35, 24, 10, 0.95) 0%, rgba(15, 10, 4, 0.95) 100%);
+  color: rgba(255, 191, 0, 0.92);
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.encoder-btn:hover,
+.encoder-push:hover,
+.encoder-btn:focus-visible,
+.encoder-push:focus-visible {
+  border-color: rgba(255, 191, 0, 0.7);
+  box-shadow: 0 0 8px rgba(255, 176, 40, 0.25);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.encoder-push {
+  padding: 0 14px;
+  font-size: 10px;
+}
+
+.readout-softkeys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.readout-softkeys span {
+  border: 1px solid rgba(255, 176, 40, 0.24);
+  border-radius: 3px;
+  text-align: center;
+  padding: 3px 0;
+  color: rgba(255, 176, 40, 0.62);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+}
+
+/* ── RIGHT ZONE — COMMS (180px) ── */
 .console-right {
+  width: 180px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  align-items: flex-end;
+  gap: 7px;
+  padding: 14px 14px 10px;
 }
 
-/* THE MASTER CLOCK */
+/* ── MASTER CLOCK — Amber phosphor CRT display ── */
 .master-clock {
-  background: linear-gradient(135deg, var(--walnut-dark) 0%, var(--walnut-grain) 100%);
-  border: 2px solid var(--warm-brass);
-  border-radius: 8px;
-  padding: 20px;
+  background: #070601;
+  border: 1px solid rgba(200, 150, 30, 0.25);
+  border-radius: 3px;
+  padding: 7px 14px 9px;
   text-align: center;
-  min-width: 240px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6),
-              inset 0 -1px 3px rgba(255, 255, 255, 0.1),
-              0 4px 12px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 200, 60, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* CRT scanline overlay on clock */
+.master-clock::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent         0px,
+    rgba(0,0,0,0.14)    1px,
+    transparent         2px,
+    transparent         5px
+  );
+  pointer-events: none;
 }
 
 .clock-frequency {
-  font-family: var(--font-primary);
-  font-size: 28px;
-  color: var(--mustard-gold);
-  text-shadow: 0 0 12px var(--mustard-gold), 0 0 24px rgba(197, 160, 37, 0.3);
-  margin-bottom: 8px;
-  font-weight: var(--weight-bold);
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: #ffbf00;
+  text-shadow:
+    0 0 6px  rgba(255,191,0,0.95),
+    0 0 18px rgba(255,191,0,0.45),
+    0 0 36px rgba(255,140,0,0.18);
+  margin-bottom: 2px;
 }
 
 .clock-time {
   font-family: var(--font-mono);
-  font-size: 14px;
-  color: var(--cream-off-white);
-  margin-bottom: 8px;
-  letter-spacing: 0.05em;
+  font-size: 10px;
+  color: rgba(255, 191, 0, 0.45);
+  letter-spacing: 0.14em;
+  margin-bottom: 3px;
+}
+
+.clock-oscilloscope {
+  width: 72px;
+  height: 20px;
+  margin: 0 auto 4px;
+  display: block;
+}
+
+.clock-oscilloscope polyline {
+  fill: none;
+  stroke: rgba(255, 191, 0, 0.92);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px rgba(255, 191, 0, 0.7));
 }
 
 .resonance-indicator {
-  color: var(--burnt-orange);
-  font-size: 20px;
-  animation: resonance-pulse 2s infinite;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: rgba(255, 140, 0, 0.5);
+  text-transform: uppercase;
+  animation: resonance-pulse 3s ease-in-out infinite;
 }
 
 @keyframes resonance-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.85; text-shadow: 0 0 8px rgba(255,140,0,0.55); }
 }
 
-/* THE CONDUIT SLIDER */
+/* ── TACTICAL PIT — Amber radar CRT bezel ── */
+.console-pit {
+  background: radial-gradient(ellipse at 50% 40%, #080700 0%, #040300 55%, #000 100%);
+  border-radius: 4px;
+  padding: 8px 12px 10px;
+  position: relative;
+  border: 1px solid rgba(200, 150, 30, 0.2);
+  box-shadow:
+    inset 0 0 60px rgba(0, 0, 0, 0.98),
+    inset 0 0 16px rgba(255, 140, 0, 0.03),
+    0 2px 10px rgba(0, 0, 0, 0.7);
+  flex: 1;
+}
+
+/* Amber bezel rim */
+.console-pit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 160, 30, 0.1);
+  box-shadow: inset 0 0 6px rgba(255, 140, 0, 0.05);
+  pointer-events: none;
+}
+
+/* CRT scanline on radar */
+.console-pit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent         0px,
+    rgba(0,0,0,0.08)    1px,
+    transparent         2px,
+    transparent         6px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── CONDUIT SLIDER — Broadcast fader ── */
 .conduit-slider {
-  background: linear-gradient(135deg, var(--walnut-dark) 0%, var(--walnut-grain) 100%);
-  border: 2px solid var(--warm-brass);
-  border-radius: 8px;
-  padding: 24px;
-  min-width: 280px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6),
-              inset 0 -1px 3px rgba(255, 255, 255, 0.1),
-              0 4px 12px rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(200, 150, 30, 0.18);
+  border-radius: 3px;
+  padding: 8px 10px 6px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7);
 }
 
 .slider-track {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 }
 
 .slider-input {
-  width: 200px;
+  width: 100%;
   -webkit-appearance: none;
-  background: #333;
-  height: 8px;
-  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    rgba(255,176,0,0.18) 0%,
+    rgba(0,0,0,0.55) 100%
+  );
+  height: 3px;
+  border-radius: 2px;
   outline: none;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.9);
 }
 
 .slider-input::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  background: #ffbf00;
-  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #e0b840 0%, #b88a20 60%, #8a6010 100%);
+  border-radius: 2px;
   cursor: pointer;
-  box-shadow: 0 0 10px #ffbf00;
+  box-shadow:
+    0 0 5px rgba(255,176,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    0 2px 4px rgba(0,0,0,0.7);
+  border: 1px solid rgba(0,0,0,0.4);
 }
 
 .slider-label {
-  font-family: var(--font-primary);
-  font-size: 12px;
-  color: #ffbf00;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 176, 0, 0.38);
   text-align: center;
 }
 
 .broadcast-indicator {
-  color: #666;
-  font-size: 16px;
-  transition: all 0.3s ease;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 176, 0, 0.28);
+  text-align: center;
+  transition: color 0.25s, text-shadow 0.25s;
 }
 
 .broadcast-indicator.active {
   color: #ffbf00;
-  text-shadow: 0 0 10px #ffbf00;
-  animation: broadcast-active 0.5s infinite;
+  text-shadow: 0 0 8px rgba(255, 191, 0, 0.8);
+  animation: broadcast-active 0.9s ease-in-out infinite;
 }
 
 @keyframes broadcast-active {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; text-shadow: 0 0 14px rgba(255,176,0,0.95); }
 }
 
-/* THE ASSET INTAKE SLOT */
+/* ── ASSET INTAKE SLOT ── */
 .asset-intake-slot {
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid #333;
-  padding: 15px;
-  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 140, 0, 0.14);
+  border-radius: 3px;
+  padding: 7px 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 80px;
+  transition: border-color 0.2s, box-shadow 0.2s;
   text-align: center;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
 }
 
 .asset-intake-slot:hover {
-  border-color: #ffbf00;
-  box-shadow: 0 0 10px rgba(255, 191, 0, 0.3);
+  border-color: rgba(255, 176, 0, 0.38);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.7),
+    0 0 10px rgba(255, 176, 0, 0.12);
 }
 
 .slot-opening {
-  font-size: 24px;
-  color: #666;
-  margin-bottom: 5px;
+  font-size: 14px;
+  color: rgba(255, 176, 0, 0.38);
+  margin-bottom: 2px;
+  transition: color 0.2s;
+}
+
+.asset-intake-slot:hover .slot-opening {
+  color: rgba(255, 176, 0, 0.75);
 }
 
 .slot-label {
-  font-family: var(--font-primary);
-  font-size: 10px;
-  color: #666;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 176, 0, 0.28);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s;
 }
 
 .slot-label.visible {
   opacity: 1;
-}
-
-/* ─── TACTICAL PIT — Recessed hardware housing ─── */
-.console-pit {
-  background: radial-gradient(ellipse at center, #060e06 0%, #000 80%);
-  border-radius: 10px;
-  padding: 16px 20px 20px;
-  box-shadow:
-    inset 0 0 80px #000,
-    inset 0 0 40px rgba(0,40,0,0.4),
-    inset 0 8px 24px rgba(0,0,0,0.9),
-    0 0 1px rgba(0,255,80,0.12);
-  border: 1px solid rgba(0,80,0,0.3);
-  position: relative;
-}
-
-/* Pit rim glow — phosphor edge light */
-.console-pit::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 10px;
-  border: 1px solid rgba(0,255,80,0.08);
-  pointer-events: none;
 }
 
 /* ─── THE HOLOGRAPHIC MAP ─── */
@@ -885,6 +1138,47 @@
   border-radius: 50%;
 }
 
+.binary-core-controls {
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  gap: 6px;
+  z-index: 12;
+}
+
+.binary-core-control {
+  min-height: 22px;
+  border: 1px solid rgba(255, 191, 0, 0.45);
+  border-radius: 3px;
+  padding: 2px 7px;
+  background: rgba(0, 0, 0, 0.68);
+  color: var(--amber-phosphor);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.2s ease, filter 0.2s ease;
+}
+
+.binary-core-control.sun:hover,
+.binary-core-control.sun:focus-visible {
+  border-color: #ffea00;
+  filter: drop-shadow(0 0 4px rgba(255, 234, 0, 0.6));
+}
+
+.binary-core-control.star:hover,
+.binary-core-control.star:focus-visible {
+  border-color: #8B0000;
+  filter: drop-shadow(0 0 4px rgba(139, 0, 0, 0.6));
+}
+
+.binary-core-control:focus-visible {
+  outline: 2px solid rgba(255, 191, 0, 0.9);
+  outline-offset: 2px;
+}
+
 /* DOM labels floating over the Three.js canvas */
 .binary-label-sun,
 .binary-label-star,
@@ -929,6 +1223,12 @@
   font-size: 10px;
   text-align: center;
   transform-style: preserve-3d;
+}
+
+.empire-node:focus-visible {
+  outline: 2px solid rgba(255, 191, 0, 0.95);
+  outline-offset: 3px;
+  filter: brightness(1.22);
 }
 
 /* Studio Film Grain overlay on each node */
@@ -1182,6 +1482,16 @@
   background: rgba(255, 191, 0, 0.1);
   border-color: #ffbf00;
   color: #ffbf00;
+}
+
+.latent-meta {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: rgba(255, 191, 0, 0.52);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* THE GOD MODE PULL CORD */
@@ -1450,15 +1760,38 @@
   transform-origin: center;
 }
 
-/* ─── DP Grid — accelerates toward camera during warp ────────── */
+/* ─── DP Grid — perspective warp tunnel toward camera ──────────
+   Layered grids at 3 scales create a converging tunnel illusion.
+   Radial vignette darkens edges so center glows like a warp entrance. */
 .dp-grid-warp {
   position: absolute;
   top: -50%; left: -50%;
   width: 200%; height: 200%;
+  /* Three grid scales: coarse outer / medium / fine inner — tunnel depth */
   background-image:
-    linear-gradient(rgba(139, 115, 85, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 115, 85, 0.18) 1px, transparent 1px);
-  background-size: 80px 80px;
+    /* Radial vignette: center amber glow → edge void */
+    radial-gradient(ellipse 55% 55% at 50% 50%,
+      rgba(255,191,0,0.10) 0%,
+      rgba(255,140,0,0.04) 35%,
+      transparent 65%),
+    /* Fine grid — innermost, densest near center */
+    linear-gradient(rgba(255,176,40,0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,176,40,0.45) 1px, transparent 1px),
+    /* Medium grid */
+    linear-gradient(rgba(200,130,20,0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,130,20,0.22) 1px, transparent 1px),
+    /* Coarse grid — outermost structural frame */
+    linear-gradient(rgba(160,100,10,0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(160,100,10,0.14) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    40px 40px,
+    40px 40px,
+    120px 120px,
+    120px 120px,
+    360px 360px,
+    360px 360px;
+  transform-origin: center center;
   z-index: 5;
   pointer-events: none;
 }
@@ -1549,18 +1882,141 @@
   letter-spacing: 0.15em;
   text-align: center;
   pointer-events: none;
-  animation: monitor-flicker 0.1s infinite alternate;
+}
+
+.system-broadcast-pulse,
+.arch-broadcast-pulse {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 191, 0, 0.55);
+  background: rgba(10, 7, 2, 0.82);
+  color: rgba(255, 191, 0, 0.92);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(255, 191, 0, 0.85);
+  animation: broadcast-banner-pulse 0.9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.arch-broadcast-pulse {
+  top: 12px;
+  border-color: rgba(0, 212, 200, 0.52);
+  color: rgba(125, 255, 248, 0.95);
+  background: rgba(0, 16, 18, 0.85);
+  text-shadow: 0 0 8px rgba(0, 212, 200, 0.75);
+}
+
+@keyframes broadcast-banner-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+:root {
+  --phosphor-flicker-rate: 0.16s;
+  --phosphor-flicker-rate-touch: 0.28s;
 }
 
 /* ─── SPRINT 2: Amber phosphor monitor flicker ─── */
 @keyframes monitor-flicker {
   0%   { opacity: 1;    text-shadow: 0 0 6px rgba(255,191,0,0.9),  0 0 14px rgba(255,191,0,0.5); }
+  55%  { opacity: 0.97; text-shadow: 0 0 5px rgba(255,191,0,0.78), 0 0 12px rgba(255,191,0,0.38); }
   100% { opacity: 0.93; text-shadow: 0 0 4px rgba(255,191,0,0.7),  0 0 10px rgba(255,191,0,0.3); }
 }
 
 .clock-frequency,
-.node-label {
-  animation: monitor-flicker 0.12s infinite alternate;
+.clock-time,
+.resonance-indicator,
+.node-label,
+.moon-focus,
+.node-focus,
+.broadcast-overlay {
+  animation: monitor-flicker var(--phosphor-flicker-rate) infinite alternate;
+}
+
+/* Touch-first devices get slower phosphor cadence to reduce visual fatigue. */
+@media (pointer: coarse), (hover: none) {
+  .clock-frequency,
+  .clock-time,
+  .resonance-indicator,
+  .node-label,
+  .moon-focus,
+  .node-focus,
+  .broadcast-overlay {
+    animation-duration: var(--phosphor-flicker-rate-touch);
+  }
+}
+
+/* ─── SPRINT 2: R3 Reduced-Motion Guard for Phosphor Flicker ─── */
+@media (prefers-reduced-motion: reduce) {
+  .viewport-focus,
+  .divine-sessions-welcome,
+  .clock-frequency,
+  .clock-time,
+  .resonance-indicator,
+  .node-label,
+  .moon-focus,
+  .node-focus,
+  .broadcast-overlay {
+    animation: none !important;
+    opacity: 1;
+  }
+
+  .empire-node,
+  .binary-core-control {
+    transition: none !important;
+  }
+
+  .empire-node::after {
+    animation: none !important;
+  }
+
+  .singularity-flash {
+    display: none !important;
+  }
+}
+
+/* ─── SPRINT 2: R5 Forced-Colors Compatibility for Phosphor UI ─── */
+@media (forced-colors: active) {
+  .viewport-focus,
+  .viewport-focus h2,
+  .viewport-focus p,
+  .divine-sessions-welcome,
+  .welcome-line,
+  .clock-frequency,
+  .clock-time,
+  .resonance-indicator,
+  .moon-focus,
+  .node-focus,
+  .broadcast-overlay,
+  .binary-label-sun,
+  .binary-label-star,
+  .binary-label-gap,
+  .node-label,
+  .node-owner,
+  .node-status {
+    color: CanvasText !important;
+    text-shadow: none !important;
+    animation: none !important;
+    forced-color-adjust: auto;
+  }
+
+  .viewport-border {
+    border-color: CanvasText !important;
+  }
+
+  .empire-node,
+  .binary-core-control {
+    border: 1px solid CanvasText !important;
+    box-shadow: none !important;
+    background: Canvas !important;
+    filter: none !important;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1572,28 +2028,31 @@
    charcoal carpet. You are standing inside the record room. */
 .vault-screen {
   min-height: 100vh;
-  /* Vertical pine paneling backdrop — matches D's studio walls */
+  /* Near-black walnut — deep veneer, paneling recedes behind the records */
   background:
     repeating-linear-gradient(
       90deg,
-      rgba(0,0,0,0.12) 0px,
-      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.18) 0px,
+      rgba(0,0,0,0.06) 2px,
       transparent 2px,
       transparent 20px,
-      rgba(180,110,40,0.03) 20px,
+      rgba(120,70,20,0.02) 20px,
       transparent 22px
     ),
     linear-gradient(175deg,
-      #1a0e04 0%,
-      #2e1808 15%,
-      #3a2010 35%,
-      #2a1608 65%,
-      #1e1006 85%,
-      #0a0502 100%
+      #0e0905 0%,
+      #170c04 15%,
+      #1e1006 35%,
+      #130a03 65%,
+      #0c0602 85%,
+      #060402 100%
     );
-  /* Warm lamp glow from upper-right corner — like D's studio lamp */
-  box-shadow: inset -80px -80px 200px rgba(0,0,0,0.6),
-              inset 80px 80px 160px rgba(180,100,20,0.06);
+  /* Warm lamp glow from upper-right corner — like D's studio lamp.
+     --vault-owner-glow: soul-chakra color of the vault's owner (set per-vault in JSX).
+     Defaults to transparent so unassigned vaults feel neutral. */
+  box-shadow: inset -80px -80px 200px rgba(0,0,0,0.75),
+              inset 80px 80px 160px rgba(140,70,10,0.04),
+              inset 0 0 260px var(--vault-owner-glow, transparent);
   display: flex;
   flex-direction: column;
   padding: 28px 36px 140px;
@@ -1603,7 +2062,7 @@
 
 .vault-title {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: clamp(2rem, 5vw, 3.5rem);
   color: var(--amber-phosphor);
   letter-spacing: 0.25em;
@@ -1627,6 +2086,152 @@
   display: flex;
   gap: 12px;
   margin: 20px 0 28px;
+}
+
+/* D2-A: universal 30/70 vault split (top window / library wall) */
+.vault-main-grid {
+  display: grid;
+  grid-template-rows: 3fr 7fr;
+  gap: 14px;
+  height: clamp(520px, 72svh, 900px);
+  min-height: 0;
+}
+
+.vault-top-band {
+  min-height: 0;
+}
+
+.vault-library-band {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+.vault-window-porthole {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 176, 40, 0.32);
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.7),
+    0 6px 20px rgba(0, 0, 0, 0.55);
+  background: radial-gradient(circle at 50% 25%, rgba(255, 176, 40, 0.08) 0%, rgba(5, 5, 8, 0.95) 85%);
+}
+
+.vault-window-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 3;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 191, 0, 0.86);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+.vault-window-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 191, 0, 0.9);
+  box-shadow: 0 0 8px rgba(255, 191, 0, 0.85);
+}
+
+.inverse-bloom-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.65) 35%, rgba(0, 0, 0, 0) 100%);
+  animation: inverse-bloom-pulse 420ms ease-out;
+}
+
+@keyframes inverse-bloom-pulse {
+  from { opacity: 0.95; }
+  to { opacity: 0; }
+}
+
+.vault-void-armed-overlay {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 5;
+  min-width: 260px;
+  border: 1px solid rgba(255, 191, 0, 0.55);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, rgba(18, 12, 4, 0.95) 0%, rgba(8, 6, 2, 0.96) 100%);
+  box-shadow:
+    0 0 16px rgba(255, 191, 0, 0.18),
+    inset 0 0 10px rgba(0, 0, 0, 0.7);
+}
+
+.vault-void-armed-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 191, 0, 0.95);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.vault-void-armed-file {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 227, 170, 0.9);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.vault-void-armed-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.vault-void-cancel,
+.vault-void-confirm {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 191, 0, 0.45);
+  background: rgba(0, 0, 0, 0.38);
+  color: rgba(255, 191, 0, 0.92);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.vault-void-confirm {
+  border-color: rgba(255, 88, 48, 0.8);
+  color: rgba(255, 150, 120, 0.95);
+}
+
+.vault-void-cancel:hover,
+.vault-void-cancel:focus-visible {
+  border-color: rgba(255, 191, 0, 0.85);
+  box-shadow: 0 0 8px rgba(255, 191, 0, 0.28);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.vault-void-confirm:hover,
+.vault-void-confirm:focus-visible {
+  border-color: rgba(255, 88, 48, 1);
+  box-shadow: 0 0 8px rgba(255, 88, 48, 0.35);
+  transform: translateY(-1px);
+  outline: none;
 }
 
 /* God buttons — inherit from index.css but override font */
@@ -1665,20 +2270,22 @@
 /* Faithful to D's actual studio: vertical tongue-and-groove honey amber
    pine paneling, warm incandescent lighting from upper-left corner. */
 .record-shelf {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 3px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  align-items: stretch;
+  gap: 10px;
   padding: 14px 10px 18px;
-  min-height: 290px;
-  overflow-x: auto;
-  overflow-y: visible;
+  min-height: 250px;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
   perspective: 800px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,176,0,0.3) transparent;
   /* Vertical tongue-and-groove pine paneling — D's studio wall */
   background:
+    /* Incandescent spotlight cone — overhead lamp hitting the records */
+    radial-gradient(ellipse 60% 45% at 50% 0%, rgba(255,200,100,0.16) 0%, transparent 65%),
     repeating-linear-gradient(
       90deg,
       rgba(0,0,0,0.10) 0px,
@@ -1703,8 +2310,27 @@
     inset 0 -3px 0 rgba(0,0,0,0.5);
 }
 
+/* Pine shelf lip — 6px edge at the top of each shelf row */
+.record-shelf::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(to right,
+    #5a3818 0%,
+    #9a6830 12%,
+    #c49040 45%,
+    #b07830 70%,
+    #7a5028 88%,
+    #4a2e10 100%
+  );
+  border-bottom: 1px solid rgba(0,0,0,0.45);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .record-shelf::-webkit-scrollbar {
-  height: 4px;
+  width: 7px;
 }
 .record-shelf::-webkit-scrollbar-track {
   background: transparent;
@@ -1747,98 +2373,113 @@
   );
 }
 
-/* ─── SPINE ─── */
-.spine {
-  width: 40px;
-  min-width: 40px;
-  height: 250px;
-  border-radius: 3px 3px 1px 1px;
+/* ─── FILE CELL ─── */
+.file-cell {
+  min-height: 88px;
+  border-radius: 7px;
   cursor: pointer;
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* Sun-lit gradient: bright left face → dark trailing right edge */
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 10px;
   background: linear-gradient(
-    to right,
+    135deg,
     var(--spine-highlight) 0%,
-    var(--spine-base)      42%,
+    color-mix(in srgb, var(--spine-base) 78%, #1a0f03 22%) 48%,
     color-mix(in srgb, var(--spine-shadow) 70%, black 30%) 100%
   );
   box-shadow:
-    inset -1px 0 4px rgba(0,0,0,0.55),
-    inset 1px 0 2px rgba(255,255,255,0.06),
-    2px 3px 10px rgba(0,0,0,0.7),
-    -1px 0 0 rgba(255,255,255,0.04);
-  flex-shrink: 0;
+    inset 0 1px 2px rgba(255,255,255,0.2),
+    inset 0 -1px 6px rgba(0,0,0,0.35),
+    0 8px 16px rgba(0,0,0,0.35);
   user-select: none;
+  border: 1px solid color-mix(in srgb, var(--spine-glow) 20%, rgba(255,255,255,0.1) 80%);
 }
 
-/* Left-edge specular highlight — concentrated sun reflection */
-.spine-specular {
+.file-cell-specular {
   position: absolute;
-  top: 12px; left: 2px; bottom: 12px;
-  width: 5px;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
   background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(255,255,255,0.22) 15%,
-    rgba(255,255,255,0.35) 50%,
-    rgba(255,255,255,0.22) 85%,
+    180deg,
+    rgba(255,255,255,0.24) 0%,
+    rgba(255,255,255,0.08) 55%,
     transparent 100%
   );
-  border-radius: 3px;
+  border-radius: 7px 7px 0 0;
   pointer-events: none;
 }
 
-/* Active spine — pulled 12px, glowing */
-.spine-active {
+.file-cell-active {
   box-shadow:
-    inset -1px 0 4px rgba(0,0,0,0.4),
+    inset 0 1px 2px rgba(255,255,255,0.2),
     0 0 16px var(--spine-glow),
     0 0 32px color-mix(in srgb, var(--spine-glow) 50%, transparent 50%),
-    2px 3px 10px rgba(0,0,0,0.7);
+    0 8px 16px rgba(0,0,0,0.45);
 }
 
-/* Vertical label — display serif, uppercase, reads bottom-to-top */
-.spine-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
+.file-cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.file-cell-label {
+  font-family: 'Comfortaa', sans-serif;
   text-transform: uppercase;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 12px;
+  font-weight: 700;
+  font-size: 11px;
   letter-spacing: 0.12em;
-  color: rgba(0,0,0,0.8);
-  text-shadow: 0 1px 2px rgba(255,255,255,0.22);
-  pointer-events: none;
-  padding: 10px 0;
+  color: rgba(16, 8, 0, 0.9);
+  text-shadow: 0 1px 2px rgba(255,255,255,0.25);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  max-height: 210px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-/* Vertical sub-label — Space Mono for BPM/Hz/year data */
-.spine-sublabel {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
+.file-cell-state {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(0,0,0,0.35);
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(0,0,0,0.18);
+  color: rgba(20,10,0,0.75);
+}
+
+.file-cell-state-play {
+  color: #0f3010;
+  background: rgba(120,255,120,0.25);
+}
+
+.file-cell-state-record {
+  color: #3a0505;
+  background: rgba(255,80,80,0.3);
+}
+
+.file-cell-meta {
   font-family: var(--font-mono);
   font-weight: 400;
-  font-size: 7px;
+  font-size: 10px;
   letter-spacing: 0.06em;
-  color: rgba(0,0,0,0.5);
+  color: rgba(15,8,2,0.7);
   text-shadow: 0 0 4px rgba(255,191,0,0.2);
-  pointer-events: none;
-  white-space: nowrap;
+  white-space: normal;
 }
 
-/* VOID handle — top-edge dot, revealed on hover */
-.spine-void-handle {
+.file-cell-void-handle {
   position: absolute;
-  top: 5px; left: 50%;
-  transform: translateX(-50%);
+  top: 6px;
+  right: 8px;
   width: 8px; height: 8px;
   border-radius: 50%;
   background: rgba(0,0,0,0.35);
@@ -1848,8 +2489,91 @@
   transition: opacity 0.18s ease;
 }
 
-.spine:hover .spine-void-handle {
+.file-cell:hover .file-cell-void-handle {
   opacity: 1;
+}
+
+.file-cell-comment-handle {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.12);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.file-cell:hover .file-cell-comment-handle {
+  opacity: 1;
+}
+
+/* ─── D6: SOUL-CHAKRA OWNERSHIP LANGUAGE ─── */
+
+/* Left-edge chakra rail — thin bar showing authorship color */
+.file-cell-chakra-rail {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--cell-chakra, rgba(255,200,100,0.25));
+  border-radius: 2px 0 0 2px;
+  opacity: 0.55;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+  pointer-events: none;
+}
+
+.file-cell-active .file-cell-chakra-rail {
+  opacity: 1;
+  box-shadow: 0 0 10px var(--cell-chakra, rgba(255,200,100,0.5)),
+              0 0 3px  var(--cell-chakra, rgba(255,200,100,0.4));
+}
+
+/* Member sigil — initials badge in top-right corner */
+.file-cell-sigil {
+  position: absolute;
+  top: 5px; right: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--cell-chakra, rgba(255,200,100,0.7));
+  opacity: 0.5;
+  line-height: 1;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.file-cell-active .file-cell-sigil {
+  opacity: 1;
+}
+
+.file-cell:hover .file-cell-sigil {
+  opacity: 0.85;
+}
+
+/* Transport readout with inline strobe disc — flex layout */
+.transport-readout.loaded {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.readout-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.readout-track-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* ─── SHADOW GAP SPAGHETTIFICATION ─── */
@@ -1982,6 +2706,7 @@
 
 .state-play   { color: #44ff88; background: rgba(0,100,40,0.3); }
 .state-stop   { color: #ffbf00; background: rgba(60,40,0,0.3); }
+.state-pause  { color: #ffd36a; background: rgba(80,60,0,0.35); }
 .state-record { color: #ff4444; background: rgba(100,0,0,0.4); }
 .state-rewind { color: #88ccff; background: rgba(0,40,80,0.3); }
 .state-ff     { color: #88ccff; background: rgba(0,40,80,0.3); }
@@ -2038,9 +2763,55 @@
 }
 
 .btn-play.transport-active   { color: #44ff88; border-color: #44ff88 !important; box-shadow: 0 0 8px rgba(68,255,136,0.4); }
+.btn-pause.transport-active  { color: #ffd36a; border-color: #ffd36a !important; box-shadow: 0 0 8px rgba(255,211,106,0.4); }
 .btn-record.transport-active { color: #ff4444; border-color: #ff4444 !important; box-shadow: 0 0 8px rgba(255,68,68,0.5); animation: rec-blink 0.8s step-end infinite; }
 .btn-stop.transport-active   { color: #ffbf00; }
 .btn-rewind.transport-active, .btn-ff.transport-active { color: #88ccff; }
+
+/* Voice REC — distinct amber ring to signal it's a note capture, not transport */
+.voice-rec-btn {
+  border-color: rgba(255,80,80,0.4) !important;
+  margin-left: 12px;
+}
+.voice-rec-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Admin command row */
+.transport-admin {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,176,0,0.1);
+}
+
+.transport-admin-btn {
+  background: linear-gradient(160deg, #2f2210, #1a1408);
+  border: 1px solid rgba(255,176,0,0.3);
+  color: rgba(255,196,92,0.85);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-family: 'Comfortaa', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.transport-admin-btn:hover:not(:disabled) {
+  border-color: rgba(255,191,0,0.65);
+  color: #ffcf6b;
+  box-shadow: 0 0 8px rgba(255,176,0,0.22);
+}
+
+.transport-admin-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
 
 @keyframes rec-blink {
   0%, 100% { opacity: 1; }

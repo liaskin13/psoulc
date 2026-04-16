@@ -3,7 +3,14 @@ import { motion } from 'framer-motion';
 import RecordShelf from '../components/RecordShelf';
 import StuderTransportBar from '../components/StuderTransportBar';
 import TuneModal from '../components/TuneModal';
+import VaultWindow from '../components/VaultWindow';
+import VoidStreakOverlay from '../components/VoidStreakOverlay';
+import { useVaultVoid } from '../hooks/useVaultVoid';
+import { useVaultFileCells } from '../hooks/useVaultFileCells';
 import { EARTH_DOCUMENTS } from '../data/earth';
+import { VOID_CHAKRA_COLORS, MEMBER_CHAKRA_COLORS } from '../config';
+import { useSystem } from '../state/SystemContext';
+import { canComment, canEdit } from '../utils/permissions';
 
 // Earth spine palette — color by classification level.
 const CLASS_PALETTE = {
@@ -17,55 +24,95 @@ const DOC_ITEMS = EARTH_DOCUMENTS.map(d => ({
   label:    d.title,
   sublabel: `${d.year} · ${d.classification.replace('-', ' ').toUpperCase()}`,
   metadata: d,
+  createdBy: d.createdBy || 'D',
+  chakraColor: MEMBER_CHAKRA_COLORS[d.createdBy] || MEMBER_CHAKRA_COLORS.D,
   ...(CLASS_PALETTE[d.classification] || CLASS_PALETTE.classified),
 }));
 
-function EarthSafe({ onBack, onVoid }) {
-  const [activeId,        setActiveId]        = useState(null);
-  const [activeTrack,     setActiveTrack]     = useState(null);
-  const [transportState,  setTransportState]  = useState('stop');
+const parseFrequency = (value) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const m = value.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 528;
+  }
+  return 528;
+};
+
+function EarthSafe({ onBack, onExitSystem, onVoid, readOnly = false }) {
   const [pitchMultiplier, setPitchMultiplier] = useState(1.0);
   const [tuneItem,        setTuneItem]        = useState(null);
-  const [docItems,        setDocItems]        = useState(DOC_ITEMS);
+  const { addComment, sessionMeta, getTuneOverride, saveTuneOverride } = useSystem();
+
+  const initialDocItems = DOC_ITEMS.map((item) => {
+    const override = getTuneOverride('earth', item.id);
+    if (!override) return item;
+    const bpm = override.bpm ?? item.metadata?.bpm ?? 120;
+    const frequency = override.frequency ?? parseFrequency(item.metadata?.frequency);
+    return {
+      ...item,
+      label: override.label ?? item.label,
+      metadata: { ...item.metadata, bpm, frequency: `${frequency}Hz` },
+    };
+  });
+
+  const {
+    cells: docItems,
+    activeId,
+    activeTrack,
+    transportState,
+    selectCell,
+    findCellById,
+    updateCell,
+    removeCell,
+    setTransport,
+  } = useVaultFileCells(initialDocItems);
+
+  const {
+    vaultWindowRef,
+    voidProps,
+    inverseBloom,
+    isVoidArmed,
+    armedVoidLabel,
+    cancelArmedVoid,
+    confirmArmedVoid,
+    handleShelfVoid,
+    handleVoidButton,
+  } =
+    useVaultVoid({
+      voidColor: VOID_CHAKRA_COLORS.earth,
+      onVoid: (item) => {
+        removeCell(item.id);
+        onVoid?.(item);
+      },
+    });
+
+  const handleComment = (item, body) => addComment('earth', item.id, item.label, sessionMeta?.owner || 'member', body);
+  const canAdmin = canEdit(sessionMeta, 'earth');
 
   const handleSelect = item => {
-    setActiveId(item.id);
-    setActiveTrack({ label: item.label, sublabel: item.sublabel });
-    setTransportState('stop');
+    selectCell(item);
   };
 
   const handleTune = () => {
     if (!activeId) return;
-    const item = docItems.find(i => i.id === activeId);
+    const item = findCellById(activeId);
     if (item) setTuneItem(item);
   };
 
   const handleTuneSave = (updates) => {
-    setDocItems(prev => prev.map(i =>
-      i.id === tuneItem.id
-        ? { ...i, label: updates.label }
-        : i
-    ));
-    if (activeId === tuneItem.id) {
-      setActiveTrack(prev => ({ ...prev, label: updates.label }));
-    }
+    saveTuneOverride('earth', tuneItem.id, updates);
+    updateCell(tuneItem.id, (cell) => ({
+      ...cell,
+      label: updates.label,
+      metadata: { ...cell.metadata, bpm: updates.bpm, frequency: `${updates.frequency}Hz` },
+    }));
     setTuneItem(null);
-  };
-
-  const handleVoid = () => {
-    if (!activeId) return;
-    const item = docItems.find(i => i.id === activeId);
-    if (item && onVoid) {
-      onVoid({ id: item.id, label: item.label, sublabel: item.sublabel });
-      setDocItems(prev => prev.filter(i => i.id !== activeId));
-      setActiveId(null);
-      setActiveTrack(null);
-    }
   };
 
   return (
     <motion.div
       className="vault-screen earth-safe"
+      style={{ '--vault-owner-glow': 'rgba(139,0,0,0.09)' }}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
@@ -76,10 +123,22 @@ function EarthSafe({ onBack, onVoid }) {
       </div>
 
       <div className="vault-commands">
-        <button className="god-btn" onClick={onBack}>← BACK</button>
-        <button className="god-btn" onClick={handleTune}  disabled={!activeId} style={{ opacity: activeId ? 1 : 0.4 }}>TUNE</button>
-        <button className="god-btn" onClick={handleVoid} disabled={!activeId} style={{ opacity: activeId ? 1 : 0.4 }}>VOID</button>
-        <button className="god-btn">SEAL</button>
+        <button className="god-btn" onClick={onBack}>SEAL VAULT</button>
+        <button className="god-btn" onClick={onExitSystem}>EXIT SYSTEM</button>
+        {!readOnly && (
+          <>
+            <button className="god-btn" onClick={handleTune} disabled={!activeId} style={{ opacity: activeId ? 1 : 0.4 }}>TUNE</button>
+            <button
+              className="god-btn"
+              onClick={() => activeId && handleVoidButton(findCellById(activeId))}
+              disabled={!activeId}
+              style={{ opacity: activeId ? 1 : 0.4 }}
+            >
+              VOID
+            </button>
+            <button className="god-btn">SEAL</button>
+          </>
+        )}
       </div>
 
       {tuneItem && (
@@ -90,26 +149,52 @@ function EarthSafe({ onBack, onVoid }) {
         />
       )}
 
-      <div className="shelf-section">
-        <div className="shelf-section-label">CLASSIFIED FILES</div>
-        <RecordShelf
-          items={docItems}
-          activeId={activeId}
-          onSelect={handleSelect}
-        />
+      <div className="vault-main-grid">
+        <div className="vault-top-band">
+          <VaultWindow
+            ref={vaultWindowRef}
+            inverseBloom={inverseBloom}
+            voidArmed={isVoidArmed}
+            armedLabel={armedVoidLabel}
+            onCancelVoid={cancelArmedVoid}
+            onConfirmVoid={confirmArmedVoid}
+          />
+        </div>
+
+        <div className="vault-library-band">
+          <div className="shelf-section">
+            <div className="shelf-section-label">CLASSIFIED FILES</div>
+            <RecordShelf
+              items={docItems}
+              activeId={activeId}
+              onSelect={handleSelect}
+              onVoid={readOnly ? undefined : handleShelfVoid}
+              onComment={canComment(sessionMeta) ? handleComment : undefined}
+            />
+          </div>
+
+          <StuderTransportBar
+            activeTrack={activeTrack}
+            transportState={transportState}
+            pitchMultiplier={pitchMultiplier}
+            onPlay={()   => setTransport('play')}
+            onStop={()   => setTransport('stop')}
+            onRewind={()  => setTransport('rewind')}
+            onFastForward={() => setTransport('ff')}
+            onPause={()  => setTransport('pause')}
+            onRecord={()  => setTransport('record')}
+            showAdminCommands={!readOnly}
+            isAdmin={canAdmin}
+            onAdminArm={()    => activeId && handleVoidButton(findCellById(activeId))}
+            onAdminCommit={confirmArmedVoid}
+            onAdminSeal={()   => { cancelArmedVoid(); setTransport('stop'); }}
+            onAdminClear={clearSelection}
+            onPitchChange={setPitchMultiplier}
+          />
+        </div>
       </div>
 
-      <StuderTransportBar
-        activeTrack={activeTrack}
-        transportState={transportState}
-        pitchMultiplier={pitchMultiplier}
-        onPlay={()   => setTransportState('play')}
-        onStop={()   => setTransportState('stop')}
-        onRewind={()  => setTransportState('rewind')}
-        onFastForward={() => setTransportState('ff')}
-        onRecord={()  => setTransportState('record')}
-        onPitchChange={setPitchMultiplier}
-      />
+      {!readOnly && <VoidStreakOverlay {...voidProps} />}
     </motion.div>
   );
 }

@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { motion, useSpring, useMotionValue } from 'framer-motion';
 import { AMETHYST_BOWLS, AMETHYST_SESSIONS } from '../data/amethyst';
 import StuderTransportBar from '../components/StuderTransportBar';
+import VaultWindow from '../components/VaultWindow';
+import VoidStreakOverlay from '../components/VoidStreakOverlay';
+import { useVaultVoid } from '../hooks/useVaultVoid';
+import { VOID_CHAKRA_COLORS } from '../config';
+import { useSystem } from '../state/SystemContext';
+import { canComment } from '../utils/permissions';
 
 // ── SINGING BOWL RING ──────────────────────────────────────────────────────
 // Circular CSS ring pulsing at the bowl's Hz frequency.
@@ -58,16 +64,78 @@ function BowlRing({ bowl, isActive, onSelect }) {
   );
 }
 
+// ── SESSION ROW ────────────────────────────────────────────────────────────
+// Crystal session entry with hover-reveal VOID action.
+function SessionRow({ session, isActive, onSelect, onVoid }) {
+  const [hovered, setHovered] = useState(false);
+
+  const handleVoid = (e) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.closest('.amethyst-session-row').getBoundingClientRect();
+    const sourcePos = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    onVoid({ id: session.id, label: session.label }, sourcePos);
+  };
+
+  return (
+    <motion.div
+      className={`amethyst-session-row ${isActive ? 'active' : ''}`}
+      onClick={() => onSelect(session)}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      whileHover={{ x: 6, transition: { duration: 0.15 } }}
+    >
+      <div className="session-row-content">
+        <span className="session-label">{session.label}</span>
+        <span className="session-meta">{session.frequency}Hz · {session.sublabel} · {session.date}</span>
+      </div>
+      <motion.button
+        className="session-void-btn"
+        onClick={handleVoid}
+        initial={{ opacity: 0, x: 6 }}
+        animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : 6 }}
+        transition={{ duration: 0.15 }}
+        tabIndex={hovered ? 0 : -1}
+        aria-label={`Void session ${session.label}`}
+      >
+        VOID
+      </motion.button>
+    </motion.div>
+  );
+}
+
 // ── AMETHYST VAULT ─────────────────────────────────────────────────────────
-function AmethystVault({ onBack }) {
+function AmethystVault({ onBack, onExitSystem, onVoid, readOnly = false }) {
   const [activeId, setActiveId]     = useState(null);
   const [activeTrack, setActiveTrack] = useState(null);
   const [transportState, setTransportState] = useState('stop');
   const [pitchMultiplier, setPitchMultiplier] = useState(1.0);
 
+  const {
+    vaultWindowRef,
+    voidProps,
+    inverseBloom,
+    isVoidArmed,
+    armedVoidLabel,
+    cancelArmedVoid,
+    confirmArmedVoid,
+    handleShelfVoid,
+  } =
+    useVaultVoid({
+      voidColor: VOID_CHAKRA_COLORS.amethyst,
+      onVoid: (item) => {
+        if (activeId === item.id) { setActiveId(null); setActiveTrack(null); }
+        onVoid?.(item);
+      },
+    });
+
   const handleBowlSelect = (bowl) => {
     setActiveId(bowl.id);
     setActiveTrack({ name: bowl.label, info: `${bowl.frequency}Hz · ${bowl.note}`, bpm: null });
+  };
+
+  const handleSessionSelect = (session) => {
+    setActiveId(session.id);
+    setActiveTrack({ name: session.label, info: `${session.frequency}Hz · ${session.date}`, bpm: null });
   };
 
   return (
@@ -88,61 +156,75 @@ function AmethystVault({ onBack }) {
 
       {/* Vault commands */}
       <div className="vault-commands">
-        <button className="vault-cmd" onClick={onBack}>← BACK</button>
-        <button className="vault-cmd">TUNE</button>
+        <button className="vault-cmd" onClick={onBack}>SEAL VAULT</button>
+        <button className="vault-cmd" onClick={onExitSystem}>EXIT SYSTEM</button>
+        {!readOnly && <button className="vault-cmd">TUNE</button>}
       </div>
 
-      {/* Crystal vault body */}
-      <div className="amethyst-body">
-        {/* Chakra singing bowls — 7 rings arranged in vertical column */}
-        <div className="amethyst-bowl-section">
-          <div className="amethyst-section-label">CHAKRA BOWLS</div>
-          <div className="bowl-grid">
-            {AMETHYST_BOWLS.map(bowl => (
-              <BowlRing
-                key={bowl.id}
-                bowl={bowl}
-                isActive={activeId === bowl.id}
-                onSelect={handleBowlSelect}
-              />
-            ))}
-          </div>
+      <div className="vault-main-grid">
+        <div className="vault-top-band">
+          <VaultWindow
+            ref={vaultWindowRef}
+            inverseBloom={inverseBloom}
+            voidArmed={isVoidArmed}
+            armedLabel={armedVoidLabel}
+            onCancelVoid={cancelArmedVoid}
+            onConfirmVoid={confirmArmedVoid}
+          />
         </div>
 
-        {/* Sessions archive */}
-        <div className="amethyst-sessions-section">
-          <div className="amethyst-section-label">SESSIONS</div>
-          <div className="amethyst-sessions">
-            {AMETHYST_SESSIONS.map(session => (
-              <motion.div
-                key={session.id}
-                className={`amethyst-session-row ${activeId === session.id ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveId(session.id);
-                  setActiveTrack({ name: session.label, info: `${session.frequency}Hz · ${session.date}`, bpm: null });
-                }}
-                whileHover={{ x: 6, transition: { duration: 0.15 } }}
-              >
-                <span className="session-label">{session.label}</span>
-                <span className="session-meta">{session.frequency}Hz · {session.sublabel} · {session.date}</span>
-              </motion.div>
-            ))}
+        <div className="vault-library-band">
+          {/* Crystal vault body */}
+          <div className="amethyst-body">
+            {/* Chakra singing bowls — 7 rings arranged in vertical column */}
+            <div className="amethyst-bowl-section">
+              <div className="amethyst-section-label">CHAKRA BOWLS</div>
+              <div className="bowl-grid">
+                {AMETHYST_BOWLS.map(bowl => (
+                  <BowlRing
+                    key={bowl.id}
+                    bowl={bowl}
+                    isActive={activeId === bowl.id}
+                    onSelect={handleBowlSelect}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Sessions archive — voidable items */}
+            <div className="amethyst-sessions-section">
+              <div className="amethyst-section-label">SESSIONS</div>
+              <div className="amethyst-sessions">
+                {AMETHYST_SESSIONS.map(session => (
+                  <SessionRow
+                    key={session.id}
+                    session={session}
+                    isActive={activeId === session.id}
+                    onSelect={handleSessionSelect}
+                    onVoid={readOnly ? undefined : handleShelfVoid}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
+
+          {/* Transport bar */}
+          <StuderTransportBar
+            activeTrack={activeTrack}
+            transportState={transportState}
+            pitchMultiplier={pitchMultiplier}
+            onPlay={() => setTransportState('play')}
+            onStop={() => setTransportState('stop')}
+            onRewind={() => setTransportState('rewind')}
+            onFastForward={() => setTransportState('ff')}
+            onRecord={() => setTransportState('record')}
+            onPitchChange={setPitchMultiplier}
+          />
         </div>
       </div>
 
-      {/* Transport bar */}
-      <StuderTransportBar
-        activeTrack={activeTrack}
-        transportState={transportState}
-        pitchMultiplier={pitchMultiplier}
-        onPlay={() => setTransportState('play')}
-        onStop={() => setTransportState('stop')}
-        onRewind={() => setTransportState('rewind')}
-        onFastForward={() => setTransportState('ff')}
-        onRecord={() => setTransportState('record')}
-        onPitchChange={setPitchMultiplier}
-      />
+      {/* Void system */}
+      {!readOnly && <VoidStreakOverlay {...voidProps} />}
     </motion.div>
   );
 }

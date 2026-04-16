@@ -3,13 +3,21 @@ import {
   ENTRY_CODE,
   BLACK_STAR_CODE,
   AMETHYST_CODE,
+  MARS_CODE,
+  LISTENER_CODE,
   SOLAR_FLARE_DURATION_MS,
+  SESSION_KEY,
+  SESSION_TTL_MS,
+  GATE_LOCK_KEY,
+  GATE_MAX_ATTEMPTS,
+  GATE_LOCKOUT_MS,
+  MEMBERS_KEY,
 } from '../config';
+import RequestAccessModal from './RequestAccessModal';
 import SolarFlare from './SolarFlare';
 import ArchitectFlare from './ArchitectFlare';
 import AmethystFlare from './AmethystFlare';
 import DPWallpaper from './DPWallpaper';
-import BinaryFlyby from '../three/BinaryFlyby';
 import WarpDrive from '../three/WarpDrive';
 
 // Six vault planets fly outward as the binary cores claim the center.
@@ -25,59 +33,154 @@ const SLINGSHOT_PLANETS = [
   { id: 'px09',     label: 'PX-09',    color: '#555',    tx: -W * 0.42, ty:  H * 0.32 },
 ];
 
+// ── Gate lock helpers ────────────────────────────────────────────────────
+function readLock() {
+  try { return JSON.parse(localStorage.getItem(GATE_LOCK_KEY)) || { count: 0, lockedUntil: 0 }; }
+  catch (_) { return { count: 0, lockedUntil: 0 }; }
+}
+function writeLock(lock) {
+  try { localStorage.setItem(GATE_LOCK_KEY, JSON.stringify(lock)); } catch (_) {}
+}
+function clearLock() {
+  try { localStorage.removeItem(GATE_LOCK_KEY); } catch (_) {}
+}
+// Write enriched session — { owner, planet, tier, expires }
+function writeSession(owner, planet = null, tier = 'LISTENER') {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ owner, planet, tier, expires: Date.now() + SESSION_TTL_MS }));
+  } catch (_) {}
+}
+// Load dynamic member registry for code lookup at the gate
+function loadMembersFromStorage() {
+  try { return JSON.parse(localStorage.getItem(MEMBERS_KEY)) || []; } catch (_) { return []; }
+}
+
 // onIgnite(owner) — 'D' routes to Sun console, 'L' routes to Black Star console
 function EntrySequence({ onIgnite }) {
   const [input, setInput]                   = useState('');
   const [showFlare, setShowFlare]           = useState(false);
   const [showArchFlare, setShowArchFlare]   = useState(false);
   const [showAmethystFlare, setShowAmethystFlare] = useState(false);
-  const [showFlyby, setShowFlyby]           = useState(false);
   const [owner, setOwner]                   = useState(null);
+  const [shakeActive, setShakeActive]           = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const [requestModal, setRequestModal] = useState(null); // null | 'listen' | 'collaborate'
   const inputRef = useRef(null);
 
+  // Lockout countdown ticker
+  useEffect(() => {
+    if (lockoutRemaining <= 0) return;
+    const id = setInterval(() => {
+      setLockoutRemaining(prev => {
+        if (prev <= 1000) { clearInterval(id); return 0; }
+        return prev - 1000;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [lockoutRemaining]);
+
   const triggerSunEntry = () => {
-    // D's console — Solar Flare white-out → 3D binary flyby → ignition
+    // D — Solar Flare pulse at gate, then hand off to AstralFlyby in App
     setOwner('D');
     setShowFlare(true);
     setTimeout(() => {
       setShowFlare(false);
-      setShowFlyby(true);
-      // onIgnite('D') is called by BinaryFlyby's onComplete
+      onIgnite('D');
     }, SOLAR_FLARE_DURATION_MS);
   };
 
   const triggerArchitectEntry = () => {
-    // L's console — Architect Flare darkness → implosion → Black Star console
+    // L — Architect darkness flood at gate, then hand off to AstralFlyby in App
     setOwner('L');
     setShowArchFlare(true);
-    setTimeout(() => {
-      onIgnite('L');
-    }, SOLAR_FLARE_DURATION_MS + 200);
+    setTimeout(() => onIgnite('L'), 800);
   };
 
   const triggerAmethystEntry = () => {
-    // Angi's vault — crystal bloom → direct Amethyst vault
     setOwner('ANGI');
     setShowAmethystFlare(true);
-    // AmethystFlare duration matches its animation (0.7s) + buffer
+    setTimeout(() => onIgnite('ANGI'), 900);
+  };
+
+  const triggerMarsEntry = () => {
+    setOwner('MARS');
+    setShowFlare(true);
     setTimeout(() => {
-      onIgnite('ANGI');
-    }, 900);
+      setShowFlare(false);
+      onIgnite('MARS');
+    }, SOLAR_FLARE_DURATION_MS);
+  };
+
+  const triggerListenerEntry = () => {
+    // Tier G — generic listener
+    setOwner('LISTENER');
+    setTimeout(() => onIgnite('LISTENER'), 600);
   };
 
   const triggerIgnition = (code) => {
-    console.log('🔐 Code entered:', code, 'Expected:', ENTRY_CODE, BLACK_STAR_CODE, AMETHYST_CODE);
+    // Lockout check
+    const lock = readLock();
+    if (lock.lockedUntil > Date.now()) {
+      setInput('');
+      setLockoutRemaining(lock.lockedUntil - Date.now());
+      return;
+    }
+
     if (code === ENTRY_CODE) {
-      console.log('✓ SUN ACCESS GRANTED');
+      clearLock();
+      writeSession('D', null, 'A');
       triggerSunEntry();
     } else if (code === BLACK_STAR_CODE) {
-      console.log('✓ ARCHITECT ACCESS GRANTED');
+      clearLock();
+      writeSession('L', null, 'A');
       triggerArchitectEntry();
     } else if (code === AMETHYST_CODE) {
-      console.log('✓ AMETHYST ACCESS GRANTED');
+      clearLock();
+      writeSession('ANGI', 'amethyst', 'B');
       triggerAmethystEntry();
+    } else if (code === MARS_CODE) {
+      clearLock();
+      writeSession('MARS', 'mars', 'B');
+      triggerMarsEntry();
+    } else if (code === LISTENER_CODE) {
+      clearLock();
+      writeSession('LISTENER', null, 'G');
+      triggerListenerEntry();
     } else {
-      console.log('✗ INVALID CODE');
+      // Dynamic member lookup — check registry before failing
+      const member = loadMembersFromStorage().find(m => m.code === code);
+      if (member) {
+        clearLock();
+        writeSession(member.name, member.planet || null, member.tier || 'B');
+        if (member.tier === 'C') {
+          // Moon artist — brief flare then astral flyby to Saturn Atrium
+          setOwner(member.name);
+          setShowFlare(true);
+          setTimeout(() => { setShowFlare(false); onIgnite(member.name); }, SOLAR_FLARE_DURATION_MS);
+        } else if (member.planet === 'amethyst') {
+          setOwner('ANGI');
+          setShowAmethystFlare(true);
+          setTimeout(() => onIgnite('ANGI'), 900);
+        } else if (member.planet === 'mars') {
+          setOwner('MARS');
+          setShowFlare(true);
+          setTimeout(() => { setShowFlare(false); onIgnite('MARS'); }, SOLAR_FLARE_DURATION_MS);
+        } else {
+          // B-tier member with or without planet → astral flyby
+          setOwner('member');
+          setTimeout(() => onIgnite('member'), 600);
+        }
+        return;
+      }
+      // Wrong code
+      const newCount = lock.count + 1;
+      const newLock = newCount >= GATE_MAX_ATTEMPTS
+        ? { count: 0, lockedUntil: Date.now() + GATE_LOCKOUT_MS }
+        : { count: newCount, lockedUntil: 0 };
+      writeLock(newLock);
+      if (newLock.lockedUntil) setLockoutRemaining(GATE_LOCKOUT_MS);
+      setShakeActive(true);
+      setTimeout(() => setShakeActive(false), 450);
       setInput('');
     }
   };
@@ -114,7 +217,7 @@ function EntrySequence({ onIgnite }) {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [input]);
 
-  const isActive = showFlare || showFlyby || showArchFlare || showAmethystFlare;
+  const isActive = showFlare || showArchFlare || showAmethystFlare;
 
   return (
     <div className="entry-sequence" onClick={() => inputRef.current?.focus()}>
@@ -151,7 +254,9 @@ function EntrySequence({ onIgnite }) {
 
       {/* Phase 1 — Singularity input */}
       {!isActive && (
-        <div className="entry-cluster">
+        <div className={`entry-cluster ${shakeActive ? 'entry-shake' : ''}`}>
+          <div className="entry-top-rail" aria-hidden="true" />
+
           {/* Amber singularity dot — gravitational anchor */}
           <div className="singularity-point" />
 
@@ -166,15 +271,49 @@ function EntrySequence({ onIgnite }) {
             ))}
           </div>
 
-          {/* Subtle hint */}
-          <div className="entry-hint">ENTER ACCESS CODE</div>
+          {/* Lockout display or hint */}
+          {lockoutRemaining > 0 ? (
+            <div
+              className="entry-hint entry-locked"
+              role="timer"
+              aria-live="polite"
+              aria-label={`Access locked for ${Math.ceil(lockoutRemaining / 1000)} seconds`}
+            >
+              LOCKED · {Math.ceil(lockoutRemaining / 1000)}s
+            </div>
+          ) : (
+            <div className="entry-hint">ENTER ACCESS CODE</div>
+          )}
+
+          {/* Access request links — below the hint */}
+          <div className="entry-sublinks">
+            <button
+              className="entry-sublink"
+              onClick={() => setRequestModal('listen')}
+              type="button"
+            >
+              REQUEST LISTENER ACCESS
+            </button>
+            <span className="entry-sublink-divider">·</span>
+            <button
+              className="entry-sublink"
+              onClick={() => setRequestModal('collaborate')}
+              type="button"
+            >
+              COLLABORATE WITH THE COLLECTIVE
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Phase 2 — 3D Binary Slingshot (Sun entry only) */}
-      {showFlyby && (
-        <BinaryFlyby onComplete={() => onIgnite('D')} />
+      {/* Request Access / Membership Modal */}
+      {requestModal && (
+        <RequestAccessModal
+          mode={requestModal}
+          onClose={() => setRequestModal(null)}
+        />
       )}
+
     </div>
   );
 }

@@ -1,0 +1,1 @@
+window.matchMedia(`(pointer: coarse)`).matches;var e=window.matchMedia(`(hover: hover)`).matches,t=()=>{let e=navigator.hardwareConcurrency||4,t=navigator.deviceMemory||4;return e<=4||t<=2},n=()=>Math.min(window.devicePixelRatio||1,2);export{e as n,t as r,n as t};

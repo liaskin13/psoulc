@@ -1,14 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSystem } from '../state/SystemContext';
 import SpaceWindow from '../three/SpaceWindow';
+import MissionStatusBar from '../components/MissionStatusBar';
+import TelemetryHUD from '../components/TelemetryHUD';
+import PlanetReadout from '../components/PlanetReadout';
 
 function Viewscreen({ activeNode, activeMoon, isBroadcasting, showWelcome, onPlanetClick }) {
-  const { isProtected } = useSystem();
+  const { isProtected, architectArchive, sessionMeta } = useSystem();
+  const [hoveredPlanetId, setHoveredPlanetId] = useState(null);
+  const activePlanetId = typeof activeNode === 'string' ? activeNode : activeNode?.id;
+  const readoutPlanetId = hoveredPlanetId || activePlanetId;
 
   return (
     <div className={`viewscreen ${isProtected ? 'protected' : 'create'}`} style={{ position: 'relative', overflow: 'hidden' }}>
+      <MissionStatusBar archivedCount={architectArchive.length} activeVaults={6} systemNominal={!isProtected} />
+
       {/* ─── 3D Space Window — live solar system through the cockpit glass ─── */}
-      <SpaceWindow onPlanetClick={onPlanetClick} />
+      <SpaceWindow
+        onPlanetClick={onPlanetClick}
+        onPlanetHover={setHoveredPlanetId}
+        activePlanetId={activePlanetId}
+      />
+
+      <TelemetryHUD hoveredPlanetId={hoveredPlanetId} activePlanetId={activePlanetId} />
+      <PlanetReadout
+        planetId={readoutPlanetId}
+        sessionMeta={sessionMeta}
+        onApproach={onPlanetClick}
+      />
 
       <div className="viewport-border" />
 

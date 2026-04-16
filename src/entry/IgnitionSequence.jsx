@@ -79,9 +79,6 @@ function IgnitionSequence({ onComplete }) {
       {/* Stage 3 — Solar Plunge: sun expanding to fill the screen */}
       <div className="solar-plunge" />
 
-      {/* Stage 4 — dp logo materialises through the heat */}
-      <div className="dp-logo">dp</div>
-
       {/* Warp streaks (background layer) */}
       <div className="warp-streaks" />
     </div>

@@ -1,34 +1,60 @@
-import React, { useState } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import SaturnMoon from '../saturn/SaturnMoon';
 import { LONG_PRESS_DURATION_MS } from '../config';
 
 function EmpireNode({ node, onSelect, onLongPress, isActive, saturnMoons, onMoonSync }) {
-  const [pressTimer, setPressTimer] = useState(null);
+  const pressTimerRef = useRef(null);
+  const longPressTriggeredRef = useRef(false);
 
-  const handleMouseDown = () => {
-    const timer = setTimeout(() => {
+  const cancelPress = useCallback(() => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  }, []);
+
+  const startPress = useCallback(() => {
+    cancelPress();
+    longPressTriggeredRef.current = false;
+    pressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true;
       onLongPress(node);
     }, LONG_PRESS_DURATION_MS);
-    setPressTimer(timer);
-  };
+  }, [cancelPress, node, onLongPress]);
 
-  const handleMouseUp = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      setPressTimer(null);
+  const finishPress = useCallback(() => {
+    const longPressTriggered = longPressTriggeredRef.current;
+    cancelPress();
+    if (!longPressTriggered) {
       onSelect(node);
     }
-  };
+    longPressTriggeredRef.current = false;
+  }, [cancelPress, node, onSelect]);
+
+  useEffect(() => {
+    return () => {
+      cancelPress();
+    };
+  }, [cancelPress]);
 
   return (
     <div
       className={`empire-node ${node.type} ${isActive ? 'active' : ''}`}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => {
-        if (pressTimer) {
-          clearTimeout(pressTimer);
-          setPressTimer(null);
+      role="button"
+      tabIndex={0}
+      aria-pressed={isActive}
+      aria-label={`${node.label} node. Owner ${node.owner}. Status ${node.status}.`}
+      onMouseDown={startPress}
+      onMouseUp={finishPress}
+      onMouseLeave={cancelPress}
+      onTouchStart={startPress}
+      onTouchEnd={finishPress}
+      onTouchCancel={cancelPress}
+      onBlur={cancelPress}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect(node);
         }
       }}
     >

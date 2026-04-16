@@ -12,8 +12,8 @@ export const AMETHYST_BOWLS = [
 ];
 
 export const AMETHYST_SESSIONS = [
-  { id: 'as-01', label: 'Morning Alignment',  sublabel: '21:00', frequency: 528, date: '2025.01' },
-  { id: 'as-02', label: 'Void Clearing',       sublabel: '33:00', frequency: 432, date: '2025.03' },
-  { id: 'as-03', label: 'Sovereign Resonance', sublabel: '44:00', frequency: 741, date: '2025.06' },
-  { id: 'as-04', label: 'Crystal Activation',  sublabel: '28:00', frequency: 528, date: '2025.09' },
+  { id: 'as-01', label: 'Morning Alignment',  sublabel: '21:00', frequency: 528, date: '2025.01', createdBy: 'Angi' },
+  { id: 'as-02', label: 'Void Clearing',       sublabel: '33:00', frequency: 432, date: '2025.03', createdBy: 'Angi' },
+  { id: 'as-03', label: 'Sovereign Resonance', sublabel: '44:00', frequency: 741, date: '2025.06', createdBy: 'Angi' },
+  { id: 'as-04', label: 'Crystal Activation',  sublabel: '28:00', frequency: 528, date: '2025.09', createdBy: 'Angi' },
 ];

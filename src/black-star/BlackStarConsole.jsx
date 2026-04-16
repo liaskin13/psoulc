@@ -76,6 +76,19 @@ function ArchitectViewscreen() {
 function BlackStarConsole({ onExit }) {
   const { architectArchive, restoreItem, voidedItems } = useSystem();
   const [selectedItem, setSelectedItem] = useState(null);
+  const [showPowerDownConfirm, setShowPowerDownConfirm] = useState(false);
+
+  const handlePowerDown = () => {
+    setShowPowerDownConfirm(true);
+  };
+
+  const confirmPowerDown = () => {
+    onExit();
+  };
+
+  const cancelPowerDown = () => {
+    setShowPowerDownConfirm(false);
+  };
 
   return (
     <motion.div
@@ -144,11 +157,37 @@ function BlackStarConsole({ onExit }) {
             <span className="arch-count-label">ACTIVE HOLD</span>
           </div>
 
-          <button className="arch-exit-btn" onClick={onExit}>
-            EXIT BLACK STAR
+          <button className="arch-exit-btn" onClick={handlePowerDown}>
+            POWER DOWN
           </button>
         </div>
       </div>
+
+      {/* Power-down confirmation modal */}
+      <AnimatePresence>
+        {showPowerDownConfirm && (
+          <motion.div
+            className="black-star-confirm-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="confirm-dialog">
+              <div className="confirm-title">POWER DOWN BLACK STAR?</div>
+              <div className="confirm-message">Return to New Silence login.</div>
+              <div className="confirm-buttons">
+                <button className="confirm-btn confirm-yes" onClick={confirmPowerDown}>
+                  CONFIRM
+                </button>
+                <button className="confirm-btn confirm-no" onClick={cancelPowerDown}>
+                  CANCEL
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -14,11 +14,11 @@
   --aged-stone: #8B7355;           /* Institutional neutral */
 
   /* ── TYPOGRAPHY ──────────────────────────────── */
-  --font-display: 'Cormorant Garant', 'Crimson Text', serif;   /* vault titles, planet names */
-  --font-primary: 'Cormorant Garant', serif;                   /* headers */
+  --font-display: 'Comfortaa', sans-serif;                     /* vault titles, planet names */
+  --font-primary: 'Comfortaa', sans-serif;                     /* headers */
   --font-ui: 'Comfortaa', sans-serif;                          /* small UI labels, keypads */
-  --font-mono: 'Space Mono', 'SF Mono', 'Monaco', monospace;  /* BPM, Hz, data readouts */
-  --font-headers: 'Cormorant Garant', 'Crimson Text', serif;   /* legacy alias */
+  --font-mono: 'Space Mono', 'SF Mono', 'Monaco', monospace;  /* BPM, Hz, data readouts — numbers only */
+  --font-headers: 'Comfortaa', sans-serif;                     /* all headers — no serif anywhere */
 
   /* Font Weights */
   --weight-normal: 400;

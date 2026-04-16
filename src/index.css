@@ -43,7 +43,7 @@ body::after {
     repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px),
     repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.02) 2px, rgba(0, 0, 0, 0.02) 4px);
   mix-blend-mode: overlay;
-  backdrop-filter: blur(0.5px);
+  /* backdrop-filter removed — was triggering full-viewport GPU repaint on every frame */
 }
 
 /* ── TYPOGRAPHY HIERARCHY ──────────────────────────── */
@@ -64,7 +64,7 @@ h1, h2, h3,
 /* Entry Portal */
 .entry {
   background-color: var(--midnight-vault);
-  height: 100vh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -129,7 +129,7 @@ h1, h2, h3,
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100svh;
   background-color: #ffffff;
   z-index: 1000;
   animation: flash-fade 0.8s ease-out forwards;
@@ -267,7 +267,7 @@ h1, h2, h3,
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100svh;
   background-color: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
@@ -537,7 +537,7 @@ h1, h2, h3,
 
 /* Saturn Vault */
 .saturn-vault {
-  min-height: 100vh;
+  min-height: 100svh;
   background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
   padding: var(--space-xl);
   position: relative;
@@ -637,7 +637,7 @@ h1, h2, h3,
 
 /* ─── Mercury — Live Stream Pipeline ────────────────────────── */
 .mercury-stream {
-  min-height: 100vh;
+  min-height: 100svh;
   background: linear-gradient(135deg, #0a0a0a, #0a0f18);
   padding: var(--space-xl);
   font-family: var(--font-mono);
@@ -738,7 +738,7 @@ h1, h2, h3,
 
 /* ─── Venus — Deep Mix Archive ───────────────────────────────── */
 .venus-archive {
-  min-height: 100vh;
+  min-height: 100svh;
   background: linear-gradient(135deg, #0d0a0a, #0a0a0a);
   padding: var(--space-xl);
   font-family: var(--font-mono);
@@ -819,7 +819,7 @@ h1, h2, h3,
 
 /* ─── Earth — Secure Document Safe ──────────────────────────── */
 .earth-safe {
-  min-height: 100vh;
+  min-height: 100svh;
   background: linear-gradient(135deg, #060a0d, #0a0a0a);
   padding: var(--space-xl);
   font-family: var(--font-mono);
@@ -904,4 +904,148 @@ h1, h2, h3,
   color: #2a2a2a;
   font-size: 0.75rem;
   text-align: right;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACCESSIBILITY FOUNDATION
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Skip Navigation ─────────────────────────────────────────── */
+.skip-nav {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 1001;
+  padding: 0.5rem 1.25rem;
+  background: var(--amber-phosphor);
+  color: var(--void-black);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: top 0.1s;
+}
+.skip-nav:focus {
+  top: 1rem;
+}
+
+/* ── Global Focus Visibility ─────────────────────────────────── */
+/* Restores keyboard navigation without overriding custom input focus styles */
+:focus-visible {
+  outline: 2px solid var(--amber-phosphor);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Architect console: cyan focus ring */
+.arch-console :focus-visible,
+.architect-console :focus-visible {
+  outline-color: var(--arch-accent);
+}
+
+/* ── Windows High Contrast / Forced Colors ───────────────────── */
+@media (forced-colors: active) {
+  .spine          { border: 2px solid ButtonText; }
+  .digit-cell     { border: 2px solid Highlight; }
+  .vault-cmd,
+  .god-btn        { border: 1px solid ButtonText; }
+  :focus-visible  { outline: 3px solid Highlight; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REDUCED MOTION — WCAG 2.3.3 (prefers-reduced-motion: reduce)
+   ═══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  /* Kill all ambient CSS animations */
+  *, *::before, *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1      !important;
+    transition-duration:       0.01ms !important;
+    scroll-behavior:           auto   !important;
+  }
+
+  /* Re-allow structural transitions that aid comprehension */
+  .vault-screen,
+  .entry-sequence,
+  .access-modal,
+  .inbox-panel,
+  .members-panel,
+  .comment-panel {
+    transition-duration: 150ms !important;
+  }
+
+  /* Static fallbacks for ambient elements */
+  .starfield-far,
+  .starfield-mid,
+  .starfield-near,
+  .arch-starfield-far,
+  .arch-starfield-mid,
+  .arch-starfield-near { opacity: 0.04 !important; animation: none !important; }
+
+  .corona-ring     { animation: none !important; opacity: 0.35 !important; }
+  .singularity-dot { animation: none !important;
+                     box-shadow: 0 0 8px var(--amber-phosphor) !important; }
+  .resonance-ring  { animation: none !important; }
+  .orbit-path      { animation: none !important; }
+  .grain-cycle,
+  body::before     { animation: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE GRID OVERRIDES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Venus mix-entry — collapse fixed 5-column grid at mobile */
+@media (max-width: 767px) {
+  .mix-entry {
+    grid-template-columns: 1fr 80px;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+  }
+  .mix-duration,
+  .mix-frequency,
+  .mix-date { display: none; }
+  .mix-index { font-size: 0.65rem; }
+}
+
+/* Earth doc-entry — collapse at narrow phone */
+@media (max-width: 479px) {
+  .doc-entry {
+    grid-template-columns: 1fr 64px;
+    gap: var(--space-sm);
+  }
+  .doc-date,
+  .doc-year { display: none; }
+}
+
+/* ── Safe-area: keep entry content clear of notch ── */
+.entry-sequence {
+  padding-top: var(--safe-top);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OFFLINE STATUS BANNER
+   ═══════════════════════════════════════════════════════════════ */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 951;
+  padding: var(--space-xs) var(--space-md);
+  padding-top: calc(var(--space-xs) + var(--safe-top));
+  background: rgba(5, 5, 5, 0.92);
+  border-bottom: 1px solid rgba(255, 191, 0, 0.25);
+  color: var(--amber-phosphor);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
 }

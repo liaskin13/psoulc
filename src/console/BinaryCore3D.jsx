@@ -282,6 +282,8 @@ function BinarySystem({ onSelect, isProtected }) {
 // ── COMPONENT WRAPPER ──────────────────────────────────────────────────────
 function BinaryCore3D({ onSelect }) {
   const { isProtected } = useSystem();
+  const handleSelectSun = () => onSelect(SUN_NODE);
+  const handleSelectBlackStar = () => onSelect(BS_NODE);
 
   return (
     <div className="binary-core-3d">
@@ -309,6 +311,25 @@ function BinaryCore3D({ onSelect }) {
       >
         <BinarySystem onSelect={onSelect} isProtected={isProtected} />
       </Canvas>
+
+      <div className="binary-core-controls" role="group" aria-label="Binary core quick select">
+        <button
+          type="button"
+          className="binary-core-control sun"
+          onClick={handleSelectSun}
+          aria-label="Select Sun core"
+        >
+          SUN
+        </button>
+        <button
+          type="button"
+          className="binary-core-control star"
+          onClick={handleSelectBlackStar}
+          aria-label="Select Black Star core"
+        >
+          BLACK STAR
+        </button>
+      </div>
 
       {/* Labels — rendered in DOM over the canvas */}
       <div className="binary-label-sun">SUN</div>
