@@ -1,117 +1,131 @@
+# CLAUDE.md — Pleasant Soul Collective
+
+## Mission & Purpose
+
+We are building a visually stunning, cinematic music streaming and sharing
+platform where the independent artist is the center of the universe —
+not an afterthought.
+
+Skill and authenticity reign supreme here. This is not a platform optimized
+for engagement metrics or algorithmic discovery. It is a space built
+deliberately around one belief: art sustains the world and shapes our
+collective destiny.
+
+Artists on this platform hold sovereign control over their work — who
+accesses it, when, where, how, and on what terms. Godlike control is not
+a feature. It is the foundation.
+
+### The artist benefit check
+
+Before every task, ask: does this serve the creator?
+If the answer is unclear, stop and reframe until it is.
+
+---
+
 ## Workflow Orchestration
-### 1. Plan Node Default
-	⁃	﻿﻿Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
-	⁃	﻿﻿If something goes sideways, STOP and re-plan immediately - don't keep pushing
-	⁃	﻿﻿Use plan mode for verification steps, not just building
-	⁃	﻿﻿Write detailed specs upfront to reduce ambiguity
+
+### 1. Plan First (Default)
+
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing
+- Use plan mode for verification steps, not just building
+- Write detailed specs upfront to reduce ambiguity
+
 ### 2. Subagent Strategy
-	⁃	﻿﻿Use subagents liberally to keep main context window clean
-	⁃	﻿﻿Offload research, exploration, and parallel analysis to subagents
-	⁃	﻿﻿For complex problems, throw more compute at it via subagents
-	⁃	﻿﻿One tack per subagent for focused execution
+
+- Use subagents liberally to keep the main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
+
 ### 3. Self-Improvement Loop
-	⁃	﻿﻿After ANY correction from the user: update "tasks/lessons.md" with the pattern
-	⁃	﻿﻿Write rules for yourself that prevent the same mistake
-	⁃	﻿﻿Ruthlessly iterate on these lessons until mistake rate drops
-	⁃	﻿﻿Review lessons at session start for relevant project
+
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules that prevent the same mistake from recurring
+- Ruthlessly iterate on these lessons until the mistake rate drops
+- Review lessons at session start for relevant context
+
 ### 4. Verification Before Done
-	⁃	﻿﻿Never mark a task complete without proving it works
-	⁃	﻿﻿Diff behavior between main and your changes when relevant
-	⁃	﻿﻿Ask yourself: "Would a staff engineer approve this?"
-	⁃	﻿﻿Run tests, check logs, demonstrate correctness
-	⁃	### 5. Demand Elegance (Balanced)
-	⁃	﻿﻿For non-trivial changes: pause and ask "is there a more elegant way?"
-	⁃	﻿﻿If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
-	⁃	﻿﻿Skip this for simple, obvious fixes - don't over-engineer
-	⁃	﻿﻿Challenge your own work before presenting it
-### 6. Autonomous Bug Fizing
-	⁃	﻿﻿When given a bug report: just fix it. Don't ask for hand-holding
-	⁃	﻿﻿Point at logs, errors, failing tests - then resolve them
-	⁃	﻿﻿Zero context switching required from the user
-	⁃	﻿﻿Go fix failing CI tests without being told how
+
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Run tests, check logs, demonstrate correctness
+
+### 5. Demand Elegance (Balanced)
+
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes — don't over-engineer
+- Challenge your own work before presenting it
+
+### 6. Autonomous Bug Fixing
+
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+- Fix failing CI tests without being told how
+
+---
+
 ## Task Management
-## Core Principles
-	⁃	﻿﻿**Simplicity First**: Make every change as simple as possible. Impact minimal code.
-	⁃	﻿﻿**No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
-	⁃	﻿﻿**Minimat Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
-	1. **Plan First**: Write plan to "tasks/todo.md" with checkable items
-	2. **Verify Plan**: Check in before starting implementation
-	3. **Track Progress**: Mark items complete as you go
-	4. **Explain Changes**: High-level summary at each step
-	5. **Document Results**: Add review section to "tasks/todo.md"
-	6. **Capture Lessons**: Update
-tasks/lessons.md" after corrections
 
-# MASTER DIRECTIVE: SYSTEM RESTORATION
+### Core Principles
 
-## 1. THE DUAL CORES (Binary Authority)
-* **THE SUN:** D's 'God Mode' Console. The active command center for the Collective. (**Access: 0528**).
-* **THE PULL CORD:** A physical, braided 3D pull cord suspended in the Sun Console.
-    * **MECHANIC:** Pulling the cord activates the Black Star to drain the system’s light.
-    * **ACTION:** Drains all color from the PSC system, shifting the entire UI into **High-Contrast Grayscale**.
-    * **ACCESS:** Severes access for Tier B and C. Access is restored only when D reactivates the Sun via the cord.
-* **THE BLACK STAR:** The Architect's (L's) God Mode Plus Console. The silent gravitational anchor and center of the 'Void'. (**Access: 7677**).
+- **Simplicity First** — Make every change as simple as possible. Impact minimal code.
+- **No Laziness** — Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact** — Changes should only touch what's necessary. Avoid introducing bugs.
 
-## 2. THE VAULT PLANETS (PSC System Architecture)
-* **CELESTIAL MODELING:** The system is modeled after the real Solar System but **scaled for Proximity**.
-    * **SCALE:** Planets are increased in size relative to their orbits, and orbital distances are compressed so the entire system is visible from the Bridge windows.
-* **LABELS:**
-    * **SATURN:** Original Music.
-    * **SATURN'S MOONS:** Artist Dedicated Original Music (unique access; no admin rights).
-    * **MERCURY:** Live Sets (pre-recorded) and Live Streaming.
-    * **VENUS:** Soul Pleasant Curated Mixes.
-    * **EARTH:** Sonic Architecture Proposal.
-    * **AMETHYST:** Angi's Crystal Vault (**Access: 4096**).
+### Execution Order
 
-## 3. THE INTERFACE & CONSOLE FOR D (The Bridge)
-* **AESTHETIC:** Bridge of the Enterprise with 70's Soul Vibe / D's actual studio images.
-* **THE RADAR:** Amber Star Chart in the Sun Console showing Vaults as active nodes.
-* **VIEWPORT LOGIC:** What is seen from the console windows must accurately reflect the user's location in the system. As planets orbit in proximity, their transit across the window must be visible and scale-accurate.
-* **THE COMMANDS:** * `< EXPLORE >` (Enter Vault).
-    * `< TUNE >` (Edit records via Nixie Tube sliders).
-    * `< VOID >` (Initiate Black Star transfer).
-##3.1. THE INTERFACE & CONSOLE FOR L (The Bridge)
-**SAME AS D'S CONSOLE BUT WITHOUT THE 70'S SOUL VIBE 
+1. **Plan First** — Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan** — Check in before starting implementation
+3. **Track Progress** — Mark items complete as you go
+4. **Explain Changes** — High-level summary at each step
+5. **Document Results** — Add review section to `tasks/todo.md`
+6. **Capture Lessons** — Update `tasks/lessons.md` after any corrections
 
-## 4. THE GATE
-* **VISUAL:** 'dp' logo wallpaper background with access code input overlay (Comfortaa font).
-* **ACCESS LEVELS:**
-    * **A. L AND D:** God Mode - Total Admin Control.
-    * **B. COLLECTIVE MEMBERS:** Admin of assigned planet, if assigned; access to explore all vaults.
-    * **C. POTENTIAL COLLABORATORS:** Tier B access;Additional access to individual Moons.
+---
 
-## 5. THE ELLIPTICAL PLANE & KINETICS
-* **THE TILT:** Orbital plane set to a 23-degree 3D tilt relative to the camera.
-* **THE PATHS:** Elliptical (oval) orbits following Keplerian physics. Planets accelerate at Perihelion and slow down at Aphelion.
-* **PLANETARY SPEEDS:**
-    * **MERCURY:** High velocity, tight orbit.
-    * **VENUS:** Smooth, rhythmic pace.
-    * **EARTH:** Balanced, steady resonance.
-    * **SATURN:** Slow, massive, and commanding.
-    * **AMETHYST:** Floating, 'wobbling' singing bowl vibration.
-* **VISUAL TRAILS:** Faint, Chakra-colored etched orbits and phase markers.
+## Session Start Checklist
 
-## 6. THE VAULT INTERIOR (12" Vinyl Library)
-* **AESTHETIC:** 3D Library of vinyl record shelves (Wood shelves, wood panelling, thick shag carpet).
-* **READOUT:** Hovering over a record displays **Track Name** and **BPM** in Amber. 
-* **CONTROLS:** Selecting a record reveals options: **PLAY, FFWD, REWIND, STOP**.
-* **SCROLL:** Vertical, kinetic scroll that feels 'heavy' and mechanical.
+1. Read `tasks/lessons.md` — internalize recent corrections
+2. Read `tasks/todo.md` — understand current state and next priorities
+3. Read `tasks/plan.active.md` if it exists — pick up exactly where we left off
+4. Apply the artist benefit check to the first task before touching any code
 
-## 7. KINETIC RECORD PLAYER PHYSICS
-* **ROTATION:** Each record rotates at a speed relative to its BPM metadata.
-* **STROBE EFFECT:** Subtle 'Motion Blur' and a **'70s Shutter' flicker** (stroboscopic look) under Honey Amber lighting.
-* **HOVER:** Triggers a 528Hz Glow and a soft 'Tape Hiss' audio floor.
-* **TRANSPORT:** Brushed Chrome **Studer-style** Transport Bar at the bottom centre.
+---
 
-## 8. THE VOID TRANSFER (Spaghettification)
-* **THE ACTION:** Non-Linear Stretch Transform toward the Black Star.
-* **VECTOR:** Asset elongates and thins until it is a **1px line of light**.
-* **COLOR LOGIC:** The streak inherits the **Chakra Color** of the originating Planet, fading into Absolute Black at the Event Horizon.
-* **SOUND:** Granular pitch-down audio effect as the record stretches.
-* **THE STICK:** Successful capture triggers an **'Inverse Bloom'** (Flash of Darkness) at the Black Star.
-* **LOGIC:** Only the Architect has the 'Restore' toggle.
+## MASTER DIRECTIVE: SYSTEM
 
-## 9. THE ETERNAL REGISTRY (The Black Star)
-* **METADATA:** Permanent record of Origin Planet and Time of Voiding.
-* **GHOST LIGHT:** Hovering over the Black Star in the 2D map displays a multi-colored nebula representing the stored frequencies.
-* **CONFIRMATION:** *"As it is in the Frequency, so let it be in the Stone."*
+> Full canonical spec: `vault/architecture/SYSTEM_DIRECTIVE.md`
+> Design skill (load on-demand for UI/vault/entry/console work): `skills/psc-system/SKILL.md`
+
+---
+
+## gstack
+
+Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
+
+Available gstack skills:
+`/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
+
+## Skill routing
+
+When the user's request matches an available skill, ALWAYS invoke it using the Skill
+tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
+The skill has specialized workflows that produce better results than ad-hoc answers.
+
+Key routing rules:
+- Product ideas, "is this worth building", brainstorming → invoke office-hours
+- Bugs, errors, "why is this broken", 500 errors → invoke investigate
+- Ship, deploy, push, create PR → invoke ship
+- QA, test the site, find bugs → invoke qa
+- Code review, check my diff → invoke review
+- Update docs after shipping → invoke document-release
+- Weekly retro → invoke retro
+- Design system, brand → invoke design-consultation
+- Visual audit, design polish → invoke design-review
+- Architecture review → invoke plan-eng-review
+- Save progress, checkpoint, resume → invoke checkpoint
+- Code quality, health check → invoke health
