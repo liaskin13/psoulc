@@ -109,6 +109,7 @@ function MoonVault({ moonId, onBack, onExitSystem, onVoid, readOnly = false }) {
 
   const canAdmin = canEdit(sessionMeta, moonId);
   const handleComment = (item, body) => addComment(moonId, item.id, item.label, sessionMeta?.owner || 'member', body);
+  const handleVoiceComment = (item, audioData) => addComment(moonId, item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
 
   const handleTuneSave = (updates) => {
     saveTuneOverride(moonId, tuneItem.id, updates);
@@ -178,6 +179,7 @@ function MoonVault({ moonId, onBack, onExitSystem, onVoid, readOnly = false }) {
               onSelect={selectCell}
               onVoid={readOnly ? undefined : handleShelfVoid}
               onComment={canComment(sessionMeta) ? handleComment : undefined}
+              onVoiceComment={canComment(sessionMeta) ? handleVoiceComment : undefined}
             />
           </div>
 

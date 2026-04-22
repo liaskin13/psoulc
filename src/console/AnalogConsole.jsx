@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
 import GodModePullCord from './GodModePullCord';
 import MasterClock from './MasterClock';
@@ -11,6 +11,77 @@ import InboxPanel from './InboxPanel';
 import MembersPanel from './MembersPanel';
 import CommentPanel from './CommentPanel';
 
+// ── Vault pad bank — left AKAI zone ────────────────────────────────────────
+// Each pad maps to a planet vault. Chakra-lit when active.
+const VAULT_PADS = [
+  { id: 'mercury',  abbr: 'MCY',  label: 'MERCURY',  color: '#8B0000' },
+  { id: 'venus',    abbr: 'VNS',  label: 'VENUS',    color: '#ff7c00' },
+  { id: 'earth',    abbr: 'ETH',  label: 'EARTH',    color: '#00cc44' },
+  { id: 'mars',     abbr: 'MRS',  label: 'MARS',     color: '#c1440e' },
+  { id: 'saturn',   abbr: 'SAT',  label: 'SATURN',   color: '#9b59b6' },
+  { id: 'amethyst', abbr: 'AME',  label: 'AMETHYST', color: '#6600cc' },
+];
+
+// ── LED meter strip — Neve-style visual indicator ────────────────────────────
+function LedStrip({ color = '#ffbf00', segments = 8, level = 0 }) {
+  return (
+    <div className="console-led-strip" aria-hidden="true">
+      {Array.from({ length: segments }, (_, i) => {
+        const lit = i < level;
+        const red = i >= segments - 2;
+        const yellow = i >= segments - 4 && !red;
+        const segColor = lit ? (red ? '#ff2020' : yellow ? '#ffcc00' : color) : 'rgba(40,30,20,0.6)';
+        return (
+          <div
+            key={i}
+            className="console-led-segment"
+            style={{ backgroundColor: segColor, boxShadow: lit ? `0 0 4px ${segColor}80` : 'none' }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Vault pad ────────────────────────────────────────────────────────────────
+function VaultPad({ pad, isActive, onClick }) {
+  return (
+    <motion.button
+      className={`console-pad vault-pad ${isActive ? 'pad-active' : ''}`}
+      style={{
+        '--pad-color': pad.color,
+        '--pad-glow': pad.color + '60',
+      }}
+      onClick={() => onClick(pad)}
+      aria-label={`Open ${pad.label} vault`}
+      aria-pressed={isActive}
+      whileTap={{ scale: 0.92 }}
+    >
+      <span className="pad-abbr">{pad.abbr}</span>
+      {isActive && <span className="pad-active-dot" aria-hidden="true" />}
+    </motion.button>
+  );
+}
+
+// ── Action pad ───────────────────────────────────────────────────────────────
+function ActionPad({ label, color = '#ffbf00', badge, armed, disabled, onClick, ariaLabel }) {
+  return (
+    <motion.button
+      className={`console-pad action-pad ${armed ? 'pad-armed' : ''} ${disabled ? 'pad-disabled' : ''}`}
+      style={{ '--pad-color': color, '--pad-glow': color + '60' }}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel || label}
+      aria-pressed={armed}
+      whileTap={disabled ? undefined : { scale: 0.92 }}
+    >
+      <span className="pad-abbr">{label}</span>
+      {badge > 0 && <span className="pad-badge">{badge}</span>}
+    </motion.button>
+  );
+}
+
+// ── Main console ─────────────────────────────────────────────────────────────
 function AnalogConsole({
   activeNode,
   onNodeSelect,
@@ -24,23 +95,50 @@ function AnalogConsole({
   onMoonSync,
   onPowerDown
 }) {
-  const { isProtected, unreadCount, members, unreadCommentCount } = useSystem();
+  const { isProtected, unreadCount, members, unreadCommentCount, animationsEnabled, setAnimationsEnabled } = useSystem();
   const [showInbox,    setShowInbox]    = useState(false);
   const [showMembers,  setShowMembers]  = useState(false);
   const [showComments, setShowComments] = useState(false);
 
+  const activeVaultId = activeNode?.id;
+
+  const handleVaultPad = (pad) => {
+    onNodeSelect?.({ id: pad.id, label: pad.label });
+  };
+
   return (
     <div className={`analog-console ${isProtected ? 'protected' : 'create'}`}>
 
-      {/* LEFT ZONE — Power / Pull Cord */}
-      <div className="console-left">
-        <span className="console-zone-label">POWER</span>
-        <GodModePullCord onPowerDown={onPowerDown} />
+      {/* ── LEFT ZONE — Vault pad grid ────────────────────────────────────── */}
+      <div className="console-left console-pad-zone">
+        <span className="console-zone-label">VAULTS</span>
+        <LedStrip color="#ffbf00" segments={8} level={activeVaultId ? 4 : 1} />
+        <div className="pad-grid pad-grid-2x3">
+          {VAULT_PADS.map(pad => (
+            <VaultPad
+              key={pad.id}
+              pad={pad}
+              isActive={activeVaultId === pad.id}
+              onClick={handleVaultPad}
+            />
+          ))}
+        </div>
+        {/* Power controls below pads */}
+        <div className="console-power-row">
+          <GodModePullCord onPowerDown={onPowerDown} />
+          <button
+            className="anim-toggle-btn"
+            onClick={() => setAnimationsEnabled(v => !v)}
+            aria-label={`Entry animations ${animationsEnabled ? 'on' : 'off'}`}
+          >
+            {animationsEnabled ? '◉' : '○'}
+          </button>
+        </div>
       </div>
 
       <div className="console-zone-divider" />
 
-      {/* CENTER ZONE — Navigation / Systems */}
+      {/* ── CENTER ZONE — Encoder readout ─────────────────────────────────── */}
       <div className="console-center">
         <span className="console-zone-label">NAVIGATION · SYSTEMS</span>
         <MasterClock />
@@ -55,45 +153,54 @@ function AnalogConsole({
 
       <div className="console-zone-divider" />
 
-      {/* RIGHT ZONE — Comms */}
-      <div className="console-right">
-        <span className="console-zone-label">COMMS</span>
-        <ConduitSlider onBroadcast={onBroadcast} isBroadcasting={isBroadcasting} />
-
-        {/* Asset Intake Slot with panel badges */}
-        <div className="console-intake-wrapper">
-          <AssetIntakeSlot onIntake={onIntake} />
-
-          {/* Inbox badge — D sees approved_L queue */}
-          {unreadCount > 0 && (
-            <button
-              className="inbox-badge-btn"
-              onClick={() => setShowInbox(true)}
-              aria-label={`${unreadCount} submission${unreadCount > 1 ? 's' : ''} awaiting review`}
-            >
-              {unreadCount}
-            </button>
-          )}
-
-          {/* Collective badge — always shows member count */}
-          <button
-            className="inbox-badge-btn members-badge-btn"
+      {/* ── RIGHT ZONE — Action pad grid ──────────────────────────────────── */}
+      <div className="console-right console-pad-zone">
+        <span className="console-zone-label">OPERATIONS</span>
+        <LedStrip color="#00aaff" segments={8} level={isBroadcasting ? 7 : (unreadCount + unreadCommentCount > 0 ? 3 : 1)} />
+        <div className="pad-grid pad-grid-2x4">
+          <ActionPad
+            label="INBOX"
+            color="#c87c2a"
+            badge={unreadCount}
+            onClick={() => setShowInbox(true)}
+            ariaLabel={`Inbox — ${unreadCount} pending`}
+          />
+          <ActionPad
+            label="CREW"
+            color="#6f3f9c"
+            badge={members.length}
             onClick={() => setShowMembers(true)}
-            aria-label={`${members.length} collective member${members.length !== 1 ? 's' : ''}`}
-          >
-            ◎ {members.length}
-          </button>
-
-          {/* Comments badge */}
-          {unreadCommentCount > 0 && (
-            <button
-              className="inbox-badge-btn comment-badge-btn"
-              onClick={() => setShowComments(true)}
-              aria-label={`${unreadCommentCount} new transmission${unreadCommentCount > 1 ? 's' : ''}`}
-            >
-              ◌ {unreadCommentCount}
-            </button>
-          )}
+            ariaLabel={`${members.length} collective members`}
+          />
+          <ActionPad
+            label="TRANS"
+            color="#00aaff"
+            badge={unreadCommentCount}
+            onClick={() => setShowComments(true)}
+            ariaLabel={`Transmissions — ${unreadCommentCount} unread`}
+          />
+          <ActionPad
+            label="INTAKE"
+            color="#00cc44"
+            onClick={onIntake}
+            ariaLabel="Asset intake"
+          />
+          <ActionPad
+            label={isBroadcasting ? '■ CAST' : '▶ CAST'}
+            color="#00aaff"
+            armed={isBroadcasting}
+            onClick={onBroadcast}
+            ariaLabel={isBroadcasting ? 'Stop broadcast' : 'Start broadcast'}
+          />
+          <ActionPad label="POWER" color="#cc2020" onClick={onPowerDown} ariaLabel="Power down" />
+          <ActionPad
+            label={animationsEnabled ? 'ANIM ●' : 'ANIM ○'}
+            color="#ffbf00"
+            armed={animationsEnabled}
+            onClick={() => setAnimationsEnabled(v => !v)}
+            ariaLabel={`Animations ${animationsEnabled ? 'on' : 'off'}`}
+          />
+          <ActionPad label="SPARE" color="#444" disabled ariaLabel="Reserved" />
         </div>
 
         {latentNodes.length > 0 && (

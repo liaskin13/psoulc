@@ -85,6 +85,7 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
     });
 
   const handleComment = (item, body) => addComment('saturn', item.id, item.label, sessionMeta?.owner || 'member', body);
+  const handleVoiceComment = (item, audioData) => addComment('saturn', item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
   const canAdmin = canEdit(sessionMeta, 'saturn');
 
   const handleSelect = item => {
@@ -168,6 +169,7 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
               onSelect={handleSelect}
               onVoid={readOnly ? undefined : handleShelfVoid}
               onComment={canComment(sessionMeta) ? handleComment : undefined}
+              onVoiceComment={canComment(sessionMeta) ? handleVoiceComment : undefined}
             />
           </div>
 

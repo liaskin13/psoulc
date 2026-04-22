@@ -404,20 +404,39 @@
 - [ ] D console redesign is not complete yet (hardware readout + encoder interaction still pending as primary control language)
 
 ### D-Series Plan (From Recovered Plan)
-- [x] D1 — Replace map-centric interaction with hardware readout + encoder navigation (`src/console/ReadoutNavigator.jsx`, `src/console/AnalogConsole.jsx`, `src/App.css`)
-- [x] D2 — Enforce 30/70 layout system-wide (`src/App.css`, `src/saturn/SaturnVault.jsx`, `src/venus/VenusArchive.jsx`, `src/earth/EarthSafe.jsx`, `src/mars/MarsVault.jsx`, `src/mercury/MercuryStream.jsx`, `src/amethyst/AmethystVault.jsx`)
-- [x] D3 — Edit-mode top window behavior (live orbit + cancel void overlay) (`src/hooks/useVaultVoid.js`, `src/components/VaultWindow.jsx`, `src/saturn/SaturnVault.jsx`, `src/venus/VenusArchive.jsx`, `src/earth/EarthSafe.jsx`, `src/mars/MarsVault.jsx`, `src/mercury/MercuryStream.jsx`, `src/amethyst/AmethystVault.jsx`, `src/App.css`)
-- [x] D4 — Functional file-cell wall (navigation + readout sync) (`src/hooks/useVaultFileCells.js`, `src/components/RecordShelf.jsx`, `src/saturn/SaturnVault.jsx`, `src/venus/VenusArchive.jsx`, `src/earth/EarthSafe.jsx`, `src/mars/MarsVault.jsx`, `src/mercury/MercuryStream.jsx`, `src/App.css`)
-- [x] D5 — Full Studer command pack: PAUSE transport, REC voice-note button, admin row (ARM/COMMIT/SEAL/CLEAR) across all 5 shelf vaults (`src/components/StuderTransportBar.jsx`, all vault files, `src/App.css`)
-- [ ] TODO — Amethyst vault needs RecordShelf file-cell wall (currently bowl rings + session rows)
-- [ ] TODO — Saturn moons each need their own vault screen with shelf-based file-cell wall
-- [ ] TODO — REC voice comments: audio blob capture per selected file, stored in comment thread
-- [ ] D6 — Soul-chakra ownership language pass
-- [ ] D6 — Soul-chakra ownership language system-wide
-- [ ] D7 — Collaborator object system activation
+- [x] D1 — Replace map-centric interaction with hardware readout + encoder navigation
+- [x] D2 — Enforce 30/70 layout system-wide across all vaults
+- [x] D3 — Edit-mode top window behavior (live orbit + cancel void overlay)
+- [x] D4 — Functional file-cell wall (navigation + readout sync)
+- [x] D5 — Full Studer command pack: PAUSE, REC, admin row (ARM/COMMIT/SEAL/CLEAR)
+- [x] D6 — Soul-chakra ownership language system-wide (chakra rail + sigil badge per cell)
 
-### Saved Follow-On Requirement
-- [ ] Messaging capability alongside comments (direct messaging, thread view, inbox/outbox, unread indicators, and planet-scoped channels)
+### Completed This Session (April 17, 2026)
+- [x] SolarFlare rebuilt: white strobe (150ms) → honey amber flood (650ms) bridge before AstralFlyby
+- [x] AstralFlyby rebuilt: `t^2.5` velocity curve (ignition feel), star-streak overlay at 60%+, solar corona burst at 85%+, white-out flash → fade to D console
+- [x] SystemContext: `animationsEnabled` boolean added, persisted to `psc_animations_enabled` localStorage
+- [x] App.jsx: flyby login counter (`psc_flyby_count`), auto-skip after 3 logins or if animations disabled
+- [x] AnalogConsole: `◉ ANIM ON / ○ ANIM OFF` toggle in POWER zone
+- [x] Vault exit routing: D→console, L→architect, others→gallery-drift
+- [x] RecordShelf.css: full purge of dead `.spine-*` rules → rebuilt as deep wood cubby wall (dark cell interior, amber radial wall lighting, wood lattice dividers, studio vignette)
+- [x] App.css `.file-cell`: dark recess interior (#0d0804, inset cubby shadows), amber-warm text on dark, chakra glow on active
+- [x] App.css: purged dead `.record-shelf` pine-shelf block + `.shelf-floor` dead code (old design)
+- [x] Build: clean ✓ (1.98s)
+
+### Open for Next Session — Complete Phase 9
+- [ ] **N1** — Visual browser confirm: load dev server, verify cubby wall renders correctly in Saturn/Venus/Earth vaults
+- [ ] **N2** — D7: Collaborator object system (schema + ingestion + grants) — `src/data/collaborators.js` + SystemContext wiring
+- [ ] **N3** — Amethyst vault: replace bowl rings + session rows with file-cell cubby wall (matches all other vaults)
+- [ ] **N4** — Saturn moons: each moon needs its own vault interior screen with file-cell wall
+- [ ] **N5** — Venus upload: ID3 metadata auto-read → pre-fill title/artist/BPM fields in UploadModal on file select
+- [ ] **N6** — REC voice comments: MediaRecorder → audio blob capture per selected cell, stored in comment thread
+- [ ] **N7** — D console layout pass: hardware-inspired redesign (Neve fader rows, AKAI pad grid language, encoder zones) — D's studio reference images locked in decisions log
+- [ ] **N8** — Pull Cord: high-contrast grayscale drain + Tier B/C/D/G severance (currently visual-only, no enforcement)
+- [ ] **N9** — Push to feature branch `phase-9` for safe checkpoint before merging main
+
+### Saved Follow-On (Post-Phase 9)
+- [ ] Messaging: direct messaging, thread view, inbox/outbox, unread indicators, planet-scoped channels
+- [ ] C1–C7: Console Controls Program (command bus + state engine + safety interlocks)
 
 ### Verification
-- [x] `npm run build` currently passes on local tree
+- [x] `npm run build` — clean, 1.98s, zero errors (April 17, 2026)

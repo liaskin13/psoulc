@@ -85,6 +85,7 @@ function VenusArchive({ onBack, onExitSystem, onVoid, readOnly = false }) {
     });
 
   const handleComment = (item, body) => addComment('venus', item.id, item.label, sessionMeta?.owner || 'member', body);
+  const handleVoiceComment = (item, audioData) => addComment('venus', item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
   const canAdmin = canEdit(sessionMeta, 'venus');
 
   const handleSelect = item => {
@@ -168,6 +169,7 @@ function VenusArchive({ onBack, onExitSystem, onVoid, readOnly = false }) {
               onSelect={handleSelect}
               onVoid={readOnly ? undefined : handleShelfVoid}
               onComment={canComment(sessionMeta) ? handleComment : undefined}
+              onVoiceComment={canComment(sessionMeta) ? handleVoiceComment : undefined}
             />
           </div>
 

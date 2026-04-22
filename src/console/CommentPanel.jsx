@@ -66,7 +66,15 @@ function CommentPanel({ onClose, viewer = 'D' }) {
               </div>
               <div className="inbox-card-name">{c.from}</div>
               <div className="comment-track-name">{c.trackName}</div>
-              <div className="comment-body">{c.body}</div>
+              {c.body && <div className="comment-body">{c.body}</div>}
+              {c.audioData && (
+                <audio
+                  controls
+                  src={c.audioData}
+                  className="comment-voice-player"
+                  aria-label={`Voice transmission from ${c.from}`}
+                />
+              )}
             </div>
           ))
         )}

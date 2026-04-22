@@ -1049,3 +1049,13 @@ h1, h2, h3,
   text-transform: uppercase;
   backdrop-filter: blur(4px);
 }
+
+/* ── Voice comment audio player ─────────────────────────────────────────────── */
+.comment-voice-player {
+  width: 100%;
+  margin-top: 6px;
+  height: 28px;
+  border-radius: 4px;
+  accent-color: var(--amber-phosphor, #ffbf00);
+  background: rgba(0, 0, 0, 0.4);
+}

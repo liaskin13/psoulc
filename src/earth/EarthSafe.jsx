@@ -87,6 +87,7 @@ function EarthSafe({ onBack, onExitSystem, onVoid, readOnly = false }) {
     });
 
   const handleComment = (item, body) => addComment('earth', item.id, item.label, sessionMeta?.owner || 'member', body);
+  const handleVoiceComment = (item, audioData) => addComment('earth', item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
   const canAdmin = canEdit(sessionMeta, 'earth');
 
   const handleSelect = item => {
@@ -170,6 +171,7 @@ function EarthSafe({ onBack, onExitSystem, onVoid, readOnly = false }) {
               onSelect={handleSelect}
               onVoid={readOnly ? undefined : handleShelfVoid}
               onComment={canComment(sessionMeta) ? handleComment : undefined}
+              onVoiceComment={canComment(sessionMeta) ? handleVoiceComment : undefined}
             />
           </div>
 

@@ -1,21 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { startTapeHiss, stopTapeHiss, play528HzGlow } from '../audio/vaultAudio';
 import { hasHover } from '../utils/device';
+import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 
-/**
- * RecordShelf — Sovereign Library display.
- *
- * Props:
- *   items      — array of { id, label, sublabel?, highlight, base, shadow, glow }
- *   activeId   — currently selected item id
- *   onSelect   — (item) => void
- *   onVoid     — (item, pos) => void  — if undefined, VOID handle hidden
- *   onComment  — (item, body) => void — if undefined, COMMENT handle hidden
- */
-function RecordShelf({ items, activeId, onSelect, onVoid, onComment }) {
+function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComment, capacity = 20 }) {
   const [commentingId, setCommentingId] = useState(null);
   const [commentText,  setCommentText]  = useState('');
+  const [recordingId,  setRecordingId]  = useState(null);
+
+  const handleVoiceCommit = useCallback((audioDataUrl) => {
+    if (!recordingId) return;
+    const item = items.find(i => i.id === recordingId);
+    if (item) onVoiceComment?.(item, audioDataUrl);
+    setRecordingId(null);
+  }, [recordingId, items, onVoiceComment]);
+
+  const { isRecording, startRecording, stopRecording, cancelRecording, error: recError } =
+    useVoiceRecorder({ onCommit: handleVoiceCommit });
 
   const handleCommentSubmit = (e, item) => {
     e.preventDefault();
@@ -25,13 +26,16 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment }) {
     setCommentingId(null);
   };
 
+  // Pad to `capacity` with empty placeholder slots
+  const emptyCount = Math.max(0, capacity - items.length);
+
   return (
     <div className="record-shelf" role="list" aria-label="Track archive">
       {items.map(item => (
         <motion.div
           key={item.id}
           role="listitem"
-          className={`file-cell ${activeId === item.id ? 'file-cell-active' : ''} ${item.playState ? `file-cell-${item.playState}` : ''}`}
+          className={`file-cell file-cell-occupied ${activeId === item.id ? 'file-cell-active' : ''} ${item.playState ? `file-cell-${item.playState}` : ''}`}
           style={{
             '--spine-highlight': item.highlight,
             '--spine-base':      item.base,
@@ -43,7 +47,7 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment }) {
           aria-label={`${item.label}${item.sublabel ? ` — ${item.sublabel}` : ''}`}
           aria-pressed={activeId === item.id}
           animate={activeId === item.id ? { y: -4 } : { y: 0 }}
-          whileHover={hasHover ? { y: -6, filter: 'brightness(1.2)' } : undefined}
+          whileHover={hasHover ? { y: -3, filter: 'brightness(1.15)' } : undefined}
           transition={{ duration: 0.16, ease: [0.2, 0, 0.3, 1] }}
           onClick={() => onSelect(item)}
           onKeyDown={e => {
@@ -52,31 +56,25 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment }) {
               onSelect(item);
             }
           }}
-          onHoverStart={() => { if (hasHover) { startTapeHiss(); play528HzGlow(); } }}
-          onHoverEnd={() => { if (hasHover) stopTapeHiss(); }}
         >
-          {/* Soul-chakra ownership rail — left edge, colored by authorship */}
+          <div className="file-cell-specular" aria-hidden="true" />
           <div className="file-cell-chakra-rail" aria-hidden="true" />
 
-          <div className="file-cell-specular" aria-hidden="true" />
+          {/* Centered 'dp' mark — occupied indicator (C) */}
+          <div className="file-cell-dp-mark" aria-hidden="true">dp</div>
 
-          {/* Member sigil — initials badge, visible in top-right corner */}
-          {item.createdBy && (
-            <div className="file-cell-sigil" title={item.createdBy} aria-label={`Created by ${item.createdBy}`}>
-              {item.createdBy.slice(0, 2).toUpperCase()}
+          {/* Hover-reveal content */}
+          <div className="file-cell-content">
+            <div className="file-cell-header">
+              <div className="file-cell-label">{item.label}</div>
+              <div className={`file-cell-state file-cell-state-${item.playState || 'idle'}`}>
+                {(item.playState || 'idle').toUpperCase()}
+              </div>
             </div>
-          )}
-
-          <div className="file-cell-header">
-            <div className="file-cell-label">{item.label}</div>
-            <div className={`file-cell-state file-cell-state-${item.playState || 'idle'}`}>
-              {(item.playState || 'idle').toUpperCase()}
-            </div>
+            {item.sublabel && <div className="file-cell-meta">{item.sublabel}</div>}
           </div>
 
-          {item.sublabel && <div className="file-cell-meta">{item.sublabel}</div>}
-
-          {/* VOID handle — top edge dot, visible on hover */}
+          {/* VOID handle */}
           {onVoid && (
             <motion.div
               role="button"
@@ -103,7 +101,7 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment }) {
             />
           )}
 
-          {/* COMMENT handle — bottom edge dot, visible on hover */}
+          {/* COMMENT handle */}
           {onComment && (
             <motion.div
               role="button"
@@ -127,10 +125,69 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment }) {
               whileHover={{ scale: 1.4, backgroundColor: 'rgba(0,180,216,0.8)' }}
             />
           )}
+
+          {/* VOICE handle — arms MediaRecorder for this cell */}
+          {onVoiceComment && (
+            <motion.div
+              role="button"
+              tabIndex={0}
+              className={`file-cell-voice-handle ${recordingId === item.id && isRecording ? 'recording' : ''}`}
+              aria-label={recordingId === item.id && isRecording ? `Stop voice transmission for ${item.label}` : `Record voice transmission for ${item.label}`}
+              aria-pressed={recordingId === item.id && isRecording}
+              onClick={e => {
+                e.stopPropagation();
+                if (recordingId === item.id && isRecording) {
+                  stopRecording();
+                } else {
+                  setRecordingId(item.id);
+                  startRecording();
+                }
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (recordingId === item.id && isRecording) stopRecording();
+                  else { setRecordingId(item.id); startRecording(); }
+                }
+              }}
+              whileHover={{ scale: 1.4 }}
+              animate={recordingId === item.id && isRecording
+                ? { backgroundColor: ['rgba(220,0,0,0.7)', 'rgba(220,0,0,0.4)', 'rgba(220,0,0,0.7)'], scale: [1, 1.2, 1] }
+                : { backgroundColor: 'rgba(180,60,0,0.5)' }
+              }
+              transition={recordingId === item.id && isRecording
+                ? { repeat: Infinity, duration: 0.9 }
+                : { duration: 0.16 }
+              }
+            >
+              {recordingId === item.id && isRecording ? '■' : '⏺'}
+            </motion.div>
+          )}
         </motion.div>
       ))}
 
-      {/* Inline comment form — appears when a spine is in commenting mode */}
+      {/* Empty slots — dark recesses, no glow, no sigil */}
+      {Array.from({ length: emptyCount }, (_, i) => (
+        <div
+          key={`empty-${i}`}
+          role="listitem"
+          aria-label="Empty slot"
+          className="file-cell file-cell-empty"
+        >
+          <div className="file-cell-specular" aria-hidden="true" />
+        </div>
+      ))}
+
+      {/* Recording error banner */}
+      {recError && (
+        <div className="spine-comment-form" role="alert" style={{ color: 'rgba(255,80,80,0.9)', fontSize: '0.65rem', letterSpacing: '0.1em', padding: '8px 10px' }}>
+          ⚠ {recError.toUpperCase()}
+          <button className="spine-comment-cancel" style={{ marginLeft: 12 }} onClick={cancelRecording}>DISMISS</button>
+        </div>
+      )}
+
+      {/* Inline comment form */}
       {commentingId && onComment && (() => {
         const item = items.find(i => i.id === commentingId);
         if (!item) return null;
@@ -179,7 +236,6 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment }) {
         );
       })()}
 
-      {/* Walnut shelf floor */}
       <div className="shelf-floor" aria-hidden="true" />
     </div>
   );

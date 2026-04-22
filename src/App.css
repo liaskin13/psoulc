@@ -585,19 +585,39 @@
   display: block;
 }
 
-/* ── LEFT ZONE — POWER (120px) ── */
+/* ── LEFT ZONE — VAULTS (200px) ── */
 .console-left {
-  width: 120px;
+  width: 200px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
-  padding: 14px 10px 10px;
-  position: relative; /* contains GodModePullCord absolute positioning */
-  /* overflow: visible — power-down-confirm (min-width:220px) must not be clipped */
+  padding: 10px 12px 8px;
+  position: relative;
   overflow: visible;
-  z-index: 10; /* confirm dialog floats above center/right zones */
+  z-index: 10;
+}
+
+/* Animation toggle — small amber readout button below pull cord */
+.anim-toggle-btn {
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 176, 40, 0.55);
+  background: transparent;
+  border: 1px solid rgba(255, 176, 40, 0.18);
+  border-radius: 2px;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.anim-toggle-btn:hover {
+  color: rgba(255, 176, 40, 0.9);
+  border-color: rgba(255, 176, 40, 0.45);
 }
 
 /* ── CENTER ZONE — NAVIGATION / SYSTEMS ── */
@@ -738,12 +758,142 @@
 
 /* ── RIGHT ZONE — COMMS (180px) ── */
 .console-right {
-  width: 180px;
+  width: 200px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding: 14px 14px 10px;
+  gap: 6px;
+  padding: 10px 12px 8px;
+}
+
+/* ── PAD ZONE — shared by left + right ── */
+.console-pad-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* LED meter strip — Neve-style signal indicator */
+.console-led-strip {
+  display: flex;
+  gap: 2px;
+  height: 5px;
+  margin-bottom: 4px;
+}
+.console-led-segment {
+  flex: 1;
+  border-radius: 1px;
+  transition: background-color 0.1s, box-shadow 0.1s;
+}
+
+/* Pad grid layouts */
+.pad-grid {
+  display: grid;
+  gap: 4px;
+}
+.pad-grid-2x3 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+.pad-grid-2x4 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); }
+
+/* Base pad — dark AKAI/MPC style */
+.console-pad {
+  position: relative;
+  height: 36px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(160deg,
+      rgba(30, 22, 12, 0.0) 0%,
+      rgba(10, 7, 4, 0.7)  100%
+    ),
+    #111009;
+  box-shadow:
+    inset 0  2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
+  transition: background 0.12s, box-shadow 0.12s, border-color 0.12s;
+  font-family: var(--font-mono);
+}
+
+.pad-abbr {
+  font-size: 6.5px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 220, 160, 0.45);
+  text-transform: uppercase;
+  transition: color 0.12s;
+}
+
+/* Lit pad — active vault or armed action */
+.console-pad.pad-active,
+.console-pad.pad-armed {
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 40%,
+      var(--pad-glow, rgba(255,191,0,0.3)) 0%,
+      transparent 70%
+    ),
+    #1a1208;
+  border-color: var(--pad-color, rgba(255,191,0,0.5));
+  box-shadow:
+    inset 0  2px 4px rgba(0, 0, 0, 0.4),
+    0 0 8px var(--pad-glow, rgba(255,191,0,0.2));
+}
+.console-pad.pad-active .pad-abbr,
+.console-pad.pad-armed .pad-abbr {
+  color: var(--pad-color, rgba(255,191,0,0.9));
+  text-shadow: 0 0 6px var(--pad-glow, rgba(255,191,0,0.4));
+}
+
+/* Active dot indicator */
+.pad-active-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--pad-color, #ffbf00);
+  box-shadow: 0 0 4px var(--pad-color, #ffbf00);
+}
+
+/* Badge counter on pad */
+.pad-badge {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-family: var(--font-mono);
+  font-size: 6px;
+  color: var(--pad-color, #ffbf00);
+  letter-spacing: 0;
+}
+
+/* Disabled pad */
+.console-pad.pad-disabled {
+  opacity: 0.22;
+  cursor: not-allowed;
+}
+
+/* Hover */
+.console-pad:not(.pad-disabled):hover {
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 40%,
+      var(--pad-glow, rgba(255,191,0,0.15)) 0%,
+      transparent 70%
+    ),
+    #161209;
+  border-color: rgba(255, 220, 160, 0.18);
+}
+.console-pad:not(.pad-disabled):hover .pad-abbr {
+  color: rgba(255, 220, 160, 0.8);
+}
+
+/* Power row below vault pads */
+.console-power-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 /* ── MASTER CLOCK — Amber phosphor CRT display ── */
@@ -2266,245 +2416,156 @@
   padding-left: 8px;
 }
 
-/* ─── RECORD SHELF ─── */
-/* Faithful to D's actual studio: vertical tongue-and-groove honey amber
-   pine paneling, warm incandescent lighting from upper-left corner. */
-.record-shelf {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  align-items: stretch;
-  gap: 10px;
-  padding: 14px 10px 18px;
-  min-height: 250px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  position: relative;
-  perspective: 800px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,176,0,0.3) transparent;
-  /* Vertical tongue-and-groove pine paneling — D's studio wall */
-  background:
-    /* Incandescent spotlight cone — overhead lamp hitting the records */
-    radial-gradient(ellipse 60% 45% at 50% 0%, rgba(255,200,100,0.16) 0%, transparent 65%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(0,0,0,0.10) 0px,
-      rgba(0,0,0,0.02) 3px,
-      transparent 3px,
-      transparent 22px,
-      rgba(255,200,120,0.04) 22px,
-      transparent 25px
-    ),
-    linear-gradient(180deg,
-      #3a2510 0%,
-      #6b4420 8%,
-      #8a5828 30%,
-      #7a4e22 55%,
-      #6a4018 80%,
-      #3a2008 100%
-    );
-  /* Warm amber incandescent light from upper-left */
-  box-shadow:
-    inset 12px 0 40px rgba(200,140,40,0.12),
-    inset 0 3px 0 rgba(180,120,50,0.3),
-    inset 0 -3px 0 rgba(0,0,0,0.5);
-}
-
-/* Pine shelf lip — 6px edge at the top of each shelf row */
-.record-shelf::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 6px;
-  background: linear-gradient(to right,
-    #5a3818 0%,
-    #9a6830 12%,
-    #c49040 45%,
-    #b07830 70%,
-    #7a5028 88%,
-    #4a2e10 100%
-  );
-  border-bottom: 1px solid rgba(0,0,0,0.45);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.record-shelf::-webkit-scrollbar {
-  width: 7px;
-}
-.record-shelf::-webkit-scrollbar-track {
-  background: transparent;
-}
-.record-shelf::-webkit-scrollbar-thumb {
-  background: rgba(255,176,0,0.3);
-  border-radius: 2px;
-}
-
-/* Shelf board — simple flat pine board between record rows, like D's actual shelving */
-.shelf-floor {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 16px;
-  /* Pine board face — warm honey, sun-lit from left */
-  background: linear-gradient(to right,
-    #7a5228 0%,
-    #c48a3a 8%,
-    #b07830 30%,
-    #a06828 65%,
-    #885020 85%,
-    #5a3010 100%
-  );
-  border-top: 1px solid rgba(200,150,60,0.4);
-  box-shadow:
-    0 4px 16px rgba(0,0,0,0.85),
-    inset 0 1px 0 rgba(255,200,80,0.2);
-}
-/* Shelf edge grain detail */
-.shelf-floor::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0px,
-    rgba(0,0,0,0.06) 1px,
-    transparent 2px,
-    transparent 18px
-  );
-}
-
-/* ─── FILE CELL ─── */
+/* ─── FILE CELL — dark cubby recess, one file per box ─── */
 .file-cell {
-  min-height: 88px;
-  border-radius: 7px;
-  cursor: pointer;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px 14px 10px;
-  background: linear-gradient(
-    135deg,
-    var(--spine-highlight) 0%,
-    color-mix(in srgb, var(--spine-base) 78%, #1a0f03 22%) 48%,
-    color-mix(in srgb, var(--spine-shadow) 70%, black 30%) 100%
-  );
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  cursor: pointer;
+  overflow: hidden;
+
+  /* Dark interior — the wood wall casts shadow INTO the cubby */
+  background:
+    linear-gradient(160deg, rgba(18, 11, 5, 0.0) 0%, rgba(6, 3, 1, 0.55) 100%),
+    #0d0804;
+
+  /* Deep cubby shadow from all sides */
   box-shadow:
-    inset 0 1px 2px rgba(255,255,255,0.2),
-    inset 0 -1px 6px rgba(0,0,0,0.35),
-    0 8px 16px rgba(0,0,0,0.35);
+    inset  6px  0   14px rgba(0, 0, 0, 0.80),
+    inset -6px  0   14px rgba(0, 0, 0, 0.80),
+    inset  0    8px 18px rgba(0, 0, 0, 0.95),
+    inset  0   -4px  10px rgba(0, 0, 0, 0.60);
+
+  border: 1px solid rgba(255, 160, 60, 0.08);
   user-select: none;
-  border: 1px solid color-mix(in srgb, var(--spine-glow) 20%, rgba(255,255,255,0.1) 80%);
+  transition: box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
+/* Subtle ambient top sheen — simulates distant overhead light reaching into the cubby */
 .file-cell-specular {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 16px;
+  top: 0; left: 0; right: 0;
+  height: 22px;
   background: linear-gradient(
     180deg,
-    rgba(255,255,255,0.24) 0%,
-    rgba(255,255,255,0.08) 55%,
+    rgba(255, 180, 80, 0.07) 0%,
     transparent 100%
   );
-  border-radius: 7px 7px 0 0;
   pointer-events: none;
 }
 
+/* Selected: chakra glow bleeds out from the cubby */
 .file-cell-active {
+  border-color: var(--cell-chakra, rgba(255,191,0,0.35));
   box-shadow:
-    inset 0 1px 2px rgba(255,255,255,0.2),
-    0 0 16px var(--spine-glow),
-    0 0 32px color-mix(in srgb, var(--spine-glow) 50%, transparent 50%),
-    0 8px 16px rgba(0,0,0,0.45);
+    inset  6px  0   14px rgba(0, 0, 0, 0.70),
+    inset -6px  0   14px rgba(0, 0, 0, 0.70),
+    inset  0    8px 18px rgba(0, 0, 0, 0.85),
+    inset  0   -4px  10px rgba(0, 0, 0, 0.55),
+    0 0 16px var(--cell-chakra, rgba(255,191,0,0.3)),
+    0 0 40px color-mix(in srgb, var(--cell-chakra, rgba(255,191,0,0.15)) 40%, transparent 60%);
+}
+
+.file-cell:hover:not(.file-cell-active) {
+  border-color: rgba(255, 160, 60, 0.18);
+  box-shadow:
+    inset  6px  0   14px rgba(0, 0, 0, 0.72),
+    inset -6px  0   14px rgba(0, 0, 0, 0.72),
+    inset  0    8px 16px rgba(0, 0, 0, 0.88),
+    inset  0   -4px  8px rgba(0, 0, 0, 0.55);
 }
 
 .file-cell-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
 }
 
+/* Track title — amber-warm, readable in the dark cubby */
 .file-cell-label {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: var(--font-mono);
   text-transform: uppercase;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: rgba(16, 8, 0, 0.9);
-  text-shadow: 0 1px 2px rgba(255,255,255,0.25);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  color: rgba(255, 218, 160, 0.88);
+  text-shadow: 0 0 8px rgba(200, 120, 30, 0.45);
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-height: 1.3;
 }
 
+/* State pill */
 .file-cell-state {
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  border: 1px solid rgba(0,0,0,0.35);
-  border-radius: 999px;
-  padding: 2px 8px;
-  background: rgba(0,0,0,0.18);
-  color: rgba(20,10,0,0.75);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  border: 1px solid rgba(255, 160, 60, 0.2);
+  border-radius: 2px;
+  padding: 2px 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 180, 80, 0.55);
 }
 
 .file-cell-state-play {
-  color: #0f3010;
-  background: rgba(120,255,120,0.25);
+  color: rgba(120, 255, 140, 0.85);
+  border-color: rgba(80, 220, 100, 0.3);
+  background: rgba(20, 60, 20, 0.5);
 }
 
 .file-cell-state-record {
-  color: #3a0505;
-  background: rgba(255,80,80,0.3);
+  color: rgba(255, 90, 80, 0.9);
+  border-color: rgba(200, 60, 50, 0.35);
+  background: rgba(50, 10, 10, 0.5);
 }
 
+/* Sublabel / metadata */
 .file-cell-meta {
   font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.06em;
-  color: rgba(15,8,2,0.7);
-  text-shadow: 0 0 4px rgba(255,191,0,0.2);
-  white-space: normal;
+  color: rgba(200, 150, 80, 0.50);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* VOID handle — dim red dot, top-left corner, appears on hover */
 .file-cell-void-handle {
   position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 8px; height: 8px;
+  top: 6px; left: 7px;
+  width: 7px; height: 7px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(220, 60, 40, 0.75);
+  border: 1px solid rgba(255, 120, 100, 0.4);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.18s ease;
+  transition: opacity 0.16s ease;
 }
 
 .file-cell:hover .file-cell-void-handle {
   opacity: 1;
 }
 
+/* Comment handle — cyan dot, top-right corner, appears on hover */
 .file-cell-comment-handle {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
+  top: 6px; right: 7px;
+  width: 7px; height: 7px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(20, 180, 216, 0.75);
+  border: 1px solid rgba(60, 210, 240, 0.35);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.18s ease;
+  transition: opacity 0.16s ease;
 }
 
 .file-cell:hover .file-cell-comment-handle {
@@ -3676,4 +3737,115 @@
   font-size: 8px;
   color: rgba(155,89,182,0.6);
   letter-spacing: 0.12em;
+}
+
+/* ── UPLOAD MODAL ───────────────────────────────────────────── */
+.upload-vault-toggle { display: flex; gap: 8px; }
+.upload-vault-btn {
+  flex: 1; padding: 8px 0; background: transparent;
+  border: 1px solid rgba(255,191,0,0.2); border-radius: 2px;
+  color: rgba(255,191,0,0.5); font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.14em; cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+.upload-vault-btn.active, .upload-vault-btn:hover {
+  border-color: rgba(255,191,0,0.7); color: rgba(255,191,0,0.9);
+  background: rgba(255,191,0,0.06);
+}
+.upload-dropzone {
+  width: 100%; padding: 18px 0;
+  border: 1px dashed rgba(255,191,0,0.25); border-radius: 2px;
+  text-align: center; cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.upload-dropzone:hover, .upload-dropzone.has-file {
+  border-color: rgba(255,191,0,0.55); background: rgba(255,191,0,0.04);
+}
+.upload-drop-hint { font-family: var(--font-mono); font-size: 9px; color: rgba(255,191,0,0.35); letter-spacing: 0.12em; }
+.upload-filename  { font-family: var(--font-mono); font-size: 9px; color: rgba(255,191,0,0.75); letter-spacing: 0.08em; word-break: break-all; }
+.upload-freq-options { display: flex; gap: 6px; flex-wrap: wrap; }
+.upload-freq-btn {
+  padding: 5px 10px; background: transparent;
+  border: 1px solid rgba(255,191,0,0.2); border-radius: 2px;
+  color: rgba(255,191,0,0.5); font-family: var(--font-mono);
+  font-size: 10px; cursor: pointer;
+}
+.upload-freq-btn.active { border-color: rgba(255,191,0,0.7); color: rgba(255,191,0,0.9); background: rgba(255,191,0,0.06); }
+.upload-error { color: rgba(255,80,60,0.85); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; padding: 6px 0; }
+
+/* Vault scanning state */
+.vault-scanning {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em;
+  color: rgba(255,191,0,0.5); padding: 32px 0;
+  animation: vault-scan-pulse 1.4s ease-in-out infinite;
+}
+@keyframes vault-scan-pulse {
+  0%, 100% { opacity: 0.4; } 50% { opacity: 1; }
+}
+
+/* ── COMMAND PALETTE ────────────────────────────────────────── */
+.cmd-palette-hint {
+  position: fixed; bottom: 16px; right: 16px; z-index: 900;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+  color: rgba(255,191,0,0.3); cursor: pointer; padding: 4px 8px;
+  border: 1px solid rgba(255,191,0,0.1); border-radius: 2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.cmd-palette-hint:hover { color: rgba(255,191,0,0.7); border-color: rgba(255,191,0,0.3); }
+.cmd-palette-backdrop {
+  position: fixed; inset: 0; z-index: 950;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+}
+.cmd-palette {
+  position: fixed; top: 20%; left: 50%; transform: translateX(-50%);
+  z-index: 960; width: min(520px, 90vw);
+  background: rgba(10,10,12,0.97); border: 1px solid rgba(255,191,0,0.2);
+  border-radius: 4px; overflow: hidden;
+}
+.cmd-palette-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid rgba(255,191,0,0.1);
+}
+.cmd-palette-owner {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.2em;
+  color: rgba(255,191,0,0.9); padding: 2px 6px;
+  border: 1px solid rgba(255,191,0,0.4); border-radius: 2px;
+}
+.cmd-palette-title {
+  flex: 1; font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 0.2em; color: rgba(255,191,0,0.4);
+}
+.cmd-palette-close {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em;
+  color: rgba(255,191,0,0.3); cursor: pointer;
+}
+.cmd-palette-input {
+  width: 100%; padding: 12px 14px; background: transparent;
+  border: none; border-bottom: 1px solid rgba(255,191,0,0.1);
+  color: rgba(255,191,0,0.9); font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.08em; outline: none;
+}
+.cmd-palette-input::placeholder { color: rgba(255,191,0,0.25); }
+.cmd-palette-list { max-height: 300px; overflow-y: auto; }
+.cmd-palette-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer;
+  transition: background 0.12s;
+}
+.cmd-palette-item.active, .cmd-palette-item:hover { background: rgba(255,191,0,0.05); }
+.cmd-palette-item-label {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em;
+  color: rgba(255,191,0,0.85); min-width: 140px;
+}
+.cmd-palette-item-desc {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em;
+  color: rgba(255,191,0,0.35); flex: 1;
+}
+.cmd-palette-item-enter {
+  font-family: var(--font-mono); font-size: 10px;
+  color: rgba(255,191,0,0.4);
+}
+.cmd-palette-empty {
+  padding: 20px 14px; font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 0.1em; color: rgba(255,191,0,0.25); text-align: center;
 }
