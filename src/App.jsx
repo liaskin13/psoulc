@@ -43,7 +43,12 @@ function refreshSessionMeta() {
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s || Date.now() > s.expires) return null;
-    return { owner: s.owner, planet: s.planet ?? null, tier: s.tier ?? 'G' };
+    return { 
+      owner: s.owner, 
+      vault: s.vault ?? s.planet ?? null, 
+      tier: s.tier ?? 'G',
+      residentId: s.residentId ?? null
+    };
   } catch (_) { return null; }
 }
 
@@ -74,20 +79,29 @@ function App() {
       if (!raw) return;
       const session = JSON.parse(raw);
       if (session?.owner && session.expires > Date.now()) {
-        handleIgnite(session.owner);
+        handleIgnite(session.owner, session.tier);
       }
     } catch (_) {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleIgnite = (ownerVal) => {
+  const handleIgnite = (ownerVal, tier = 'G') => {
+    const meta = refreshSessionMeta();
     setOwner(ownerVal);
     setConsoleOwner(ownerVal);
-    setSessionMeta(refreshSessionMeta());
-    if (ownerVal === 'D') setStage('console');
-    else if (ownerVal === 'L') setStage('architect');
-    else setStage('room');
+    setSessionMeta(meta);
+
+    // Tier-based routing
+    if (tier === 'A') {
+      if (ownerVal === 'L') setStage('architect');
+      else setStage('console');
+    } else {
+      setStage('room');
+      // Auto-focus vault if assigned
+      if (meta?.vault) setActiveNode({ id: meta.vault });
+    }
   };
+
 
   const closeVault = () => {
     setActiveNode(null);
@@ -157,37 +171,45 @@ function App() {
   };
 
   const renderVault = (id) => {
-    const rOnly = !canEdit(sessionMeta, id);
+    const rOnly    = !canEdit(sessionMeta, id);
     const vAllowed = canVoid(sessionMeta, id);
+    const shared   = { onBack: closeVault, onExitSystem: handlePowerDown, readOnly: rOnly, voidAllowed: vAllowed };
+    const onVoid   = (planet) => (item) => handleVoid(item, planet);
+
     let vault = null;
     switch (id) {
-      case 'saturn':   vault = <SaturnVault   onVoid={(item) => handleVoid(item, 'saturn')}   onExplore={() => {}} onTune={() => {}} onBack={closeVault} onExitSystem={handlePowerDown} readOnly={rOnly} voidAllowed={vAllowed} />; break;
-      case 'mercury':  vault = <MercuryStream  onBack={closeVault} onExitSystem={handlePowerDown} readOnly={rOnly} voidAllowed={vAllowed} />; break;
-      case 'venus':    vault = <VenusArchive   onVoid={(item) => handleVoid(item, 'venus')}   onBack={closeVault} onExitSystem={handlePowerDown} readOnly={rOnly} voidAllowed={vAllowed} />; break;
-      case 'earth':    vault = <EarthSafe      onVoid={(item) => handleVoid(item, 'earth')}   onBack={closeVault} onExitSystem={handlePowerDown} readOnly={rOnly} voidAllowed={vAllowed} />; break;
-      case 'amethyst': vault = <AmethystVault  onVoid={(item) => handleVoid(item, 'amethyst')} onBack={closeVault} onExitSystem={handlePowerDown} readOnly={rOnly} voidAllowed={vAllowed} />; break;
-      case 'mars':     vault = <MarsVault      onVoid={(item) => handleVoid(item, 'mars')}     onBack={closeVault} onExitSystem={handlePowerDown} readOnly={rOnly} voidAllowed={vAllowed} />; break;
+      case 'saturn':   vault = <SaturnVault   {...shared} onVoid={onVoid('saturn')}   onExplore={() => {}} onTune={() => {}} />; break;
+      case 'mercury':  vault = <MercuryStream  {...shared} />; break;
+      case 'venus':    vault = <VenusArchive   {...shared} onVoid={onVoid('venus')} />; break;
+      case 'earth':    vault = <EarthSafe      {...shared} onVoid={onVoid('earth')} />; break;
+      case 'amethyst': vault = <AmethystVault  {...shared} onVoid={onVoid('amethyst')} />; break;
+      case 'mars':     vault = <MarsVault      {...shared} onVoid={onVoid('mars')} />; break;
       default: break;
     }
     if (!vault && typeof id === 'string' && id.startsWith(MOON_PREFIX)) {
-      vault = <MoonVault moonId={id} onBack={closeVault} onExitSystem={handlePowerDown} readOnly={rOnly} voidAllowed={vAllowed} onVoid={(item) => handleVoid(item, id)} />;
+      vault = <MoonVault {...shared} moonId={id} onVoid={onVoid(id)} />;
     }
     return <Suspense fallback={<VaultSkeleton />}>{vault}</Suspense>;
   };
+
+  const offlineBanner = !online && (
+    <div className="offline-banner" role="status">SIGNAL LOST — ARCHIVE CACHED LOCALLY</div>
+  );
 
   // ── ENTRY ────────────────────────────────────────────────────────────────
   if (stage === 'entry') {
     return (
       <>
-        {!online && <div className="offline-banner" role="status">SIGNAL LOST — ARCHIVE CACHED LOCALLY</div>}
+        {offlineBanner}
         <a href="#main-content" className="skip-nav">Skip to archive</a>
         <EntrySequence onIgnite={handleIgnite} />
       </>
     );
   }
 
-  // ── ROOM — Guest/Listener (Phase 3 shell) ────────────────────────────────
-  if (stage === 'room') {
+  // ── ROOM — guest / listener lounge ───────────────────────────────────────
+  // Note: vault check below handles activeNode for room-stage users too
+  if (stage === 'room' && !activeNode) {
     return (
       <div className="the-room" id="main-content">
         <div className="room-backdrop" />
@@ -212,7 +234,7 @@ function App() {
   if (stage === 'architect') {
     return (
       <>
-        {!online && <div className="offline-banner" role="status">SIGNAL LOST — ARCHIVE CACHED LOCALLY</div>}
+        {offlineBanner}
         <a href="#main-content" className="skip-nav">Skip to archive</a>
         <div className="universe god-mode-mainframe state-create" id="main-content">
           <div className="glitter-grain" />
@@ -225,11 +247,11 @@ function App() {
     );
   }
 
-  // N8: If sealed, non-Tier-A sessions are evicted back to entry.
+  // Pull Cord: sealed system evicts non-Tier-A sessions back to entry
   if (isProtected && sessionMeta && sessionMeta.tier !== 'A') {
     return (
       <>
-        {!online && <div className="offline-banner" role="status">SIGNAL LOST — ARCHIVE CACHED LOCALLY</div>}
+        {offlineBanner}
         <EntrySequence onIgnite={handleIgnite} />
       </>
     );
@@ -241,7 +263,7 @@ function App() {
   if (activeNode && isVaultId(activeNode.id)) {
     return (
       <>
-        {!online && <div className="offline-banner" role="status">SIGNAL LOST — ARCHIVE CACHED LOCALLY</div>}
+        {offlineBanner}
         <motion.div
           className={`universe god-mode-mainframe ${stateClass}`}
           id="main-content"
@@ -263,10 +285,10 @@ function App() {
     );
   }
 
-  // ── D's GOD MODE CONSOLE (full screen) ──────────────────────────────────
+  // ── D's GOD MODE CONSOLE ─────────────────────────────────────────────────
   return (
     <>
-      {!online && <div className="offline-banner" role="status">SIGNAL LOST — ARCHIVE CACHED LOCALLY</div>}
+      {offlineBanner}
       <a href="#main-content" className="skip-nav">Skip to archive</a>
       <div className={`universe god-mode-mainframe ${stateClass}`}>
         <div className="glitter-grain" />
