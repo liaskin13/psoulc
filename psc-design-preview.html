@@ -451,6 +451,13 @@ body {
   color: #2a2318;
   letter-spacing: 0.06em;
 }
+.tel-cursor {
+  color: #ffb347;
+  opacity: 0.7;
+  animation: telBlink 1.1s step-end infinite;
+  margin-left: 3px;
+}
+@keyframes telBlink { 0%,100%{opacity:0.7;} 50%{opacity:0;} }
 
 /* Left rail — controls */
 .console-rail {
@@ -961,7 +968,7 @@ body {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 40px 1fr;
+  grid-template-rows: 40px 1fr auto;
 }
 
 .l-topbar {
@@ -1216,6 +1223,7 @@ html { scroll-behavior: smooth; }
   <a href="#vault">VAULT</a>
   <a href="#helix">HELIX</a>
   <a href="#listener">LISTENER</a>
+  <a href="#muses">MUSES</a>
   <a href="#l-console">L CONSOLE</a>
   <a href="#palette">PALETTE</a>
   <a href="#type">TYPE</a>
@@ -1350,7 +1358,22 @@ html { scroll-behavior: smooth; }
   <div class="console-topbar">
     <span class="console-logo">PSC · D</span>
     <span style="font-family:var(--font-mono);font-size:8px;color:#2a2318;letter-spacing:0.1em;text-transform:uppercase;">GOD MODE</span>
-    <span class="console-clock" style="margin-left:auto;">04:22:11 UTC</span>
+    <!-- Vault health -->
+    <span style="display:flex;align-items:center;gap:14px;margin-left:28px;">
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#ffb347;opacity:0.7;"></span>
+        <span style="font-family:var(--font-mono);font-size:8px;color:#3a2a18;letter-spacing:0.06em;">ORIGINAL · 12</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#ffb347;opacity:0.5;"></span>
+        <span style="font-family:var(--font-mono);font-size:8px;color:#3a2a18;letter-spacing:0.06em;">MIXES · 24</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span style="width:5px;height:5px;border-radius:50%;background:#2a2318;opacity:0.6;"></span>
+        <span style="font-family:var(--font-mono);font-size:8px;color:#2a2318;letter-spacing:0.06em;">LIVE · 0</span>
+      </span>
+    </span>
+    <span id="d-clock" class="console-clock" style="margin-left:auto;"></span>
     <span class="console-session">SESSION · 0528</span>
   </div>
 
@@ -1532,7 +1555,7 @@ html { scroll-behavior: smooth; }
     <div class="td-telemetry">
       <div class="td-tel-row td-tel-ok">[01:14] UPLOAD — OK</div>
       <div class="td-tel-row td-tel-ok">[01:22] TUNE bpm:94 — OK</div>
-      <div class="td-tel-row td-tel-pending">[01:38] COMMENT — PENDING</div>
+      <div class="td-tel-row td-tel-pending">[01:38] COMMENT — PENDING<span class="tel-cursor">▌</span></div>
       <div class="td-tel-row td-tel-denied">[02:11] VOID — DENIED · ARM FIRST</div>
     </div>
   </div>
@@ -1945,6 +1968,7 @@ html { scroll-behavior: smooth; }
       <span id="helix-detail-key" style="font-family:'Chakra Petch',sans-serif;font-size:11px;color:#ffb347;letter-spacing:0.06em;"></span>
     </div>
     <div id="helix-detail-status" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#3a2a18;letter-spacing:0.12em;text-transform:uppercase;border:1px solid #2a1800;display:inline-block;padding:2px 8px;"></div>
+    <div id="helix-detail-wave" style="margin-top:14px;opacity:0.7;"></div>
   </div>
 
   <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-family:'Chakra Petch',sans-serif;font-size:9px;color:#3a2a18;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;">DRAG TO SPIN · SCROLL TO TRAVEL · CLICK TO SELECT</div>
@@ -2107,6 +2131,29 @@ html { scroll-behavior: smooth; }
     });
   }
 
+  function makeHelixWave(seed, color) {
+    var bars = 38, W = 224, H = 42;
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width',W); svg.setAttribute('height',H);
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    var s = seed >>> 0;
+    var barW = (W - bars) / bars;
+    for (var i = 0; i < bars; i++) {
+      s = (Math.imul(s,1664525)+1013904223) >>> 0;
+      var ht = 0.25 + (s/0xffffffff)*0.75;
+      var rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      var bh = ht * H;
+      rect.setAttribute('x', i*(barW+1));
+      rect.setAttribute('y', (H-bh)/2);
+      rect.setAttribute('width', barW);
+      rect.setAttribute('height', bh);
+      rect.setAttribute('fill', color);
+      rect.setAttribute('opacity', 0.22 + ht*0.5);
+      svg.appendChild(rect);
+    }
+    return svg;
+  }
+
   function selectCard(idx) {
     selectedIdx = idx;
     cardEls.forEach(function(c,i){ c.classList.toggle('hx-selected', i===idx); });
@@ -2115,6 +2162,12 @@ html { scroll-behavior: smooth; }
     document.getElementById('helix-detail-bpm').textContent = t.bpm!=='—' ? t.bpm+' BPM' : '';
     document.getElementById('helix-detail-key').textContent = t.key!=='—' ? t.key : '';
     document.getElementById('helix-detail-status').textContent = t.status;
+    var waveEl = document.getElementById('helix-detail-wave');
+    if (waveEl) {
+      var seed = t.title.split('').reduce(function(a,c,i){ return a+c.charCodeAt(0)*(i+17); }, idx+3);
+      waveEl.innerHTML = '';
+      waveEl.appendChild(makeHelixWave(seed, t.color));
+    }
     document.getElementById('helix-detail').style.opacity = '1';
   }
 
@@ -2173,8 +2226,8 @@ html { scroll-behavior: smooth; }
   </div>
 
   <!-- Crate stage -->
-  <div id="crate-stage" style="perspective:1200px;width:100%;display:flex;align-items:center;justify-content:center;padding-top:40px;position:relative;z-index:5;">
-    <div id="crate-stack" style="position:relative;width:360px;height:360px;transform-style:preserve-3d;cursor:grab;"></div>
+  <div id="crate-stage" style="perspective:1200px;width:100%;display:flex;align-items:center;justify-content:center;padding-top:44px;position:relative;z-index:5;">
+    <div id="crate-stack" style="position:relative;width:min(360px,90vw);height:min(360px,90vw);transform-style:preserve-3d;cursor:grab;"></div>
   </div>
 
   <!-- Now playing strip -->
@@ -2184,7 +2237,7 @@ html { scroll-behavior: smooth; }
       <div id="np-progress-fill" style="position:absolute;left:0;top:0;height:100%;width:28%;background:linear-gradient(to right,#ffb347,rgba(255,179,71,0.2));transition:width 0.5s linear;"></div>
     </div>
     <!-- Strip body -->
-    <div style="background:linear-gradient(to top,#060403 0%,rgba(6,4,3,0.92) 70%,transparent 100%);display:flex;align-items:center;padding:14px 28px 18px;gap:18px;">
+    <div id="np-strip-body" style="background:linear-gradient(to top,#060403 0%,rgba(6,4,3,0.92) 70%,transparent 100%);display:flex;align-items:center;padding:14px 28px 18px;gap:18px;">
       <!-- Identity bar -->
       <div id="np-id-bar" style="width:2px;height:40px;background:#ffb347;flex-shrink:0;transition:background 300ms;"></div>
       <!-- Track info -->
@@ -2244,7 +2297,10 @@ html { scroll-behavior: smooth; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #2a1e0e;
-  padding: 10px 20px;
+  padding: 0 20px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   cursor: pointer;
   border-right: 1px solid #1a1510;
   transition: color 120ms;
@@ -2256,8 +2312,8 @@ html { scroll-behavior: smooth; }
 
 .crate-card {
   position: absolute;
-  width: 340px;
-  height: 340px;
+  width: min(340px, 85vw);
+  height: min(340px, 85vw);
   background: #0c0a07;
   border: 1px solid #2a2018;
   display: flex;
@@ -2345,6 +2401,11 @@ html { scroll-behavior: smooth; }
 }
 .crate-waveform-playing rect {
   animation: waveBar 0.6s ease-in-out infinite;
+}
+@media (max-width: 420px) {
+  .crate-card-title { font-size: 18px; }
+  .crate-card { padding: 16px 16px 14px; }
+  #np-strip-body { padding: 12px 18px 16px !important; }
 }
 </style>
 
@@ -2644,6 +2705,286 @@ html { scroll-behavior: smooth; }
 })();
 </script>
 
+<!-- SECTION LABEL: MUSES -->
+<div class="scroll-target" id="muses"></div>
+<div class="section-label">05B — MUSES · ARTIST VAULTS · INVITED SOVEREIGNTY</div>
+
+<style>
+.muses-screen {
+  background: #060403;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 40px 60px;
+  position: relative;
+  overflow: hidden;
+}
+.muses-header {
+  text-align: center;
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 2;
+}
+.muses-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #2a1e0e;
+  margin-bottom: 10px;
+}
+.muses-subtitle {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1a1208;
+}
+.muses-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  width: 100%;
+  max-width: 960px;
+  position: relative;
+  z-index: 2;
+  background: #111008;
+}
+.muse-card {
+  background: #070504;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 200ms;
+  padding: 32px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+.muse-card:hover { background: #0a0806; }
+.muse-card:hover .muse-glow { opacity: 0.12; }
+.muse-card:hover .muse-enter { opacity: 1; }
+.muse-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  transition: opacity 300ms;
+  pointer-events: none;
+}
+.muse-id-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+.muse-tag {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #2a1e0e;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.muse-tag-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.muse-wave-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+.muse-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(42px, 6vw, 72px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.muse-genre {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2a2018;
+  margin-bottom: 20px;
+}
+.muse-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #1a1408;
+  padding-top: 14px;
+}
+.muse-count {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #2a1e0e;
+}
+.muse-enter {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 200ms;
+  padding: 0;
+}
+</style>
+
+<div class="muses-screen">
+
+  <!-- Shared ambient field -->
+  <div style="position:absolute;width:1200px;height:800px;background:radial-gradient(ellipse,rgba(255,179,71,0.02) 0%,transparent 60%);pointer-events:none;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+
+  <div class="muses-header">
+    <div class="muses-title">M U S E S</div>
+    <div class="muses-subtitle">Pleasant Soul Collective · Invited Sovereignty · Original Music</div>
+  </div>
+
+  <div class="muses-grid">
+
+    <!-- LARRY — West Coast / Smooth Hop — sage green -->
+    <div class="muse-card" id="muse-larry">
+      <div class="muse-id-bar" style="background:#7aaa5a;"></div>
+      <div class="muse-glow" style="background:radial-gradient(ellipse at 30% 50%,#7aaa5a,transparent);"></div>
+      <div class="muse-tag">
+        <span class="muse-tag-dot" style="background:#7aaa5a;"></span>
+        WEST COAST · SMOOTH HOP
+      </div>
+      <div class="muse-wave-wrap" id="muse-wave-larry"></div>
+      <div class="muse-name" style="color:#7aaa5a;">LARRY</div>
+      <div class="muse-genre">SMOOTH FREQUENCIES · VINTAGE SOUL · CALIFORNIA</div>
+      <div class="muse-footer">
+        <span class="muse-count">6 TRACKS</span>
+        <button class="muse-enter" style="color:#7aaa5a;">ENTER VAULT →</button>
+      </div>
+    </div>
+
+    <!-- JANET — R&B / Iconic Soul — deep magenta -->
+    <div class="muse-card" id="muse-janet">
+      <div class="muse-id-bar" style="background:#cc3399;"></div>
+      <div class="muse-glow" style="background:radial-gradient(ellipse at 70% 40%,#cc3399,transparent);"></div>
+      <div class="muse-tag">
+        <span class="muse-tag-dot" style="background:#cc3399;"></span>
+        R&amp;B · ICONIC SOUL
+      </div>
+      <div class="muse-wave-wrap" id="muse-wave-janet"></div>
+      <div class="muse-name" style="color:#cc3399;">JANET</div>
+      <div class="muse-genre">RHYTHM &amp; SOUL · WOULD YOU MIND · CONTROL</div>
+      <div class="muse-footer">
+        <span class="muse-count">9 TRACKS</span>
+        <button class="muse-enter" style="color:#cc3399;">ENTER VAULT →</button>
+      </div>
+    </div>
+
+    <!-- ERIKAH — Neo Soul / Frequencies — terracotta -->
+    <div class="muse-card" id="muse-erikah">
+      <div class="muse-id-bar" style="background:#cc6633;"></div>
+      <div class="muse-glow" style="background:radial-gradient(ellipse at 25% 60%,#cc6633,transparent);"></div>
+      <div class="muse-tag">
+        <span class="muse-tag-dot" style="background:#cc6633;"></span>
+        NEO SOUL · FREQUENCIES
+      </div>
+      <div class="muse-wave-wrap" id="muse-wave-erikah"></div>
+      <div class="muse-name" style="color:#cc6633;">ERIKAH</div>
+      <div class="muse-genre">NEO SOUL · ANCESTRAL FREQUENCIES · ON &amp; ON</div>
+      <div class="muse-footer">
+        <span class="muse-count">11 TRACKS</span>
+        <button class="muse-enter" style="color:#cc6633;">ENTER VAULT →</button>
+      </div>
+    </div>
+
+    <!-- DRAKE — OVO Sound / Cool Gold -->
+    <div class="muse-card" id="muse-drake">
+      <div class="muse-id-bar" style="background:#c4a428;"></div>
+      <div class="muse-glow" style="background:radial-gradient(ellipse at 65% 55%,#c4a428,transparent);"></div>
+      <div class="muse-tag">
+        <span class="muse-tag-dot" style="background:#c4a428;"></span>
+        OVO SOUND · TORONTO
+      </div>
+      <div class="muse-wave-wrap" id="muse-wave-drake"></div>
+      <div class="muse-name" style="color:#c4a428;">DRAKE</div>
+      <div class="muse-genre">OVO SOUND · TORONTO · CERTIFIED FREQUENCIES</div>
+      <div class="muse-footer">
+        <span class="muse-count">8 TRACKS</span>
+        <button class="muse-enter" style="color:#c4a428;">ENTER VAULT →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  var muses = [
+    { id: 'larry',  color: '#7aaa5a', seed: 0x4c415252 },
+    { id: 'janet',  color: '#cc3399', seed: 0x4a414e45 },
+    { id: 'erikah', color: '#cc6633', seed: 0x45524942 },
+    { id: 'drake',  color: '#c4a428', seed: 0x4452414b }
+  ];
+
+  function makeMuseWave(seed, color) {
+    var bars = 52, W = '100%', H = 56;
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width','100%');
+    svg.setAttribute('height', H);
+    svg.setAttribute('viewBox','0 0 520 ' + H);
+    svg.setAttribute('preserveAspectRatio','none');
+    var s = seed >>> 0;
+    var barW = (520 - bars) / bars;
+    for (var i = 0; i < bars; i++) {
+      s = (Math.imul(s,1664525)+1013904223) >>> 0;
+      var ht = 0.15 + (s/0xffffffff)*0.85;
+      s = (Math.imul(s,1664525)+1013904223) >>> 0;
+      var alpha = 0.2 + ht * 0.55;
+      var rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      var bh = ht * H;
+      rect.setAttribute('x', i*(barW+1));
+      rect.setAttribute('y', (H-bh)/2);
+      rect.setAttribute('width', Math.max(1, barW));
+      rect.setAttribute('height', bh);
+      rect.setAttribute('fill', color);
+      rect.setAttribute('opacity', alpha);
+      svg.appendChild(rect);
+    }
+    return svg;
+  }
+
+  muses.forEach(function(m) {
+    var el = document.getElementById('muse-wave-' + m.id);
+    if (el) {
+      el.style.width = '100%';
+      el.appendChild(makeMuseWave(m.seed, m.color));
+    }
+  });
+
+  // Hover — animate the waveform brightness
+  document.querySelectorAll('.muse-card').forEach(function(card) {
+    var svg = card.querySelector('svg');
+    card.addEventListener('mouseenter', function() {
+      if (svg) svg.style.filter = 'brightness(1.8)';
+    });
+    card.addEventListener('mouseleave', function() {
+      if (svg) svg.style.filter = '';
+    });
+  });
+}());
+</script>
+
 <!-- SECTION LABEL: L CONSOLE -->
 <div class="scroll-target" id="l-console"></div>
 <div class="section-label">06 — L CONSOLE · 7677 · ARCHITECT</div>
@@ -2722,6 +3063,154 @@ html { scroll-behavior: smooth; }
   animation: lActBlip 2s ease-in-out infinite;
 }
 @keyframes lActBlip { 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+/* D → L BROADCAST PANEL */
+.dl-broadcast {
+  grid-column: 1 / -1;
+  border-top: 1px solid #111820;
+  display: flex;
+  flex-direction: column;
+}
+.dl-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid #111820;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #060810;
+}
+.dl-header-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0d2030;
+}
+.dl-from-badge {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: #ffb347;
+  opacity: 0.7;
+  border: 1px solid rgba(255,179,71,0.2);
+  padding: 1px 7px;
+}
+.dl-count {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #0a1e28;
+  letter-spacing: 0.08em;
+  margin-left: auto;
+}
+.dl-entries {
+  display: flex;
+  flex-direction: column;
+}
+.dl-entry {
+  display: grid;
+  grid-template-columns: 3px 100px 1fr auto;
+  align-items: stretch;
+  border-bottom: 1px solid #0a1018;
+  cursor: pointer;
+  transition: background 80ms;
+  min-height: 38px;
+}
+.dl-entry:hover { background: #090e14; }
+.dl-entry.dl-ack { opacity: 0.35; }
+.dl-entry-bar {
+  align-self: stretch;
+}
+.dl-entry-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+}
+.dl-status-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dl-status-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.dl-entry-body {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #1a3040;
+  letter-spacing: 0.03em;
+  line-height: 1.45;
+  padding: 10px 12px 10px 0;
+  display: flex;
+  align-items: center;
+}
+.dl-entry-ts {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: #0a1420;
+  letter-spacing: 0.06em;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.dl-entry-ts .dl-ack-label {
+  color: #00e5ff;
+  opacity: 0.4;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  display: none;
+}
+.dl-entry.dl-ack .dl-ack-label { display: inline; }
+.dl-entry.dl-ack .dl-ts-time { display: none; }
+
+/* status variants */
+.dl-working .dl-entry-bar { background: rgba(255,179,71,0.25); }
+.dl-working .dl-status-dot { background: #ffb347; box-shadow: 0 0 4px rgba(255,179,71,0.4); }
+.dl-working .dl-status-label { color: #7a5a1a; }
+.dl-broken .dl-entry-bar { background: rgba(200,60,60,0.4); }
+.dl-broken .dl-status-dot { background: #cc3c3c; box-shadow: 0 0 4px rgba(200,60,60,0.4); }
+.dl-broken .dl-status-label { color: #883030; }
+.dl-review .dl-entry-bar { background: rgba(0,170,200,0.2); }
+.dl-review .dl-status-dot { background: #00aacc; box-shadow: 0 0 4px rgba(0,170,200,0.3); }
+.dl-review .dl-status-label { color: #005566; }
+.dl-compose {
+  padding: 10px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid #111820;
+  background: #060810;
+}
+.dl-compose-input {
+  flex: 1;
+  background: #0a1018;
+  border: 1px solid #111820;
+  color: #1a3040;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 7px 10px;
+  letter-spacing: 0.04em;
+  outline: none;
+}
+.dl-compose-input::placeholder { color: #0d1e28; }
+.dl-compose-input:focus { border-color: rgba(0,229,255,0.2); color: #2a5060; }
+.dl-compose-btn {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid #111820;
+  color: #0d2030;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: all 80ms;
+}
+.dl-compose-btn:hover { border-color: rgba(0,229,255,0.2); color: #1a4050; }
 </style>
 
 <div class="l-console-screen" data-theme="l-architect" style="min-height: calc(100vh - 32px);">
@@ -2730,6 +3219,7 @@ html { scroll-behavior: smooth; }
     <span class="l-logo">L CONSOLE</span>
     <span style="font-family:var(--font-mono);font-size:8px;color:#0d2030;letter-spacing:0.1em;text-transform:uppercase;">ARCHITECT</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:14px;">
+      <span id="l-clock" style="font-family:var(--font-mono);font-size:9px;color:#0d2030;letter-spacing:0.06em;"></span>
       <span class="m3-badge master">MASTER</span>
       <span class="l-session">7677</span>
     </div>
@@ -2926,6 +3416,74 @@ html { scroll-behavior: smooth; }
       </div>
     </div>
   </div>
+
+  <!-- D → L BROADCAST -->
+  <div class="dl-broadcast">
+    <div class="dl-header">
+      <span class="dl-header-label">BROADCAST</span>
+      <span class="dl-from-badge">D → L</span>
+      <span class="dl-count" id="dl-count">4 SIGNALS</span>
+    </div>
+    <div class="dl-entries" id="dl-entries">
+
+      <div class="dl-entry dl-broken" data-idx="0">
+        <div class="dl-entry-bar"></div>
+        <div class="dl-entry-status">
+          <div class="dl-status-dot"></div>
+          <span class="dl-status-label">BROKEN</span>
+        </div>
+        <div class="dl-entry-body">Voice comment REC button — no response on tap. Mic permission issue?</div>
+        <div class="dl-entry-ts"><span class="dl-ts-time">12M</span><span class="dl-ack-label">ACK</span></div>
+      </div>
+
+      <div class="dl-entry dl-broken" data-idx="1">
+        <div class="dl-entry-bar"></div>
+        <div class="dl-entry-status">
+          <div class="dl-status-dot"></div>
+          <span class="dl-status-label">BROKEN</span>
+        </div>
+        <div class="dl-entry-body">Vault tab LIVE SETS — opens but no cells render. Confirm placeholder or empty state needed.</div>
+        <div class="dl-entry-ts"><span class="dl-ts-time">28M</span><span class="dl-ack-label">ACK</span></div>
+      </div>
+
+      <div class="dl-entry dl-review" data-idx="2">
+        <div class="dl-entry-bar"></div>
+        <div class="dl-entry-status">
+          <div class="dl-status-dot"></div>
+          <span class="dl-status-label">REVIEW</span>
+        </div>
+        <div class="dl-entry-body">Now-playing track title crops on narrow screens — need to confirm min font at iPhone width.</div>
+        <div class="dl-entry-ts"><span class="dl-ts-time">1H</span><span class="dl-ack-label">ACK</span></div>
+      </div>
+
+      <div class="dl-entry dl-working" data-idx="3">
+        <div class="dl-entry-bar"></div>
+        <div class="dl-entry-status">
+          <div class="dl-status-dot"></div>
+          <span class="dl-status-label">WORKING</span>
+        </div>
+        <div class="dl-entry-body">Entry gate feels exactly right. The amber fill on the cells is it.</div>
+        <div class="dl-entry-ts"><span class="dl-ts-time">2H</span><span class="dl-ack-label">ACK</span></div>
+      </div>
+
+      <div class="dl-entry dl-working" data-idx="4">
+        <div class="dl-entry-bar"></div>
+        <div class="dl-entry-status">
+          <div class="dl-status-dot"></div>
+          <span class="dl-status-label">WORKING</span>
+        </div>
+        <div class="dl-entry-body">Crate flip — swipe between tracks is responsive. This is the listener experience.</div>
+        <div class="dl-entry-ts"><span class="dl-ts-time">3H</span><span class="dl-ack-label">ACK</span></div>
+      </div>
+
+    </div>
+    <!-- L can compose a reply / new signal -->
+    <div class="dl-compose">
+      <input class="dl-compose-input" id="dl-input" placeholder="L REPLY TO D — type then press SEND …" maxlength="120" />
+      <button class="dl-compose-btn" id="dl-send">SEND</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- PALETTE -->
@@ -3052,7 +3610,7 @@ html { scroll-behavior: smooth; }
 
 <script>
 // Nav active state
-const sections = ['entry','d-console','vault','helix','listener','l-console','palette','type'];
+const sections = ['entry','d-console','vault','helix','listener','muses','l-console','palette','type'];
 const links = document.querySelectorAll('.nav a');
 
 function updateActive() {
@@ -3110,6 +3668,72 @@ window.addEventListener('scroll', updateActive);
     cells.forEach(function(c){ c.classList.remove('ec-active'); });
   });
   syncCells();
+}());
+
+// D → L Broadcast panel
+(function() {
+  var entries = document.getElementById('dl-entries');
+  var countEl = document.getElementById('dl-count');
+  var input = document.getElementById('dl-input');
+  var sendBtn = document.getElementById('dl-send');
+  if (!entries) return;
+
+  function updateCount() {
+    var total = entries.querySelectorAll('.dl-entry').length;
+    var unacked = entries.querySelectorAll('.dl-entry:not(.dl-ack)').length;
+    countEl.textContent = unacked + ' SIGNAL' + (unacked !== 1 ? 'S' : '');
+    countEl.style.color = unacked > 0 ? '#0d2030' : '#004422';
+  }
+
+  entries.querySelectorAll('.dl-entry').forEach(function(row) {
+    row.addEventListener('click', function() {
+      row.classList.toggle('dl-ack');
+      updateCount();
+    });
+  });
+
+  function addEntry(type, text) {
+    var el = document.createElement('div');
+    el.className = 'dl-entry dl-' + type;
+    el.setAttribute('data-idx', Date.now());
+    var labels = { working: 'WORKING', broken: 'BROKEN', review: 'REVIEW' };
+    el.innerHTML = '<div class="dl-entry-bar"></div>'
+      + '<div class="dl-entry-status"><div class="dl-status-dot"></div><span class="dl-status-label">' + labels[type] + '</span></div>'
+      + '<div class="dl-entry-body">' + text.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+      + '<div class="dl-entry-ts"><span class="dl-ts-time">NOW</span><span class="dl-ack-label">ACK</span></div>';
+    el.addEventListener('click', function(){ el.classList.toggle('dl-ack'); updateCount(); });
+    entries.insertBefore(el, entries.firstChild);
+    updateCount();
+  }
+
+  if (sendBtn && input) {
+    sendBtn.addEventListener('click', function() {
+      var val = input.value.trim();
+      if (!val) return;
+      addEntry('review', 'L → D: ' + val);
+      input.value = '';
+    });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') sendBtn.click();
+    });
+  }
+
+  updateCount();
+}());
+
+// D + L Console — live clocks
+(function() {
+  var clocks = [document.getElementById('d-clock'), document.getElementById('l-clock')];
+  function tick() {
+    var now = new Date();
+    var h = String(now.getUTCHours()).padStart(2,'0');
+    var m = String(now.getUTCMinutes()).padStart(2,'0');
+    var s = String(now.getUTCSeconds()).padStart(2,'0');
+    var t = h + ':' + m + ':' + s + ' UTC';
+    clocks.forEach(function(el){ if (el) el.textContent = t; });
+  }
+  tick();
+  setInterval(tick, 1000);
 }());
 </script>
 </body>

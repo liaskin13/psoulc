@@ -440,3 +440,114 @@
 
 ### Verification
 - [x] `npm run build` — clean, 1.98s, zero errors (April 17, 2026)
+
+## Design Review TODOs (from /plan-design-review — 2026-04-22)
+
+- [ ] **DESIGN-1** — Define C7 command palette vocabulary: enumerate all commands, aliases, groupings (VAULT / ROSTER / SYSTEM), and autocomplete behavior. Do after C1 (command bus) is defined so vocabulary is canonical. Prevents palette from surfacing internal function names instead of user-facing command language.
+
+- [ ] **DESIGN-2** — Define D7.2 prospect questionnaire fields: D + L decide together what questions applicants must answer. Request modal already stubbed for multi-field form (TBD fields). Unblock before D7.2 UI is finalized.
+
+- [ ] **DESIGN-3** — ~~Run /plan-eng-review for L console (L0.1–L0.8) before shipping.~~ DONE (2026-04-22) — eng review complete, CLEAR.
+
+## Eng Review TODOs (from /plan-eng-review — 2026-04-22)
+
+**Build order locked — execute in this sequence:**
+
+- [ ] **ENG-1** — L0.9: Remove `arch-viewscreen-zone` from ArchitectConsole.jsx (top 60% dead zone — viewer window deprecated). Also remove `ArchitectViewscreen` component. Reclaimed space becomes the full console surface for L0.3/L0.4.
+
+- [ ] **ENG-2** — L0.1: Extend `variables.css` with L palette tokens. Add: `--arch-bg: #070a0d`, `--arch-phosphor: #00e5ff`, `--arch-phosphor-dim: rgba(0,229,255,0.20)`, `--arch-separator: #1a2530`. Verify none already exist first.
+
+- [ ] **ENG-3** — L0.3: Refactor ROSTER zone in ArchitectConsole — replace MembersPanel card UI with a dense phosphor text table (`TIER | ID | HANDLE | STATUS | LAST SEEN`). No cards, no avatar circles, no role badges, no rounded corners. Monospace rows, cyan phosphor. Also add `SET CODE` field to member creation (kills `generateCode()` auto-random — codes must be manually meaningful).
+
+- [ ] **ENG-4** — L0.4: Add CMD MATRIX zone to ArchitectConsole — interactive permission grid. Each cell is a toggle (grant/revoke). ARM required before committing any change (pre-C4 stub: button brightens when armed, COMMIT commits, CANCEL disarms).
+
+- [ ] **ENG-5** — C1: Extend `dispatchCommand` in SystemContext.jsx:
+  - Add handler map `{ [CMD.VOID_ITEM]: voidItem, [CMD.RESTORE_ITEM]: restoreItem, ... }` — dispatch() calls the handler, returns `{ success, error, result }` not a boolean
+  - Add collaborator auth cross-check (1D gap): after `checkAuthorization(cmd, consoleOwner)` passes, if session is a collaborator, verify `canCollaboratorAccess(collab, vaultId)`
+  - Add `commandLog` state, persist to `psc_command_log` in localStorage, cap at 500 entries (rotate oldest)
+  - Expose `commandLog` in SystemContext value
+
+- [ ] **ENG-6** — Manual auth regression (before C1 ships): test 4 paths: null owner → denied, D→RESTORE_ITEM → denied, L→RESTORE_ITEM → allowed, collaborator→VOID_ITEM → denied
+
+### ENG Status: ALL COMPLETE ✓ (2026-04-23)
+- ENG-1 through ENG-6 shipped clean. Build: 543 modules, 971ms, zero errors.
+
+---
+
+## Phase 10: Sovereign Platform Depth — ACTIVE
+*Session start: 2026-04-23*
+
+### Architecture Decisions Locked
+
+**M³ tier naming** — canonical brand language, locked 2026-04-23:
+- **Masters** = D + L (Tier A)
+- **Members** = Tier B (planet holders)
+- **Muses** = Tier C (featured artists, moon vault owners)
+
+**Moon vaults** — double-locked safety deposit box model:
+- Muse + D are the only two keys
+- Nobody else enters unless D explicitly cuts a key for a peer or collaborator
+- Interior UI completely unknown — goes to `/design-shotgun` when D is ready
+- Brief: *"just out of reach — a double vault inside the vault"*
+
+**Pull cord** — fate table:
+
+| Element | Fate |
+|---|---|
+| Global `isProtected` grayscale | **REMOVED** — vestigial, no longer serves a purpose |
+| Pull Cord in D's GOD MODE | **SURVIVES** — session logout / power-down only |
+| Pull Cord in L's ArchitectConsole | **REMOVED** |
+| Spaghettification void animation | **SURVIVES** — D's GOD MODE only, stays cinematic |
+| EVENT HORIZON ARCHIVE | **SURVIVES** — D's console only |
+
+**D console** — AKAI MPC III reference dropped. Neve fader row reference dropped. The frame:
+> *"Master producer's private sanctum. Not the studio floor — the suite above it. 70s warmth, sovereign darkness. The person in this room made all the decisions before anyone else walked in."*
+No code until design exists. Goes to `/design-consultation` → `/design-shotgun`.
+
+---
+
+### Build Order
+
+```
+P10-2 (D7 collaborator wiring)
+  → P10-6 (moon vault access layer, depends on D7)
+  → P10-8 (pull cord surgery)
+  → P10-3 (Amethyst parity)
+  → P10-5 (voice comments)
+  → P10-4 (ID3 auto-read)
+  → P10-1 (QA)
+  → P10-7 (design session)
+```
+
+---
+
+### Tasks
+
+- [ ] **P10-2** — D7 Collaborator object system: `src/data/collaborators.js` schema (`name, planet, tier, grantedVaults[], moonGrants: { moonId, grantedBy, grantedAt }[], activeSince`). Wire into SystemContext: `collaborators` state, `addCollaborator`, `canCollaboratorAccess`. Data layer only — no UI yet.
+
+- [ ] **P10-6** — Moon vault access layer (data only): double-key check in `canEnterVault` — moon vault requires `owner === 'D'` OR session matches the Muse OR explicit `moonGrants` entry. Locked-door placeholder render for denied access (no interior revealed). Depends on P10-2.
+
+- [ ] **P10-8** — Pull cord surgery: strip `isProtected` from SystemContext, remove grayscale CSS from all surfaces, remove pull cord from ArchitectConsole (L). Move pull cord to D-only. Verify spaghettification still fires in MasterReel / AnalogConsole.
+
+- [ ] **P10-3** — Amethyst vault interior: replace bowl rings + session rows with file-cell cubby wall. Same dark recess interior, amber radial lighting, wood lattice dividers. Parity with Saturn / Venus / Earth — no design decisions.
+
+- [ ] **P10-5** — REC voice comments: MediaRecorder → audio blob per selected cell, stored in comment thread (`audioData` field already stubbed). Wire record/playback UI. Timed timestamp pins on track progress bar (Soundcloud-style).
+  - *⚠ Open: access scope = full M³ (Masters + Members + Muses) or Masters + Members only?*
+
+- [ ] **P10-4** — ID3 auto-read on upload: on audio file select in UploadModal, read ID3 metadata (`jsmediatags` or File API) and pre-fill title / artist / BPM. Add TAGS field (comma-delimited). Write access: Masters only.
+
+- [ ] **P10-1** — QA sweep: load dev server, confirm cubby wall renders correctly in Saturn / Venus / Earth vaults. Visual browser pass — do last before calling phase complete.
+
+- [ ] **P10-7** — D console design: run `/design-consultation` then `/design-shotgun`. No code written until design is locked. Inputs: UBC music production degree, 70s soul vibe, sovereign sanctum frame above.
+
+---
+
+### Dropped / Deferred (not dev tasks)
+
+- **DESIGN-1** (C7 command palette vocabulary) — operator naming decision required before any code. Carry as open decision item.
+- **DESIGN-2** (D7.2 questionnaire fields) — D + L decide together. Unblock before request modal UI is finalized.
+
+---
+
+### Open Decisions
+- [ ] **P10-5 scope**: timed comments — full M³ or Masters + Members only?
