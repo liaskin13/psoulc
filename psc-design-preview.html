@@ -2969,7 +2969,7 @@ html { scroll-behavior: smooth; }
   font-size: 9px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #2a2018;
+  color: #3a3020;
   margin-bottom: 20px;
 }
 .muse-footer {
@@ -2983,7 +2983,7 @@ html { scroll-behavior: smooth; }
   font-family: 'Chakra Petch', sans-serif;
   font-size: 9px;
   letter-spacing: 0.1em;
-  color: #2a1e0e;
+  color: #3a2e1a;
 }
 .muse-enter {
   font-family: 'Chakra Petch', sans-serif;
@@ -2993,7 +2993,7 @@ html { scroll-behavior: smooth; }
   background: none;
   border: none;
   cursor: pointer;
-  opacity: 0.5;
+  opacity: 0.7;
   transition: opacity 200ms;
   padding: 0;
 }
@@ -3155,6 +3155,17 @@ html { scroll-behavior: smooth; }
   position: relative;
   overflow: hidden;
 }
+.mv-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Ctext x='10' y='75' font-family='Comfortaa%2C cursive' font-size='52' fill='%23ffffff'%3Edp%3C/text%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  background-repeat: repeat;
+  opacity: 0.022;
+  pointer-events: none;
+  z-index: 0;
+}
 .mv-topbar {
   background: var(--mvc-surface);
   border-bottom: 1px solid var(--mvc-border);
@@ -3297,6 +3308,17 @@ html { scroll-behavior: smooth; }
   position: relative;
   overflow: hidden;
 }
+.janet-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Ctext x='10' y='75' font-family='Comfortaa%2C cursive' font-size='52' fill='%23ffffff'%3Edp%3C/text%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  background-repeat: repeat;
+  opacity: 0.022;
+  pointer-events: none;
+  z-index: 0;
+}
 .janet-topbar {
   background: #060305;
   border-bottom: 1px solid #1e0e1a;
@@ -3338,7 +3360,7 @@ html { scroll-behavior: smooth; }
   font-family: 'Chakra Petch', sans-serif;
   font-size: clamp(52px, 9vw, 110px);
   font-weight: 700;
-  color: #130810;
+  color: #1e0d1c;
   letter-spacing: -0.04em;
   line-height: 1;
   padding: 16px 0 4px;
@@ -3636,6 +3658,18 @@ html { scroll-behavior: smooth; }
     wall.insertBefore(cell, watermark);
   });
 
+  // Span a lone last-row cell full-width
+  requestAnimationFrame(function() {
+    var cells = wall.querySelectorAll('.janet-cell');
+    if (cells.length < 2) return;
+    var last = cells[cells.length - 1];
+    var prev = cells[cells.length - 2];
+    if (last.getBoundingClientRect().top > prev.getBoundingClientRect().top) {
+      last.style.gridColumn = '1 / -1';
+      last.style.maxWidth = '180px';
+    }
+  });
+
   // Trigger first cell
   var first = wall.querySelector('.janet-cell');
   if (first) {
@@ -3712,6 +3746,18 @@ function buildMuseVault(wallId, drawerId, titleId, waveId, bpmId, keyId, durId, 
     wall.insertBefore(cell, watermark);
   });
 
+  // Span a lone last-row cell full-width so it doesn't orphan as a single card
+  requestAnimationFrame(function() {
+    var cells = wall.querySelectorAll('.mv-cell');
+    if (cells.length < 2) return;
+    var last = cells[cells.length - 1];
+    var prev = cells[cells.length - 2];
+    if (last.getBoundingClientRect().top > prev.getBoundingClientRect().top) {
+      last.style.gridColumn = '1 / -1';
+      last.style.maxWidth = '180px';
+    }
+  });
+
   // Seed drawer with first track
   var dw = document.getElementById(waveId);
   if (dw && tracks[0]) {
@@ -3725,7 +3771,7 @@ function buildMuseVault(wallId, drawerId, titleId, waveId, bpmId, keyId, durId, 
 <div class="scroll-target" id="larry-vault"></div>
 <div class="section-label">05D — LARRY · MUSE VAULT · EMPTY PAGES</div>
 
-<div class="mv-screen" id="larry-screen" style="--mvc:#7aaa5a;--mvc-rgb:122,170,90;--mvc-bg:#060705;--mvc-surface:#050604;--mvc-border:#1a2e0e;--mvc-dim:#a8c890;--mvc-bpm:#2a3a1a;--mvc-wm:#080d05;">
+<div class="mv-screen" id="larry-screen" style="--mvc:#7aaa5a;--mvc-rgb:122,170,90;--mvc-bg:#060705;--mvc-surface:#050604;--mvc-border:#1a2e0e;--mvc-dim:#a8c890;--mvc-bpm:#2a3a1a;--mvc-wm:#0d1a08;">
   <div class="mv-topbar">
     <span class="mv-back">← MUSES</span>
     <span style="width:1px;height:16px;background:var(--mvc-border);flex-shrink:0;"></span>
@@ -3776,7 +3822,7 @@ function buildMuseVault(wallId, drawerId, titleId, waveId, bpmId, keyId, durId, 
 <div class="scroll-target" id="erikah-vault"></div>
 <div class="section-label">05E — ERIKAH · MUSE VAULT · ON &amp; ON</div>
 
-<div class="mv-screen" id="erikah-screen" style="--mvc:#cc6633;--mvc-rgb:204,102,51;--mvc-bg:#070504;--mvc-surface:#060403;--mvc-border:#2e1a0e;--mvc-dim:#c8985a;--mvc-bpm:#3a2010;--mvc-wm:#100a05;">
+<div class="mv-screen" id="erikah-screen" style="--mvc:#cc6633;--mvc-rgb:204,102,51;--mvc-bg:#070504;--mvc-surface:#060403;--mvc-border:#2e1a0e;--mvc-dim:#c8985a;--mvc-bpm:#3a2010;--mvc-wm:#1a1208;">
   <div class="mv-topbar">
     <span class="mv-back">← MUSES</span>
     <span style="width:1px;height:16px;background:var(--mvc-border);flex-shrink:0;"></span>
@@ -3832,7 +3878,7 @@ function buildMuseVault(wallId, drawerId, titleId, waveId, bpmId, keyId, durId, 
 <div class="scroll-target" id="drake-vault"></div>
 <div class="section-label">05F — DRAKE · MUSE VAULT · PASSIONFRUIT</div>
 
-<div class="mv-screen" id="drake-screen" style="--mvc:#c4a428;--mvc-rgb:196,164,40;--mvc-bg:#070604;--mvc-surface:#060504;--mvc-border:#2a2208;--mvc-dim:#c8b870;--mvc-bpm:#3a2e08;--mvc-wm:#0e0c04;">
+<div class="mv-screen" id="drake-screen" style="--mvc:#c4a428;--mvc-rgb:196,164,40;--mvc-bg:#070604;--mvc-surface:#060504;--mvc-border:#2a2208;--mvc-dim:#c8b870;--mvc-bpm:#3a2e08;--mvc-wm:#181408;">
   <div class="mv-topbar">
     <span class="mv-back">← MUSES</span>
     <span style="width:1px;height:16px;background:var(--mvc-border);flex-shrink:0;"></span>
