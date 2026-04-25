@@ -1,0 +1,2888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSC Design System — Visual Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+<style>
+/* === DESIGN TOKENS === */
+:root {
+  --void:            #050505;
+  --surface:         #0d0d0d;
+  --surface-raised:  #141414;
+  --border:          #222222;
+  --border-mid:      #2a2a2a;
+  --text-primary:    #f0ede8;
+  --text-secondary:  #666666;
+  --text-muted:      #333333;
+  --identity:        transparent;
+  --identity-dim:    transparent;
+  --identity-glow:   none;
+  --record-red:      #cc2200;
+  --error-text:      #ff4444;
+  --cmd-success:     rgba(0, 200, 80, 0.22);
+
+  --font-display:  'Chakra Petch', sans-serif;
+  --font-ui:       'Chakra Petch', sans-serif;
+  --font-mono:     'Chakra Petch', monospace;
+}
+
+[data-theme="d-soul"] {
+  --identity:        #ffb347;
+  --identity-dim:    rgba(255, 179, 71, 0.10);
+  --identity-glow:   0 0 24px rgba(255, 179, 71, 0.22);
+  --surface:         #0a0806;
+  --surface-raised:  #130e08;
+  --text-primary:    #f5ead8;
+  --border:          #1e1a14;
+  --border-mid:      #2a2318;
+}
+
+[data-theme="l-architect"] {
+  --identity:        #00e5ff;
+  --identity-dim:    rgba(0, 229, 255, 0.10);
+  --identity-glow:   0 0 24px rgba(0, 229, 255, 0.18);
+  --surface:         #070a0d;
+  --surface-raised:  #0d1318;
+  --border:          #111820;
+  --border-mid:      #192230;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #020202;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* === LAYOUT === */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: #050505;
+  border-bottom: 1px solid #1a1a1a;
+  padding: 12px 24px;
+  display: flex; gap: 24px; align-items: center;
+  z-index: 100;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #444;
+}
+.nav a { color: #666; text-decoration: none; cursor: pointer; transition: color 120ms; }
+.nav a:hover, .nav a.active { color: #f0ede8; }
+.nav-brand { color: #333; margin-right: auto; font-size: 9px; }
+
+.section {
+  min-height: 100vh;
+  padding: 72px 0 0;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #333;
+  padding: 24px 32px 8px;
+  border-bottom: 1px solid #111;
+}
+
+/* === SCREEN 1: ENTRY GATE === */
+.entry-screen {
+  background: var(--void, #050505);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.dp-wallpaper {
+  position: absolute; inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.dp-row {
+  display: flex;
+  flex-shrink: 0;
+}
+.dp-row-offset {
+  transform: translateX(65px);
+}
+.dp-wallpaper span {
+  font-family: 'Comfortaa', cursive;
+  font-size: 28px;
+  font-weight: 700;
+  color: #0d0d0d;
+  line-height: 2.4;
+  width: 130px;
+  text-align: center;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.entry-core {
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.entry-code-wrap {
+  position: relative;
+}
+
+.entry-code {
+  width: 120px;
+  height: 48px;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #ffb347;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: 0.3em;
+  text-align: center;
+  outline: none;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.entry-code:focus {
+  border-color: #ffb347;
+  box-shadow: 0 0 20px rgba(255, 179, 71, 0.18);
+}
+.entry-code::placeholder { color: #2a2a2a; letter-spacing: 0.3em; }
+
+.entry-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2e2e2e;
+}
+
+.entry-hint {
+  font-family: 'Comfortaa', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+/* === SCREEN 2: D's CONSOLE === */
+.console-screen {
+  background: #0a0806;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 180px 1fr 220px;
+  grid-template-rows: 40px 1fr;
+}
+
+/* Vault sidebar */
+.vault-sidebar {
+  background: #080604;
+  border-right: 1px solid #1a1510;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: 4px;
+}
+.vs-section-label {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2a1e10;
+  padding: 10px 14px 6px;
+}
+.vs-vault, .vs-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background 60ms;
+}
+.vs-vault:hover, .vs-filter:hover { background: #110e08; }
+.vs-vault.active { border-left-color: #ffb347; background: #0f0c07; }
+.vs-vault.active .vs-name { color: #c8a870; }
+.active-filter { border-left-color: #ffb347; }
+.active-filter .vs-name { color: #c8a870; }
+.vs-name {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4a3820;
+}
+.vs-count {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #2a1e10;
+}
+.vs-empty .vs-name, .vs-empty .vs-count { color: #1e1610; }
+.vs-divider {
+  height: 1px;
+  background: #1a1510;
+  margin: 8px 14px;
+}
+.vs-upload {
+  margin-top: auto;
+  padding: 14px;
+  border-top: 1px solid #1a1510;
+}
+.vs-upload-btn {
+  width: 100%;
+  height: 26px;
+  background: transparent;
+  border: 1px solid #2a2318;
+  color: #ffb347;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 80ms;
+}
+.vs-upload-btn:hover { background: #1a1208; }
+
+/* Track table */
+.track-table-wrap {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0a0806;
+}
+.tt-header {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  height: 28px;
+  border-bottom: 1px solid #1e1a14;
+  background: #080604;
+  gap: 0;
+  flex-shrink: 0;
+}
+.tt-col {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #2a2318;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tt-header .tt-col { cursor: pointer; }
+.tt-header .tt-col:hover { color: #665544; }
+.tt-num   { width: 28px; flex-shrink: 0; }
+.tt-title { flex: 1; min-width: 0; }
+.tt-bpm   { width: 44px; flex-shrink: 0; text-align: right; padding-right: 16px; }
+.tt-key   { width: 44px; flex-shrink: 0; }
+.tt-dur   { width: 52px; flex-shrink: 0; }
+.tt-status{ width: 90px; flex-shrink: 0; }
+.tt-vault { width: 110px; flex-shrink: 0; }
+
+.tt-row {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  height: 30px;
+  border-bottom: 1px solid #0f0c08;
+  cursor: pointer;
+  gap: 0;
+  flex-shrink: 0;
+  transition: background 60ms;
+}
+.tt-row:hover { background: #0e0b07; }
+.tt-selected {
+  background: #110e08;
+  border-left: 2px solid #ffb347;
+  padding-left: 14px;
+}
+.tt-archived .tt-col { color: #2a2318; }
+.tt-archived .tt-title { color: #2a2318; }
+.tt-row .tt-num { color: #2a2318; }
+.tt-row .tt-title { color: #b0a090; font-family: var(--font-ui); font-size: 11px; letter-spacing: 0; }
+.tt-row .tt-bpm { color: #665544; font-size: 9px; }
+.tt-row .tt-key { color: #665544; font-size: 9px; }
+.tt-row .tt-dur { color: #3a2a18; font-size: 9px; }
+.tt-selected .tt-title { color: #f0e8d8; }
+.tt-selected .tt-bpm { color: #ffb347; }
+.tt-selected .tt-key { color: #ffb347; }
+.tt-unreleased { color: #664400 !important; }
+.tt-released { color: #1a6644 !important; }
+.tt-archive { color: #2a2318 !important; }
+.tt-row .tt-vault { color: #2a2318; font-size: 8px; }
+
+/* Right panel — track detail */
+.track-detail {
+  background: #080604;
+  border-left: 1px solid #1a1510;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  gap: 0;
+}
+.td-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0e8d8;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #1a1510;
+}
+.td-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+}
+.td-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid #0f0c08;
+}
+.td-label {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2a1e10;
+}
+.td-value {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #665544;
+  letter-spacing: 0.06em;
+}
+.td-accent { color: #ffb347; }
+.td-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 14px 0;
+  border-top: 1px solid #1a1510;
+  border-bottom: 1px solid #1a1510;
+  margin-top: 4px;
+}
+.td-btn {
+  height: 22px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid #2a2318;
+  color: #554433;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms;
+}
+.td-btn:hover { border-color: #ffb347; color: #ffb347; }
+.td-void { border-color: #2a1400; color: #441100; }
+.td-void:hover { border-color: #cc2200; color: #cc2200; }
+.td-telemetry {
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.td-tel-row {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #2a2318;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.td-tel-ok { color: #443322; }
+.td-tel-pending { color: #554433; }
+.td-tel-denied { color: rgba(204,34,0,0.35); }
+
+.console-topbar {
+  grid-column: 1 / -1;
+  background: #0a0806;
+  border-bottom: 1px solid #1e1a14;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 24px;
+}
+
+.console-logo {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #ffb347;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.console-clock {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #443322;
+  letter-spacing: 0.06em;
+  margin-left: auto;
+}
+
+.console-session {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #2a2318;
+  letter-spacing: 0.06em;
+}
+
+/* Left rail — controls */
+.console-rail {
+  background: #0a0806;
+  border-right: 1px solid #1e1a14;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rail-zone {
+  padding: 12px 16px;
+  border-bottom: 1px solid #1a1510;
+}
+
+.rail-zone-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3a3020;
+  margin-bottom: 10px;
+}
+
+/* VU meter + transport */
+.transport-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.transport-btn {
+  width: 28px; height: 28px;
+  background: #120f0a;
+  border: 1px solid #2a2318;
+  color: #665544;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  transition: border-color 120ms, color 120ms;
+}
+.transport-btn:hover { border-color: #ffb347; color: #ffb347; }
+.transport-btn.active { background: #ffb347; color: #050505; border-color: #ffb347; }
+.transport-btn.rec {
+  border-color: #cc2200;
+  color: #cc2200;
+}
+.transport-btn.rec.armed {
+  animation: rec-pulse 1.6s ease-in-out infinite;
+}
+@keyframes rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(204, 34, 0, 0); }
+  50% { box-shadow: 0 0 8px 2px rgba(204, 34, 0, 0.3); }
+}
+
+.vu-strip {
+  flex: 1;
+  height: 28px;
+  background: #0d0a06;
+  border: 1px solid #1e1a14;
+  display: flex;
+  align-items: flex-end;
+  padding: 2px 3px;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.vu-bar {
+  width: 3px;
+  background: #ffb347;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* Track list */
+.track-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.track-section-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3a2a10;
+  padding: 8px 16px 4px;
+  background: #0d0b07;
+  position: sticky; top: 0;
+  border-bottom: 1px solid #1a1510;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-chip {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  padding: 1px 5px;
+  border: 1px solid #2a1800;
+  color: #664400;
+}
+
+.track-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  border-bottom: 1px solid #130f09;
+  cursor: pointer;
+  gap: 10px;
+  transition: background 60ms;
+}
+.track-row:hover { background: #120e09; }
+.track-row.selected { background: #1a1208; border-left: 2px solid #ffb347; padding-left: 14px; }
+
+.track-chakra {
+  width: 6px; height: 6px;
+  border-radius: 0;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.track-title {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #c8b89a;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-bpm {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #3a2a18;
+}
+
+/* Right panel — main content */
+.console-main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Selected track readout */
+.track-readout {
+  padding: 24px 32px;
+  border-bottom: 1px solid #1a1510;
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.track-title-display {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 700;
+  color: #f5ead8;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  flex: 1;
+  max-width: 500px;
+}
+
+.track-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3a2a18;
+}
+
+.meta-value {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: #ffb347;
+  letter-spacing: 0.02em;
+}
+
+.meta-value-sm {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #8a7055;
+}
+
+/* Command row */
+.cmd-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 32px;
+  border-bottom: 1px solid #1a1510;
+  align-items: center;
+}
+
+.cmd-btn {
+  height: 24px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid #2a2318;
+  color: #665544;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms;
+}
+.cmd-btn:hover { border-color: #ffb347; color: #ffb347; }
+.cmd-btn.void-btn { border-color: #2a1400; color: #441100; }
+.cmd-btn.void-btn:hover { border-color: #cc2200; color: #cc2200; }
+
+.cmd-arm-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #2a2318;
+  letter-spacing: 0.08em;
+  margin-left: auto;
+}
+
+/* Telemetry rail */
+.telemetry-rail {
+  padding: 12px 32px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-bottom: 1px solid #1a1510;
+}
+
+.tel-row { display: flex; gap: 12px; color: #2e2318; }
+.tel-row .tel-time { color: #2a1e10; min-width: 48px; }
+.tel-row.tel-ok .tel-cmd { color: #554433; }
+.tel-row.tel-success .tel-result { color: rgba(255, 179, 71, 0.5); }
+.tel-row.tel-denied .tel-result { color: rgba(204, 34, 0, 0.5); }
+
+/* Voice comment section */
+.voice-section {
+  padding: 12px 32px;
+  flex: 1;
+}
+
+.voice-header {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3a2a18;
+  margin-bottom: 10px;
+}
+
+.voice-comment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #130f09;
+}
+
+.voice-play {
+  font-size: 9px;
+  color: #443322;
+  cursor: pointer;
+  transition: color 120ms;
+}
+.voice-play:hover { color: #ffb347; }
+
+.voice-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #3a2a18;
+  flex: 1;
+}
+
+.voice-del {
+  font-size: 9px;
+  color: #2a1e10;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.voice-comment:hover .voice-del { opacity: 1; color: #ffb347; }
+
+/* === SCREEN 3: VAULT INTERIOR === */
+.vault-screen {
+  background: #0a0806;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.vault-topbar {
+  height: 40px;
+  background: #0a0806;
+  border-bottom: 1px solid #1e1a14;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+}
+
+.vault-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #f5ead8;
+  letter-spacing: -0.01em;
+}
+
+.vault-planet-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #443322;
+}
+
+.vault-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  overflow: hidden;
+}
+
+/* File cell wall */
+.cell-wall {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  align-content: start;
+  overflow-y: auto;
+}
+
+.cell-section-header {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3a2a18;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #1a1510;
+  margin-bottom: 2px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.file-cell {
+  background: #080603;
+  border: 1px solid #1a1510;
+  padding: 10px;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 60ms;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  aspect-ratio: 1;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.4), inset 0 6px 12px rgba(0,0,0,0.6);
+}
+
+.file-cell:hover {
+  border-color: #2a2318;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.4), inset 0 6px 12px rgba(0,0,0,0.6), 0 0 0 1px #2a2318;
+}
+
+.file-cell.selected {
+  border-color: #ffb347;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.4), inset 0 6px 12px rgba(0,0,0,0.6), 0 0 8px rgba(255, 179, 71, 0.15);
+}
+
+.cell-chakra-rail {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+}
+
+.cell-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  color: #8a7055;
+  line-height: 1.3;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cell-bpm {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #3a2a18;
+}
+
+.cell-handles {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 60ms;
+}
+.file-cell:hover .cell-handles { opacity: 1; }
+.file-cell.selected .cell-handles { opacity: 1; }
+
+.cell-handle {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: #3a2a18;
+  cursor: pointer;
+  transition: color 60ms;
+}
+.cell-handle:hover { color: #ffb347; }
+
+/* Vault side panel */
+.vault-panel {
+  border-left: 1px solid #1e1a14;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #090706;
+}
+
+.panel-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid #141008;
+}
+
+.panel-section-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #3a2a18;
+  margin-bottom: 10px;
+}
+
+.panel-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #f5ead8;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.panel-data-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid #130f09;
+  align-items: baseline;
+}
+.panel-data-key {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #3a2a18;
+  letter-spacing: 0.06em;
+}
+.panel-data-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #ffb347;
+}
+
+/* === SCREEN 4: L CONSOLE === */
+.l-console-screen {
+  background: #070a0d;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 40px 1fr;
+}
+
+.l-topbar {
+  grid-column: 1/-1;
+  height: 40px;
+  background: #070a0d;
+  border-bottom: 1px solid #111820;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 24px;
+}
+
+.l-logo {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #00e5ff;
+  letter-spacing: 0.08em;
+  opacity: 0.5;
+}
+
+.l-session {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #0d1e28;
+  letter-spacing: 0.06em;
+  margin-left: auto;
+}
+
+/* ROSTER zone */
+.l-roster {
+  border-right: 1px solid #111820;
+  display: flex;
+  flex-direction: column;
+}
+
+.l-zone-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid #111820;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0d2030;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.l-zone-tag {
+  color: #00e5ff;
+  opacity: 0.4;
+}
+
+.roster-table {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.roster-col-header {
+  display: grid;
+  grid-template-columns: 40px 80px 1fr 70px 80px;
+  padding: 6px 16px;
+  border-bottom: 1px solid #111820;
+  background: #060910;
+  position: sticky; top: 0;
+}
+.roster-col-label {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0d2030;
+}
+
+.roster-row {
+  display: grid;
+  grid-template-columns: 40px 80px 1fr 70px 80px;
+  padding: 7px 16px;
+  border-bottom: 1px solid #0a1018;
+  cursor: pointer;
+  transition: background 60ms;
+}
+.roster-row:hover { background: #090e14; }
+.roster-row.selected { background: #0c1620; border-left: 2px solid #00e5ff; padding-left: 14px; }
+
+.roster-cell {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #1a3040;
+  display: flex;
+  align-items: center;
+}
+.roster-cell.tier-a { color: #00e5ff; opacity: 0.6; }
+.roster-cell.tier-b { color: #0099bb; opacity: 0.5; }
+.roster-cell.handle { color: #1e4050; }
+.roster-cell.status-active { color: #006644; }
+.roster-cell.status-pending { color: #664400; }
+
+/* CMD MATRIX */
+.l-matrix {
+  display: flex;
+  flex-direction: column;
+}
+
+.matrix-grid {
+  flex: 1;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 120px repeat(4, 1fr);
+  gap: 1px;
+  background: #111820;
+  align-content: start;
+  overflow: hidden;
+}
+
+.matrix-cell {
+  background: #070a0d;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #0d2030;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matrix-header-cell {
+  background: #060910;
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0d2030;
+  justify-content: flex-start;
+}
+
+.matrix-row-label {
+  justify-content: flex-start;
+  color: #102030;
+}
+
+.matrix-toggle {
+  width: 14px; height: 14px;
+  border: 1px solid #0d2030;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px;
+  transition: border-color 120ms;
+}
+.matrix-toggle.on {
+  border-color: #00e5ff;
+  color: #00e5ff;
+  box-shadow: 0 0 6px rgba(0, 229, 255, 0.2);
+}
+.matrix-toggle:hover { border-color: rgba(0,229,255,0.4); }
+
+.matrix-footer {
+  padding: 10px 16px;
+  border-top: 1px solid #111820;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.l-cmd-btn {
+  height: 22px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid #0d2030;
+  color: #0d3040;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms;
+}
+.l-cmd-btn:hover { border-color: #00e5ff; color: #00e5ff; }
+.l-cmd-btn.armed { border-color: #00e5ff; color: #00e5ff; box-shadow: 0 0 8px rgba(0,229,255,0.15); }
+
+/* === SYSTEM PALETTE === */
+.palette-section {
+  background: #050505;
+  padding: 32px;
+}
+
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 2px;
+  margin-bottom: 24px;
+}
+
+.swatch {
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 6px 8px;
+}
+
+.swatch-hex {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.3);
+}
+
+.swatch-name {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: rgba(255,255,255,0.2);
+  margin-bottom: 2px;
+}
+
+/* === TYPE SPECIMEN === */
+.type-section {
+  background: #050505;
+  padding: 32px;
+}
+
+.type-row {
+  padding: 24px 0;
+  border-bottom: 1px solid #111;
+  display: flex;
+  gap: 24px;
+  align-items: baseline;
+}
+
+.type-meta {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #2a2a2a;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  min-width: 120px;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+/* Nav scroll behavior */
+html { scroll-behavior: smooth; }
+.scroll-target { scroll-margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-brand">PSC · DESIGN SYSTEM</span>
+  <a href="#entry" class="active">ENTRY</a>
+  <a href="#d-console">D CONSOLE</a>
+  <a href="#vault">VAULT</a>
+  <a href="#helix">HELIX</a>
+  <a href="#listener">LISTENER</a>
+  <a href="#l-console">L CONSOLE</a>
+  <a href="#palette">PALETTE</a>
+  <a href="#type">TYPE</a>
+</nav>
+
+<!-- SECTION LABEL: ENTRY GATE -->
+<div class="scroll-target" id="entry"></div>
+<div class="section-label">01 — ENTRY GATE · SOVEREIGN ACCESS</div>
+
+<style>
+/* Entry v2 */
+.dp-wallpaper span { color: #111111 !important; }
+.entry-dp-logo {
+  font-family: 'Comfortaa', cursive;
+  font-size: 72px;
+  font-weight: 700;
+  color: #1e1510;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  transition: color 500ms;
+  user-select: none;
+  margin-bottom: 8px;
+}
+.entry-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,179,71,0.042) 0%, transparent 56%);
+  pointer-events: none;
+  animation: entryBreath 5s ease-in-out infinite;
+}
+@keyframes entryBreath {
+  0%, 100% { opacity: 1;    transform: translate(-50%,-50%) scale(1);    }
+  50%       { opacity: 0.5; transform: translate(-50%,-50%) scale(1.1); }
+}
+.entry-scanlines {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px
+  );
+  pointer-events: none;
+}
+.entry-code-grid {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  cursor: text;
+}
+.entry-cell {
+  width: 52px; height: 64px;
+  border: 1px solid #1c1c1c;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 11px;
+  color: #303030;
+  letter-spacing: 0;
+  transition: border-color 150ms, color 150ms, box-shadow 150ms;
+  user-select: none;
+}
+.entry-cell.ec-active {
+  border-color: #3a2a18;
+  color: #555;
+  box-shadow: 0 0 12px rgba(255,179,71,0.06);
+}
+.entry-cell.ec-filled {
+  border-color: #2a1e10;
+  color: #ffb347;
+  font-size: 20px;
+}
+.entry-code-hidden {
+  position: absolute !important;
+  inset: 0 !important;
+  opacity: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: text !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 10;
+}
+.entry-success-ring {
+  position: absolute; inset: -8px;
+  border: 1px solid rgba(255,179,71,0);
+  pointer-events: none;
+  transition: border-color 300ms, box-shadow 300ms;
+}
+.entry-success-ring.flash {
+  border-color: rgba(255,179,71,0.4);
+  box-shadow: 0 0 40px rgba(255,179,71,0.12);
+}
+</style>
+
+<div class="entry-screen" style="background:#050505; min-height: calc(100vh - 32px);">
+  <div class="dp-wallpaper" id="dp-wallpaper"></div>
+  <script>
+    (function(){
+      var w = document.getElementById('dp-wallpaper');
+      for(var r=0;r<18;r++){
+        var row=document.createElement('div');
+        row.className='dp-row'+(r%2===1?' dp-row-offset':'');
+        for(var c=0;c<16;c++){var s=document.createElement('span');s.textContent='dp';row.appendChild(s);}
+        w.appendChild(row);
+      }
+    })();
+  </script>
+  <div class="entry-scanlines"></div>
+  <div class="entry-glow"></div>
+  <div class="entry-core">
+    <div class="entry-dp-logo" id="entry-dp-logo">dp</div>
+    <div class="entry-code-grid" id="entry-grid">
+      <div class="entry-cell" id="ec0">·</div>
+      <div class="entry-cell" id="ec1">·</div>
+      <div class="entry-cell" id="ec2">·</div>
+      <div class="entry-cell" id="ec3">·</div>
+      <div class="entry-success-ring" id="entry-ring"></div>
+      <input class="entry-code entry-code-hidden" type="password" maxlength="4" id="entry-input" autocomplete="off">
+    </div>
+    <div class="entry-label">SOVEREIGN ACCESS</div>
+    <div class="entry-hint">PLEASANT SOUL COLLECTIVE</div>
+  </div>
+</div>
+
+<!-- SECTION LABEL: D CONSOLE -->
+<div class="scroll-target" id="d-console"></div>
+<div class="section-label">02 — D CONSOLE · 0528 · GOD MODE</div>
+
+<div class="console-screen" data-theme="d-soul" style="min-height: calc(100vh - 32px);">
+
+  <div class="console-topbar">
+    <span class="console-logo">PSC · D</span>
+    <span style="font-family:var(--font-mono);font-size:8px;color:#2a2318;letter-spacing:0.1em;text-transform:uppercase;">GOD MODE</span>
+    <span class="console-clock" style="margin-left:auto;">04:22:11 UTC</span>
+    <span class="console-session">SESSION · 0528</span>
+  </div>
+
+  <!-- Vault sidebar -->
+  <div class="vault-sidebar">
+    <div class="vs-section-label">VAULTS</div>
+    <div class="vs-vault active">
+      <span class="vs-name">ORIGINAL WORK</span>
+      <span class="vs-count">12</span>
+    </div>
+    <div class="vs-vault">
+      <span class="vs-name">MIXES</span>
+      <span class="vs-count">24</span>
+    </div>
+    <div class="vs-vault vs-empty">
+      <span class="vs-name">LIVE SETS</span>
+      <span class="vs-count">0</span>
+    </div>
+    <div class="vs-divider"></div>
+    <div class="vs-section-label">FILTER</div>
+    <div class="vs-filter active-filter">
+      <span class="vs-name">ALL</span>
+      <span class="vs-count">36</span>
+    </div>
+    <div class="vs-filter">
+      <span class="vs-name">UNRELEASED</span>
+      <span class="vs-count">12</span>
+    </div>
+    <div class="vs-filter">
+      <span class="vs-name">RELEASED</span>
+      <span class="vs-count">3</span>
+    </div>
+    <div class="vs-filter">
+      <span class="vs-name">ARCHIVE</span>
+      <span class="vs-count">21</span>
+    </div>
+    <div class="vs-upload">
+      <button class="vs-upload-btn">+ UPLOAD</button>
+    </div>
+  </div>
+
+  <!-- Track table -->
+  <div class="track-table-wrap">
+    <div class="tt-header">
+      <span class="tt-col tt-num">#</span>
+      <span class="tt-col tt-title">TITLE</span>
+      <span class="tt-col tt-bpm">BPM</span>
+      <span class="tt-col tt-key">KEY</span>
+      <span class="tt-col tt-dur">DURATION</span>
+      <span class="tt-col tt-status">STATUS</span>
+      <span class="tt-col tt-vault">VAULT</span>
+    </div>
+    <div class="tt-row tt-selected">
+      <span class="tt-col tt-num">01</span>
+      <span class="tt-col tt-title">Low End Theory Redux</span>
+      <span class="tt-col tt-bpm">094</span>
+      <span class="tt-col tt-key">5A</span>
+      <span class="tt-col tt-dur">6:42</span>
+      <span class="tt-col tt-status tt-unreleased">UNRELEASED</span>
+      <span class="tt-col tt-vault">ORIGINAL WORK</span>
+    </div>
+    <div class="tt-row">
+      <span class="tt-col tt-num">02</span>
+      <span class="tt-col tt-title">Dusk Protocol</span>
+      <span class="tt-col tt-bpm">110</span>
+      <span class="tt-col tt-key">4A</span>
+      <span class="tt-col tt-dur">7:18</span>
+      <span class="tt-col tt-status tt-unreleased">UNRELEASED</span>
+      <span class="tt-col tt-vault">ORIGINAL WORK</span>
+    </div>
+    <div class="tt-row">
+      <span class="tt-col tt-num">03</span>
+      <span class="tt-col tt-title">Signal Lost</span>
+      <span class="tt-col tt-bpm">088</span>
+      <span class="tt-col tt-key">9B</span>
+      <span class="tt-col tt-dur">5:55</span>
+      <span class="tt-col tt-status tt-unreleased">UNRELEASED</span>
+      <span class="tt-col tt-vault">ORIGINAL WORK</span>
+    </div>
+    <div class="tt-row">
+      <span class="tt-col tt-num">04</span>
+      <span class="tt-col tt-title">Pressure System</span>
+      <span class="tt-col tt-bpm">072</span>
+      <span class="tt-col tt-key">2A</span>
+      <span class="tt-col tt-dur">4:30</span>
+      <span class="tt-col tt-status tt-unreleased">UNRELEASED</span>
+      <span class="tt-col tt-vault">ORIGINAL WORK</span>
+    </div>
+    <div class="tt-row">
+      <span class="tt-col tt-num">05</span>
+      <span class="tt-col tt-title">Echo Chamber</span>
+      <span class="tt-col tt-bpm">116</span>
+      <span class="tt-col tt-key">6A</span>
+      <span class="tt-col tt-dur">5:12</span>
+      <span class="tt-col tt-status tt-unreleased">UNRELEASED</span>
+      <span class="tt-col tt-vault">ORIGINAL WORK</span>
+    </div>
+    <div class="tt-row">
+      <span class="tt-col tt-num">06</span>
+      <span class="tt-col tt-title">First Draft</span>
+      <span class="tt-col tt-bpm">102</span>
+      <span class="tt-col tt-key">11B</span>
+      <span class="tt-col tt-dur">6:07</span>
+      <span class="tt-col tt-status tt-unreleased">UNRELEASED</span>
+      <span class="tt-col tt-vault">ORIGINAL WORK</span>
+    </div>
+    <div class="tt-row">
+      <span class="tt-col tt-num">07</span>
+      <span class="tt-col tt-title">Golden Gate Sunrise</span>
+      <span class="tt-col tt-bpm">128</span>
+      <span class="tt-col tt-key">11A</span>
+      <span class="tt-col tt-dur">7:44</span>
+      <span class="tt-col tt-status tt-released">RELEASED</span>
+      <span class="tt-col tt-vault">MIXES</span>
+    </div>
+    <div class="tt-row">
+      <span class="tt-col tt-num">08</span>
+      <span class="tt-col tt-title">Root Frequency</span>
+      <span class="tt-col tt-bpm">098</span>
+      <span class="tt-col tt-key">3B</span>
+      <span class="tt-col tt-dur">6:21</span>
+      <span class="tt-col tt-status tt-released">RELEASED</span>
+      <span class="tt-col tt-vault">MIXES</span>
+    </div>
+    <div class="tt-row tt-archived">
+      <span class="tt-col tt-num">09</span>
+      <span class="tt-col tt-title">The Beginning Sessions</span>
+      <span class="tt-col tt-bpm">105</span>
+      <span class="tt-col tt-key">8A</span>
+      <span class="tt-col tt-dur">8:33</span>
+      <span class="tt-col tt-status tt-archive">ARCHIVE</span>
+      <span class="tt-col tt-vault">MIXES</span>
+    </div>
+  </div>
+
+  <!-- Right panel: selected track detail -->
+  <div class="track-detail">
+    <div class="td-title">Low End Theory Redux</div>
+    <div class="td-fields">
+      <div class="td-field">
+        <span class="td-label">BPM</span>
+        <span class="td-value td-accent">094</span>
+      </div>
+      <div class="td-field">
+        <span class="td-label">KEY</span>
+        <span class="td-value td-accent">5A · F MIN</span>
+      </div>
+      <div class="td-field">
+        <span class="td-label">DURATION</span>
+        <span class="td-value">6:42</span>
+      </div>
+      <div class="td-field">
+        <span class="td-label">FORMAT</span>
+        <span class="td-value">WAV · 24BIT</span>
+      </div>
+      <div class="td-field">
+        <span class="td-label">STATUS</span>
+        <span class="td-value">UNRELEASED</span>
+      </div>
+      <div class="td-field">
+        <span class="td-label">VAULT</span>
+        <span class="td-value">ORIGINAL WORK</span>
+      </div>
+      <div class="td-field">
+        <span class="td-label">GENRE</span>
+        <span class="td-value">Electronic</span>
+      </div>
+      <div class="td-field">
+        <span class="td-label">UPLOADED</span>
+        <span class="td-value">2026-04-12</span>
+      </div>
+    </div>
+    <div class="td-actions">
+      <button class="td-btn">TUNE</button>
+      <button class="td-btn">COMMENT</button>
+      <button class="td-btn">MOVE</button>
+      <button class="td-btn td-void">VOID</button>
+    </div>
+    <div class="td-telemetry">
+      <div class="td-tel-row td-tel-ok">[01:14] UPLOAD — OK</div>
+      <div class="td-tel-row td-tel-ok">[01:22] TUNE bpm:94 — OK</div>
+      <div class="td-tel-row td-tel-pending">[01:38] COMMENT — PENDING</div>
+      <div class="td-tel-row td-tel-denied">[02:11] VOID — DENIED · ARM FIRST</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SECTION LABEL: VAULT -->
+<div class="scroll-target" id="vault"></div>
+<div class="section-label">03 — ORIGINAL WORK · FILE CELL WALL</div>
+
+<div class="vault-screen" data-theme="d-soul" style="min-height: calc(100vh - 32px);">
+  <div class="vault-topbar">
+    <span class="vault-name">Original Work</span>
+    <span class="vault-planet-tag">VAULT · 43 TRACKS</span>
+    <span style="margin-left:auto;font-family:var(--font-mono);font-size:8px;color:#2a1e10;letter-spacing:0.08em;">UNRELEASED · 12 &nbsp;&nbsp; RELEASED · 3 &nbsp;&nbsp; ARCHIVE · 28</span>
+  </div>
+  <div class="vault-content">
+    <div class="cell-wall">
+      <div class="cell-section-header">UNRELEASED</div>
+      <!-- Row of cells -->
+      <div class="file-cell selected">
+        <div class="cell-chakra-rail" style="background:#ff6b35;"></div>
+        <div class="cell-title">Low End Theory Redux</div>
+        <div class="cell-bpm">094 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+          <span class="cell-handle">⏺</span>
+        </div>
+      </div>
+      <div class="file-cell">
+        <div class="cell-chakra-rail" style="background:#9b59b6;"></div>
+        <div class="cell-title">Dusk Protocol</div>
+        <div class="cell-bpm">110 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+          <span class="cell-handle">⏺</span>
+        </div>
+      </div>
+      <div class="file-cell">
+        <div class="cell-chakra-rail" style="background:#27ae60;"></div>
+        <div class="cell-title">Signal Lost</div>
+        <div class="cell-bpm">088 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+          <span class="cell-handle">⏺</span>
+        </div>
+      </div>
+      <div class="file-cell">
+        <div class="cell-chakra-rail" style="background:#2980b9;"></div>
+        <div class="cell-title">Pressure System</div>
+        <div class="cell-bpm">072 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+          <span class="cell-handle">⏺</span>
+        </div>
+      </div>
+      <div class="file-cell">
+        <div class="cell-chakra-rail" style="background:#ff6b35;"></div>
+        <div class="cell-title">Echo Chamber</div>
+        <div class="cell-bpm">116 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+          <span class="cell-handle">⏺</span>
+        </div>
+      </div>
+      <div class="file-cell">
+        <div class="cell-chakra-rail" style="background:#e74c3c;"></div>
+        <div class="cell-title">Root Frequency Vol. II</div>
+        <div class="cell-bpm">098 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+          <span class="cell-handle">⏺</span>
+        </div>
+      </div>
+      <div class="file-cell">
+        <div class="cell-chakra-rail" style="background:#f39c12;"></div>
+        <div class="cell-title">The Deep Mix</div>
+        <div class="cell-bpm">104 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+          <span class="cell-handle">⏺</span>
+        </div>
+      </div>
+      <div class="file-cell">
+        <div class="cell-chakra-rail" style="background:#1abc9c;"></div>
+        <div class="cell-title">First Draft</div>
+        <div class="cell-bpm">080 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+          <span class="cell-handle">⏺</span>
+        </div>
+      </div>
+
+      <div class="cell-section-header" style="margin-top:8px;">RELEASED</div>
+      <div class="file-cell" style="background:#080704; border-color:#1e1a0e;">
+        <div class="cell-chakra-rail" style="background:#f1c40f;opacity:0.5;"></div>
+        <div class="cell-title" style="color:#665533;">Golden Gate Sunrise</div>
+        <div class="cell-bpm">128 BPM</div>
+        <div class="cell-handles">
+          <span class="cell-handle">TUNE</span>
+          <span class="cell-handle">▶</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <div class="vault-panel">
+      <div class="panel-section">
+        <div class="panel-section-label">SELECTED</div>
+        <div class="panel-title">Low End Theory Redux</div>
+        <div class="panel-data-row">
+          <span class="panel-data-key">BPM</span>
+          <span class="panel-data-val">094</span>
+        </div>
+        <div class="panel-data-row">
+          <span class="panel-data-key">KEY</span>
+          <span class="panel-data-val" style="color:#ff6b35;font-size:10px;">F MINOR</span>
+        </div>
+        <div class="panel-data-row">
+          <span class="panel-data-key">SECTION</span>
+          <span class="panel-data-val" style="color:#554422;font-size:10px;">UNRELEASED</span>
+        </div>
+        <div class="panel-data-row">
+          <span class="panel-data-key">DURATION</span>
+          <span class="panel-data-val">4:32</span>
+        </div>
+        <div class="panel-data-row">
+          <span class="panel-data-key">FORMAT</span>
+          <span class="panel-data-val" style="font-size:10px;color:#3a2a18;">WAV · 24bit</span>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section-label">COMMANDS</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;text-align:left;height:26px;">TUNE METADATA</button>
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;text-align:left;height:26px;">LEAVE COMMENT</button>
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;text-align:left;height:26px;">MOVE SECTION</button>
+          <button class="cmd-btn void-btn" style="width:100%;justify-content:flex-start;text-align:left;height:26px;">ARM · VOID</button>
+        </div>
+      </div>
+
+      <div class="panel-section" style="flex:1;">
+        <div class="panel-section-label">VOICE COMMENTS · 3</div>
+        <div class="voice-comment" style="border-bottom:1px solid #130f09;padding:6px 0;">
+          <span class="voice-play">▶</span>
+          <span class="voice-meta">0528 · @ 0:32</span>
+          <span class="voice-del">×</span>
+        </div>
+        <div class="voice-comment" style="border-bottom:1px solid #130f09;padding:6px 0;">
+          <span class="voice-play">▶</span>
+          <span class="voice-meta">4096 · @ 1:15</span>
+          <span class="voice-del">×</span>
+        </div>
+        <div class="voice-comment" style="padding:6px 0;">
+          <span class="voice-play">▶</span>
+          <span class="voice-meta">7677 · @ 2:44</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION LABEL: VAULT HELIX -->
+<div class="scroll-target" id="helix"></div>
+<div class="section-label">04 — VAULT HELIX · D's ARCHIVE · 3D MODE</div>
+
+<style>
+.helix-stage {
+  position: relative; width: 100%; height: 100vh;
+  overflow: hidden; background: #050402;
+  perspective: 1000px; perspective-origin: 50% 50%;
+  cursor: grab;
+}
+.helix-stage:active { cursor: grabbing; }
+.helix-group {
+  position: absolute; top: 50%; left: 50%;
+  transform-style: preserve-3d;
+  width: 0; height: 0;
+}
+.hx-card {
+  position: absolute;
+  width: 300px; height: 188px;
+  margin-left: -150px; margin-top: -94px;
+  background: #0b0906;
+  border: 1px solid #2a2018;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  cursor: pointer;
+  transition: border-color 200ms;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.hx-card:hover { border-color: #3a2a18; }
+.hx-card.hx-selected { border-color: #ffb347; box-shadow: 0 0 30px rgba(255,179,71,0.15), 0 0 60px rgba(255,179,71,0.06); }
+.hx-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.hx-wave { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 8px; }
+.hx-title { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 600; color: #f0ede8; padding: 0 12px 4px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hx-meta { font-family: 'Chakra Petch', sans-serif; font-size: 9px; color: #ffb347; padding: 0 12px 10px; letter-spacing: 0.05em; display: flex; gap: 10px; }
+.hx-num { position: absolute; top: 8px; right: 10px; font-family: 'Chakra Petch', sans-serif; font-size: 9px; color: #1e1610; letter-spacing: 0.06em; }
+/* Ambient particles */
+.hx-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.hx-particle { position: absolute; border-radius: 50%; background: #ffb347; opacity: 0; animation: hxFloat linear infinite; }
+@keyframes hxFloat {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  10%  { opacity: 0.3; }
+  90%  { opacity: 0.1; }
+  100% { transform: translateY(-120vh) scale(0.3); opacity: 0; }
+}
+/* Spine nodes */
+.hx-spine-node {
+  position: absolute;
+  width: 3px; height: 3px;
+  margin-left: -1.5px; margin-top: -1.5px;
+  border-radius: 50%;
+  background: #ffb347;
+  pointer-events: none;
+  will-change: transform;
+}
+/* Rise particles — drift upward through helix axis */
+@keyframes hxRise {
+  0%   { transform: translate(-50%, 42vh); opacity: 0; }
+  6%   { opacity: 0.55; }
+  88%  { opacity: 0.12; }
+  100% { transform: translate(-50%, -42vh) scale(0.35); opacity: 0; }
+}
+.hx-rise {
+  position: absolute;
+  left: 50%; top: 50%;
+  border-radius: 50%;
+  background: #ffb347;
+  animation: hxRise linear infinite;
+  pointer-events: none;
+}
+</style>
+
+<div class="helix-stage" id="helix-stage">
+  <div class="hx-particles" id="hx-particles"></div>
+  <div id="hx-rise-layer" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+  <div class="helix-group" id="helix-group"></div>
+
+  <!-- Selected track overlay -->
+  <div id="helix-detail" style="position:absolute;top:20px;right:28px;opacity:0;transition:opacity 300ms;pointer-events:none;text-align:right;">
+    <div id="helix-detail-title" style="font-family:'Chakra Petch',sans-serif;font-size:20px;font-weight:600;color:#f5ead8;letter-spacing:-0.01em;line-height:1.2;margin-bottom:8px;max-width:320px;"></div>
+    <div style="display:flex;gap:16px;justify-content:flex-end;margin-bottom:6px;">
+      <span id="helix-detail-bpm" style="font-family:'Chakra Petch',sans-serif;font-size:11px;color:#ffb347;letter-spacing:0.06em;"></span>
+      <span id="helix-detail-key" style="font-family:'Chakra Petch',sans-serif;font-size:11px;color:#ffb347;letter-spacing:0.06em;"></span>
+    </div>
+    <div id="helix-detail-status" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#3a2a18;letter-spacing:0.12em;text-transform:uppercase;border:1px solid #2a1800;display:inline-block;padding:2px 8px;"></div>
+  </div>
+
+  <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-family:'Chakra Petch',sans-serif;font-size:9px;color:#3a2a18;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;">DRAG TO SPIN · SCROLL TO TRAVEL · CLICK TO SELECT</div>
+</div>
+
+<script>
+(function() {
+  var allTracks = [
+    { title: 'Low End Theory Redux',  bpm: '094', key: 'F MIN',   dur: '4:32',  status: 'UNRELEASED', color: '#ffb347' },
+    { title: 'Dusk Protocol',         bpm: '110', key: 'A♭ MAJ',  dur: '6:14',  status: 'RELEASED',   color: '#cc6644' },
+    { title: 'Signal Lost',           bpm: '088', key: 'D MIN',   dur: '5:47',  status: 'UNRELEASED', color: '#4488cc' },
+    { title: 'Pressure System',       bpm: '072', key: 'G MIN',   dur: '7:03',  status: 'UNRELEASED', color: '#44aa77' },
+    { title: 'Echo Chamber',          bpm: '116', key: 'E♭ MAJ',  dur: '5:22',  status: 'RELEASED',   color: '#8844cc' },
+    { title: 'Root Frequency Vol. II',bpm: '096', key: 'C MIN',   dur: '8:11',  status: 'UNRELEASED', color: '#cc4444' },
+    { title: 'The Deep Mix',          bpm: '104', key: 'B♭ MIN',  dur: '9:44',  status: 'UNRELEASED', color: '#cc8844' },
+    { title: 'First Draft',           bpm: '089', key: 'D MAJ',   dur: '3:58',  status: 'UNRELEASED', color: '#44ccaa' },
+    { title: 'Golden Gate Sunrise',   bpm: '128', key: 'F# MIN',  dur: '5:30',  status: 'RELEASED',   color: '#ffb347' },
+    { title: 'Oscillator Suite',      bpm: '100', key: 'C MAJ',   dur: '6:12',  status: 'UNRELEASED', color: '#cc44aa' },
+    { title: 'Warmth Coefficient',    bpm: '085', key: 'A MIN',   dur: '4:44',  status: 'UNRELEASED', color: '#4466cc' },
+    { title: 'Vision 001 — Rough Cut',bpm: '—',   key: '—',       dur: '47:12', status: 'UNRELEASED', color: '#ffb347' },
+  ];
+
+  var group = document.getElementById('helix-group');
+  var stage = document.getElementById('helix-stage');
+  var N = allTracks.length;
+
+  // === GEOMETRY ===
+  var radius = 260;   // horizontal spread — tighter so cards stay in frame
+  var turns  = 2;     // full rotations top to bottom
+  var totalH = 500;   // vertical span — enough to separate without losing cards off screen
+  var PERSP  = 1000;  // must match CSS perspective value
+
+  // Start with card 0 at z=+radius (front/closest). sin(PI/2)=1 → z=+radius.
+  var rotY = Math.PI / 2, targetRotY = Math.PI / 2;
+  var scrollY = 0, targetScrollY = 0;
+  var isDrag = false, lastX = 0, selectedIdx = -1;
+  var cardEls = [], spineEls = [];
+  var SPINE_COUNT = 80; // smooth dotted spiral
+
+  // Seeded RNG
+  function seedRng(s) { return function() { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }; }
+
+  // SVG waveform (same algo as crate flip)
+  function makeWaveSvg(seed, color) {
+    var bars=64, barW=2.5, gap=1.5, h=46, w=bars*(barW+gap);
+    var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width',w); svg.setAttribute('height',h); svg.setAttribute('viewBox','0 0 '+w+' '+h);
+    svg.style.cssText='display:block;';
+    var rand=seedRng(seed);
+    for(var b=0;b<bars;b++){
+      var r1=rand(),r2=rand(),r3=rand();
+      var env=Math.sin((b/bars)*Math.PI)*0.65+0.35;
+      var ht=(r1*0.5+r2*0.3+r3*0.2)*env;
+      var bh=Math.max(1.5,ht*h);
+      var x=b*(barW+gap), y=(h-bh)/2;
+      var rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',x); rect.setAttribute('y',y);
+      rect.setAttribute('width',barW); rect.setAttribute('height',bh);
+      rect.setAttribute('fill',color);
+      rect.setAttribute('opacity', 0.35+ht*0.45);
+      svg.appendChild(rect);
+    }
+    return svg;
+  }
+
+  // Build cards
+  allTracks.forEach(function(t, i) {
+    var card = document.createElement('div');
+    card.className = 'hx-card';
+    card.dataset.idx = i;
+
+    var accent = document.createElement('div');
+    accent.className = 'hx-accent';
+    accent.style.background = t.color;
+    card.appendChild(accent);
+
+    var num = document.createElement('div');
+    num.className = 'hx-num';
+    num.textContent = String(i+1).padStart(2,'0');
+    card.appendChild(num);
+
+    var wave = document.createElement('div');
+    wave.className = 'hx-wave';
+    var seed = t.title.split('').reduce(function(a,c,j){return a+c.charCodeAt(0)*(j+7);},i*31);
+    wave.appendChild(makeWaveSvg(seed, t.color));
+    card.appendChild(wave);
+
+    var title = document.createElement('div');
+    title.className = 'hx-title';
+    title.textContent = t.title;
+    card.appendChild(title);
+
+    var meta = document.createElement('div');
+    meta.className = 'hx-meta';
+    meta.innerHTML = '<span>'+t.bpm+(t.bpm!=='—'?' BPM':'')+'</span><span>'+t.key+'</span><span style="margin-left:auto;color:#3a2a18;">'+t.dur+'</span>';
+    card.appendChild(meta);
+
+    card.addEventListener('click', function() { selectCard(i); });
+    group.appendChild(card);
+    cardEls.push(card);
+  });
+
+  // Build spine nodes
+  for (var s = 0; s < SPINE_COUNT; s++) {
+    var st = s / (SPINE_COUNT - 1);
+    var node = document.createElement('div');
+    node.className = 'hx-spine-node';
+    node.dataset.t = st;
+    group.appendChild(node);
+    spineEls.push(node);
+  }
+
+  // Rise particles — spawn in axis layer, not 3D group
+  var riseLayer = document.getElementById('hx-rise-layer');
+  for (var r = 0; r < 18; r++) {
+    var rp = document.createElement('div');
+    rp.className = 'hx-rise';
+    var sz = 1.5 + Math.random() * 2.5;
+    var xOff = (Math.random() - 0.5) * 60; // slight horizontal scatter
+    rp.style.cssText += 'width:'+sz+'px;height:'+sz+'px;margin-left:'+xOff+'px;animation-duration:'+(7+Math.random()*10)+'s;animation-delay:'+(-Math.random()*12)+'s;';
+    riseLayer.appendChild(rp);
+  }
+
+  // Spawn ambient particles
+  var particles = document.getElementById('hx-particles');
+  for (var p = 0; p < 25; p++) {
+    var dot = document.createElement('div');
+    dot.className = 'hx-particle';
+    var size = 1 + Math.random() * 2;
+    dot.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+(Math.random()*100)+'%;bottom:'+(Math.random()*20)+'%;animation-duration:'+(8+Math.random()*16)+'s;animation-delay:'+(Math.random()*12)+'s;';
+    particles.appendChild(dot);
+  }
+
+  function positionCards(ry, sy) {
+    // Cards
+    allTracks.forEach(function(t, i) {
+      var baseAngle = (i / (N - 1)) * turns * Math.PI * 2;
+      var worldAngle = baseAngle + ry;
+      var x = Math.cos(worldAngle) * radius;
+      var z = Math.sin(worldAngle) * radius;
+      var y = (i / (N - 1)) * totalH - totalH / 2 + sy;
+      var faceAngle = Math.atan2(-Math.cos(worldAngle) * radius, PERSP - Math.sin(worldAngle) * radius);
+      cardEls[i].style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' + faceAngle + 'rad)';
+      var depth = (z + radius) / (radius * 2);
+      cardEls[i].style.filter = 'brightness(' + (0.5 + depth * 0.5) + ')';
+    });
+
+    // Spine nodes — trace the full helix path continuously
+    spineEls.forEach(function(node, s) {
+      var st = s / (SPINE_COUNT - 1);
+      var sAngle = st * turns * Math.PI * 2 + ry;
+      var sx = Math.cos(sAngle) * (radius * 0.72); // run inside card radius
+      var sz = Math.sin(sAngle) * (radius * 0.72);
+      var sy2 = st * totalH - totalH / 2 + sy;
+      var depth = (sz + radius) / (radius * 2);
+      // Opacity pulses along the spine for flow direction
+      var pulse = 0.15 + 0.35 * Math.pow(Math.abs(Math.sin(st * Math.PI * turns * 2 + Date.now() * 0.0008)), 2);
+      node.style.transform = 'translate3d(' + sx + 'px,' + sy2 + 'px,' + sz + 'px)';
+      node.style.opacity = pulse * (0.4 + depth * 0.6);
+    });
+  }
+
+  function selectCard(idx) {
+    selectedIdx = idx;
+    cardEls.forEach(function(c,i){ c.classList.toggle('hx-selected', i===idx); });
+    var t = allTracks[idx];
+    document.getElementById('helix-detail-title').textContent = t.title;
+    document.getElementById('helix-detail-bpm').textContent = t.bpm!=='—' ? t.bpm+' BPM' : '';
+    document.getElementById('helix-detail-key').textContent = t.key!=='—' ? t.key : '';
+    document.getElementById('helix-detail-status').textContent = t.status;
+    document.getElementById('helix-detail').style.opacity = '1';
+  }
+
+  // Drag
+  stage.addEventListener('mousedown', function(e){ isDrag=true; lastX=e.clientX; clickX=e.clientX; });
+  window.addEventListener('mousemove', function(e){
+    if(!isDrag) return;
+    targetRotY += (e.clientX - lastX) * 0.008;
+    lastX = e.clientX;
+  });
+  window.addEventListener('mouseup', function(){ isDrag=false; });
+  stage.addEventListener('wheel', function(e){
+    targetScrollY -= e.deltaY * 0.6;
+    targetScrollY = Math.max(-totalH * 0.5, Math.min(totalH * 0.5, targetScrollY));
+  }, { passive: true });
+
+  // RAF loop — gentle auto-spin, smooth lerp
+  function tick() {
+    requestAnimationFrame(tick);
+    if (!isDrag) targetRotY += 0.0025;
+    rotY    += (targetRotY    - rotY)    * 0.055;
+    scrollY += (targetScrollY - scrollY) * 0.09;
+    positionCards(rotY, scrollY);
+  }
+  tick();
+
+  // Initial select
+  setTimeout(function(){ selectCard(0); }, 300);
+})();
+</script>
+
+<!-- SECTION LABEL: LISTENER VIEW -->
+<div class="scroll-target" id="listener"></div>
+<div class="section-label">05 — LISTENER VIEW · CRATE FLIP</div>
+
+<div style="background:#080604;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+
+  <!-- Ambient glow -->
+  <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(255,179,71,0.04) 0%,transparent 70%);pointer-events:none;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+
+  <!-- Artist identity strip -->
+  <div style="position:absolute;top:0;left:0;right:0;height:40px;display:flex;align-items:center;padding:0 28px;gap:16px;border-bottom:1px solid #1a1510;">
+    <div style="font-family:'Comfortaa',cursive;font-size:18px;font-weight:700;color:#ffb347;letter-spacing:-0.02em;">dp</div>
+    <div style="font-family:'Comfortaa',cursive;font-size:9px;font-weight:700;color:#3a2a18;letter-spacing:0.14em;text-transform:uppercase;">PLEASANT SOUL COLLECTIVE</div>
+    <div style="margin-left:auto;font-family:'Chakra Petch',sans-serif;font-size:9px;color:#2a1e0e;letter-spacing:0.08em;">LISTENER ACCESS</div>
+  </div>
+
+  <!-- Vault tabs -->
+  <div style="position:absolute;top:48px;left:0;right:0;display:flex;gap:0;border-bottom:1px solid #1a1510;">
+    <div class="crate-tab active-tab" data-crate="mixes">MIXES</div>
+    <div class="crate-tab" data-crate="original">ORIGINAL WORK</div>
+    <div class="crate-tab" data-crate="live">LIVE SETS</div>
+  </div>
+
+  <!-- Crate stage -->
+  <div id="crate-stage" style="perspective:1200px;width:100%;display:flex;align-items:center;justify-content:center;padding-top:40px;position:relative;">
+    <div id="crate-stack" style="position:relative;width:360px;height:360px;transform-style:preserve-3d;cursor:grab;">
+    </div>
+  </div>
+
+  <!-- Now playing strip -->
+  <div id="now-playing" style="position:absolute;bottom:0;left:0;right:0;height:64px;background:#06050300;border-top:1px solid #1a1510;display:flex;align-items:center;padding:0 28px;gap:20px;">
+    <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
+      <div id="np-title" style="font-family:'Chakra Petch',sans-serif;font-size:15px;font-weight:600;color:#f5ead8;letter-spacing:0.01em;">Low End Theory Redux</div>
+      <div style="display:flex;gap:16px;align-items:center;">
+        <span id="np-bpm" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#ffb347;letter-spacing:0.08em;">094 BPM</span>
+        <span id="np-key" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#ffb347;letter-spacing:0.08em;">F MIN</span>
+        <span id="np-status" style="font-family:'Chakra Petch',sans-serif;font-size:8px;color:#3a2a18;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #2a1800;padding:1px 6px;">UNRELEASED</span>
+      </div>
+    </div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#2a1e0e;letter-spacing:0.06em;">SWIPE TO BROWSE</div>
+  </div>
+
+</div>
+
+<style>
+.crate-tab {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2a1e0e;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-right: 1px solid #1a1510;
+  transition: color 120ms;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.crate-tab:hover { color: #7a5a38; }
+.crate-tab.active-tab { color: #ffb347; border-bottom-color: #ffb347; }
+
+.crate-card {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  background: #0c0a07;
+  border: 1px solid #2a2018;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 18px;
+  left: 50%;
+  top: 50%;
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+}
+.crate-card-accent {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+.crate-card-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #f5ead8;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+.crate-card-meta {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.crate-card-bpm {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 11px;
+  color: #ffb347;
+  letter-spacing: 0.06em;
+}
+.crate-card-key {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 11px;
+  color: #ffb347;
+  letter-spacing: 0.06em;
+}
+.crate-card-dur {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  color: #3a2a18;
+  letter-spacing: 0.04em;
+  margin-left: auto;
+}
+.crate-play-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #2a2018;
+  background: #0c0a07;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+}
+.crate-play-btn:hover { border-color: #ffb347; background: #1a1208; }
+.crate-play-btn svg { transition: fill 120ms; }
+.crate-progress {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: #1a1510;
+}
+.crate-progress-bar {
+  height: 100%;
+  background: #ffb347;
+  width: 0%;
+  transition: width 0.5s linear;
+}
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(1); }
+  50%       { transform: scaleY(0.45); }
+}
+.crate-waveform-playing rect {
+  animation: waveBar 0.6s ease-in-out infinite;
+}
+</style>
+
+<script>
+(function() {
+  const tracks = {
+    mixes: [
+      { title: 'Low End Theory Redux', bpm: '094', key: 'F MIN', dur: '4:32', status: 'UNRELEASED', color: '#ffb347' },
+      { title: 'Dusk Protocol', bpm: '110', key: 'A♭ MAJ', dur: '6:14', status: 'RELEASED', color: '#cc6644' },
+      { title: 'Signal Lost', bpm: '088', key: 'D MIN', dur: '5:47', status: 'UNRELEASED', color: '#4488cc' },
+      { title: 'Pressure System', bpm: '072', key: 'G MIN', dur: '7:03', status: 'UNRELEASED', color: '#44aa77' },
+      { title: 'Echo Chamber', bpm: '116', key: 'E♭ MAJ', dur: '5:22', status: 'RELEASED', color: '#8844cc' },
+      { title: 'Root Frequency Vol. II', bpm: '096', key: 'C MIN', dur: '8:11', status: 'UNRELEASED', color: '#cc4444' },
+      { title: 'The Deep Mix', bpm: '104', key: 'B♭ MIN', dur: '9:44', status: 'UNRELEASED', color: '#cc8844' },
+    ],
+    original: [
+      { title: 'First Draft', bpm: '089', key: 'D MAJ', dur: '3:58', status: 'UNRELEASED', color: '#44ccaa' },
+      { title: 'Golden Gate Sunrise', bpm: '128', key: 'F# MIN', dur: '5:30', status: 'RELEASED', color: '#ffb347' },
+      { title: 'Oscillator Suite', bpm: '100', key: 'C MAJ', dur: '6:12', status: 'UNRELEASED', color: '#cc44aa' },
+      { title: 'Warmth Coefficient', bpm: '085', key: 'A MIN', dur: '4:44', status: 'UNRELEASED', color: '#4466cc' },
+    ],
+    live: [
+      { title: 'Vision 001 — Rough Cut', bpm: '—', key: '—', dur: '47:12', status: 'UNRELEASED', color: '#ffb347' },
+      { title: 'Basement Continuum', bpm: '—', key: '—', dur: '1:22:05', status: 'UNRELEASED', color: '#cc6644' },
+    ]
+  };
+
+  let currentCrate = 'mixes';
+  let currentIndex = 0;
+  let isAnimating = false;
+  let dragStartX = 0;
+  let isPlaying = false;
+  let playProgress = 0;
+  let playInterval = null;
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    if (isPlaying) {
+      playInterval = setInterval(() => {
+        playProgress = Math.min(1, playProgress + 0.002);
+        const bar = document.getElementById('crate-prog-bar');
+        const line = document.getElementById('wave-progress-line');
+        if (bar) bar.style.width = (playProgress * 100) + '%';
+        if (line) line.style.left = (playProgress * 100) + '%';
+        if (playProgress >= 1) { isPlaying = false; playProgress = 0; clearInterval(playInterval); buildStack(currentCrate, currentIndex); }
+        const wave = document.getElementById('front-wave');
+        if (wave) wave.querySelector('svg').classList.toggle('crate-waveform-playing', isPlaying);
+      }, 100);
+    } else {
+      clearInterval(playInterval);
+    }
+    buildStack(currentCrate, currentIndex);
+  }
+  let dragDelta = 0;
+  let isDragging = false;
+
+  const stack = document.getElementById('crate-stack');
+  const npTitle = document.getElementById('np-title');
+  const npBpm = document.getElementById('np-bpm');
+  const npKey = document.getElementById('np-key');
+  const npStatus = document.getElementById('np-status');
+
+  function makeWaveform(seed, isFront, color) {
+    const bars = 72;
+    const w = 280; const h = 80;
+    const barW = 2; const gap = 1.7;
+    let rng = seed;
+    function rand() { rng = (rng * 1664525 + 1013904223) & 0xffffffff; return (rng >>> 0) / 0xffffffff; }
+    let pts = [];
+    for (let b = 0; b < bars; b++) {
+      const r1 = rand(), r2 = rand(), r3 = rand();
+      const envelope = Math.sin((b / bars) * Math.PI) * 0.7 + 0.3;
+      const ht = (r1 * 0.5 + r2 * 0.3 + r3 * 0.2) * envelope;
+      pts.push(ht);
+    }
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width', w); svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.style.cssText = 'display:block;margin:0 auto;';
+    const alpha = isFront ? 0.55 : 0.15;
+    const fill = isFront ? color : '#ffb347';
+    pts.forEach((ht, b) => {
+      const barH = Math.max(2, ht * h);
+      const x = b * (barW + gap);
+      const y = (h - barH) / 2;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x', x); rect.setAttribute('y', y);
+      rect.setAttribute('width', barW); rect.setAttribute('height', barH);
+      rect.setAttribute('fill', fill);
+      rect.setAttribute('opacity', alpha * (0.6 + ht * 0.4));
+      svg.appendChild(rect);
+    });
+    return svg;
+  }
+
+  function makeCard(t, tIdx, depth, isFront) {
+    const card = document.createElement('div');
+    card.className = 'crate-card';
+    const scale = 1 - depth * 0.065;
+    const translateY = depth * 26;
+    const translateZ = -depth * 55;
+    const rotateZ = depth * 0.8 * (depth % 2 === 0 ? 1 : -0.5);
+    card.style.transform = `translate(-50%, -50%) translateY(${translateY}px) translateZ(${translateZ}px) rotateZ(${rotateZ}deg) scale(${scale})`;
+    card.style.opacity = isFront ? '1' : Math.max(0.35, 1 - depth * 0.14);
+    card.style.zIndex = 100 - depth;
+    card.style.boxShadow = isFront
+      ? `0 32px 100px rgba(0,0,0,0.9), 0 0 0 1px #3a2a18, inset 0 1px 0 rgba(255,255,255,0.04), 0 0 40px rgba(255,179,71,0.06)`
+      : `0 ${10 + depth * 6}px ${30 + depth * 12}px rgba(0,0,0,0.7)`;
+
+    const accent = document.createElement('div');
+    accent.className = 'crate-card-accent';
+    accent.style.background = isFront ? t.color : '#1a1510';
+    card.appendChild(accent);
+
+    // Waveform area
+    const waveWrap = document.createElement('div');
+    waveWrap.id = isFront ? 'front-wave' : '';
+    waveWrap.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;padding:0 10px;position:relative;';
+    const seed = t.title.split('').reduce((a,c) => a + c.charCodeAt(0) * 31, tIdx + 7);
+    const waveSvg = makeWaveform(seed, isFront, t.color);
+    if (isFront && isPlaying) waveSvg.classList.add('crate-waveform-playing');
+    waveWrap.appendChild(waveSvg);
+
+    // Progress overlay (front only)
+    if (isFront) {
+      const progressLine = document.createElement('div');
+      progressLine.id = 'wave-progress-line';
+      progressLine.style.cssText = `position:absolute;top:0;bottom:0;left:${playProgress * 100}%;width:1px;background:#ffb347;opacity:0.6;pointer-events:none;`;
+      waveWrap.appendChild(progressLine);
+    }
+    card.appendChild(waveWrap);
+
+    const title = document.createElement('div');
+    title.className = 'crate-card-title';
+    title.textContent = t.title;
+    card.appendChild(title);
+
+    const meta = document.createElement('div');
+    meta.className = 'crate-card-meta';
+    meta.innerHTML = `<span class="crate-card-bpm">${t.bpm} BPM</span><span class="crate-card-key">${t.key}</span><span class="crate-card-dur">${t.dur}</span>`;
+    card.appendChild(meta);
+
+    // Play button (front only)
+    if (isFront) {
+      const playBtn = document.createElement('div');
+      playBtn.className = 'crate-play-btn';
+      playBtn.innerHTML = isPlaying
+        ? `<svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="4" height="10" fill="#ffb347"/><rect x="7" y="1" width="4" height="10" fill="#ffb347"/></svg>`
+        : `<svg width="12" height="12" viewBox="0 0 12 12"><polygon points="2,1 11,6 2,11" fill="#ffb347"/></svg>`;
+      playBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
+      card.appendChild(playBtn);
+
+      // Bottom progress bar
+      const prog = document.createElement('div');
+      prog.className = 'crate-progress';
+      const bar = document.createElement('div');
+      bar.className = 'crate-progress-bar';
+      bar.id = 'crate-prog-bar';
+      bar.style.width = (playProgress * 100) + '%';
+      prog.appendChild(bar);
+      card.appendChild(prog);
+    }
+
+    if (isFront) card.dataset.front = 'true';
+    return card;
+  }
+
+  function buildStack(crate, activeIdx) {
+    stack.innerHTML = '';
+    const list = tracks[crate];
+    const visible = 6;
+    for (let i = Math.min(visible - 1, list.length - 1); i >= 0; i--) {
+      const tIdx = (activeIdx + i) % list.length;
+      stack.appendChild(makeCard(list[tIdx], tIdx, i, i === 0));
+    }
+    updateNowPlaying(list[activeIdx]);
+  }
+
+  function updateNowPlaying(t) {
+    npTitle.textContent = t.title;
+    npBpm.textContent = t.bpm !== '—' ? t.bpm + ' BPM' : '—';
+    npKey.textContent = t.key;
+    npStatus.textContent = t.status;
+  }
+
+  function flipNext() {
+    if (isAnimating) return;
+    isAnimating = true;
+    const list = tracks[currentCrate];
+    const front = stack.querySelector('[data-front]');
+    if (front) {
+      front.style.transition = 'transform 280ms cubic-bezier(0.22,1,0.36,1), opacity 200ms ease';
+      front.style.transform = `translate(-50%, -50%) translateX(120%) translateY(-20px) rotate(12deg) scale(0.9)`;
+      front.style.opacity = '0';
+    }
+    setTimeout(() => {
+      currentIndex = (currentIndex + 1) % list.length;
+      buildStack(currentCrate, currentIndex);
+      isAnimating = false;
+    }, 260);
+  }
+
+  function flipPrev() {
+    if (isAnimating) return;
+    isAnimating = true;
+    const list = tracks[currentCrate];
+    currentIndex = (currentIndex - 1 + list.length) % list.length;
+    const tIdx = currentIndex;
+    const incoming = makeCard(list[tIdx], tIdx, 0, true);
+    incoming.style.transform = `translate(-50%, -50%) translateX(-140%) rotate(-14deg) scale(0.9)`;
+    incoming.style.opacity = '0';
+    incoming.style.zIndex = '200';
+    stack.appendChild(incoming);
+    requestAnimationFrame(() => {
+      incoming.style.transition = 'transform 300ms cubic-bezier(0.22,1,0.36,1), opacity 220ms ease';
+      incoming.style.transform = `translate(-50%, -50%)`;
+      incoming.style.opacity = '1';
+    });
+    setTimeout(() => {
+      buildStack(currentCrate, currentIndex);
+      isAnimating = false;
+    }, 300);
+  }
+
+  // Drag / swipe
+  stack.addEventListener('mousedown', e => {
+    dragStartX = e.clientX;
+    isDragging = true;
+    stack.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    dragDelta = e.clientX - dragStartX;
+    const front = stack.querySelector('[data-front]');
+    if (front) {
+      const rot = dragDelta * 0.05;
+      const lift = Math.abs(dragDelta) * 0.08;
+      front.style.transition = 'none';
+      front.style.transform = `translate(-50%, -50%) translateX(${dragDelta * 0.4}px) translateY(${-lift}px) rotate(${rot}deg)`;
+    }
+  });
+  window.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    stack.style.cursor = 'grab';
+    if (dragDelta > 60) flipPrev();
+    else if (dragDelta < -60) flipNext();
+    else { buildStack(currentCrate, currentIndex); }
+    dragDelta = 0;
+  });
+
+  // Touch
+  stack.addEventListener('touchstart', e => { dragStartX = e.touches[0].clientX; isDragging = true; }, { passive: true });
+  stack.addEventListener('touchmove', e => {
+    if (!isDragging) return;
+    dragDelta = e.touches[0].clientX - dragStartX;
+    const front = stack.querySelector('[data-front]');
+    if (front) {
+      const rot = dragDelta * 0.05;
+      front.style.transition = 'none';
+      front.style.transform = `translate(-50%, -50%) translateX(${dragDelta * 0.4}px) rotate(${rot}deg)`;
+    }
+  }, { passive: true });
+  stack.addEventListener('touchend', () => {
+    isDragging = false;
+    if (dragDelta > 50) flipPrev();
+    else if (dragDelta < -50) flipNext();
+    else buildStack(currentCrate, currentIndex);
+    dragDelta = 0;
+  });
+
+  // Keyboard
+  window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') flipNext();
+    if (e.key === 'ArrowLeft') flipPrev();
+  });
+
+  // Vault tabs
+  document.querySelectorAll('.crate-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.crate-tab').forEach(t => t.classList.remove('active-tab'));
+      tab.classList.add('active-tab');
+      currentCrate = tab.dataset.crate;
+      currentIndex = 0;
+      buildStack(currentCrate, currentIndex);
+    });
+  });
+
+  buildStack(currentCrate, currentIndex);
+})();
+</script>
+
+<!-- SECTION LABEL: L CONSOLE -->
+<div class="scroll-target" id="l-console"></div>
+<div class="section-label">06 — L CONSOLE · 7677 · ARCHITECT</div>
+
+<style>
+/* 3-column override for L Console */
+.l-console-screen { grid-template-columns: 300px 1fr 272px !important; }
+
+/* M³ tier badges */
+.m3-badge {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  padding: 1px 5px;
+  border: 1px solid;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.m3-badge.master { border-color: rgba(0,229,255,0.55); color: #00e5ff; opacity: 0.8; }
+.m3-badge.muse   { border-color: rgba(0,160,190,0.4);  color: #00aabb; opacity: 0.75; }
+.m3-badge.open   { border-color: rgba(0,50,70,0.3);    color: #0d2030; opacity: 0.5; }
+
+/* Updated roster column template */
+.roster-col-header,
+.roster-row { grid-template-columns: 80px 52px 1fr 60px 60px !important; }
+
+/* Activity feed — right column */
+.l-activity {
+  border-left: 1px solid #111820;
+  display: flex;
+  flex-direction: column;
+}
+.l-activity-list { flex: 1; overflow-y: auto; }
+
+.l-activity-entry {
+  padding: 9px 14px;
+  border-bottom: 1px solid #0a1018;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  transition: background 60ms;
+}
+.l-activity-entry:hover { background: #090e14; }
+.l-activity-ts {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: #0d1e28;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  padding-top: 1px;
+  min-width: 36px;
+}
+.l-activity-body {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  line-height: 1.55;
+  letter-spacing: 0.03em;
+  color: #0d2030;
+}
+.l-activity-body .la-actor  { color: #1a4050; }
+.l-activity-body .la-verb   { color: #00aacc; opacity: 0.8; }
+.l-activity-body .la-target { color: #1a3040; }
+
+.l-act-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #0d2030;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.l-activity-entry.live .l-act-dot {
+  background: #00e5ff;
+  box-shadow: 0 0 5px rgba(0,229,255,0.5);
+  animation: lActBlip 2s ease-in-out infinite;
+}
+@keyframes lActBlip { 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+</style>
+
+<div class="l-console-screen" data-theme="l-architect" style="min-height: calc(100vh - 32px);">
+  <div class="l-topbar">
+    <div style="font-family:'Comfortaa',cursive;font-size:14px;font-weight:700;color:#00e5ff;opacity:0.45;letter-spacing:-0.01em;line-height:1;margin-right:2px;">dp</div>
+    <span class="l-logo">L CONSOLE</span>
+    <span style="font-family:var(--font-mono);font-size:8px;color:#0d2030;letter-spacing:0.1em;text-transform:uppercase;">ARCHITECT</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:14px;">
+      <span class="m3-badge master">MASTER</span>
+      <span class="l-session">7677</span>
+    </div>
+  </div>
+
+  <!-- M³ ROSTER -->
+  <div class="l-roster">
+    <div class="l-zone-header">
+      M³ ROSTER
+      <span class="l-zone-tag">5 MEMBERS</span>
+    </div>
+    <div class="roster-table">
+      <div class="roster-col-header">
+        <span class="roster-col-label">TIER</span>
+        <span class="roster-col-label">CODE</span>
+        <span class="roster-col-label">HANDLE</span>
+        <span class="roster-col-label">STATUS</span>
+        <span class="roster-col-label">SEEN</span>
+      </div>
+      <!-- D — Master -->
+      <div class="roster-row">
+        <span class="roster-cell"><span class="m3-badge master">MASTER</span></span>
+        <span class="roster-cell" style="font-family:var(--font-mono);color:#0d3040;">0528</span>
+        <span class="roster-cell handle" style="color:#1a4050;">D</span>
+        <span class="roster-cell status-active">ACTIVE</span>
+        <span class="roster-cell">NOW</span>
+      </div>
+      <!-- L — Master (current user) -->
+      <div class="roster-row selected">
+        <span class="roster-cell"><span class="m3-badge master">MASTER</span></span>
+        <span class="roster-cell" style="font-family:var(--font-mono);color:#0d3040;">7677</span>
+        <span class="roster-cell handle" style="color:#00e5ff;opacity:0.7;">L</span>
+        <span class="roster-cell status-active">ACTIVE</span>
+        <span class="roster-cell">NOW</span>
+      </div>
+      <!-- ANGI — Muse -->
+      <div class="roster-row">
+        <span class="roster-cell"><span class="m3-badge muse">MUSE</span></span>
+        <span class="roster-cell" style="font-family:var(--font-mono);color:#0d3040;">4096</span>
+        <span class="roster-cell handle">ANGI</span>
+        <span class="roster-cell status-active">ACTIVE</span>
+        <span class="roster-cell">2D AGO</span>
+      </div>
+      <!-- JESS B — Muse -->
+      <div class="roster-row">
+        <span class="roster-cell"><span class="m3-badge muse">MUSE</span></span>
+        <span class="roster-cell" style="font-family:var(--font-mono);color:#0d3040;">1984</span>
+        <span class="roster-cell handle">JESS B</span>
+        <span class="roster-cell" style="color:#3a2a00;font-size:8px;letter-spacing:0.06em;">IDLE</span>
+        <span class="roster-cell">1W AGO</span>
+      </div>
+      <!-- LISTENER — open tier -->
+      <div class="roster-row" style="opacity:0.38;">
+        <span class="roster-cell"><span class="m3-badge open">OPEN</span></span>
+        <span class="roster-cell" style="font-family:var(--font-mono);color:#0d2030;">—</span>
+        <span class="roster-cell handle" style="color:#0d2030;">LISTENER</span>
+        <span class="roster-cell" style="color:#0d2030;font-size:8px;">READ</span>
+        <span class="roster-cell">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CMD MATRIX -->
+  <div class="l-matrix">
+    <div class="l-zone-header">
+      CMD MATRIX
+      <span class="l-zone-tag">PERMISSION GRID</span>
+    </div>
+    <div class="matrix-grid">
+      <div class="matrix-cell matrix-header-cell"></div>
+      <div class="matrix-cell matrix-header-cell">VOID</div>
+      <div class="matrix-cell matrix-header-cell">TUNE</div>
+      <div class="matrix-cell matrix-header-cell">COMMENT</div>
+      <div class="matrix-cell matrix-header-cell">UPLOAD</div>
+
+      <div class="matrix-cell matrix-row-label" style="color:#1a3040;flex-direction:column;align-items:flex-start;gap:2px;">
+        <span>D · 0528</span><span style="font-size:7px;color:#0a1e28;letter-spacing:0.08em;">MASTER</span>
+      </div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+
+      <div class="matrix-cell matrix-row-label" style="color:#00e5ff;opacity:0.5;flex-direction:column;align-items:flex-start;gap:2px;">
+        <span>L · 7677</span><span style="font-size:7px;color:#0a1e28;letter-spacing:0.08em;opacity:1;">MASTER</span>
+      </div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+
+      <div class="matrix-cell matrix-row-label" style="flex-direction:column;align-items:flex-start;gap:2px;">
+        <span>ANGI · 4096</span><span style="font-size:7px;color:#0a1e28;letter-spacing:0.08em;">MUSE</span>
+      </div>
+      <div class="matrix-cell"><div class="matrix-toggle"></div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle"></div></div>
+
+      <div class="matrix-cell matrix-row-label" style="flex-direction:column;align-items:flex-start;gap:2px;">
+        <span>JESS B · 1984</span><span style="font-size:7px;color:#0a1e28;letter-spacing:0.08em;">MUSE</span>
+      </div>
+      <div class="matrix-cell"><div class="matrix-toggle"></div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle on">✓</div></div>
+      <div class="matrix-cell"><div class="matrix-toggle"></div></div>
+
+      <div class="matrix-cell matrix-row-label" style="color:#0d2030;flex-direction:column;align-items:flex-start;gap:2px;">
+        <span>LISTENER</span><span style="font-size:7px;color:#091418;letter-spacing:0.08em;">OPEN</span>
+      </div>
+      <div class="matrix-cell"><div class="matrix-toggle" style="opacity:0.25;"></div></div>
+      <div class="matrix-cell"><div class="matrix-toggle" style="opacity:0.25;"></div></div>
+      <div class="matrix-cell"><div class="matrix-toggle" style="opacity:0.25;"></div></div>
+      <div class="matrix-cell"><div class="matrix-toggle" style="opacity:0.25;"></div></div>
+    </div>
+
+    <div class="matrix-footer">
+      <button class="l-cmd-btn armed">ARMED</button>
+      <button class="l-cmd-btn">COMMIT</button>
+      <button class="l-cmd-btn">CANCEL</button>
+      <span style="font-family:var(--font-mono);font-size:8px;color:#0d2030;margin-left:auto;letter-spacing:0.08em;">ANGI · TUNE · AMETHYST [00:08]</span>
+    </div>
+  </div>
+
+  <!-- ACTIVITY FEED -->
+  <div class="l-activity">
+    <div class="l-zone-header">
+      ACTIVITY
+      <span class="l-zone-tag">LIVE</span>
+    </div>
+    <div class="l-activity-list">
+      <div class="l-activity-entry live">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">NOW</div>
+          <div class="l-activity-body"><span class="la-actor">D</span> <span class="la-verb">listening</span> <span class="la-target">Low End Theory Redux</span></div>
+        </div>
+      </div>
+      <div class="l-activity-entry">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">02M</div>
+          <div class="l-activity-body"><span class="la-actor">L</span> <span class="la-verb">granted</span> <span class="la-target">TUNE → ANGI</span></div>
+        </div>
+      </div>
+      <div class="l-activity-entry">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">14M</div>
+          <div class="l-activity-body"><span class="la-actor">ANGI</span> <span class="la-verb">tuned</span> <span class="la-target">Echo Chamber</span></div>
+        </div>
+      </div>
+      <div class="l-activity-entry">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">1H</div>
+          <div class="l-activity-body"><span class="la-actor">JESS B</span> <span class="la-verb">voice comment</span> <span class="la-target">Low End Theory Redux @ 2:44</span></div>
+        </div>
+      </div>
+      <div class="l-activity-entry">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">3H</div>
+          <div class="l-activity-body"><span class="la-actor">D</span> <span class="la-verb">armed void</span> <span class="la-target">First Draft</span></div>
+        </div>
+      </div>
+      <div class="l-activity-entry">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">6H</div>
+          <div class="l-activity-body"><span class="la-actor">D</span> <span class="la-verb">uploaded</span> <span class="la-target">Root Frequency Vol. II</span></div>
+        </div>
+      </div>
+      <div class="l-activity-entry">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">8H</div>
+          <div class="l-activity-body"><span class="la-actor">D</span> <span class="la-verb">released</span> <span class="la-target">Dusk Protocol → public</span></div>
+        </div>
+      </div>
+      <div class="l-activity-entry" style="opacity:0.45;">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">1D</div>
+          <div class="l-activity-body"><span class="la-actor">L</span> <span class="la-verb">updated</span> <span class="la-target">permission matrix</span></div>
+        </div>
+      </div>
+      <div class="l-activity-entry" style="opacity:0.3;">
+        <div class="l-act-dot"></div>
+        <div style="flex:1;">
+          <div class="l-activity-ts">2D</div>
+          <div class="l-activity-body"><span class="la-actor">ANGI</span> <span class="la-verb">joined</span> <span class="la-target">as MUSE</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PALETTE -->
+<div class="scroll-target" id="palette"></div>
+<div class="section-label">05 — COLOR SYSTEM · ACHROMATIC BASE + IDENTITY LAYER</div>
+<div class="palette-section">
+  <div style="font-family:var(--font-mono);font-size:9px;color:#333;letter-spacing:0.1em;margin-bottom:16px;text-transform:uppercase;">Base (achromatic — no identity)</div>
+  <div class="palette-grid">
+    <div class="swatch" style="background:#050505;">
+      <div class="swatch-name">--void</div>
+      <div class="swatch-hex">#050505</div>
+    </div>
+    <div class="swatch" style="background:#0d0d0d;">
+      <div class="swatch-name">--surface</div>
+      <div class="swatch-hex">#0d0d0d</div>
+    </div>
+    <div class="swatch" style="background:#141414;">
+      <div class="swatch-name">--surface-raised</div>
+      <div class="swatch-hex">#141414</div>
+    </div>
+    <div class="swatch" style="background:#222222;border:1px solid #333;">
+      <div class="swatch-name">--border</div>
+      <div class="swatch-hex">#222222</div>
+    </div>
+    <div class="swatch" style="background:#f0ede8;justify-content:flex-start;padding-top:8px;">
+      <div class="swatch-name" style="color:#333;">--text-primary</div>
+      <div class="swatch-hex" style="color:#333;">#f0ede8</div>
+    </div>
+    <div class="swatch" style="background:#666666;justify-content:flex-start;padding-top:8px;">
+      <div class="swatch-name" style="color:#222;">--text-secondary</div>
+      <div class="swatch-hex" style="color:#222;">#666666</div>
+    </div>
+  </div>
+
+  <div style="font-family:var(--font-mono);font-size:9px;color:#333;letter-spacing:0.1em;margin-bottom:16px;text-transform:uppercase;">D · Soul Theme (amber identity)</div>
+  <div class="palette-grid">
+    <div class="swatch" style="background:#0a0806;border:1px solid #222;">
+      <div class="swatch-name">D surface</div>
+      <div class="swatch-hex">#0a0806</div>
+    </div>
+    <div class="swatch" style="background:#ffb347;justify-content:flex-start;padding-top:8px;">
+      <div class="swatch-name" style="color:#3a2000;">--identity D</div>
+      <div class="swatch-hex" style="color:#3a2000;">#ffb347</div>
+    </div>
+    <div class="swatch" style="background:#f5ead8;justify-content:flex-start;padding-top:8px;">
+      <div class="swatch-name" style="color:#333;">D text-primary</div>
+      <div class="swatch-hex" style="color:#333;">#f5ead8</div>
+    </div>
+  </div>
+
+  <div style="font-family:var(--font-mono);font-size:9px;color:#333;letter-spacing:0.1em;margin-bottom:16px;text-transform:uppercase;">L · Architect Theme (cyan identity)</div>
+  <div class="palette-grid">
+    <div class="swatch" style="background:#070a0d;border:1px solid #222;">
+      <div class="swatch-name">L surface</div>
+      <div class="swatch-hex">#070a0d</div>
+    </div>
+    <div class="swatch" style="background:#00e5ff;justify-content:flex-start;padding-top:8px;">
+      <div class="swatch-name" style="color:#002030;">--identity L</div>
+      <div class="swatch-hex" style="color:#002030;">#00e5ff</div>
+    </div>
+  </div>
+
+  <div style="font-family:var(--font-mono);font-size:9px;color:#333;letter-spacing:0.1em;margin-bottom:16px;text-transform:uppercase;">System States</div>
+  <div class="palette-grid">
+    <div class="swatch" style="background:#cc2200;justify-content:flex-start;padding-top:8px;">
+      <div class="swatch-name" style="color:#660000;">--record-red</div>
+      <div class="swatch-hex" style="color:#660000;">#cc2200</div>
+    </div>
+    <div class="swatch" style="background:rgba(0,200,80,0.22);border:1px solid #222;">
+      <div class="swatch-name">--cmd-success</div>
+      <div class="swatch-hex">rgba(0,200,80,.22)</div>
+    </div>
+  </div>
+</div>
+
+<!-- TYPE SPECIMEN -->
+<div class="scroll-target" id="type"></div>
+<div class="section-label">06 — TYPOGRAPHY</div>
+<div class="type-section">
+  <div class="type-row">
+    <div class="type-meta">
+      CHAKRA PETCH 600<br>Display / vault headings<br>72–120px
+    </div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:80px;font-weight:600;color:#f5ead8;line-height:1;letter-spacing:-0.03em;">Original Work</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">
+      CHAKRA PETCH 500<br>Track title / readout<br>52px
+    </div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:52px;font-weight:500;color:#f5ead8;line-height:1;letter-spacing:-0.02em;">Low End Theory Redux</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">
+      CHAKRA PETCH 600<br>Zone / section labels<br>13px · uppercase · +0.1em
+    </div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:13px;font-weight:600;color:#f0ede8;letter-spacing:0.1em;text-transform:uppercase;">TRANSPORT &nbsp;&nbsp; TELEMETRY &nbsp;&nbsp; VOICE COMMENTS</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">
+      CHAKRA PETCH 400<br>Body / UI copy<br>11–13px
+    </div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:13px;font-weight:400;color:#c8b89a;line-height:1.6;max-width:500px;">Artist controls and telemetry rendered in Chakra Petch. Angular, precise — the artist's identity color carries the emotional weight.</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">
+      CHAKRA PETCH 500<br>Data · BPM · telemetry · keys<br>8–18px · uppercase
+    </div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:22px;font-weight:500;color:#ffb347;letter-spacing:0.04em;">094 &nbsp;&nbsp; [01:22] UPLOAD_TRACK original-work — OK</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">
+      CHAKRA PETCH 400<br>Micro system labels<br>8–10px · uppercase · +0.14em
+    </div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:9px;font-weight:400;color:#3a2a18;letter-spacing:0.14em;text-transform:uppercase;">UNRELEASED &nbsp;·&nbsp; VAULT &nbsp;·&nbsp; ARM REQUIRED FOR VOID &nbsp;·&nbsp; LAST SEEN</div>
+  </div>
+  <div class="type-row">
+    <div class="type-meta">
+      COMFORTAA 700<br>QUARANTINED<br>Logo mark only
+    </div>
+    <div style="font-family:'Comfortaa',cursive;font-size:52px;font-weight:700;color:#1a1a1a;line-height:1;">dp</div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#3a2a18;letter-spacing:0.1em;text-transform:uppercase;padding:4px 12px;border:1px solid #2a1800;align-self:center;">NEVER in CSS vars · logo only</div>
+  </div>
+</div>
+
+<script>
+// Nav active state
+const sections = ['entry','d-console','vault','helix','listener','l-console','palette','type'];
+const links = document.querySelectorAll('.nav a');
+
+function updateActive() {
+  const pos = window.scrollY + 80;
+  let active = 'entry';
+  for (const id of sections) {
+    const el = document.getElementById(id);
+    if (el && el.offsetTop <= pos) active = id;
+  }
+  links.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + active);
+  });
+}
+window.addEventListener('scroll', updateActive);
+
+// Entry gate — 4-cell code grid
+(function() {
+  var entryInput = document.getElementById('entry-input');
+  var cells = ['ec0','ec1','ec2','ec3'].map(function(id){ return document.getElementById(id); });
+  var logo = document.getElementById('entry-dp-logo');
+  var ring = document.getElementById('entry-ring');
+  if (!entryInput) return;
+
+  function syncCells() {
+    var val = entryInput.value;
+    cells.forEach(function(cell, i) {
+      cell.classList.remove('ec-active','ec-filled');
+      if (i < val.length) {
+        cell.textContent = '●';
+        cell.classList.add('ec-filled');
+      } else if (i === val.length && document.activeElement === entryInput) {
+        cell.textContent = '·';
+        cell.classList.add('ec-active');
+      } else {
+        cell.textContent = '·';
+      }
+    });
+    // Logo warms slightly as digits are entered
+    if (val.length > 0) {
+      logo.style.color = '#2a1e10';
+    } else {
+      logo.style.color = '';
+    }
+    // Full entry flash
+    if (val.length === 4) {
+      ring.classList.add('flash');
+      setTimeout(function(){ ring.classList.remove('flash'); }, 600);
+    }
+  }
+
+  document.getElementById('entry-grid').addEventListener('click', function(){ entryInput.focus(); });
+  entryInput.addEventListener('input', syncCells);
+  entryInput.addEventListener('focus', syncCells);
+  entryInput.addEventListener('blur', function() {
+    cells.forEach(function(c){ c.classList.remove('ec-active'); });
+  });
+  syncCells();
+}());
+</script>
+</body>
+</html>
