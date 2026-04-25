@@ -419,6 +419,90 @@ body {
 .td-tel-pending { color: #554433; }
 .td-tel-denied { color: rgba(204,34,0,0.35); }
 
+/* === VOID TRIGGER === */
+.void-trigger-zone {
+  border-top: 1px solid #1a0800;
+  margin-top: auto;
+  padding: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.void-trigger-label {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2a1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.void-trigger-status {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: #1a0800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.void-trigger-status.armed { color: #aa6600; animation: voidPulseText 1.2s ease-in-out infinite; }
+.void-trigger-status.active { color: #cc2200; }
+@keyframes voidPulseText { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+.void-trigger-desc {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: #1a0c06;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+}
+
+.void-btn {
+  width: 100%;
+  padding: 10px 0;
+  background: #080400;
+  border: 1px solid #2a0c00;
+  color: #441800;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 200ms;
+  text-align: center;
+}
+.void-btn:hover { border-color: #662200; color: #884400; }
+.void-btn.armed {
+  border-color: #cc7700;
+  color: #cc7700;
+  background: #0c0600;
+  animation: voidBtnPulse 1.2s ease-in-out infinite;
+}
+@keyframes voidBtnPulse {
+  0%,100%{ box-shadow: 0 0 0 rgba(204,119,0,0); }
+  50%    { box-shadow: 0 0 12px rgba(204,119,0,0.15); }
+}
+.void-btn.active {
+  border-color: #cc2200;
+  color: #cc2200;
+  background: #0e0200;
+  animation: voidActivePulse 2s ease-in-out infinite;
+}
+@keyframes voidActivePulse {
+  0%,100%{ box-shadow: 0 0 0 rgba(204,34,0,0); }
+  50%    { box-shadow: 0 0 20px rgba(204,34,0,0.2); }
+}
+
+/* System-wide Void state */
+body.void-active .section-label,
+body.void-active .nav { filter: grayscale(1); }
+body.void-active > *:not(nav):not(script):not(style) {
+  filter: grayscale(1) contrast(1.15);
+  transition: filter 1.2s ease-in-out;
+}
+body.void-active { background: #050505; }
+body { transition: background 1.2s; }
+
 .console-topbar {
   grid-column: 1 / -1;
   background: #0a0806;
@@ -1558,6 +1642,16 @@ html { scroll-behavior: smooth; }
       <div class="td-tel-row td-tel-ok">[01:22] TUNE bpm:94 — OK</div>
       <div class="td-tel-row td-tel-pending">[01:38] COMMENT — PENDING<span class="tel-cursor">▌</span></div>
       <div class="td-tel-row td-tel-denied">[02:11] VOID — DENIED · ARM FIRST</div>
+    </div>
+
+    <!-- VOID TRIGGER — system control -->
+    <div class="void-trigger-zone">
+      <div class="void-trigger-label">
+        VOID PROTOCOL
+        <span class="void-trigger-status" id="void-status">INACTIVE</span>
+      </div>
+      <div class="void-trigger-desc" id="void-desc">Drains all color system-wide. Severs access below Master tier.</div>
+      <button class="void-btn" id="void-btn">ARM VOID PROTOCOL</button>
     </div>
   </div>
 
@@ -4030,6 +4124,42 @@ window.addEventListener('scroll', updateActive);
     cells.forEach(function(c){ c.classList.remove('ec-active'); });
   });
   syncCells();
+}());
+
+// Void Trigger — ARM → CONFIRM → ACTIVE → DEACTIVATE
+(function() {
+  var btn    = document.getElementById('void-btn');
+  var status = document.getElementById('void-status');
+  var desc   = document.getElementById('void-desc');
+  if (!btn) return;
+  var state = 'inactive'; // inactive → armed → active
+
+  btn.addEventListener('click', function() {
+    if (state === 'inactive') {
+      state = 'armed';
+      btn.textContent = 'CONFIRM · EXECUTE VOID PROTOCOL';
+      btn.className = 'void-btn armed';
+      status.textContent = 'ARMED';
+      status.className = 'void-trigger-status armed';
+      desc.textContent = 'Confirm to drain all color and sever non-Master access.';
+    } else if (state === 'armed') {
+      state = 'active';
+      btn.textContent = 'VOID ACTIVE — CLICK TO DEACTIVATE';
+      btn.className = 'void-btn active';
+      status.textContent = 'ACTIVE';
+      status.className = 'void-trigger-status active';
+      desc.textContent = 'System in Void state. All sub-Master access severed.';
+      document.body.classList.add('void-active');
+    } else if (state === 'active') {
+      state = 'inactive';
+      btn.textContent = 'ARM VOID PROTOCOL';
+      btn.className = 'void-btn';
+      status.textContent = 'INACTIVE';
+      status.className = 'void-trigger-status';
+      desc.textContent = 'Drains all color system-wide. Severs access below Master tier.';
+      document.body.classList.remove('void-active');
+    }
+  });
 }());
 
 // D → L Broadcast panel
