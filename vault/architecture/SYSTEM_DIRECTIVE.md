@@ -9,10 +9,10 @@
 ## 1. THE DUAL CORES (Founding Authority)
 
 * **D's GOD MODE CONSOLE:** The active command center of the Collective. Full sovereign control. (**Access: 0528**).
-* **THE PULL CORD:** A physical, braided 3D pull cord suspended in D's console.
-  * **MECHANIC:** Pulling the cord activates the Void — draining all color from the system UI into High-Contrast Grayscale.
-  * **ACTION:** Severs access for all tiers below Master. Access is restored only when D reactivates via the cord.
-  * *(Grayscale drain and tier-access severance — confirmed, Phase 9 implementation complete.)*
+* **VOID TRIGGER:** A button (or equivalent control) in D's console that activates the Void.
+  * **MECHANIC:** Triggers a system-wide drain — all color bleeds out into High-Contrast Grayscale.
+  * **ACTION:** Severs access for all tiers below Master. Access is restored only when D deactivates via the same control.
+  * **VISUAL FORM:** TBD — button, toggle, or gesture. Not a pull cord. Design to be decided.
 * **L's ARCHITECT CONSOLE (THE VOID):** The silent governance layer. The Architect has full visibility and elevated permissions, including the exclusive `RESTORE` command. (**Access: 7677**).
 
 ---
@@ -101,8 +101,8 @@ Potential member submits request → L reviews → D confirms → code auto-gene
 
 ## 5. THE VAULT INTERIOR (Library)
 
-* **AESTHETIC:** Each vault is a warm, high-contrast chamber with a **30/70 split** — top viewport window (artist-facing view) / lower file-cell library wall.
-* **LIBRARY WALL:** A grid of square file-cells in a warm wood-tone frame under Honey Amber lighting. Each cell has an identity-colored ownership rail, creator sigil, and reveals VOID + COMMENT handles on hover. Each vault carries its own identity color.
+* **AESTHETIC:** Each vault is a warm, high-contrast chamber. Honey Amber lighting, wood-tone warmth.
+* **LIBRARY WALL:** A full-screen grid of square file-cells. Each cell has an identity-colored ownership rail, creator sigil, and reveals VOID + COMMENT handles on hover. Each vault carries its own identity color. Layout and proportions are open — no fixed split ratio.
 * **MUSE VAULTS** inherit this template, themed to their artist — simple aesthetic choices (accent color, lighting tone) are within each vault owner's sovereignty.
 * **READOUT:** Hovering over a file displays **Track Name** and **BPM** in Amber.
 * **CONTROLS:** Selecting a file reveals options: **PLAY, FFWD, REWIND, STOP, REC**.
