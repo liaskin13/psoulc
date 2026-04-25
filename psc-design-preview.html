@@ -1540,6 +1540,60 @@ html { scroll-behavior: smooth; }
 </div>
 
 <!-- SECTION LABEL: VAULT -->
+<style>
+/* Vault v2 — full-screen, drawer, waveform glow, duration bars, watermark */
+.vault-content { grid-template-columns: 1fr !important; position: relative; overflow: hidden; }
+.vault-panel   { display: none !important; }
+.cell-wall     { padding-right: 268px; }
+
+.file-cell:hover .cell-wave svg  { animation: vWaveGlow 1.4s ease-in-out infinite; }
+.file-cell.selected .cell-wave svg { filter: brightness(3.8); }
+@keyframes vWaveGlow {
+  0%, 100% { filter: brightness(2.6); }
+  50%      { filter: brightness(4.2); }
+}
+
+.cell-dur-bar {
+  position: absolute;
+  bottom: 0; left: 2px; right: 0;
+  height: 1px;
+  opacity: 0.14;
+  transition: opacity 150ms;
+}
+.file-cell:hover .cell-dur-bar,
+.file-cell.selected .cell-dur-bar { opacity: 0.5; }
+
+.file-cell.status-released .cell-title { color: #4e3a22 !important; }
+.file-cell.status-released .cell-bpm   { color: #221608 !important; }
+.file-cell.status-archive  { opacity: 0.45; }
+
+.vault-watermark {
+  grid-column: 1 / -1;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(52px, 9vw, 110px);
+  font-weight: 700;
+  color: #0e0b08;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  padding: 20px 0 6px;
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.vault-drawer {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 256px;
+  background: #090706;
+  border-left: 1px solid #1e1a14;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 10;
+}
+</style>
 <div class="scroll-target" id="vault"></div>
 <div class="section-label">03 — ORIGINAL WORK · FILE CELL WALL</div>
 
@@ -1644,45 +1698,44 @@ html { scroll-behavior: smooth; }
           <span class="cell-handle">▶</span>
         </div>
       </div>
+      <div class="vault-watermark">ORIGINAL WORK</div>
     </div>
 
-    <!-- Side panel -->
-    <div class="vault-panel">
-      <div class="panel-section">
+    <!-- Drawer -->
+    <div class="vault-drawer" id="vault-drawer">
+      <div class="panel-section" style="padding-bottom:8px;">
         <div class="panel-section-label">SELECTED</div>
-        <div class="panel-title">Low End Theory Redux</div>
+        <div class="panel-title" id="vd-title">Low End Theory Redux</div>
         <div class="panel-data-row">
           <span class="panel-data-key">BPM</span>
-          <span class="panel-data-val">094</span>
+          <span class="panel-data-val" id="vd-bpm">094</span>
         </div>
         <div class="panel-data-row">
           <span class="panel-data-key">KEY</span>
-          <span class="panel-data-val" style="color:#ff6b35;font-size:10px;">F MINOR</span>
+          <span class="panel-data-val" id="vd-key" style="color:#ff6b35;font-size:10px;">F MINOR</span>
         </div>
         <div class="panel-data-row">
-          <span class="panel-data-key">SECTION</span>
-          <span class="panel-data-val" style="color:#554422;font-size:10px;">UNRELEASED</span>
+          <span class="panel-data-key">STATUS</span>
+          <span class="panel-data-val" id="vd-status" style="color:#554422;font-size:10px;">UNRELEASED</span>
         </div>
         <div class="panel-data-row">
           <span class="panel-data-key">DURATION</span>
-          <span class="panel-data-val">4:32</span>
+          <span class="panel-data-val" id="vd-dur">4:32</span>
         </div>
         <div class="panel-data-row">
           <span class="panel-data-key">FORMAT</span>
-          <span class="panel-data-val" style="font-size:10px;color:#3a2a18;">WAV · 24bit</span>
+          <span class="panel-data-val" style="font-size:10px;color:#3a2a18;">WAV · 24BIT</span>
         </div>
       </div>
-
       <div class="panel-section">
         <div class="panel-section-label">COMMANDS</div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="cmd-btn" style="width:100%;justify-content:flex-start;text-align:left;height:26px;">TUNE METADATA</button>
-          <button class="cmd-btn" style="width:100%;justify-content:flex-start;text-align:left;height:26px;">LEAVE COMMENT</button>
-          <button class="cmd-btn" style="width:100%;justify-content:flex-start;text-align:left;height:26px;">MOVE SECTION</button>
-          <button class="cmd-btn void-btn" style="width:100%;justify-content:flex-start;text-align:left;height:26px;">ARM · VOID</button>
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;height:26px;">TUNE METADATA</button>
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;height:26px;">LEAVE COMMENT</button>
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;height:26px;">MOVE SECTION</button>
+          <button class="cmd-btn void-btn" style="width:100%;justify-content:flex-start;height:26px;">ARM · VOID</button>
         </div>
       </div>
-
       <div class="panel-section" style="flex:1;">
         <div class="panel-section-label">VOICE COMMENTS · 3</div>
         <div class="voice-comment" style="border-bottom:1px solid #130f09;padding:6px 0;">
@@ -1706,6 +1759,20 @@ html { scroll-behavior: smooth; }
 
 <script>
 (function() {
+  // Track metadata for drawer + duration bars
+  var trackData = {
+    'Low End Theory Redux':   { bpm:'094', key:'F MIN',   status:'UNRELEASED', dur:'4:32', secs:272 },
+    'Dusk Protocol':          { bpm:'110', key:'A♭ MAJ',  status:'UNRELEASED', dur:'6:14', secs:374 },
+    'Signal Lost':            { bpm:'088', key:'D MIN',   status:'UNRELEASED', dur:'5:47', secs:347 },
+    'Pressure System':        { bpm:'072', key:'G MIN',   status:'UNRELEASED', dur:'7:03', secs:423 },
+    'Echo Chamber':           { bpm:'116', key:'E♭ MAJ',  status:'UNRELEASED', dur:'5:22', secs:322 },
+    'Root Frequency Vol. II': { bpm:'096', key:'C MIN',   status:'UNRELEASED', dur:'8:11', secs:491 },
+    'The Deep Mix':           { bpm:'104', key:'B♭ MIN',  status:'UNRELEASED', dur:'9:44', secs:584 },
+    'First Draft':            { bpm:'080', key:'D MAJ',   status:'UNRELEASED', dur:'3:58', secs:238 },
+    'Golden Gate Sunrise':    { bpm:'128', key:'F# MIN',  status:'RELEASED',   dur:'5:30', secs:330 },
+  };
+  var MAX_SECS = 600;
+
   function seedRng(s) {
     return function() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
   }
@@ -1733,12 +1800,28 @@ html { scroll-behavior: smooth; }
     return svg;
   }
 
+  function updateDrawer(title, data, color) {
+    var el = function(id) { return document.getElementById(id); };
+    if (!el('vd-title')) return;
+    el('vd-title').textContent = title;
+    el('vd-bpm').textContent = data.bpm;
+    el('vd-key').textContent = data.key;
+    el('vd-key').style.color = color;
+    el('vd-status').textContent = data.status;
+    el('vd-dur').textContent = data.dur;
+  }
+
   document.querySelectorAll('.file-cell').forEach(function(cell, i) {
     var rail = cell.querySelector('.cell-chakra-rail');
     var color = (rail && rail.style.background) ? rail.style.background : '#ffb347';
     var titleEl = cell.querySelector('.cell-title');
     var txt = titleEl ? titleEl.textContent.trim() : '';
-    var seed = txt.split('').reduce(function(a, c, j) { return a + c.charCodeAt(0) * (j + 7); }, i * 31 + 17);
+    var data = trackData[txt] || {};
+    var seed = txt.split('').reduce(function(a,c,j){ return a + c.charCodeAt(0) * (j+7); }, i*31+17);
+
+    // Status class
+    if (data.status === 'RELEASED') cell.classList.add('status-released');
+    if (data.status === 'ARCHIVE')  cell.classList.add('status-archive');
 
     // Track number
     var num = document.createElement('div');
@@ -1752,7 +1835,27 @@ html { scroll-behavior: smooth; }
     waveDiv.appendChild(makeVaultWave(seed, color));
     if (titleEl) cell.insertBefore(waveDiv, titleEl);
     else cell.appendChild(waveDiv);
+
+    // Duration bar
+    if (data.secs) {
+      var bar = document.createElement('div');
+      bar.className = 'cell-dur-bar';
+      bar.style.width = Math.round((data.secs / MAX_SECS) * 100) + '%';
+      bar.style.background = color;
+      cell.appendChild(bar);
+    }
+
+    // Click → update drawer
+    cell.addEventListener('click', function() {
+      document.querySelectorAll('.file-cell').forEach(function(c){ c.classList.remove('selected'); });
+      cell.classList.add('selected');
+      if (data.bpm) updateDrawer(txt, data, color);
+    });
   });
+
+  // Auto-select first cell
+  var first = document.querySelector('.file-cell.selected') || document.querySelector('.file-cell');
+  if (first) first.click();
 })();
 </script>
 
