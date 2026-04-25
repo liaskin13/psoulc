@@ -2150,45 +2150,91 @@ html { scroll-behavior: smooth; }
 <div class="scroll-target" id="listener"></div>
 <div class="section-label">05 — LISTENER VIEW · CRATE FLIP</div>
 
-<div style="background:#080604;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+<div id="listener-screen" style="background:#080604;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;">
 
-  <!-- Ambient glow -->
-  <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(255,179,71,0.04) 0%,transparent 70%);pointer-events:none;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+  <!-- Ambient glow — larger -->
+  <div style="position:absolute;width:900px;height:900px;background:radial-gradient(circle,rgba(255,179,71,0.05) 0%,transparent 62%);pointer-events:none;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+
+  <!-- Waveform watermark — injected by JS below -->
+  <div id="listener-watermark" style="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);pointer-events:none;opacity:1;z-index:0;"></div>
 
   <!-- Artist identity strip -->
-  <div style="position:absolute;top:0;left:0;right:0;height:40px;display:flex;align-items:center;padding:0 28px;gap:16px;border-bottom:1px solid #1a1510;">
+  <div style="position:absolute;top:0;left:0;right:0;height:40px;display:flex;align-items:center;padding:0 28px;gap:16px;border-bottom:1px solid #1a1510;z-index:10;">
     <div style="font-family:'Comfortaa',cursive;font-size:18px;font-weight:700;color:#ffb347;letter-spacing:-0.02em;">dp</div>
     <div style="font-family:'Comfortaa',cursive;font-size:9px;font-weight:700;color:#3a2a18;letter-spacing:0.14em;text-transform:uppercase;">PLEASANT SOUL COLLECTIVE</div>
     <div style="margin-left:auto;font-family:'Chakra Petch',sans-serif;font-size:9px;color:#2a1e0e;letter-spacing:0.08em;">LISTENER ACCESS</div>
   </div>
 
   <!-- Vault tabs -->
-  <div style="position:absolute;top:48px;left:0;right:0;display:flex;gap:0;border-bottom:1px solid #1a1510;">
+  <div style="position:absolute;top:40px;left:0;right:0;display:flex;gap:0;border-bottom:1px solid #1a1510;z-index:10;">
     <div class="crate-tab active-tab" data-crate="mixes">MIXES</div>
     <div class="crate-tab" data-crate="original">ORIGINAL WORK</div>
     <div class="crate-tab" data-crate="live">LIVE SETS</div>
   </div>
 
   <!-- Crate stage -->
-  <div id="crate-stage" style="perspective:1200px;width:100%;display:flex;align-items:center;justify-content:center;padding-top:40px;position:relative;">
-    <div id="crate-stack" style="position:relative;width:360px;height:360px;transform-style:preserve-3d;cursor:grab;">
-    </div>
+  <div id="crate-stage" style="perspective:1200px;width:100%;display:flex;align-items:center;justify-content:center;padding-top:40px;position:relative;z-index:5;">
+    <div id="crate-stack" style="position:relative;width:360px;height:360px;transform-style:preserve-3d;cursor:grab;"></div>
   </div>
 
   <!-- Now playing strip -->
-  <div id="now-playing" style="position:absolute;bottom:0;left:0;right:0;height:64px;background:#06050300;border-top:1px solid #1a1510;display:flex;align-items:center;padding:0 28px;gap:20px;">
-    <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
-      <div id="np-title" style="font-family:'Chakra Petch',sans-serif;font-size:15px;font-weight:600;color:#f5ead8;letter-spacing:0.01em;">Low End Theory Redux</div>
-      <div style="display:flex;gap:16px;align-items:center;">
-        <span id="np-bpm" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#ffb347;letter-spacing:0.08em;">094 BPM</span>
-        <span id="np-key" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#ffb347;letter-spacing:0.08em;">F MIN</span>
-        <span id="np-status" style="font-family:'Chakra Petch',sans-serif;font-size:8px;color:#3a2a18;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #2a1800;padding:1px 6px;">UNRELEASED</span>
+  <div id="now-playing" style="position:absolute;bottom:0;left:0;right:0;z-index:10;">
+    <!-- Progress line -->
+    <div id="np-progress-track" style="height:1px;background:#1a1510;position:relative;">
+      <div id="np-progress-fill" style="position:absolute;left:0;top:0;height:100%;width:28%;background:linear-gradient(to right,#ffb347,rgba(255,179,71,0.2));transition:width 0.5s linear;"></div>
+    </div>
+    <!-- Strip body -->
+    <div style="background:linear-gradient(to top,#060403 0%,rgba(6,4,3,0.92) 70%,transparent 100%);display:flex;align-items:center;padding:14px 28px 18px;gap:18px;">
+      <!-- Identity bar -->
+      <div id="np-id-bar" style="width:2px;height:40px;background:#ffb347;flex-shrink:0;transition:background 300ms;"></div>
+      <!-- Track info -->
+      <div style="display:flex;flex-direction:column;gap:5px;flex:1;">
+        <div id="np-title" style="font-family:'Chakra Petch',sans-serif;font-size:16px;font-weight:600;color:#f5ead8;letter-spacing:0.01em;line-height:1.1;">Low End Theory Redux</div>
+        <div style="display:flex;gap:14px;align-items:center;">
+          <span id="np-bpm" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#ffb347;letter-spacing:0.08em;">094 BPM</span>
+          <span id="np-key" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#ffb347;letter-spacing:0.08em;">F MIN</span>
+          <span id="np-dur" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#3a2a18;letter-spacing:0.06em;">4:32</span>
+          <span id="np-status" style="font-family:'Chakra Petch',sans-serif;font-size:7px;color:#3a2a18;letter-spacing:0.12em;text-transform:uppercase;border:1px solid #2a1800;padding:1px 6px;">UNRELEASED</span>
+        </div>
+      </div>
+      <!-- Counter + hint -->
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <div id="np-counter" style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#3a2a18;letter-spacing:0.08em;">01 / 07</div>
+        <div style="font-family:'Chakra Petch',sans-serif;font-size:8px;color:#201610;letter-spacing:0.1em;">← SWIPE →</div>
       </div>
     </div>
-    <div style="font-family:'Chakra Petch',sans-serif;font-size:9px;color:#2a1e0e;letter-spacing:0.06em;">SWIPE TO BROWSE</div>
   </div>
 
 </div>
+
+<script>
+// Listener — ambient waveform watermark
+(function() {
+  var container = document.getElementById('listener-watermark');
+  if (!container) return;
+  var bars = 120, barW = 3, gap = 2, h = 220, w = bars * (barW + gap);
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '100%'); svg.setAttribute('height', h);
+  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  var s = 99137;
+  function rand() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; }
+  for (var b = 0; b < bars; b++) {
+    var env = Math.sin((b / bars) * Math.PI * 1.6 + 0.4) * 0.55 + 0.45;
+    var ht = (rand() * 0.45 + rand() * 0.35 + rand() * 0.2) * env;
+    var bh = Math.max(4, ht * h * 0.78);
+    var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', b * (barW + gap));
+    rect.setAttribute('y', (h - bh) / 2);
+    rect.setAttribute('width', barW);
+    rect.setAttribute('height', bh);
+    rect.setAttribute('fill', '#ffb347');
+    rect.setAttribute('opacity', 0.022 + ht * 0.018);
+    svg.appendChild(rect);
+  }
+  container.appendChild(svg);
+})();
+</script>
 
 <style>
 .crate-tab {
@@ -2360,6 +2406,9 @@ html { scroll-behavior: smooth; }
   const npBpm = document.getElementById('np-bpm');
   const npKey = document.getElementById('np-key');
   const npStatus = document.getElementById('np-status');
+  const npDur = document.getElementById('np-dur');
+  const npCounter = document.getElementById('np-counter');
+  const npIdBar = document.getElementById('np-id-bar');
 
   function makeWaveform(seed, isFront, color) {
     const bars = 72;
@@ -2478,10 +2527,14 @@ html { scroll-behavior: smooth; }
   }
 
   function updateNowPlaying(t) {
+    const list = tracks[currentCrate];
     npTitle.textContent = t.title;
     npBpm.textContent = t.bpm !== '—' ? t.bpm + ' BPM' : '—';
-    npKey.textContent = t.key;
+    npKey.textContent = t.key !== '—' ? t.key : '';
     npStatus.textContent = t.status;
+    if (npDur) npDur.textContent = t.dur || '';
+    if (npCounter) npCounter.textContent = String(currentIndex + 1).padStart(2,'0') + ' / ' + String(list.length).padStart(2,'0');
+    if (npIdBar) npIdBar.style.background = t.color || '#ffb347';
   }
 
   function flipNext() {
