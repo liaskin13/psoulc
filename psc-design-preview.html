@@ -793,10 +793,10 @@ body {
 
 /* File cell wall */
 .cell-wall {
-  padding: 16px;
+  padding: 14px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 5px;
   align-content: start;
   overflow-y: auto;
 }
@@ -846,12 +846,31 @@ body {
   width: 2px;
 }
 
+.cell-wave {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  margin: 0 -2px;
+}
+.cell-wave svg { display: block; width: 100%; }
+
+.cell-track-num {
+  position: absolute;
+  top: 7px; right: 8px;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: #1e1610;
+  letter-spacing: 0.05em;
+}
+
 .cell-title {
   font-family: 'Chakra Petch', sans-serif;
-  font-size: 10px;
-  color: #8a7055;
+  font-size: 9px;
+  font-weight: 500;
+  color: #7a6045;
   line-height: 1.3;
-  flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -860,8 +879,9 @@ body {
 
 .cell-bpm {
   font-family: var(--font-mono);
-  font-size: 9px;
-  color: #3a2a18;
+  font-size: 8px;
+  color: #2e2010;
+  letter-spacing: 0.04em;
 }
 
 .cell-handles {
@@ -1683,6 +1703,58 @@ html { scroll-behavior: smooth; }
     </div>
   </div>
 </div>
+
+<script>
+(function() {
+  function seedRng(s) {
+    return function() { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+  }
+  function makeVaultWave(seed, color) {
+    var bars = 38, barW = 1.5, gap = 1, h = 40, w = bars * (barW + gap);
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', w); svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    var rand = seedRng(seed);
+    for (var b = 0; b < bars; b++) {
+      var r1 = rand(), r2 = rand(), r3 = rand();
+      var env = Math.sin((b / bars) * Math.PI) * 0.6 + 0.4;
+      var ht = (r1 * 0.5 + r2 * 0.3 + r3 * 0.2) * env;
+      var bh = Math.max(1.5, ht * h);
+      var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', b * (barW + gap));
+      rect.setAttribute('y', (h - bh) / 2);
+      rect.setAttribute('width', barW);
+      rect.setAttribute('height', bh);
+      rect.setAttribute('fill', color);
+      rect.setAttribute('opacity', 0.15 + ht * 0.15);
+      svg.appendChild(rect);
+    }
+    return svg;
+  }
+
+  document.querySelectorAll('.file-cell').forEach(function(cell, i) {
+    var rail = cell.querySelector('.cell-chakra-rail');
+    var color = (rail && rail.style.background) ? rail.style.background : '#ffb347';
+    var titleEl = cell.querySelector('.cell-title');
+    var txt = titleEl ? titleEl.textContent.trim() : '';
+    var seed = txt.split('').reduce(function(a, c, j) { return a + c.charCodeAt(0) * (j + 7); }, i * 31 + 17);
+
+    // Track number
+    var num = document.createElement('div');
+    num.className = 'cell-track-num';
+    num.textContent = String(i + 1).padStart(2, '0');
+    cell.appendChild(num);
+
+    // Waveform
+    var waveDiv = document.createElement('div');
+    waveDiv.className = 'cell-wave';
+    waveDiv.appendChild(makeVaultWave(seed, color));
+    if (titleEl) cell.insertBefore(waveDiv, titleEl);
+    else cell.appendChild(waveDiv);
+  });
+})();
+</script>
 
 <!-- SECTION LABEL: VAULT HELIX -->
 <div class="scroll-target" id="helix"></div>
