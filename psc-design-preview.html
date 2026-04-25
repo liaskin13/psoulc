@@ -1498,6 +1498,30 @@ html { scroll-behavior: smooth; }
     <div class="vs-upload">
       <button class="vs-upload-btn">+ UPLOAD</button>
     </div>
+
+    <!-- BROADCAST to L -->
+    <div style="border-top:1px solid #1a1510;padding:10px 14px 14px;">
+      <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:0.16em;text-transform:uppercase;color:#2a1e10;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+        BROADCAST
+        <span style="color:#ffb347;opacity:0.5;font-size:7px;">D → L</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;" id="d-broadcast-type">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;">
+          <input type="radio" name="d-sig" value="working" checked style="accent-color:#ffb347;">
+          <span style="font-family:var(--font-mono);font-size:7px;color:#554433;letter-spacing:0.08em;">WORKING</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;">
+          <input type="radio" name="d-sig" value="broken" style="accent-color:#cc3300;">
+          <span style="font-family:var(--font-mono);font-size:7px;color:#443322;letter-spacing:0.08em;">BROKEN</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;">
+          <input type="radio" name="d-sig" value="review" style="accent-color:#886622;">
+          <span style="font-family:var(--font-mono);font-size:7px;color:#443322;letter-spacing:0.08em;">REVIEW</span>
+        </label>
+      </div>
+      <textarea id="d-broadcast-input" placeholder="Signal to L…" maxlength="120" rows="2" style="width:100%;background:#0a0806;border:1px solid #1a1510;color:#665544;font-family:var(--font-mono);font-size:8px;padding:6px 8px;letter-spacing:0.04em;resize:none;outline:none;box-sizing:border-box;"></textarea>
+      <button id="d-broadcast-send" style="width:100%;margin-top:5px;padding:6px 0;background:none;border:1px solid #2a1e10;color:#443322;font-family:var(--font-mono);font-size:7px;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;transition:all 80ms;">TRANSMIT</button>
+    </div>
   </div>
 
   <!-- Track table -->
@@ -4124,6 +4148,52 @@ window.addEventListener('scroll', updateActive);
     cells.forEach(function(c){ c.classList.remove('ec-active'); });
   });
   syncCells();
+}());
+
+// D Console — BROADCAST transmit → pushes into L's broadcast panel
+(function() {
+  var sendBtn = document.getElementById('d-broadcast-send');
+  var input   = document.getElementById('d-broadcast-input');
+  var dlEntries = document.getElementById('dl-entries');
+  var dlCount   = document.getElementById('dl-count');
+  if (!sendBtn || !input || !dlEntries) return;
+
+  function updateLCount() {
+    var unacked = dlEntries.querySelectorAll('.dl-entry:not(.dl-ack)').length;
+    if (dlCount) dlCount.textContent = unacked + ' SIGNAL' + (unacked !== 1 ? 'S' : '');
+  }
+
+  sendBtn.addEventListener('click', function() {
+    var val = input.value.trim();
+    if (!val) return;
+    var type = document.querySelector('input[name="d-sig"]:checked');
+    var sigType = type ? type.value : 'working';
+
+    var el = document.createElement('div');
+    el.className = 'dl-entry dl-' + sigType;
+    var labels = { working:'WORKING', broken:'BROKEN', review:'REVIEW' };
+    el.innerHTML = '<div class="dl-entry-bar"></div>'
+      + '<div class="dl-entry-status"><div class="dl-status-dot"></div><span class="dl-status-label">' + labels[sigType] + '</span></div>'
+      + '<div class="dl-entry-body">' + val.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+      + '<div class="dl-entry-ts"><span class="dl-ts-time">NOW</span><span class="dl-ack-label">ACK</span></div>';
+    el.addEventListener('click', function(){ el.classList.toggle('dl-ack'); updateLCount(); });
+    dlEntries.insertBefore(el, dlEntries.firstChild);
+    updateLCount();
+
+    input.value = '';
+    sendBtn.textContent = 'TRANSMITTED ✓';
+    sendBtn.style.color = '#ffb347';
+    sendBtn.style.borderColor = 'rgba(255,179,71,0.3)';
+    setTimeout(function() {
+      sendBtn.textContent = 'TRANSMIT';
+      sendBtn.style.color = '';
+      sendBtn.style.borderColor = '';
+    }, 1800);
+  });
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+  });
 }());
 
 // Void Trigger — ARM → CONFIRM → ACTIVE → DEACTIVATE
