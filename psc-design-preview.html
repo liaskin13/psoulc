@@ -1309,6 +1309,9 @@ html { scroll-behavior: smooth; }
   <a href="#listener">LISTENER</a>
   <a href="#muses">MUSES</a>
   <a href="#janet-vault">JANET</a>
+  <a href="#larry-vault">LARRY</a>
+  <a href="#erikah-vault">ERIKAH</a>
+  <a href="#drake-vault">DRAKE</a>
   <a href="#l-console">L CONSOLE</a>
   <a href="#palette">PALETTE</a>
   <a href="#type">TYPE</a>
@@ -2546,10 +2549,7 @@ html { scroll-behavior: smooth; }
       { title: 'Oscillator Suite', bpm: '100', key: 'C MAJ', dur: '6:12', status: 'UNRELEASED', color: '#cc44aa' },
       { title: 'Warmth Coefficient', bpm: '085', key: 'A MIN', dur: '4:44', status: 'UNRELEASED', color: '#4466cc' },
     ],
-    live: [
-      { title: 'Vision 001 — Rough Cut', bpm: '—', key: '—', dur: '47:12', status: 'UNRELEASED', color: '#ffb347' },
-      { title: 'Basement Continuum', bpm: '—', key: '—', dur: '1:22:05', status: 'UNRELEASED', color: '#cc6644' },
-    ]
+    live: []
   };
 
   let currentCrate = 'mixes';
@@ -2695,9 +2695,44 @@ html { scroll-behavior: smooth; }
     return card;
   }
 
+  function makeEmptyCard(label, sublabel) {
+    const card = document.createElement('div');
+    card.className = 'crate-card';
+    card.style.transform = 'translate(-50%,-50%)';
+    card.style.zIndex = '100';
+    card.style.boxShadow = '0 32px 100px rgba(0,0,0,0.9), 0 0 0 1px #2a1e10';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.alignItems = 'center';
+    card.style.justifyContent = 'center';
+    card.style.gap = '12px';
+    const accent = document.createElement('div');
+    accent.className = 'crate-card-accent';
+    accent.style.background = '#1a1510';
+    card.appendChild(accent);
+    const lbl = document.createElement('div');
+    lbl.style.cssText = "font-family:'Chakra Petch',sans-serif;font-size:11px;font-weight:600;color:#2a1e0e;letter-spacing:0.14em;text-transform:uppercase;text-align:center;";
+    lbl.textContent = label;
+    card.appendChild(lbl);
+    const sub = document.createElement('div');
+    sub.style.cssText = "font-family:'Chakra Petch',sans-serif;font-size:8px;color:#1a1408;letter-spacing:0.12em;text-transform:uppercase;text-align:center;line-height:1.6;max-width:200px;";
+    sub.textContent = sublabel;
+    card.appendChild(sub);
+    return card;
+  }
+
   function buildStack(crate, activeIdx) {
     stack.innerHTML = '';
     const list = tracks[crate];
+    if (!list || list.length === 0) {
+      stack.appendChild(makeEmptyCard('NO SIGNAL', 'This vault has no tracks yet.'));
+      if (npTitle) { npTitle.textContent = '—'; }
+      if (npBpm) npBpm.textContent = ''; if (npKey) npKey.textContent = '';
+      if (npStatus) npStatus.textContent = 'EMPTY'; if (npDur) npDur.textContent = '';
+      if (npCounter) npCounter.textContent = '00 / 00';
+      if (npIdBar) npIdBar.style.background = '#2a1e0e';
+      return;
+    }
     const visible = 6;
     for (let i = Math.min(visible - 1, list.length - 1); i >= 0; i--) {
       const tIdx = (activeIdx + i) % list.length;
@@ -3104,6 +3139,147 @@ html { scroll-behavior: smooth; }
 }());
 </script>
 
+<!-- SHARED MUSE VAULT CSS — used by Janet, Larry, Erikah, Drake -->
+<style>
+/* --mvc: identity color  |  --mvc-rgb: r,g,b for rgba()  |  --mvc-bg/surface/border/dim: palette */
+.mv-screen {
+  --mvc: #ff0000; --mvc-rgb: 255,0,0;
+  --mvc-bg: #070406; --mvc-surface: #060305;
+  --mvc-border: #1e0e1a; --mvc-dim: #c0a0b0;
+  --mvc-bpm: #3a1a2e; --mvc-wm: #120810;
+  background: var(--mvc-bg);
+  min-height: calc(100vh - 32px);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 40px 1fr;
+  position: relative;
+  overflow: hidden;
+}
+.mv-topbar {
+  background: var(--mvc-surface);
+  border-bottom: 1px solid var(--mvc-border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+}
+.mv-vault-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--mvc); opacity: 0.8;
+}
+.mv-back {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px; letter-spacing: 0.14em;
+  color: rgba(var(--mvc-rgb),0.25);
+  cursor: pointer; text-transform: uppercase;
+  transition: color 120ms;
+}
+.mv-back:hover { color: rgba(var(--mvc-rgb),0.6); }
+.mv-cell-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px,1fr));
+  gap: 5px;
+  padding: 18px 276px 18px 18px;
+  overflow-y: auto;
+  align-content: start;
+  position: relative;
+}
+.mv-watermark {
+  grid-column: 1/-1;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(52px,9vw,110px);
+  font-weight: 700;
+  color: var(--mvc-wm);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  padding: 16px 0 4px;
+  user-select: none; pointer-events: none;
+  white-space: nowrap; overflow: hidden;
+}
+.mv-cell {
+  background: var(--mvc-bg);
+  border: 1px solid var(--mvc-border);
+  position: relative;
+  padding: 12px 10px 10px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms;
+  overflow: hidden; min-height: 118px;
+}
+.mv-cell:hover { filter: brightness(1.12); }
+.mv-cell.selected { border-color: rgba(var(--mvc-rgb),0.3); }
+.mv-cell-rail {
+  position: absolute; left:0; top:0; bottom:0; width:2px;
+  background: var(--mvc); opacity: 0.55;
+}
+.mv-cell.selected .mv-cell-rail { opacity: 1; }
+.mv-cell-num {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 7px; color: rgba(var(--mvc-rgb),0.2);
+  letter-spacing: 0.08em;
+  position: absolute; top: 8px; right: 8px;
+}
+.mv-cell-wave { margin: 4px 0 2px; flex: 1; }
+.mv-cell:hover .mv-cell-wave svg,
+.mv-cell.selected .mv-cell-wave svg { filter: brightness(2.6); transition: filter 200ms; }
+.mv-cell-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px; font-weight: 600;
+  color: var(--mvc-dim);
+  letter-spacing: 0.02em; line-height: 1.3; margin-top: 18px;
+}
+.mv-cell.selected .mv-cell-title { color: rgba(var(--mvc-rgb),0.9); }
+.mv-cell-bpm {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px; color: var(--mvc-bpm); letter-spacing: 0.06em;
+}
+.mv-cell.selected .mv-cell-bpm { color: var(--mvc); opacity: 0.7; }
+.mv-drawer {
+  position: absolute; right:0; top:0; bottom:0; width:256px;
+  background: var(--mvc-surface);
+  border-left: 1px solid var(--mvc-border);
+  display: flex; flex-direction: column;
+  overflow-y: auto; z-index: 10;
+}
+.mv-drawer-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 18px; font-weight: 600;
+  color: rgba(var(--mvc-rgb),0.7);
+  letter-spacing: -0.01em; line-height: 1.25;
+  padding: 20px 18px 14px;
+  border-bottom: 1px solid var(--mvc-border);
+}
+.mv-drawer-wave { padding: 14px 18px 6px; border-bottom: 1px solid var(--mvc-border); }
+.mv-drawer-fields {
+  padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 10px;
+  border-bottom: 1px solid var(--mvc-border);
+}
+.mv-drawer-field { display: flex; justify-content: space-between; align-items: baseline; }
+.mv-drawer-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px; letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(var(--mvc-rgb),0.15);
+}
+.mv-drawer-value {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px; color: rgba(var(--mvc-rgb),0.35); letter-spacing: 0.04em;
+}
+.mv-drawer-value.accent { color: var(--mvc); opacity: 0.75; }
+.mv-drawer-actions { padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; }
+.mv-drawer-btn {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase;
+  background: none; border: 1px solid var(--mvc-border);
+  color: rgba(var(--mvc-rgb),0.25);
+  padding: 7px 12px; cursor: pointer; text-align: left; transition: all 80ms;
+}
+.mv-drawer-btn:hover { border-color: rgba(var(--mvc-rgb),0.3); color: rgba(var(--mvc-rgb),0.6); }
+</style>
+
 <!-- SECTION LABEL: JANET VAULT -->
 <div class="scroll-target" id="janet-vault"></div>
 <div class="section-label">05C — JANET · MUSE VAULT · WOULD YOU MIND</div>
@@ -3462,6 +3638,241 @@ html { scroll-behavior: smooth; }
     var seed0 = janetTracks[0].title.split('').reduce(function(a,c,j){ return a+c.charCodeAt(0)*(j+11); }, 23);
     dw.appendChild(makeJanetWave(seed0, 38, 44, true));
   }
+}());
+</script>
+
+<!-- Shared Muse Vault builder — used by Larry, Erikah, Drake -->
+<script>
+function buildMuseVault(wallId, drawerId, titleId, waveId, bpmId, keyId, durId, statusId, tracks, mvc) {
+  var MAX_SECS = 420;
+  var wall = document.getElementById(wallId);
+  if (!wall) return;
+  var watermark = wall.querySelector('.mv-watermark');
+
+  function makeWave(seed, bars, H) {
+    var W = bars * 5;
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width','100%'); svg.setAttribute('height',H);
+    svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.setAttribute('preserveAspectRatio','none');
+    var s = seed >>> 0, bw = (W - bars) / bars;
+    for (var i = 0; i < bars; i++) {
+      s = (Math.imul(s,1664525)+1013904223) >>> 0;
+      var ht = 0.18 + (s/0xffffffff)*0.82;
+      var r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      var bh = ht * H;
+      r.setAttribute('x', i*(bw+1)); r.setAttribute('y',(H-bh)/2);
+      r.setAttribute('width',Math.max(0.8,bw)); r.setAttribute('height',bh);
+      r.setAttribute('fill',mvc); r.setAttribute('opacity',0.15+ht*0.45);
+      svg.appendChild(r);
+    }
+    return svg;
+  }
+
+  tracks.forEach(function(t, i) {
+    var cell = document.createElement('div');
+    cell.className = 'mv-cell' + (i===0?' selected':'');
+
+    var rail = document.createElement('div'); rail.className = 'mv-cell-rail'; cell.appendChild(rail);
+    var num = document.createElement('div'); num.className = 'mv-cell-num';
+    num.textContent = String(i+1).padStart(2,'0'); cell.appendChild(num);
+
+    var seed = t.title.split('').reduce(function(a,c,j){return a+c.charCodeAt(0)*(j+11);},i*37+23);
+    var wDiv = document.createElement('div'); wDiv.className = 'mv-cell-wave';
+    wDiv.appendChild(makeWave(seed,28,32)); cell.appendChild(wDiv);
+
+    var ttl = document.createElement('div'); ttl.className = 'mv-cell-title';
+    ttl.textContent = t.title; cell.appendChild(ttl);
+    var bpm = document.createElement('div'); bpm.className = 'mv-cell-bpm';
+    bpm.textContent = t.bpm+' BPM'; cell.appendChild(bpm);
+
+    if (t.secs) {
+      var bar = document.createElement('div');
+      bar.style.cssText = 'position:absolute;bottom:0;left:2px;right:0;height:1px;background:'+mvc+';opacity:0.12;width:'+Math.round(t.secs/MAX_SECS*100)+'%';
+      cell.appendChild(bar);
+    }
+
+    var seed2 = seed;
+    cell.addEventListener('click', function() {
+      wall.querySelectorAll('.mv-cell').forEach(function(c){c.classList.remove('selected');});
+      cell.classList.add('selected');
+      document.getElementById(titleId).textContent = t.title;
+      document.getElementById(bpmId).textContent = t.bpm;
+      document.getElementById(keyId).textContent = t.key;
+      document.getElementById(durId).textContent = t.dur;
+      document.getElementById(statusId).textContent = t.status;
+      var dw = document.getElementById(waveId); dw.innerHTML = '';
+      dw.appendChild(makeWave(seed2,38,44));
+    });
+
+    wall.insertBefore(cell, watermark);
+  });
+
+  // Seed drawer with first track
+  var dw = document.getElementById(waveId);
+  if (dw && tracks[0]) {
+    var s0 = tracks[0].title.split('').reduce(function(a,c,j){return a+c.charCodeAt(0)*(j+11);},23);
+    dw.appendChild(makeWave(s0,38,44));
+  }
+}
+</script>
+
+<!-- SECTION LABEL: LARRY VAULT -->
+<div class="scroll-target" id="larry-vault"></div>
+<div class="section-label">05D — LARRY · MUSE VAULT · EMPTY PAGES</div>
+
+<div class="mv-screen" id="larry-screen" style="--mvc:#7aaa5a;--mvc-rgb:122,170,90;--mvc-bg:#060705;--mvc-surface:#050604;--mvc-border:#1a2e0e;--mvc-dim:#a8c890;--mvc-bpm:#2a3a1a;--mvc-wm:#080d05;">
+  <div class="mv-topbar">
+    <span class="mv-back">← MUSES</span>
+    <span style="width:1px;height:16px;background:var(--mvc-border);flex-shrink:0;"></span>
+    <span class="mv-vault-name">LARRY</span>
+    <span style="font-family:var(--font-mono);font-size:8px;color:rgba(122,170,90,0.2);letter-spacing:0.1em;text-transform:uppercase;">MUSE · ORIGINAL MUSIC · 6 TRACKS</span>
+    <span style="margin-left:auto;font-family:var(--font-mono);font-size:8px;color:rgba(122,170,90,0.1);letter-spacing:0.08em;">ACCESS · MEMBER+</span>
+  </div>
+  <div style="position:relative;overflow:hidden;">
+    <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(122,170,90,0.04) 0%,transparent 65%);pointer-events:none;top:40%;left:50%;transform:translate(-50%,-50%);"></div>
+    <div class="mv-cell-wall" id="larry-wall">
+      <div class="mv-watermark">LARRY</div>
+    </div>
+    <div class="mv-drawer" id="larry-drawer">
+      <div class="mv-drawer-title" id="ld-title">Empty Pages</div>
+      <div class="mv-drawer-wave" id="ld-wave"></div>
+      <div class="mv-drawer-fields">
+        <div class="mv-drawer-field"><span class="mv-drawer-label">BPM</span><span class="mv-drawer-value accent" id="ld-bpm">082</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">KEY</span><span class="mv-drawer-value accent" id="ld-key">F MAJ</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">DURATION</span><span class="mv-drawer-value" id="ld-dur">3:44</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">STATUS</span><span class="mv-drawer-value" id="ld-status">UNRELEASED</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">FORMAT</span><span class="mv-drawer-value">WAV · 24BIT</span></div>
+      </div>
+      <div class="mv-drawer-actions">
+        <button class="mv-drawer-btn">▶ PLAY</button>
+        <button class="mv-drawer-btn">⏺ VOICE COMMENT</button>
+        <button class="mv-drawer-btn">TUNE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var MVC = '#7aaa5a', MVC_RGB = '122,170,90';
+  var tracks = [
+    { title: 'Empty Pages',         bpm: '082', key: 'F MAJ',  dur: '3:44', secs: 224, status: 'UNRELEASED' },
+    { title: 'Smoothest in the City',bpm: '088', key: 'B♭ MAJ', dur: '3:12', secs: 192, status: 'UNRELEASED' },
+    { title: 'Early Morning Risers', bpm: '076', key: 'G MAJ',  dur: '4:02', secs: 242, status: 'RELEASED'   },
+    { title: 'Orange Print',         bpm: '092', key: 'D MAJ',  dur: '3:28', secs: 208, status: 'UNRELEASED' },
+    { title: 'Slauson Deli',         bpm: '084', key: 'E♭ MAJ', dur: '3:55', secs: 235, status: 'UNRELEASED' },
+    { title: 'Jefe Status',          bpm: '095', key: 'C MAJ',  dur: '3:10', secs: 190, status: 'RELEASED'   }
+  ];
+  buildMuseVault('larry-wall','larry-drawer','ld-title','ld-wave','ld-bpm','ld-key','ld-dur','ld-status', tracks, MVC);
+}());
+</script>
+
+<!-- SECTION LABEL: ERIKAH VAULT -->
+<div class="scroll-target" id="erikah-vault"></div>
+<div class="section-label">05E — ERIKAH · MUSE VAULT · ON &amp; ON</div>
+
+<div class="mv-screen" id="erikah-screen" style="--mvc:#cc6633;--mvc-rgb:204,102,51;--mvc-bg:#070504;--mvc-surface:#060403;--mvc-border:#2e1a0e;--mvc-dim:#c8985a;--mvc-bpm:#3a2010;--mvc-wm:#100a05;">
+  <div class="mv-topbar">
+    <span class="mv-back">← MUSES</span>
+    <span style="width:1px;height:16px;background:var(--mvc-border);flex-shrink:0;"></span>
+    <span class="mv-vault-name">ERIKAH</span>
+    <span style="font-family:var(--font-mono);font-size:8px;color:rgba(204,102,51,0.2);letter-spacing:0.1em;text-transform:uppercase;">MUSE · ORIGINAL MUSIC · 11 TRACKS</span>
+    <span style="margin-left:auto;font-family:var(--font-mono);font-size:8px;color:rgba(204,102,51,0.1);letter-spacing:0.08em;">ACCESS · MEMBER+</span>
+  </div>
+  <div style="position:relative;overflow:hidden;">
+    <div style="position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(204,102,51,0.04) 0%,transparent 65%);pointer-events:none;top:40%;left:50%;transform:translate(-50%,-50%);"></div>
+    <div class="mv-cell-wall" id="erikah-wall">
+      <div class="mv-watermark">ERIKAH</div>
+    </div>
+    <div class="mv-drawer" id="erikah-drawer">
+      <div class="mv-drawer-title" id="ed-title">On &amp; On</div>
+      <div class="mv-drawer-wave" id="ed-wave"></div>
+      <div class="mv-drawer-fields">
+        <div class="mv-drawer-field"><span class="mv-drawer-label">BPM</span><span class="mv-drawer-value accent" id="ed-bpm">093</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">KEY</span><span class="mv-drawer-value accent" id="ed-key">F MIN</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">DURATION</span><span class="mv-drawer-value" id="ed-dur">5:02</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">STATUS</span><span class="mv-drawer-value" id="ed-status">UNRELEASED</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">FORMAT</span><span class="mv-drawer-value">WAV · 24BIT</span></div>
+      </div>
+      <div class="mv-drawer-actions">
+        <button class="mv-drawer-btn">▶ PLAY</button>
+        <button class="mv-drawer-btn">⏺ VOICE COMMENT</button>
+        <button class="mv-drawer-btn">TUNE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var MVC = '#cc6633';
+  var tracks = [
+    { title: 'On & On',              bpm: '093', key: 'F MIN',  dur: '5:02', secs: 302, status: 'UNRELEASED' },
+    { title: 'Next Lifetime',        bpm: '068', key: 'E♭ MIN', dur: '5:14', secs: 314, status: 'UNRELEASED' },
+    { title: 'Tyrone',               bpm: '088', key: 'D MIN',  dur: '4:44', secs: 284, status: 'RELEASED'   },
+    { title: 'Bag Lady',             bpm: '072', key: 'G MIN',  dur: '5:28', secs: 328, status: 'UNRELEASED' },
+    { title: 'Love of My Life',      bpm: '084', key: 'A MIN',  dur: '4:18', secs: 258, status: 'UNRELEASED' },
+    { title: 'Window Seat',          bpm: '065', key: 'C MIN',  dur: '4:50', secs: 290, status: 'UNRELEASED' },
+    { title: 'Other Side of the Game',bpm:'079', key: 'B♭ MIN', dur: '4:36', secs: 276, status: 'UNRELEASED' },
+    { title: 'Didn\'t Cha Know',     bpm: '091', key: 'F# MIN', dur: '5:10', secs: 310, status: 'RELEASED'   },
+    { title: 'Apple Tree',           bpm: '098', key: 'D MAJ',  dur: '3:58', secs: 238, status: 'UNRELEASED' },
+    { title: 'Honey',                bpm: '074', key: 'A♭ MAJ', dur: '4:22', secs: 262, status: 'UNRELEASED' },
+    { title: 'Green Eyes',           bpm: '058', key: 'G MAJ',  dur: '6:44', secs: 404, status: 'UNRELEASED' }
+  ];
+  buildMuseVault('erikah-wall','erikah-drawer','ed-title','ed-wave','ed-bpm','ed-key','ed-dur','ed-status', tracks, MVC);
+}());
+</script>
+
+<!-- SECTION LABEL: DRAKE VAULT -->
+<div class="scroll-target" id="drake-vault"></div>
+<div class="section-label">05F — DRAKE · MUSE VAULT · PASSIONFRUIT</div>
+
+<div class="mv-screen" id="drake-screen" style="--mvc:#c4a428;--mvc-rgb:196,164,40;--mvc-bg:#070604;--mvc-surface:#060504;--mvc-border:#2a2208;--mvc-dim:#c8b870;--mvc-bpm:#3a2e08;--mvc-wm:#0e0c04;">
+  <div class="mv-topbar">
+    <span class="mv-back">← MUSES</span>
+    <span style="width:1px;height:16px;background:var(--mvc-border);flex-shrink:0;"></span>
+    <span class="mv-vault-name">DRAKE</span>
+    <span style="font-family:var(--font-mono);font-size:8px;color:rgba(196,164,40,0.2);letter-spacing:0.1em;text-transform:uppercase;">MUSE · ORIGINAL MUSIC · 8 TRACKS</span>
+    <span style="margin-left:auto;font-family:var(--font-mono);font-size:8px;color:rgba(196,164,40,0.1);letter-spacing:0.08em;">ACCESS · MEMBER+</span>
+  </div>
+  <div style="position:relative;overflow:hidden;">
+    <div style="position:absolute;width:650px;height:650px;background:radial-gradient(circle,rgba(196,164,40,0.04) 0%,transparent 65%);pointer-events:none;top:40%;left:50%;transform:translate(-50%,-50%);"></div>
+    <div class="mv-cell-wall" id="drake-wall">
+      <div class="mv-watermark">DRAKE</div>
+    </div>
+    <div class="mv-drawer" id="drake-drawer">
+      <div class="mv-drawer-title" id="drd-title">Passionfruit</div>
+      <div class="mv-drawer-wave" id="drd-wave"></div>
+      <div class="mv-drawer-fields">
+        <div class="mv-drawer-field"><span class="mv-drawer-label">BPM</span><span class="mv-drawer-value accent" id="drd-bpm">115</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">KEY</span><span class="mv-drawer-value accent" id="drd-key">G# MIN</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">DURATION</span><span class="mv-drawer-value" id="drd-dur">4:44</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">STATUS</span><span class="mv-drawer-value" id="drd-status">UNRELEASED</span></div>
+        <div class="mv-drawer-field"><span class="mv-drawer-label">FORMAT</span><span class="mv-drawer-value">WAV · 24BIT</span></div>
+      </div>
+      <div class="mv-drawer-actions">
+        <button class="mv-drawer-btn">▶ PLAY</button>
+        <button class="mv-drawer-btn">⏺ VOICE COMMENT</button>
+        <button class="mv-drawer-btn">TUNE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var MVC = '#c4a428';
+  var tracks = [
+    { title: 'Passionfruit',             bpm: '115', key: 'G# MIN', dur: '4:44', secs: 284, status: 'UNRELEASED' },
+    { title: 'Hold On We\'re Going Home',bpm: '098', key: 'A MAJ',  dur: '3:47', secs: 227, status: 'RELEASED'   },
+    { title: 'Best I Ever Had',          bpm: '086', key: 'B♭ MAJ', dur: '3:58', secs: 238, status: 'RELEASED'   },
+    { title: 'Marvins Room',             bpm: '072', key: 'D MIN',  dur: '5:00', secs: 300, status: 'UNRELEASED' },
+    { title: 'God\'s Plan',              bpm: '077', key: 'D♭ MAJ', dur: '3:18', secs: 198, status: 'RELEASED'   },
+    { title: 'Feel No Ways',             bpm: '104', key: 'F# MIN', dur: '3:45', secs: 225, status: 'UNRELEASED' },
+    { title: 'Controlla',                bpm: '090', key: 'G MIN',  dur: '3:55', secs: 235, status: 'UNRELEASED' },
+    { title: 'One Dance',                bpm: '104', key: 'C# MIN', dur: '2:53', secs: 173, status: 'RELEASED'   }
+  ];
+  buildMuseVault('drake-wall','drake-drawer','drd-title','drd-wave','drd-bpm','drd-key','drd-dur','drd-status', tracks, MVC);
 }());
 </script>
 
@@ -4090,7 +4501,7 @@ html { scroll-behavior: smooth; }
 
 <script>
 // Nav active state
-const sections = ['entry','d-console','vault','helix','listener','muses','janet-vault','l-console','palette','type'];
+const sections = ['entry','d-console','vault','helix','listener','muses','janet-vault','larry-vault','erikah-vault','drake-vault','l-console','palette','type'];
 const links = document.querySelectorAll('.nav a');
 
 function updateActive() {
