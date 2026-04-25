@@ -1224,6 +1224,7 @@ html { scroll-behavior: smooth; }
   <a href="#helix">HELIX</a>
   <a href="#listener">LISTENER</a>
   <a href="#muses">MUSES</a>
+  <a href="#janet-vault">JANET</a>
   <a href="#l-console">L CONSOLE</a>
   <a href="#palette">PALETTE</a>
   <a href="#type">TYPE</a>
@@ -2985,6 +2986,367 @@ html { scroll-behavior: smooth; }
 }());
 </script>
 
+<!-- SECTION LABEL: JANET VAULT -->
+<div class="scroll-target" id="janet-vault"></div>
+<div class="section-label">05C — JANET · MUSE VAULT · WOULD YOU MIND</div>
+
+<style>
+/* Janet vault — deep magenta identity */
+.janet-screen {
+  background: #070406;
+  min-height: calc(100vh - 32px);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 40px 1fr;
+  position: relative;
+  overflow: hidden;
+}
+.janet-topbar {
+  background: #060305;
+  border-bottom: 1px solid #1e0e1a;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+}
+.janet-vault-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #cc3399;
+  opacity: 0.8;
+}
+.janet-back {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: #3a1a2e;
+  cursor: pointer;
+  text-transform: uppercase;
+  opacity: 0.7;
+  transition: opacity 120ms;
+}
+.janet-back:hover { opacity: 1; }
+.janet-cell-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 5px;
+  padding: 18px 276px 18px 18px;
+  overflow-y: auto;
+  align-content: start;
+  position: relative;
+}
+.janet-watermark {
+  grid-column: 1 / -1;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(52px, 9vw, 110px);
+  font-weight: 700;
+  color: #130810;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  padding: 16px 0 4px;
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.janet-cell {
+  background: #0a0508;
+  border: 1px solid #1a0c15;
+  position: relative;
+  padding: 12px 10px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms;
+  overflow: hidden;
+  min-height: 118px;
+}
+.janet-cell:hover { background: #0e0710; border-color: #2a1020; }
+.janet-cell.selected {
+  background: #0e0810;
+  border-color: rgba(204,51,153,0.3);
+  box-shadow: inset 0 0 0 1px rgba(204,51,153,0.08);
+}
+.janet-cell-rail {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: #cc3399;
+  opacity: 0.6;
+}
+.janet-cell.selected .janet-cell-rail { opacity: 1; }
+.janet-cell-num {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 7px;
+  color: #3a1a2e;
+  letter-spacing: 0.08em;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.janet-cell-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #c8a0b8;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  margin-top: 18px;
+}
+.janet-cell.selected .janet-cell-title { color: #e8c0d8; }
+.janet-cell-bpm {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  color: #4a1a38;
+  letter-spacing: 0.06em;
+}
+.janet-cell.selected .janet-cell-bpm { color: #cc3399; opacity: 0.7; }
+/* Janet drawer */
+.janet-drawer {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 256px;
+  background: #060305;
+  border-left: 1px solid #1e0e1a;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 10;
+}
+.janet-drawer-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #d080a8;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  padding: 20px 18px 14px;
+  border-bottom: 1px solid #1a0c15;
+}
+.janet-drawer-fields {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid #1a0c15;
+}
+.janet-drawer-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.janet-drawer-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2a1020;
+}
+.janet-drawer-value {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  color: #5a2040;
+  letter-spacing: 0.04em;
+}
+.janet-drawer-value.accent { color: #cc3399; opacity: 0.75; }
+.janet-drawer-actions {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.janet-drawer-btn {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid #1e0e1a;
+  color: #3a1a2e;
+  padding: 7px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 80ms;
+}
+.janet-drawer-btn:hover { border-color: rgba(204,51,153,0.3); color: #7a3060; }
+.janet-drawer-wave {
+  padding: 14px 18px 6px;
+  border-bottom: 1px solid #1a0c15;
+}
+/* Janet cell waveform */
+.janet-cell-wave { margin: 4px 0 2px; flex: 1; }
+.janet-cell:hover .janet-cell-wave svg,
+.janet-cell.selected .janet-cell-wave svg {
+  filter: brightness(2.8);
+  transition: filter 200ms;
+}
+</style>
+
+<div class="janet-screen">
+  <div class="janet-topbar">
+    <span class="janet-back">← MUSES</span>
+    <span style="width:1px;height:16px;background:#1e0e1a;flex-shrink:0;"></span>
+    <span class="janet-vault-name">JANET</span>
+    <span style="font-family:var(--font-mono);font-size:8px;color:#2a0e20;letter-spacing:0.1em;text-transform:uppercase;">MUSE · ORIGINAL MUSIC · 9 TRACKS</span>
+    <span style="margin-left:auto;font-family:var(--font-mono);font-size:8px;color:#1e0818;letter-spacing:0.08em;">ACCESS · MEMBER+</span>
+  </div>
+
+  <div style="position:relative;overflow:hidden;">
+    <!-- Ambient glow -->
+    <div style="position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(204,51,153,0.04) 0%,transparent 65%);pointer-events:none;top:40%;left:50%;transform:translate(-50%,-50%);"></div>
+
+    <div class="janet-cell-wall" id="janet-cell-wall">
+      <!-- Watermark -->
+      <div class="janet-watermark">JANET</div>
+      <!-- Cells injected by JS -->
+    </div>
+
+    <!-- Drawer -->
+    <div class="janet-drawer" id="janet-drawer">
+      <div class="janet-drawer-title" id="jd-title">Would You Mind</div>
+      <div class="janet-drawer-wave" id="jd-wave"></div>
+      <div class="janet-drawer-fields">
+        <div class="janet-drawer-field">
+          <span class="janet-drawer-label">BPM</span>
+          <span class="janet-drawer-value accent" id="jd-bpm">076</span>
+        </div>
+        <div class="janet-drawer-field">
+          <span class="janet-drawer-label">KEY</span>
+          <span class="janet-drawer-value accent" id="jd-key">A♭ MIN</span>
+        </div>
+        <div class="janet-drawer-field">
+          <span class="janet-drawer-label">DURATION</span>
+          <span class="janet-drawer-value" id="jd-dur">5:14</span>
+        </div>
+        <div class="janet-drawer-field">
+          <span class="janet-drawer-label">STATUS</span>
+          <span class="janet-drawer-value" id="jd-status">UNRELEASED</span>
+        </div>
+        <div class="janet-drawer-field">
+          <span class="janet-drawer-label">FORMAT</span>
+          <span class="janet-drawer-value">WAV · 24BIT</span>
+        </div>
+      </div>
+      <div class="janet-drawer-actions">
+        <button class="janet-drawer-btn">▶ PLAY</button>
+        <button class="janet-drawer-btn">⏺ VOICE COMMENT</button>
+        <button class="janet-drawer-btn">TUNE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var JANET_COLOR = '#cc3399';
+  var janetTracks = [
+    { title: 'Would You Mind',      bpm: '076', key: 'A♭ MIN', dur: '5:14', secs: 314, status: 'UNRELEASED' },
+    { title: 'Slow Down',           bpm: '068', key: 'E♭ MIN', dur: '4:58', secs: 298, status: 'UNRELEASED' },
+    { title: 'Control',             bpm: '108', key: 'F MIN',  dur: '4:06', secs: 246, status: 'RELEASED'   },
+    { title: 'Again',               bpm: '059', key: 'D♭ MAJ', dur: '5:44', secs: 344, status: 'UNRELEASED' },
+    { title: 'Any Time, Any Place', bpm: '063', key: 'G MIN',  dur: '5:20', secs: 320, status: 'UNRELEASED' },
+    { title: 'That\'s The Way Love Goes', bpm: '093', key: 'B♭ MIN', dur: '4:32', secs: 272, status: 'RELEASED' },
+    { title: 'Come Back To Me',     bpm: '071', key: 'F MAJ',  dur: '4:48', secs: 288, status: 'UNRELEASED' },
+    { title: 'You',                 bpm: '082', key: 'C MIN',  dur: '4:10', secs: 250, status: 'UNRELEASED' },
+    { title: 'Doesn\'t Really Matter', bpm: '120', key: 'G MAJ', dur: '3:58', secs: 238, status: 'RELEASED' }
+  ];
+  var MAX_SECS = 400;
+
+  function makeJanetWave(seed, bars, H, fullWidth) {
+    var W_vb = fullWidth ? 200 : 94;
+    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width','100%'); svg.setAttribute('height', H);
+    svg.setAttribute('viewBox','0 0 ' + W_vb + ' ' + H);
+    svg.setAttribute('preserveAspectRatio','none');
+    var s = seed >>> 0;
+    var barW = (W_vb - bars) / bars;
+    for (var i = 0; i < bars; i++) {
+      s = (Math.imul(s,1664525)+1013904223) >>> 0;
+      var ht = 0.18 + (s/0xffffffff)*0.82;
+      var rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      var bh = ht * H;
+      rect.setAttribute('x', i*(barW+1));
+      rect.setAttribute('y', (H-bh)/2);
+      rect.setAttribute('width', Math.max(0.8, barW));
+      rect.setAttribute('height', bh);
+      rect.setAttribute('fill', JANET_COLOR);
+      rect.setAttribute('opacity', 0.15 + ht*0.45);
+      svg.appendChild(rect);
+    }
+    return svg;
+  }
+
+  var wall = document.getElementById('janet-cell-wall');
+  var watermark = wall.querySelector('.janet-watermark');
+
+  janetTracks.forEach(function(t, i) {
+    var cell = document.createElement('div');
+    cell.className = 'janet-cell' + (i === 0 ? ' selected' : '');
+
+    var rail = document.createElement('div');
+    rail.className = 'janet-cell-rail';
+    cell.appendChild(rail);
+
+    var num = document.createElement('div');
+    num.className = 'janet-cell-num';
+    num.textContent = String(i+1).padStart(2,'0');
+    cell.appendChild(num);
+
+    var seed = t.title.split('').reduce(function(a,c,j){ return a+c.charCodeAt(0)*(j+11); }, i*37+23);
+    var waveDiv = document.createElement('div');
+    waveDiv.className = 'janet-cell-wave';
+    waveDiv.appendChild(makeJanetWave(seed, 28, 32, false));
+    cell.appendChild(waveDiv);
+
+    var titleEl = document.createElement('div');
+    titleEl.className = 'janet-cell-title';
+    titleEl.textContent = t.title;
+    cell.appendChild(titleEl);
+
+    var bpmEl = document.createElement('div');
+    bpmEl.className = 'janet-cell-bpm';
+    bpmEl.textContent = t.bpm + ' BPM';
+    cell.appendChild(bpmEl);
+
+    if (t.secs) {
+      var bar = document.createElement('div');
+      bar.className = 'cell-dur-bar';
+      bar.style.cssText = 'position:absolute;bottom:0;left:2px;right:0;height:1px;background:' + JANET_COLOR + ';opacity:0.12;transition:opacity 150ms;';
+      bar.style.width = Math.round((t.secs/MAX_SECS)*100)+'%';
+      cell.appendChild(bar);
+    }
+
+    cell.addEventListener('click', function() {
+      wall.querySelectorAll('.janet-cell').forEach(function(c){ c.classList.remove('selected'); });
+      cell.classList.add('selected');
+      // Update drawer
+      document.getElementById('jd-title').textContent = t.title;
+      document.getElementById('jd-bpm').textContent = t.bpm;
+      document.getElementById('jd-key').textContent = t.key;
+      document.getElementById('jd-dur').textContent = t.dur;
+      document.getElementById('jd-status').textContent = t.status;
+      // Drawer waveform
+      var dw = document.getElementById('jd-wave');
+      dw.innerHTML = '';
+      dw.appendChild(makeJanetWave(seed, 38, 44, true));
+    });
+
+    wall.insertBefore(cell, watermark);
+  });
+
+  // Trigger first cell
+  var first = wall.querySelector('.janet-cell');
+  if (first) {
+    var dw = document.getElementById('jd-wave');
+    var seed0 = janetTracks[0].title.split('').reduce(function(a,c,j){ return a+c.charCodeAt(0)*(j+11); }, 23);
+    dw.appendChild(makeJanetWave(seed0, 38, 44, true));
+  }
+}());
+</script>
+
 <!-- SECTION LABEL: L CONSOLE -->
 <div class="scroll-target" id="l-console"></div>
 <div class="section-label">06 — L CONSOLE · 7677 · ARCHITECT</div>
@@ -3610,7 +3972,7 @@ html { scroll-behavior: smooth; }
 
 <script>
 // Nav active state
-const sections = ['entry','d-console','vault','helix','listener','muses','l-console','palette','type'];
+const sections = ['entry','d-console','vault','helix','listener','muses','janet-vault','l-console','palette','type'];
 const links = document.querySelectorAll('.nav a');
 
 function updateActive() {
