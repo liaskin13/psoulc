@@ -247,7 +247,7 @@ body {
 }
 .vs-upload-btn {
   width: 100%;
-  height: 26px;
+  min-height: 44px;
   background: transparent;
   border: 1px solid #2a2318;
   color: #ffb347;
@@ -386,7 +386,7 @@ body {
   margin-top: 4px;
 }
 .td-btn {
-  height: 22px;
+  height: 36px;
   padding: 0 10px;
   background: transparent;
   border: 1px solid #2a2318;
@@ -459,7 +459,7 @@ body {
 
 .void-btn {
   width: 100%;
-  padding: 10px 0;
+  padding: 14px 0;
   background: #080400;
   border: 1px solid #2a0c00;
   color: #441800;
@@ -1523,7 +1523,7 @@ html { scroll-behavior: smooth; }
         </label>
       </div>
       <textarea id="d-broadcast-input" placeholder="Signal to L…" maxlength="120" rows="2" style="width:100%;background:#0a0806;border:1px solid #1a1510;color:#665544;font-family:var(--font-mono);font-size:8px;padding:6px 8px;letter-spacing:0.04em;resize:none;outline:none;box-sizing:border-box;"></textarea>
-      <button id="d-broadcast-send" style="width:100%;margin-top:5px;padding:6px 0;background:none;border:1px solid #2a1e10;color:#443322;font-family:var(--font-mono);font-size:7px;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;transition:all 80ms;">TRANSMIT</button>
+      <button id="d-broadcast-send" style="width:100%;margin-top:5px;min-height:36px;padding:0;background:none;border:1px solid #2a1e10;color:#443322;font-family:var(--font-mono);font-size:7px;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;transition:all 80ms;">TRANSMIT</button>
     </div>
   </div>
 
@@ -1875,10 +1875,10 @@ html { scroll-behavior: smooth; }
       <div class="panel-section">
         <div class="panel-section-label">COMMANDS</div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="cmd-btn" style="width:100%;justify-content:flex-start;height:26px;">TUNE METADATA</button>
-          <button class="cmd-btn" style="width:100%;justify-content:flex-start;height:26px;">LEAVE COMMENT</button>
-          <button class="cmd-btn" style="width:100%;justify-content:flex-start;height:26px;">MOVE SECTION</button>
-          <button class="cmd-btn void-btn" style="width:100%;justify-content:flex-start;height:26px;">ARM · VOID</button>
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;min-height:36px;">TUNE METADATA</button>
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;min-height:36px;">LEAVE COMMENT</button>
+          <button class="cmd-btn" style="width:100%;justify-content:flex-start;min-height:36px;">MOVE SECTION</button>
+          <button class="cmd-btn void-btn" style="width:100%;justify-content:flex-start;min-height:36px;">ARM · VOID</button>
         </div>
       </div>
       <div class="panel-section" style="flex:1;">
@@ -2887,7 +2887,7 @@ html { scroll-behavior: smooth; }
   font-weight: 500;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: #2a1e0e;
+  color: #443322;
   margin-bottom: 10px;
 }
 .muses-subtitle {
@@ -2895,7 +2895,7 @@ html { scroll-behavior: smooth; }
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #1a1208;
+  color: #2a1e0e;
 }
 .muses-grid {
   display: grid;
@@ -3275,7 +3275,9 @@ html { scroll-behavior: smooth; }
   font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase;
   background: none; border: 1px solid var(--mvc-border);
   color: rgba(var(--mvc-rgb),0.25);
-  padding: 7px 12px; cursor: pointer; text-align: left; transition: all 80ms;
+  padding: 0 12px; min-height: 44px;
+  display: flex; align-items: center;
+  cursor: pointer; text-align: left; transition: all 80ms;
 }
 .mv-drawer-btn:hover { border-color: rgba(var(--mvc-rgb),0.3); color: rgba(var(--mvc-rgb),0.6); }
 </style>
@@ -3460,7 +3462,10 @@ html { scroll-behavior: smooth; }
   background: none;
   border: 1px solid #1e0e1a;
   color: #3a1a2e;
-  padding: 7px 12px;
+  padding: 0 12px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   cursor: pointer;
   text-align: left;
   transition: all 80ms;
