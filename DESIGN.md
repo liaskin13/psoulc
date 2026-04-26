@@ -224,7 +224,7 @@ CSS grid `repeat(auto-fill, minmax(118px, 1fr))`. Each cell: waveform thumbnail,
 | LARRY | `#7aaa5a` sage green | Empty Pages — Larry June |
 | JANET | `#cc3399` deep magenta | Would You Mind — Janet Jackson |
 | ERIKAH | `#cc6633` terracotta | Honey — Erykah Badu |
-| DRAKE | `#c4a428` OVO gold | Do Not Disturb — Drake |
+| DRAKE | `#c4a428` OVO gold | Passionfruit — Drake |
 
 ---
 
