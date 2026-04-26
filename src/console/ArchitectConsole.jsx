@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
 import GodModePullCord from './GodModePullCord';
@@ -11,11 +11,28 @@ import { VOID_CHAKRA_COLORS, MOON_PREFIX } from '../config';
 
 const PLANETS = ['mercury', 'venus', 'earth', 'mars', 'saturn', 'amethyst'];
 
+const SR_ONLY_STYLE = {
+  position: 'absolute',
+  width: '1px',
+  height: '1px',
+  padding: 0,
+  margin: '-1px',
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
 // ── EVENT HORIZON SUB-PANEL ───────────────────────────────────────────────
 // The Black Star archive — accessible as a sub-panel within the Architect's bridge.
 function EventHorizonPanel({ architectArchive, onRestore }) {
   return (
     <motion.div
+      id="arch-event-horizon-panel"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="arch-archive-title"
+      aria-describedby="arch-archive-sub"
       className="arch-event-horizon-panel"
       initial={{ x: '100%', opacity: 0 }}
       animate={{ x: 0,     opacity: 1 }}
@@ -24,8 +41,8 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
     >
       <div className="arch-panel-header">
         <span className="arch-panel-dot" />
-        <span className="arch-panel-title">EVENT HORIZON ARCHIVE</span>
-        <span className="arch-panel-sub">Gravitational stasis — Architect access only</span>
+        <span id="arch-archive-title" className="arch-panel-title">EVENT HORIZON ARCHIVE</span>
+        <span id="arch-archive-sub" className="arch-panel-sub">Gravitational stasis — Architect access only</span>
       </div>
 
       <div className="arch-horizon-entries">
@@ -111,6 +128,17 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   const [matrixPending,  setMatrixPending]  = useState({}); // { [memberId]: { void, tune, comment } }
   const [matrixCommitted, setMatrixCommitted] = useState({});
   const [matrixHistory, setMatrixHistory] = useState([]);
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const announceTimerRef = useRef(null);
+
+  const announce = (message) => {
+    if (!message) return;
+    if (announceTimerRef.current) clearTimeout(announceTimerRef.current);
+    setLiveAnnouncement('');
+    announceTimerRef.current = setTimeout(() => {
+      setLiveAnnouncement(message);
+    }, 20);
+  };
 
   useEffect(() => {
     try {
@@ -136,24 +164,73 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     } catch (_) {}
   }, [matrixHistory]);
 
+  useEffect(() => () => {
+    if (announceTimerRef.current) clearTimeout(announceTimerRef.current);
+  }, []);
+
   const handlePlanetSelect = (planetId) => {
-    setActivePlanet(planetId === activePlanet ? null : planetId);
+    const nextPlanet = planetId === activePlanet ? null : planetId;
+    setActivePlanet(nextPlanet);
+    announce(nextPlanet ? `${nextPlanet.toUpperCase()} selected.` : 'Planet selection cleared.');
+  };
+
+  const toggleArchive = () => {
+    setShowArchive(prev => {
+      const next = !prev;
+      announce(`Event Horizon ${next ? 'opened' : 'closed'}.`);
+      return next;
+    });
+  };
+
+  const toggleInbox = () => {
+    setShowInbox(prev => {
+      const next = !prev;
+      announce(`Vetting Queue ${next ? 'opened' : 'closed'}.`);
+      return next;
+    });
+  };
+
+  const toggleRoster = () => {
+    setShowRoster(prev => {
+      const next = !prev;
+      announce(`Roster ${next ? 'opened' : 'closed'}.`);
+      return next;
+    });
+  };
+
+  const toggleMatrix = () => {
+    setShowMatrix(prev => {
+      const next = !prev;
+      announce(`Command matrix ${next ? 'opened' : 'closed'}.`);
+      return next;
+    });
+  };
+
+  const toggleComments = () => {
+    setShowComments(prev => {
+      const next = !prev;
+      announce(`Transmissions ${next ? 'opened' : 'closed'}.`);
+      return next;
+    });
   };
 
   const handleBroadcast = () => {
     setIsBroadcasting(true);
     onBroadcast?.();
+    announce('Architect broadcast active for five seconds.');
     setTimeout(() => setIsBroadcasting(false), 5000);
   };
 
   const handleExplore = () => {
     if (!activePlanet) return;
     onExplorePlanet?.(activePlanet);
+    announce(`Exploring ${activePlanet.toUpperCase()}.`);
   };
 
   const handleVoidProtocol = () => {
     if (!activePlanet) return;
     setShowVoidConfirm(true);
+    announce(`Void protocol confirmation opened for ${activePlanet.toUpperCase()}.`);
   };
 
   const handleRosterAdd = (e) => {
@@ -166,35 +243,46 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     setRosterFlash({ name: rosterName.trim(), code });
     setRosterName(''); setRosterPlanet(''); setRosterMoon('');
     setRosterCode(''); setRosterTier('B'); setRosterShowAdd(false);
+    announce(`${rosterName.trim()} added to roster with tier ${rosterTier}.`);
   };
 
   const handleMatrixToggle = (memberId, perm) => {
     if (!matrixArmed) return;
+    const member = members.find(m => m.id === memberId);
     setMatrixPending(prev => {
       const current = prev[memberId] ?? matrixCommitted[memberId] ?? {};
-      return { ...prev, [memberId]: { ...current, [perm]: !current[perm] } };
+      const nextValue = !current[perm];
+      announce(`${member?.name || 'Member'} ${perm} permission ${nextValue ? 'enabled' : 'disabled'} (pending).`);
+      return { ...prev, [memberId]: { ...current, [perm]: nextValue } };
     });
   };
 
   const handleMatrixCommit = () => {
+    const pendingCount = Object.keys(matrixPending).length;
     setMatrixHistory(prev => [...prev.slice(-9), matrixCommitted]);
     setMatrixCommitted(prev => ({ ...prev, ...matrixPending }));
     setMatrixPending({});
     setMatrixArmed(false);
+    announce(`Matrix committed. ${pendingCount} member ${pendingCount === 1 ? 'change' : 'changes'} applied.`);
   };
 
   const handleMatrixDisarm = () => {
     setMatrixPending({});
     setMatrixArmed(false);
+    announce('Matrix disarmed. Pending changes cleared.');
   };
 
   const handleMatrixRollback = () => {
-    if (matrixHistory.length === 0) return;
+    if (matrixHistory.length === 0) {
+      announce('No rollback snapshot available.');
+      return;
+    }
     const previous = matrixHistory[matrixHistory.length - 1] || {};
     setMatrixCommitted(previous);
     setMatrixHistory(prev => prev.slice(0, -1));
     setMatrixPending({});
     setMatrixArmed(false);
+    announce('Matrix rolled back to previous committed state.');
   };
 
   // Effective permission for a member in the matrix (committed overrides tier defaults)
@@ -217,15 +305,61 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     voidItem(record, activePlanet);
     setShowArchive(true);
     setShowVoidConfirm(false);
+    announce(`${activePlanet.toUpperCase()} protocol transferred to Event Horizon.`);
   };
 
   const handlePowerDown = () => {
     setShowPowerConfirm(true);
+    announce('Power down confirmation opened.');
   };
 
   const confirmPowerDown = () => {
+    announce('Powering down Architect terminal.');
     onPowerDown?.();
   };
+
+  useEffect(() => {
+    const onEscape = (event) => {
+      if (event.key !== 'Escape') return;
+      if (showPowerConfirm) {
+        setShowPowerConfirm(false);
+        announce('Power down confirmation dismissed.');
+        return;
+      }
+      if (showVoidConfirm) {
+        setShowVoidConfirm(false);
+        announce('Void protocol confirmation dismissed.');
+        return;
+      }
+      if (showArchive) {
+        setShowArchive(false);
+        announce('Event Horizon closed.');
+        return;
+      }
+      if (showInbox) {
+        setShowInbox(false);
+        announce('Vetting Queue closed.');
+        return;
+      }
+      if (showComments) {
+        setShowComments(false);
+        announce('Transmissions closed.');
+        return;
+      }
+      if (showMatrix) {
+        setShowMatrix(false);
+        announce('Command matrix closed.');
+        return;
+      }
+      if (showRoster) {
+        setShowRoster(false);
+        announce('Roster closed.');
+      }
+    };
+
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, [showArchive, showComments, showInbox, showMatrix, showPowerConfirm, showRoster, showVoidConfirm]);
 
   return (
     <motion.div
@@ -272,9 +406,10 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           {/* Archive toggle button */}
           <button
             className={`arch-archive-toggle ${showArchive ? 'active' : ''}`}
-            onClick={() => setShowArchive(prev => !prev)}
+            onClick={toggleArchive}
             aria-expanded={showArchive}
             aria-controls="arch-event-horizon-panel"
+            aria-haspopup="dialog"
           >
             <span className="arch-archive-icon">◉</span>
             <span className="arch-archive-btn-label">
@@ -290,9 +425,10 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           {/* Vetting queue — L's inbox */}
           <button
             className={`arch-archive-toggle ${showInbox ? 'active' : ''}`}
-            onClick={() => setShowInbox(prev => !prev)}
+            onClick={toggleInbox}
             aria-expanded={showInbox}
             aria-controls="arch-inbox-panel"
+            aria-haspopup="dialog"
           >
             <span className="arch-archive-icon">◈</span>
             <span className="arch-archive-btn-label">
@@ -306,7 +442,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           {/* Collective members */}
           <button
             className={`arch-archive-toggle ${showRoster ? 'active' : ''}`}
-            onClick={() => setShowRoster(prev => !prev)}
+            onClick={toggleRoster}
             aria-expanded={showRoster}
             aria-controls="arch-roster-zone"
           >
@@ -320,7 +456,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           {/* CMD MATRIX */}
           <button
             className={`arch-archive-toggle ${showMatrix ? 'active' : ''} ${matrixArmed ? 'arch-toggle-armed' : ''}`}
-            onClick={() => setShowMatrix(prev => !prev)}
+            onClick={toggleMatrix}
             aria-expanded={showMatrix}
             aria-controls="arch-matrix-zone"
           >
@@ -332,9 +468,10 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           {unreadCommentCount > 0 && (
             <button
               className={`arch-archive-toggle ${showComments ? 'active' : ''}`}
-              onClick={() => setShowComments(prev => !prev)}
+              onClick={toggleComments}
               aria-expanded={showComments}
               aria-controls="arch-comments-panel"
+              aria-haspopup="dialog"
             >
               <span className="arch-archive-icon">◌</span>
               <span className="arch-archive-btn-label">
@@ -361,6 +498,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       </div>
 
       {isBroadcasting && <div className="arch-broadcast-pulse">ARCHITECT BROADCAST ACTIVE</div>}
+      <div style={SR_ONLY_STYLE} role="status" aria-live="polite" aria-atomic="true">{liveAnnouncement}</div>
 
       {/* === ROSTER ZONE — inline dense phosphor table === */}
       <AnimatePresence>
@@ -567,7 +705,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
         {showArchive && (
           <>
             <motion.div
-              id="arch-event-horizon-panel"
               className="arch-panel-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -593,9 +730,15 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="arch-confirm-dialog">
-              <div className="arch-confirm-title">INITIATE VOID PROTOCOL?</div>
-              <div className="arch-confirm-msg">Capture {activePlanet?.toUpperCase()} transfer event into the Eternal Registry.</div>
+            <div
+              className="arch-confirm-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="arch-void-title"
+              aria-describedby="arch-void-msg"
+            >
+              <div id="arch-void-title" className="arch-confirm-title">INITIATE VOID PROTOCOL?</div>
+              <div id="arch-void-msg" className="arch-confirm-msg">Capture {activePlanet?.toUpperCase()} transfer event into the Eternal Registry.</div>
               <div className="arch-confirm-btns">
                 <button className="arch-confirm-yes" onClick={confirmVoidProtocol}>CONFIRM</button>
                 <button className="arch-confirm-no" onClick={() => setShowVoidConfirm(false)}>CANCEL</button>
@@ -611,9 +754,15 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="arch-confirm-dialog">
-              <div className="arch-confirm-title">POWER DOWN ARCHITECT TERMINAL?</div>
-              <div className="arch-confirm-msg">Return to Gate. Binary lock will hold.</div>
+            <div
+              className="arch-confirm-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="arch-power-title"
+              aria-describedby="arch-power-msg"
+            >
+              <div id="arch-power-title" className="arch-confirm-title">POWER DOWN ARCHITECT TERMINAL?</div>
+              <div id="arch-power-msg" className="arch-confirm-msg">Return to Gate. Binary lock will hold.</div>
               <div className="arch-confirm-btns">
                 <button className="arch-confirm-yes" onClick={confirmPowerDown}>CONFIRM</button>
                 <button className="arch-confirm-no"  onClick={() => setShowPowerConfirm(false)}>CANCEL</button>
