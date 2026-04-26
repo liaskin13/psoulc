@@ -3,7 +3,7 @@ import { useSystem } from '../state/SystemContext';
 
 function MasterClock() {
   const { isProtected } = useSystem();
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState(() => new Date());
   const [phase, setPhase] = useState(0);
 
   useEffect(() => {
