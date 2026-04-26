@@ -156,6 +156,60 @@ Pass criteria met:
 
 **Remaining risk:** None. All acceptance criteria green. Ready for production deployment.
 
+## Phase 10 Plan (Draft, 2026-04-26)
+
+### Artist Benefit Check
+
+Phase 10 protects artist sovereignty by improving reliability, permission clarity, and console accessibility before adding new feature surface area.
+
+### Objectives
+
+1. Ship clean repository hygiene and prevent generated-file regressions.
+2. Complete accessibility baseline for both consoles and entry flow.
+3. Harden command governance and observability for operator trust.
+4. Keep design law enforcement automated so visual drift does not return.
+
+### Scope (In)
+
+1. PR hygiene hardening: remove tracked artifact trees from git history going forward (`.venv`, `dist`, `node_modules`) and lock ignore policy.
+2. Accessibility baseline: keyboard-only flows, focus visibility, and contrast audit for D console, L console, and entry.
+3. Command governance: matrix state persistence + explicit rollback path for permission changes.
+4. Devex guardrails: add one-command project sanity check (`build + lint + targeted audit`).
+5. Design law checks: enforce Comfortaa whitelist and token policy in CI/local preflight.
+
+### Scope (Out)
+
+1. New vault feature expansion.
+2. Broad performance rewrites not tied to command or accessibility risk.
+3. New visual language changes that conflict with locked design law.
+
+### Execution Queue
+
+#### NOW (Phase 10 Kickoff)
+
+1. Clean PR hygiene branch and keep only product-intent diffs.
+2. Add `.gitignore` protection for generated artifacts and verify untracked behavior.
+3. Re-open a review-safe PR with focused file surface.
+
+#### NEXT (Engineering + UX Hardening)
+
+1. Accessibility baseline implementation and audit pass.
+2. Matrix permission persistence with explicit commit/disarm state transitions.
+3. Command telemetry review dashboard hooks (local-first, no artist data leakage).
+
+#### LATER (Post-Phase 10)
+
+1. Performance tuning passes by console route.
+2. Expanded collaborator workflows once permission model is fully hardened.
+
+### Exit Criteria (Phase 10 Done)
+
+1. PR diff excludes generated artifacts by policy and verification.
+2. Keyboard-only path complete for entry + both consoles.
+3. Focus/contrast checks pass for D and L themes.
+4. Command matrix changes are persisted, reversible, and logged.
+5. CI/local audit catches non-whitelisted typography/token regressions.
+
 ---
 
 ## Key files
