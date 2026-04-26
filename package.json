@@ -8,6 +8,7 @@
     "preview": "vite preview",
     "hygiene:check": "bash scripts/check-pr-hygiene.sh origin/main",
     "design-law:check": "bash scripts/check-design-law.sh",
+    "test:matrix-smoke": "node scripts/matrix-rollback-smoke.mjs",
     "preflight": "npm run hygiene:check && npm run design-law:check && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

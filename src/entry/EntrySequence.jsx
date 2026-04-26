@@ -67,7 +67,7 @@ function EntrySequence({ onIgnite }) {
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 
       // Quiet Opening Delay
-      setTimeout(() => onIgnite(res.name), 1200);
+      setTimeout(() => onIgnite(res.name, res.tier), 1200);
     } else {
       // Failed attempt logic
       const newCount = lock.count + 1;
@@ -111,6 +111,11 @@ function EntrySequence({ onIgnite }) {
       aria-label="Focus master key input"
     >
       <DPWallpaper opacity={isIgnited ? 0 : 1} />
+
+      <div className="entry-maison-mark" aria-hidden="true">
+        <span className="entry-maison-line">PLEASANT SOUL COLLECTIVE</span>
+        <span className="entry-maison-sub">EST. SOVEREIGN ARCHIVE</span>
+      </div>
 
       <input
         ref={inputRef}

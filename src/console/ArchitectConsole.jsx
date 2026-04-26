@@ -8,6 +8,13 @@ import ConduitSlider from './ConduitSlider';
 import InboxPanel from './InboxPanel';
 import CommentPanel from './CommentPanel';
 import { VOID_CHAKRA_COLORS, MOON_PREFIX } from '../config';
+import {
+  tierDefaultsForMember,
+  resolveMatrixPerm,
+  toggleMatrixPerm,
+  commitMatrixState,
+  rollbackMatrixState,
+} from './matrixState';
 
 const PLANETS = ['mercury', 'venus', 'earth', 'mars', 'saturn', 'amethyst'];
 
@@ -249,19 +256,42 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   const handleMatrixToggle = (memberId, perm) => {
     if (!matrixArmed) return;
     const member = members.find(m => m.id === memberId);
-    setMatrixPending(prev => {
-      const current = prev[memberId] ?? matrixCommitted[memberId] ?? {};
-      const nextValue = !current[perm];
-      announce(`${member?.name || 'Member'} ${perm} permission ${nextValue ? 'enabled' : 'disabled'} (pending).`);
-      return { ...prev, [memberId]: { ...current, [perm]: nextValue } };
+    if (!member) return;
+    const tierDefaults = tierDefaultsForMember(member.tier);
+    const current = resolveMatrixPerm({
+      pendingEntry: matrixPending[memberId],
+      committedEntry: matrixCommitted[memberId],
+      tierDefaults,
+      perm,
     });
+    const nextValue = !current;
+    announce(`${member.name || 'Member'} ${perm} permission ${nextValue ? 'enabled' : 'disabled'} (pending).`);
+    setMatrixPending(prev => {
+      return toggleMatrixPerm({
+        pending: prev,
+        committed: matrixCommitted,
+        memberId,
+        perm,
+        tierDefaults,
+      });
+    });
+  };
+
+  const handleMatrixArm = () => {
+    setMatrixArmed(true);
+    announce('Matrix armed. Permission cells unlocked.');
   };
 
   const handleMatrixCommit = () => {
     const pendingCount = Object.keys(matrixPending).length;
-    setMatrixHistory(prev => [...prev.slice(-9), matrixCommitted]);
-    setMatrixCommitted(prev => ({ ...prev, ...matrixPending }));
-    setMatrixPending({});
+    const nextState = commitMatrixState({
+      history: matrixHistory,
+      committed: matrixCommitted,
+      pending: matrixPending,
+    });
+    setMatrixHistory(nextState.history);
+    setMatrixCommitted(nextState.committed);
+    setMatrixPending(nextState.pending);
     setMatrixArmed(false);
     announce(`Matrix committed. ${pendingCount} member ${pendingCount === 1 ? 'change' : 'changes'} applied.`);
   };
@@ -273,13 +303,13 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   };
 
   const handleMatrixRollback = () => {
-    if (matrixHistory.length === 0) {
+    const nextState = rollbackMatrixState({ history: matrixHistory });
+    if (!nextState.didRollback) {
       announce('No rollback snapshot available.');
       return;
     }
-    const previous = matrixHistory[matrixHistory.length - 1] || {};
-    setMatrixCommitted(previous);
-    setMatrixHistory(prev => prev.slice(0, -1));
+    setMatrixCommitted(nextState.committed);
+    setMatrixHistory(nextState.history);
     setMatrixPending({});
     setMatrixArmed(false);
     announce('Matrix rolled back to previous committed state.');
@@ -287,11 +317,12 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
 
   // Effective permission for a member in the matrix (committed overrides tier defaults)
   const matrixPerm = (memberId, perm, tierDefault) => {
-    const pending = matrixPending[memberId];
-    const committed = matrixCommitted[memberId];
-    if (pending?.[perm] !== undefined) return pending[perm];
-    if (committed?.[perm] !== undefined) return committed[perm];
-    return tierDefault;
+    return resolveMatrixPerm({
+      pendingEntry: matrixPending[memberId],
+      committedEntry: matrixCommitted[memberId],
+      tierDefaults: { [perm]: tierDefault },
+      perm,
+    });
   };
 
   const confirmVoidProtocol = () => {
@@ -627,7 +658,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
               <span className="arch-matrix-sub">PERMISSION GRID — ARM TO EDIT</span>
               <div className="arch-matrix-interlocks">
                 {!matrixArmed ? (
-                  <button className="arch-matrix-arm" onClick={() => setMatrixArmed(true)}>ARM</button>
+                  <button className="arch-matrix-arm" onClick={handleMatrixArm}>ARM</button>
                 ) : (
                   <>
                     <button className="arch-matrix-commit" onClick={handleMatrixCommit}
