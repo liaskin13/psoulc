@@ -89,11 +89,18 @@ If the answer is unclear, stop and reframe until it is.
 
 ## Session Start Checklist
 
-1. Read `tasks/lessons.md` — internalize recent corrections
-2. Read `tasks/todo.md` — understand current state and next priorities
-3. Read `tasks/plan.active.md` if it exists — pick up exactly where we left off
-4. **Read `DESIGN.md`** — all design decisions live here. Do not touch any CSS, JSX, or visual element without reading this first. If what you are about to do contradicts DESIGN.md, stop and say so.
-5. Apply the artist benefit check to the first task before touching any code
+1. **Read `NEXT_SESSION.md` FIRST** — exact task queue. Do not deviate from it.
+2. Read `tasks/lessons.md` — internalize recent corrections
+3. Read `tasks/todo.md` — understand current state and next priorities
+4. Read `tasks/plan.active.md` if it exists — pick up exactly where we left off
+5. **Read `DESIGN.md`** — all design decisions live here. Do not touch any CSS, JSX, or visual element without reading this first. If what you are about to do contradicts DESIGN.md, stop and say so.
+6. Apply the artist benefit check to the first task before touching any code
+
+## Sequence Law — Non-Negotiable
+- Never start a later task if an earlier one is incomplete.
+- If the user expresses excitement about a future task, say: "We get there after [current task]. Ready?"
+- The user trusts the sequence. Breaking it without explicit permission is a failure.
+- If asked to skip ahead, confirm explicitly: "You want to skip [X] and go straight to [Y]? Confirming before I do."
 
 ---
 
