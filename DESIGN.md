@@ -246,6 +246,82 @@ These are not "deprecated ideas." They were built, caused regressions, and were 
 
 ---
 
+---
+
+## D Console — Analog Console Design Direction (locked 2026-04-26)
+
+### Visual Style
+Combination of three design languages:
+- **Dark OLED Luxury (#10)** — absolute black base, gold foil gradients, spotlight effects. Primary foundation.
+- **Aurora / Mesh Gradient (#06)** — slow-drifting amber/gold light blobs behind the UI. Atmospheric depth layer.
+- **Retro-Futurism (#07, subtle)** — CRT scanline texture on waveform and signal readout blocks only. Keeps the "pro hardware" feel.
+
+### Layout — 5-Zone Serato Model
+```
+┌─────────────────────────────────────────────┐
+│  RAIL  — 30px top bar: live · session · BPM │
+├──────────┬──────────────────────┬────────────┤
+│  BINS    │  MONITOR             │  CHAIN     │
+│  214px   │  flex 1              │  188px     │
+│  warm    │  absolute black      │  cool dark │
+│  black   │  (hero + waveform    │  (signal · │
+│  #0b0806 │   + tracklist)       │   pads ·   │
+│          │                      │   M³)      │
+├──────────┴──────────────────────┴────────────┤
+│  TRANSPORT — 52px bottom bar                 │
+└─────────────────────────────────────────────┘
+```
+
+### Surface Colors (3 distinct zones)
+- Bins column: `#0b0806` — warm black
+- Monitor center: `#000000` — absolute black (OLED)
+- Signal chain: `#060608` — cool dark
+
+### Identity Color Application
+- `--amber: #ffb347` — primary identity
+- `--gold: #d4890a` — deep gold
+- `--pale: #ffe4a0` — pale amber highlight
+- Amber left accent line on bins column
+- Gold foil animated gradient on hero track title
+- Amber glow on active elements, playhead, BPM readout, transport clock
+
+### Hero Section (Now Playing)
+- Track title: 54px Chakra Petch 700, animated gold foil gradient (background-size 300%, animates left↔right over 5s)
+- Radial amber glow from left edge behind hero
+- Badges: Unreleased (amber border), vault name (dim)
+
+### Waveform
+- CRT scanline overlay (repeating 2px transparent / 2px rgba(0,0,0,0.18))
+- Played portion: warm amber/orange color variation per bar
+- Playhead: amber with glow box-shadow
+- Height: 56px
+
+### Cursor
+- Custom glowing amber ball (12px, `box-shadow: 0 0 8px amber, 0 0 20px amber, 0 0 50px amber`)
+- Shrinks to 7px on click
+- Spotlight: 500px radial gradient follows cursor
+- `cursor: none` on body
+
+### Aurora Background
+- 3 blobs: `filter: blur(80px)`, `mix-blend-mode: screen`
+- Blob 1: 600×400px, amber/orange, top-left, 18s drift cycle
+- Blob 2: 400×500px, deep amber, center, 24s drift cycle
+- Blob 3: 350×350px, gold, bottom-right, 20s drift cycle
+- All at ~0.10–0.18 opacity
+
+### Signal Chain Right Column
+- BPM + Key: 2×2 grid, accent blocks (amber bg + border + glowing value)
+- kbps + kHz: standard blocks
+- CRT scanlines on all readout blocks
+- Vault pads: 2×2 grid, bottom amber line on active pad
+- System toggles: pill switches, amber when on
+- M³: 2×2 grid, Masters block in amber
+
+### ⚠️ HELIX — MISSING, MUST RESTORE
+The helix was a design element present before the Phase 10 preview iterations. It disappeared during the redesign sessions. **Do not ship the console without it.** Ask Lisa to describe the helix at the start of the next session and restore it immediately before continuing.
+
+---
+
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
