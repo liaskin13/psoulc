@@ -7,7 +7,7 @@ import { MOON_PREFIX } from '../config';
 // Two tabs: MEMBERS (Tier B) + LISTENERS (registry of 0000 users).
 // D and L can add members manually. Generated codes are shown once on creation.
 
-const PLANETS = ['mercury', 'venus', 'earth', 'mars', 'saturn', 'amethyst'];
+const VAULTS = ['mercury', 'venus', 'earth', 'saturn'];
 
 function MembersPanel({ onClose, viewer = 'D' }) {
   const { members, listeners, addMember } = useSystem();
@@ -154,7 +154,7 @@ function MembersPanel({ onClose, viewer = 'D' }) {
                 {newTier === 'B' ? (
                   <select className="inbox-planet-select" value={newPlanet} onChange={e => setNewPlanet(e.target.value)}>
                     <option value="">— no planet assigned —</option>
-                    {PLANETS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                    {VAULTS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
                   </select>
                 ) : (
                   <input

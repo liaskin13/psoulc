@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { INBOX_KEY, MEMBERS_KEY, LISTENERS_KEY, COMMENTS_KEY, SESSION_KEY, AMETHYST_CODE, MARS_CODE } from '../config';
+import { INBOX_KEY, MEMBERS_KEY, LISTENERS_KEY, COMMENTS_KEY, SESSION_KEY } from '../config';
 import { fetchVaultTracks } from '../lib/tracks';
 import { getResidencySplit, isMaintenanceDue } from '../utils/sovereignFinance';
 import { RESIDENT_REGISTRY, findResidentByCode } from '../data/residentBlueprint';

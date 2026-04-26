@@ -2,8 +2,6 @@
 
 export const ENTRY_CODE        = '0528';
 export const BLACK_STAR_CODE   = '7677';
-export const AMETHYST_CODE     = '4096'; // Resonance Chamber
-export const MARS_CODE         = '1984'; // Mars Vault
 export const LISTENER_CODE     = '0000';
 export const ENTRY_FLYBY_DURATION_MS = 3000;
 
@@ -30,8 +28,6 @@ export const VAULT_COLORS = {
   venus:    '#C0C0C0', // Silver — Curated Registry
   mercury:  '#ffbf00', // Amber  — Live Resonance
   earth:    '#8B7355', // Stone  — Sonic Architecture
-  mars:     '#7c1212', // Iron Red — Dedicated
-  amethyst: '#6600cc', // Indigo — Resonance Chamber (Legacy Indigo preserved)
 };
 
 export const D_IDENTITY_COLOR = '#B87333'; // Copper
@@ -45,8 +41,6 @@ export const VOID_CHAKRA_COLORS = {
   venus:    '#ff8800', // Orange
   mercury:  '#ffbf00', // Amber
   earth:    '#00aa44', // Green
-  mars:     '#cc0033', // Crimson
-  amethyst: '#6600cc', // Violet/Indigo
   moon:     '#00b4d8', // Cyan (default for moon vaults)
 };
 

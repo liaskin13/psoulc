@@ -1,5 +1,26 @@
 # PSC Universe — Lessons Learned
 
+---
+
+### ⛔ ROOT CAUSE OF RECURRING SPACE-LANGUAGE REGRESSIONS (April 26, 2026)
+
+**Why this kept happening every single session:**
+
+The code contradicted the design docs. Every session, an AI reads both — and the *code* wins over the doc. When the codebase had `PLANETS = ['mercury', 'venus', 'mars', 'amethyst']`, `import MarsVault`, `import SystemMap2D`, `kepler.js`, and `orbit-path` CSS classes, the AI concluded these were valid active patterns — regardless of what DESIGN.md said in a "Scrapped Concepts" section.
+
+**The permanent fix (done 2026-04-26):**
+
+All of it was deleted. The code now matches the docs. See DESIGN.md's ⛔ HARD STOPS section for the full list.
+
+**Never again:**
+- Do not re-add Mars or Amethyst vaults under any name or ID.
+- Do not re-add Space Mono under any circumstances.
+- Do not re-add SystemMap2D, HolographicMap, BinaryCore, EmpireNode, kepler.js, orbitalClock.js.
+- Do not add orbital rings, warp animations, galaxy flyby, or any space/astronomical UI.
+- DESIGN.md § "HARD STOPS" is authoritative. Read it before touching any vault, font, or nav component.
+
+---
+
 ### Session: Phase 10 Regression Guard (April 26, 2026)
 
 #### Active Surface Drift Is a Process Failure, Not a One-Off Bug

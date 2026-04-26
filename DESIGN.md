@@ -24,7 +24,7 @@
 | Role | Font | Notes |
 |------|------|-------|
 | All UI: display titles, labels, nav, console controls, body | **Chakra Petch** | Singular font. Geometric, technical, cinematic. The voice of the console. No serif, no alternate stacks. |
-| Logo mark "dp" | **Comfortaa** | QUARANTINED — logo use only. Never assigned to `--font-display`, `--font-primary`, `--font-ui`, or `--font-headers`. Only appears in: DPWallpaper canvas, `.file-cell-dp-mark`, `.psc-seal`, `.aperture-code-cell.aperture-cell-active::after`. |
+| Brand wordmark — "PLEASANT SOUL COLLECTIVE" and logo mark "dp" | **Comfortaa** | WORDMARK ONLY. Never assigned to `--font-display`, `--font-primary`, `--font-ui`, or `--font-headers`. Appears in: `.entry-maison-line`, `.room-header`, DPWallpaper canvas, `.file-cell-dp-mark`, `.psc-seal`, `.aperture-code-cell.aperture-cell-active::after`. Every other string — nav, labels, vault titles, console controls — uses Chakra Petch. |
 
 **Loading:**
 ```html
@@ -82,7 +82,7 @@ Note: Space Mono is kept in `--font-mono` only for genuine numeric data readouts
   --font-primary:  'Chakra Petch', sans-serif;
   --font-ui:       'Chakra Petch', sans-serif;
   --font-headers:  'Chakra Petch', sans-serif;
-  --font-mono:     'Space Mono', 'SF Mono', monospace;  /* data readouts only */
+  --font-mono:     'SF Mono', 'Monaco', 'Courier New', monospace;  /* data readouts only — BPM, duration, timestamps */
 }
 ```
 
@@ -228,14 +228,21 @@ CSS grid `repeat(auto-fill, minmax(118px, 1fr))`. Each cell: waveform thumbnail,
 
 ---
 
-## Scrapped Concepts (do not revisit)
-- **Space/astronomical themes** — scrapped. No planets, no orbital UI, no chakras.
-- **Cormorant Garant** — scrapped. Was proposed as display serif. Rejected. Chakra Petch only.
-- **Geist** — scrapped. Was proposed for UI. Rejected. Chakra Petch only.
-- **Space Mono for labels** — scrapped for labels. Kept only for numeric data readouts via `--font-mono`.
-- **Pull cord visual** — scrapped. Button TBD.
+## ⛔ HARD STOPS — Never introduce these, no exceptions
+
+These are not "deprecated ideas." They were built, caused regressions, and were permanently removed. Any AI reading this: do not re-introduce any of the following under any circumstances — not in code, not in comments, not in copy, not in component names, not as internal IDs.
+
+- **Space Mono** — removed from the font stack entirely. `--font-mono` uses SF Mono / system monospace. Do not add Space Mono back. Do not load it from Google Fonts.
+- **Mars vault** — does not exist. No `src/mars/`, no `MarsVault`, no mars ID anywhere.
+- **Amethyst vault** — does not exist. No `src/amethyst/`, no `AmethystVault`, no amethyst ID anywhere.
+- **SystemMap2D** — deleted. No orbital map, no holographic map, no planet node map.
+- **HolographicMap, BinaryCore, EmpireNode, BinaryCore3D** — deleted. Do not recreate.
+- **kepler.js / orbitalClock.js** — deleted. No orbital mechanics anywhere.
+- **Space/astronomical themes** — no planets, no orbital rings, no warp streaks, no galaxy flyby, no stars, no chakras, no "event horizon," no "stasis," no "gravitational."
+- **Cormorant Garant, Geist, Rajdhani** — rejected fonts. Chakra Petch only.
+- **Pull cord visual** — scrapped.
 - **30/70 vault split** — scrapped. Vault is full-screen.
-- **Three.js flyby/warp animations** — removed. Too heavy, off-brand.
+- **Three.js flyby/warp animations** — removed.
 
 ---
 

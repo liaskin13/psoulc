@@ -6,7 +6,7 @@ import { useSystem } from '../state/SystemContext';
 // viewer='L' → shows pending_L queue (L vets first)
 // viewer='D' → shows approved_L queue (D gives final approval + assigns code)
 
-const PLANETS = ['mercury', 'venus', 'earth', 'mars', 'saturn', 'amethyst', '— none —'];
+const VAULTS = ['mercury', 'venus', 'earth', 'saturn', '— none —'];
 
 function LCard({ request, onApprove, onDecline }) {
   const [open,          setOpen]          = useState(false);
@@ -49,7 +49,7 @@ function LCard({ request, onApprove, onDecline }) {
         <div className="inbox-approve-form">
           <label className="inbox-planet-label">SUGGEST PLANET (optional)</label>
           <select className="inbox-planet-select" value={planet} onChange={e => setPlanet(e.target.value)}>
-            {PLANETS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+            {VAULTS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
           </select>
           <div className="inbox-card-actions">
             <button className="inbox-action-btn inbox-action-approve" onClick={handleApprove}>CONFIRM → SEND TO D</button>
@@ -119,7 +119,7 @@ function DCard({ request, onFinalApprove, onDecline }) {
         <div className="inbox-approve-form">
           <label className="inbox-planet-label">ASSIGN PLANET (optional)</label>
           <select className="inbox-planet-select" value={planet} onChange={e => setPlanet(e.target.value)}>
-            {PLANETS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+            {VAULTS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
           </select>
           <div className="inbox-card-actions">
             <button className="inbox-action-btn inbox-action-approve" onClick={handleApprove}>CONFIRM · GENERATE CODE</button>

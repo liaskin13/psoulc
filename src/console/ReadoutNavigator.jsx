@@ -1,14 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 const NODE_BANK = [
-  { id: 'mercury', label: 'MERCURY', owner: 'LIVE SETS' },
-  { id: 'venus', label: 'VENUS', owner: 'CURATED MIXES' },
-  { id: 'earth', label: 'EARTH', owner: 'ARCHITECTURE' },
-  { id: 'mars', label: 'MARS', owner: 'MARS VAULT' },
-  { id: 'saturn', label: 'SATURN', owner: 'ORIGINAL MUSIC' },
-  { id: 'amethyst', label: 'AMETHYST', owner: 'CRYSTAL VAULT' },
-  { id: 'sun', label: 'SUN CORE', owner: 'PRIMARY NODE' },
-  { id: 'binary-core', label: 'BLACK STAR', owner: 'ARCHIVE NODE' },
+  { id: 'mercury', label: 'LIVE SETS',      owner: 'LIVE SETS' },
+  { id: 'venus',   label: 'CURATED MIXES',  owner: 'CURATED MIXES' },
+  { id: 'earth',   label: 'SONIC ARCHIVE',  owner: 'SONIC ARCHIVE' },
+  { id: 'saturn',  label: 'ORIGINAL MUSIC', owner: 'ORIGINAL MUSIC' },
 ];
 
 function ReadoutNavigator({ activeNode, onNodeSelect, onNodeLongPress }) {

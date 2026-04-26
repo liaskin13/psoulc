@@ -10,9 +10,7 @@ const PLANET_COLORS = {
   mercury:  '#a0c4ff',
   venus:    '#ffb7b7',
   earth:    '#87ceeb',
-  mars:     '#c1440e',
   saturn:   '#c5a059',
-  amethyst: '#9d65c9',
 };
 
 function CommentPanel({ onClose, viewer = 'D' }) {

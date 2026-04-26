@@ -19,8 +19,6 @@ const SaturnVault    = lazy(() => import('./saturn/SaturnVault'));
 const MercuryStream  = lazy(() => import('./mercury/MercuryStream'));
 const VenusArchive   = lazy(() => import('./venus/VenusArchive'));
 const EarthSafe      = lazy(() => import('./earth/EarthSafe'));
-const AmethystVault  = lazy(() => import('./amethyst/AmethystVault'));
-const MarsVault      = lazy(() => import('./mars/MarsVault'));
 const MoonVault      = lazy(() => import('./moons/MoonVault'));
 const UploadModal    = lazy(() => import('./components/UploadModal'));
 
@@ -31,7 +29,7 @@ import BottomNav     from './components/BottomNav';
 import { SATURN_MOONS } from './data/saturn';
 import { BROADCAST_DURATION_MS } from './config';
 
-const VAULT_IDS = new Set(['saturn', 'mercury', 'venus', 'earth', 'amethyst', 'mars']);
+const VAULT_IDS = new Set(['saturn', 'mercury', 'venus', 'earth']);
 
 function isVaultId(id) {
   return VAULT_IDS.has(id) || (typeof id === 'string' && id.startsWith(MOON_PREFIX));
@@ -193,8 +191,6 @@ function App() {
       case 'mercury':  vault = <MercuryStream  {...shared} />; break;
       case 'venus':    vault = <VenusArchive   {...shared} onVoid={onVoid('venus')} />; break;
       case 'earth':    vault = <EarthSafe      {...shared} onVoid={onVoid('earth')} />; break;
-      case 'amethyst': vault = <AmethystVault  {...shared} onVoid={onVoid('amethyst')} />; break;
-      case 'mars':     vault = <MarsVault      {...shared} onVoid={onVoid('mars')} />; break;
       default: break;
     }
     if (!vault && typeof id === 'string' && id.startsWith(MOON_PREFIX)) {
@@ -253,6 +249,7 @@ function App() {
           <Suspense fallback={null}>
             <ArchitectConsole onPowerDown={handlePowerDown} onExplorePlanet={handleArchitectExplore} onBroadcast={handleBroadcast} />
           </Suspense>
+          <div className="psc-wordmark-footer" aria-hidden="true">PLEASANT SOUL COLLECTIVE</div>
         </div>
       </>
     );
@@ -291,6 +288,7 @@ function App() {
               onSelect={(id) => setActiveNode({ id })}
             />
           )}
+          <div className="psc-wordmark-footer" aria-hidden="true">PLEASANT SOUL COLLECTIVE</div>
         </motion.div>
       </>
     );
@@ -304,6 +302,7 @@ function App() {
       <div className={`universe god-mode-mainframe ${stateClass}`}>
         <div className="glitter-grain" />
         <div className="receded-logo">dp</div>
+        <div className="psc-wordmark-footer" aria-hidden="true">PLEASANT SOUL COLLECTIVE</div>
         {isBroadcasting && <div className="system-broadcast-pulse" aria-live="polite">SYSTEM BROADCAST ACTIVE</div>}
 
         <input

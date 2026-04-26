@@ -56,16 +56,16 @@
 }
 
 .entry-maison-line {
-  font-family: var(--font-ui);
+  font-family: 'Comfortaa', cursive;
   font-size: clamp(11px, 1.6vw, 15px);
-  font-weight: 600;
-  letter-spacing: 0.38em;
+  font-weight: 700;
+  letter-spacing: 0.28em;
   color: rgba(255, 255, 255, 0.34);
   text-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
 }
 
 .entry-maison-sub {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: 8px;
   letter-spacing: 0.26em;
   color: rgba(255, 255, 255, 0.2);
@@ -112,53 +112,6 @@
   text-shadow: 0 0 10px #ffbf00;
 }
 
-/* THE GALAXY FLYBY */
-.galaxy-flyby {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.flyby-amethyst {
-  position: absolute;
-  top: 20%; left: -100%;
-  font-family: var(--font-primary);
-  font-size: 48px;
-  color: #9d65c9;
-  text-shadow: 0 0 20px #9d65c9;
-  animation: flyby 3s ease-out;
-}
-
-.flyby-moons {
-  position: absolute;
-  top: 40%; left: -100%;
-  display: flex;
-  gap: 40px;
-  animation: flyby 3s ease-out 0.5s;
-}
-
-.flyby-moons span {
-  font-family: var(--font-primary);
-  font-size: 32px;
-  color: #c5a059;
-  text-shadow: 0 0 15px #c5a059;
-}
-
-.flyby-sun {
-  position: absolute;
-  top: 60%; left: -100%;
-  font-family: var(--font-primary);
-  font-size: 64px;
-  color: #ffea00;
-  text-shadow: 0 0 30px #ffea00, 0 0 60px #ffea00;
-  animation: flyby 3s ease-out 1s;
-}
-
-@keyframes flyby {
-  0% { left: -100%; }
-  100% { left: 110%; }
-}
 
 /* THE IGNITION SEQUENCE - THE POOF */
 .ignition-sequence {
@@ -178,30 +131,6 @@
   animation: flash 0.8s ease-out;
 }
 
-/* Radial warp streaks — spokes emanating from center, proper tunnel feel */
-.warp-streaks {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 200%; height: 200%;
-  transform: translate(-50%, -50%);
-  background:
-    linear-gradient(0deg,   transparent 49.5%, rgba(255,176,40,0.18) 50%, transparent 50.5%),
-    linear-gradient(15deg,  transparent 49.5%, rgba(255,160,20,0.12) 50%, transparent 50.5%),
-    linear-gradient(30deg,  transparent 49.5%, rgba(255,191,0,0.16)  50%, transparent 50.5%),
-    linear-gradient(45deg,  transparent 49.5%, rgba(255,140,0,0.10)  50%, transparent 50.5%),
-    linear-gradient(60deg,  transparent 49.5%, rgba(255,191,0,0.18)  50%, transparent 50.5%),
-    linear-gradient(75deg,  transparent 49.5%, rgba(255,160,20,0.12) 50%, transparent 50.5%),
-    linear-gradient(90deg,  transparent 49.5%, rgba(255,176,40,0.16) 50%, transparent 50.5%),
-    linear-gradient(105deg, transparent 49.5%, rgba(255,140,0,0.10)  50%, transparent 50.5%),
-    linear-gradient(120deg, transparent 49.5%, rgba(255,191,0,0.18)  50%, transparent 50.5%),
-    linear-gradient(135deg, transparent 49.5%, rgba(255,160,20,0.12) 50%, transparent 50.5%),
-    linear-gradient(150deg, transparent 49.5%, rgba(255,176,40,0.16) 50%, transparent 50.5%),
-    linear-gradient(165deg, transparent 49.5%, rgba(255,140,0,0.10)  50%, transparent 50.5%);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 4;
-  animation: warp-radiate 2.0s ease-out 0.6s;
-}
 
 @keyframes flash {
   0% { opacity: 0; }
@@ -209,12 +138,6 @@
   100% { opacity: 0; }
 }
 
-@keyframes warp-radiate {
-  0%   { opacity: 0;   transform: translate(-50%, -50%) rotate(0deg)   scale(0.5); }
-  20%  { opacity: 0.9; transform: translate(-50%, -50%) rotate(4deg)   scale(0.8); }
-  65%  { opacity: 0.7; transform: translate(-50%, -50%) rotate(8deg)   scale(1.2); }
-  100% { opacity: 0;   transform: translate(-50%, -50%) rotate(12deg)  scale(2.0); }
-}
 
 @keyframes dissolve {
   0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -301,55 +224,6 @@
   line-height: 1.4;
 }
 
-.planet-readout {
-  position: absolute;
-  right: 10px;
-  top: 50px;
-  width: 220px;
-  z-index: 23;
-  border: 1px solid rgba(255, 191, 0, 0.38);
-  background: linear-gradient(180deg, rgba(9, 7, 3, 0.9) 0%, rgba(3, 2, 1, 0.92) 100%);
-  padding: 10px;
-}
-
-.planet-readout-title {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: var(--readout-accent, #ffbf00);
-  margin-bottom: 7px;
-}
-
-.planet-readout-line {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  color: rgba(255, 191, 0, 0.8);
-  letter-spacing: 0.08em;
-  line-height: 1.5;
-}
-
-.planet-readout-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 9px;
-}
-
-.planet-readout-btn {
-  flex: 1;
-  min-height: 24px;
-  border: 1px solid rgba(255, 191, 0, 0.45);
-  background: rgba(0, 0, 0, 0.5);
-  color: rgba(255, 191, 0, 0.88);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-}
-
-.planet-readout-btn.void {
-  border-color: rgba(220, 80, 30, 0.55);
-  color: rgba(255, 120, 80, 0.9);
-}
 
 /* ── Starfield and solar-corona CSS removed — Three.js SpaceWindow
    handles the starfield via its own <Stars> component with bloom.
@@ -540,7 +414,7 @@
 }
 
 /* ── ZONE LABEL ── */
-/* Small Space Mono identifier pinned to top of each zone */
+/* Identifier label pinned to top of each zone */
 .console-zone-label {
   font-family: var(--font-mono);
   font-size: 7px;
@@ -660,6 +534,12 @@
 
 .readout-v {
   font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 191, 0, 0.88);
+  text-transform: uppercase;
+}
+
 .console-pad:focus-visible {
   outline: 2px solid rgba(255, 191, 0, 0.95);
   outline-offset: 2px;
@@ -668,11 +548,6 @@
     inset 0 2px 4px rgba(0, 0, 0, 0.6),
     inset 0 -1px 2px rgba(255, 255, 255, 0.04),
     0 0 0 2px rgba(255, 191, 0, 0.18);
-}
-  font-size: 8px;
-  letter-spacing: 0.1em;
-  color: rgba(255, 191, 0, 0.88);
-  text-transform: uppercase;
 }
 
 .readout-main {
@@ -1146,26 +1021,6 @@
   border-radius: 4px;
 }
 
-/* ─── AMBER ORBITAL PATH RINGS — radar tracks ─── */
-/* Map is 400×300, center at 200×150 */
-.orbit-path {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 1px dashed rgba(255,176,0,0.28);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Inner ring — covers Mercury / Earth horizontal axis */
-.orbit-path-inner { width: 340px; height: 160px; }
-
-/* Mid ring — covers Saturn / Venus diagonal positions */
-.orbit-path-mid   { width: 310px; height: 230px; }
-
-/* Outer ring — covers Amethyst / PX-09 vertical axis */
-.orbit-path-outer { width: 390px; height: 280px; }
 
 /* ─── BINARY HEART (Sprint 3) ─── */
 .binary-heart {
@@ -1179,13 +1034,6 @@
   z-index: 10;
 }
 
-.binary-orbit-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 191, 0, 0.15);
-  pointer-events: none;
-}
 
 .binary-pair {
   position: relative;
@@ -4390,6 +4238,75 @@
    Full-screen ambient listener view — 3D solar system + planet dock.
    Previously unstyled; all listener-* classes defined here.
    ═══════════════════════════════════════════════════════════════════ */
+
+/* ── PSC WORDMARK FOOTER — authenticated surfaces only, entry excluded ── */
+.psc-wordmark-footer {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  font-family: 'Comfortaa', cursive;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.52em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.11);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── THE ROOM — listener vault lobby ── */
+.the-room {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  background: var(--void);
+}
+
+.room-header {
+  font-family: 'Comfortaa', cursive;
+  font-size: clamp(22px, 4vw, 48px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.72);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.room-vault-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: min(480px, 90vw);
+}
+
+.vault-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 24px 16px;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+}
+
+.vault-panel:hover {
+  border-color: var(--identity, rgba(255,255,255,0.3));
+  background: var(--surface-raised);
+}
+
+.vault-panel-name {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
 
 .listener-shell {
   position: fixed;

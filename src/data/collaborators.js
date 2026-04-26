@@ -7,7 +7,7 @@ export const COLLABORATORS_KEY = 'psc_collaborators';
 export const COLLABORATOR_ROLES = ['listener', 'featured-artist', 'editor', 'co-owner'];
 
 // Vault IDs that can appear in vaultAccess
-export const VAULT_IDS = ['saturn', 'mercury', 'venus', 'earth', 'amethyst', 'mars'];
+export const VAULT_IDS = ['saturn', 'mercury', 'venus', 'earth'];
 
 // Role → tier mapping used by permissions.js
 export const ROLE_TO_TIER = {

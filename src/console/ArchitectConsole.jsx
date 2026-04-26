@@ -14,14 +14,11 @@ import {
   rollbackMatrixState,
 } from './matrixState';
 
-const PLANETS = ['mercury', 'venus', 'earth', 'mars', 'saturn', 'amethyst'];
 const VAULT_ROUTES = [
-  { id: 'saturn', label: 'ORIGINAL MUSIC' },
-  { id: 'venus', label: 'CURATED MIXES' },
-  { id: 'earth', label: 'SONIC ARCHIVE' },
+  { id: 'saturn',  label: 'ORIGINAL MUSIC' },
+  { id: 'venus',   label: 'CURATED MIXES' },
+  { id: 'earth',   label: 'SONIC ARCHIVE' },
   { id: 'mercury', label: 'LIVE SETS' },
-  { id: 'mars', label: 'JESS B VAULT' },
-  { id: 'amethyst', label: 'CRYSTAL VAULT' },
 ];
 
 const SR_ONLY_STYLE = {
@@ -618,7 +615,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                 {rosterTier === 'B' ? (
                   <select className="arch-roster-select" value={rosterPlanet} onChange={e => setRosterPlanet(e.target.value)}>
                     <option value="">— NO DOMAIN —</option>
-                    {PLANETS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                    {VAULT_ROUTES.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
                   </select>
                 ) : (
                   <input className="arch-roster-input" placeholder="FEATURED TAG" value={rosterMoon}
