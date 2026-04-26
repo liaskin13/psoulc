@@ -78,9 +78,9 @@
 ## Phase 10 Planning Queue (Draft, 2026-04-26)
 
 ### NOW (Kickoff)
-- [ ] PR hygiene cleanup: remove generated artifacts from tracked diff (`.venv`, `dist`, `node_modules`) and tighten ignore policy.
-- [ ] Re-cut a review-safe PR with product-intent files only.
-- [ ] Lock merge checklist for phase-10 branch hygiene.
+- [x] PR hygiene cleanup: remove generated artifacts from tracked diff (`.venv`, `dist`, `node_modules`) and tighten ignore policy.
+- [x] Re-cut a review-safe PR with product-intent files only.
+- [x] Lock merge checklist for phase-10 branch hygiene.
 
 ### NEXT (Hardening)
 - [ ] Accessibility baseline: keyboard flow + focus-visible + contrast for entry, AnalogConsole, ArchitectConsole.

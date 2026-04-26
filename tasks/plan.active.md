@@ -187,9 +187,9 @@ Phase 10 protects artist sovereignty by improving reliability, permission clarit
 
 #### NOW (Phase 10 Kickoff)
 
-1. Clean PR hygiene branch and keep only product-intent diffs.
-2. Add `.gitignore` protection for generated artifacts and verify untracked behavior.
-3. Re-open a review-safe PR with focused file surface.
+1. ✅ Clean PR hygiene branch and keep only product-intent diffs.
+2. ✅ Add `.gitignore` protection for generated artifacts and verify untracked behavior.
+3. ✅ Re-open a review-safe PR with focused file surface.
 
 #### NEXT (Engineering + UX Hardening)
 
