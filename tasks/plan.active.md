@@ -194,6 +194,8 @@ Phase 10 protects artist sovereignty by improving reliability, permission clarit
 #### NEXT (Engineering + UX Hardening)
 
 1. Accessibility baseline implementation and audit pass.
+  - Completed: entry keyboard semantics, lockout live region, console focus-visible/ARIA wiring.
+  - Remaining: final contrast audit pass for D/L themes.
 2. Matrix permission persistence with explicit commit/disarm state transitions.
 3. Command telemetry review dashboard hooks (local-first, no artist data leakage).
 

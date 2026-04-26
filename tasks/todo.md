@@ -84,6 +84,9 @@
 
 ### NEXT (Hardening)
 - [ ] Accessibility baseline: keyboard flow + focus-visible + contrast for entry, AnalogConsole, ArchitectConsole.
+  - ✅ Entry: keyboard focus semantics + lockout live-region messaging
+  - ✅ Console controls: stronger focus-visible treatment + ARIA state wiring
+  - [ ] Final contrast verification pass (D amber and L cyan themes)
 - [ ] Command matrix persistence and rollback-safe permission transitions.
 - [ ] Add local/CI design-law guardrail checks (Comfortaa whitelist + token policy).
 

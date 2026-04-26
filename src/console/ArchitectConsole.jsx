@@ -236,6 +236,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           <button
             className={`arch-archive-toggle ${showArchive ? 'active' : ''}`}
             onClick={() => setShowArchive(prev => !prev)}
+            aria-expanded={showArchive}
+            aria-controls="arch-event-horizon-panel"
           >
             <span className="arch-archive-icon">◉</span>
             <span className="arch-archive-btn-label">
@@ -252,6 +254,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           <button
             className={`arch-archive-toggle ${showInbox ? 'active' : ''}`}
             onClick={() => setShowInbox(prev => !prev)}
+            aria-expanded={showInbox}
+            aria-controls="arch-inbox-panel"
           >
             <span className="arch-archive-icon">◈</span>
             <span className="arch-archive-btn-label">
@@ -266,6 +270,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           <button
             className={`arch-archive-toggle ${showRoster ? 'active' : ''}`}
             onClick={() => setShowRoster(prev => !prev)}
+            aria-expanded={showRoster}
+            aria-controls="arch-roster-zone"
           >
             <span className="arch-archive-icon">◎</span>
             <span className="arch-archive-btn-label">
@@ -278,6 +284,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           <button
             className={`arch-archive-toggle ${showMatrix ? 'active' : ''} ${matrixArmed ? 'arch-toggle-armed' : ''}`}
             onClick={() => setShowMatrix(prev => !prev)}
+            aria-expanded={showMatrix}
+            aria-controls="arch-matrix-zone"
           >
             <span className="arch-archive-icon">⊞</span>
             <span className="arch-archive-btn-label">CMD MATRIX</span>
@@ -288,6 +296,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             <button
               className={`arch-archive-toggle ${showComments ? 'active' : ''}`}
               onClick={() => setShowComments(prev => !prev)}
+              aria-expanded={showComments}
+              aria-controls="arch-comments-panel"
             >
               <span className="arch-archive-icon">◌</span>
               <span className="arch-archive-btn-label">
@@ -319,6 +329,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       <AnimatePresence>
         {showRoster && (
           <motion.div
+            id="arch-roster-zone"
             className="arch-roster-zone"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -365,6 +376,10 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                       className="arch-roster-code"
                       onMouseEnter={() => setRosterReveal(m.id)}
                       onMouseLeave={() => setRosterReveal(null)}
+                      onFocus={() => setRosterReveal(m.id)}
+                      onBlur={() => setRosterReveal(null)}
+                      tabIndex={0}
+                      aria-label={`Member ${m.name} access code`}
                     >
                       {rosterReveal === m.id ? m.code : '••••'}
                     </td>
@@ -414,6 +429,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       <AnimatePresence>
         {showMatrix && (
           <motion.div
+            id="arch-matrix-zone"
             className="arch-matrix-zone"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -474,6 +490,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                               onClick={() => handleMatrixToggle(m.id, perm)}
                               disabled={!matrixArmed}
                               title={matrixArmed ? `Toggle ${perm}` : 'ARM required'}
+                              aria-pressed={active}
+                              aria-label={`${m.name} ${perm} permission ${active ? 'enabled' : 'disabled'}`}
                             >
                               {active ? '●' : '○'}
                             </button>
@@ -494,6 +512,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
         {showArchive && (
           <>
             <motion.div
+              id="arch-event-horizon-panel"
               className="arch-panel-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -506,8 +525,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             />
           </>
         )}
-        {showInbox    && <InboxPanel   viewer="L" onClose={() => setShowInbox(false)} />}
-        {showComments && <CommentPanel viewer="L" onClose={() => setShowComments(false)} />}
+        {showInbox    && <div id="arch-inbox-panel"><InboxPanel viewer="L" onClose={() => setShowInbox(false)} /></div>}
+        {showComments && <div id="arch-comments-panel"><CommentPanel viewer="L" onClose={() => setShowComments(false)} /></div>}
       </AnimatePresence>
 
       {/* Power-down confirmation modal */}
