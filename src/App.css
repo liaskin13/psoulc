@@ -9,7 +9,7 @@
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: var(--void-black);
+  background: transparent; /* DPWallpaper canvas provides the background */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,13 +24,13 @@
   left: 0;
   width: 100%;
   height: 50%;
-  background: var(--mainframe-black);
+  background: var(--void);
   z-index: 10;
-  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-.aperture-gate-upper { top: 0; border-bottom: 0.5px solid var(--studer-copper); }
-.aperture-gate-lower { bottom: 0; border-top: 0.5px solid var(--studer-copper); }
+/* No visible center line — the split is revealed by motion, not by a rule */
+.aperture-gate-upper { top: 0; }
+.aperture-gate-lower { bottom: 0; }
 
 .aperture-controls {
   position: relative;
@@ -41,65 +41,35 @@
   gap: 2rem;
 }
 
+/* Black on black — no color until the artist's identity is revealed */
 .aperture-label {
   font-family: var(--font-ui);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.4em;
-  color: var(--studer-copper);
-  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.18);
   text-transform: uppercase;
 }
 
 .aperture-input-wrapper {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  width: 100vw;
-  max-width: 600px;
   justify-content: center;
 }
 
+/* Lines removed — they added hardware noise, not luxury */
 .aperture-line-left,
 .aperture-line-right {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    var(--studer-copper) 50%, 
-    var(--studer-copper) 100%
-  );
-  opacity: 0.4;
-  box-shadow: 0 0 10px var(--studer-copper);
-}
-
-.aperture-line-right {
-  background: linear-gradient(-90deg, 
-    transparent 0%, 
-    var(--studer-copper) 50%, 
-    var(--studer-copper) 100%
-  );
-}
-
-.aperture-code-display {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  color: var(--studer-copper);
-  letter-spacing: 0.8em;
-  padding-left: 0.8em; /* offset letter-spacing */
-  text-shadow: 0 0 15px var(--studer-copper);
-  min-width: 160px;
-  text-align: center;
+  display: none;
 }
 
 .aperture-seal {
   font-family: 'Comfortaa', cursive;  /* logo mark — quarantined */
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--studer-copper);
-  opacity: 0.25;
-  margin-top: 4rem;
-  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.07);
+  margin-top: 3rem;
+  letter-spacing: 0.06em;
   text-transform: lowercase;
 }
 
@@ -4151,18 +4121,18 @@
   font-size: 22px;
   font-weight: 600;
   letter-spacing: 0;
-  color: var(--studer-copper);
-  text-shadow: 0 0 14px var(--studer-copper);
-  border-bottom: 1px solid rgba(184, 115, 51, 0.35);
-  transition: border-color 0.18s ease;
+  color: rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.18s ease, color 0.18s ease;
 }
 
 .aperture-code-cell.aperture-cell-filled {
-  border-color: rgba(184, 115, 51, 0.78);
+  color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .aperture-code-cell.aperture-cell-active {
-  border-color: rgba(184, 115, 51, 0.55);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .aperture-code-cell.aperture-cell-active::after {
@@ -4175,14 +4145,14 @@
   font-weight: 700;
   font-size: 7px;
   letter-spacing: -0.02em;
-  color: rgba(184, 115, 51, 0.48);
+  color: rgba(255, 255, 255, 0.12);
   pointer-events: none;
   animation: dp-cursor-blink 1.25s ease-in-out infinite;
 }
 
 @keyframes dp-cursor-blink {
   0%, 100% { opacity: 0.05; }
-  45%, 55% { opacity: 0.45; }
+  45%, 55% { opacity: 0.55; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
