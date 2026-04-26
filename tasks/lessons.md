@@ -1,5 +1,13 @@
 # PSC Universe — Lessons Learned
 
+### Session: Phase 10 Regression Guard (April 26, 2026)
+
+#### Active Surface Drift Is a Process Failure, Not a One-Off Bug
+
+- **Root Cause**: Legacy space-era language remained in active UI components (`ArchitectConsole` route and copy) and there was no failing design-law check for banned display phrases in active files.
+- **Rule**: When DESIGN.md bans a language family (for example space-themed vocabulary), enforce it in CI/local guardrails for active UI files. Do not rely on memory or manual review.
+- **How to apply**: Keep a narrow banned-display-phrase check in `scripts/check-design-law.sh` scoped to active surface files (`App.jsx`, `EntrySequence.jsx`, `ArchitectConsole.jsx`) and fail fast on prohibited phrases.
+
 ## Agent Routing Calibration Log
 
 Use this template when an intent routes to the wrong custom agent.

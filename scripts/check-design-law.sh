@@ -62,4 +62,33 @@ if [[ -s /tmp/psc_design_font_failures.txt ]]; then
   exit 1
 fi
 
+# 3) Active UI must not reintroduce deprecated space-themed display language.
+# Scope is intentionally narrow to active surface files to avoid legacy CSS false positives.
+active_files=(
+  "src/App.jsx"
+  "src/entry/EntrySequence.jsx"
+  "src/console/ArchitectConsole.jsx"
+)
+
+banned_literal_regex='"[^"]*(BLACK STAR|THE SUN|SOLAR|GALAXY|ORBIT|WARP|CHAKRA|STARFIELD)[^"]*"|\x27[^\x27]*(BLACK STAR|THE SUN|SOLAR|GALAXY|ORBIT|WARP|CHAKRA|STARFIELD)[^\x27]*\x27'
+
+tmp_banned="/tmp/psc_design_phrase_failures.txt"
+rm -f "$tmp_banned"
+
+if [[ "$SEARCH_TOOL" == "rg" ]]; then
+  for file in "${active_files[@]}"; do
+    rg -n -i "$banned_literal_regex" "$file" >> "$tmp_banned" 2>/dev/null || true
+  done
+else
+  for file in "${active_files[@]}"; do
+    grep -nEi "$banned_literal_regex" "$file" >> "$tmp_banned" 2>/dev/null || true
+  done
+fi
+
+if [[ -s "$tmp_banned" ]]; then
+  echo "Design-law check failed: banned space-themed display language found in active UI files."
+  cat "$tmp_banned"
+  exit 1
+fi
+
 echo "Design-law check passed."

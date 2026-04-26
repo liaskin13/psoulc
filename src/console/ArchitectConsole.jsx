@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
 import GodModePullCord from './GodModePullCord';
-import MasterClock from './MasterClock';
-import SystemMap2D from './SystemMap2D';
 import ConduitSlider from './ConduitSlider';
 import InboxPanel from './InboxPanel';
 import CommentPanel from './CommentPanel';
@@ -17,6 +15,14 @@ import {
 } from './matrixState';
 
 const PLANETS = ['mercury', 'venus', 'earth', 'mars', 'saturn', 'amethyst'];
+const VAULT_ROUTES = [
+  { id: 'saturn', label: 'ORIGINAL MUSIC' },
+  { id: 'venus', label: 'CURATED MIXES' },
+  { id: 'earth', label: 'SONIC ARCHIVE' },
+  { id: 'mercury', label: 'LIVE SETS' },
+  { id: 'mars', label: 'JESS B VAULT' },
+  { id: 'amethyst', label: 'CRYSTAL VAULT' },
+];
 
 const SR_ONLY_STYLE = {
   position: 'absolute',
@@ -30,8 +36,6 @@ const SR_ONLY_STYLE = {
   border: 0,
 };
 
-// ── EVENT HORIZON SUB-PANEL ───────────────────────────────────────────────
-// The Black Star archive — accessible as a sub-panel within the Architect's bridge.
 function EventHorizonPanel({ architectArchive, onRestore }) {
   return (
     <motion.div
@@ -48,13 +52,13 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
     >
       <div className="arch-panel-header">
         <span className="arch-panel-dot" />
-        <span id="arch-archive-title" className="arch-panel-title">EVENT HORIZON ARCHIVE</span>
-        <span id="arch-archive-sub" className="arch-panel-sub">Gravitational stasis — Architect access only</span>
+        <span id="arch-archive-title" className="arch-panel-title">ARCHIVE LOG</span>
+        <span id="arch-archive-sub" className="arch-panel-sub">Secure stasis layer — Architect access only</span>
       </div>
 
       <div className="arch-horizon-entries">
         {architectArchive.length === 0 ? (
-          <div className="arch-horizon-empty">— Archive holds nothing. The void is clear. —</div>
+          <div className="arch-horizon-empty">— Archive log is clear. —</div>
         ) : (
           architectArchive.map(item => (
             <motion.div
@@ -92,10 +96,9 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
         )}
       </div>
 
-      {/* Archive count */}
       <div className="arch-panel-footer">
         <span className="arch-count">
-          {architectArchive.filter(i => !i.restored).length} ITEMS IN STASIS
+          {architectArchive.filter(i => !i.restored).length} SECURED ITEMS
         </span>
         <span className="arch-count">
           {architectArchive.filter(i => i.restored).length} RESTORED
@@ -105,9 +108,6 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
   );
 }
 
-// ── ARCHITECT CONSOLE — Cold Tactical Bridge ──────────────────────────────
-// Same command structure as D's console, but cold graphite/cyan aesthetic.
-// No 70s warmth, no amber. Clean, precise, surgical.
 function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   const { isProtected, architectArchive, restoreItem, unreadCountL, members, unreadCommentCount, voidItem, addMember } = useSystem();
   const MATRIX_COMMITTED_KEY = 'psc_matrix_committed';
@@ -184,7 +184,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   const toggleArchive = () => {
     setShowArchive(prev => {
       const next = !prev;
-      announce(`Event Horizon ${next ? 'opened' : 'closed'}.`);
+      announce(`Archive log ${next ? 'opened' : 'closed'}.`);
       return next;
     });
   };
@@ -231,7 +231,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   const handleExplore = () => {
     if (!activePlanet) return;
     onExplorePlanet?.(activePlanet);
-    announce(`Exploring ${activePlanet.toUpperCase()}.`);
+    announce(`Opening ${activePlanet.toUpperCase()} vault.`);
   };
 
   const handleVoidProtocol = () => {
@@ -336,7 +336,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     voidItem(record, activePlanet);
     setShowArchive(true);
     setShowVoidConfirm(false);
-    announce(`${activePlanet.toUpperCase()} protocol transferred to Event Horizon.`);
+    announce(`${activePlanet.toUpperCase()} protocol moved to archive log.`);
   };
 
   const handlePowerDown = () => {
@@ -364,7 +364,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       }
       if (showArchive) {
         setShowArchive(false);
-        announce('Event Horizon closed.');
+        announce('Archive log closed.');
         return;
       }
       if (showInbox) {
@@ -399,42 +399,44 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       animate={{ opacity: 1, filter: 'brightness(1) blur(0px)' }}
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}
     >
-      {/* Architect grain — subtle scanlines */}
       <div className="arch-grain-layer" />
 
-      {/* Receded identity mark */}
       <div className="arch-bg-mark">L</div>
 
-      {/* === CONSOLE STRIP — full surface === */}
       <div className="arch-console-strip">
 
-        {/* LEFT — Pull Cord + Identity */}
         <div className="arch-strip-left">
           <GodModePullCord onPowerDown={handlePowerDown} />
           <div className="arch-identity-block">
             <div className="arch-identity-label">L · ARCHITECT</div>
             <div className="arch-identity-status">
               <span className="arch-status-dot" />
-              BLACK STAR ONLINE
+              ARCHIVE LINK ONLINE
             </div>
             <div className="arch-identity-tier">SOVEREIGN ACCESS</div>
           </div>
         </div>
 
-        {/* CENTER — System Map + Clock */}
         <div className="arch-strip-center">
-          <MasterClock />
+          <div className="arch-route-header">VAULT ROUTING</div>
           <div className="arch-map-pit">
-            <SystemMap2D
-              onPlanetSelect={handlePlanetSelect}
-              activePlanet={activePlanet}
-            />
+            <div className="arch-route-grid" role="group" aria-label="Vault routing controls">
+              {VAULT_ROUTES.map((route) => (
+                <button
+                  key={route.id}
+                  className={`arch-route-btn ${activePlanet === route.id ? 'active' : ''}`}
+                  onClick={() => handlePlanetSelect(route.id)}
+                  aria-pressed={activePlanet === route.id}
+                  aria-label={`Route to ${route.label}`}
+                >
+                  {route.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* RIGHT — Archive toggle + Conduit + Panel badges */}
         <div className="arch-strip-right">
-          {/* Archive toggle button */}
           <button
             className={`arch-archive-toggle ${showArchive ? 'active' : ''}`}
             onClick={toggleArchive}
@@ -444,7 +446,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
           >
             <span className="arch-archive-icon">◉</span>
             <span className="arch-archive-btn-label">
-              EVENT HORIZON
+              ARCHIVE LOG
               {architectArchive.length > 0 && (
                 <span className="arch-archive-badge">
                   {architectArchive.filter(i => !i.restored).length}
@@ -453,7 +455,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             </span>
           </button>
 
-          {/* Vetting queue — L's inbox */}
           <button
             className={`arch-archive-toggle ${showInbox ? 'active' : ''}`}
             onClick={toggleInbox}
@@ -470,7 +471,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             </span>
           </button>
 
-          {/* Collective members */}
           <button
             className={`arch-archive-toggle ${showRoster ? 'active' : ''}`}
             onClick={toggleRoster}
@@ -484,7 +484,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             </span>
           </button>
 
-          {/* CMD MATRIX */}
           <button
             className={`arch-archive-toggle ${showMatrix ? 'active' : ''} ${matrixArmed ? 'arch-toggle-armed' : ''}`}
             onClick={toggleMatrix}
@@ -495,7 +494,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             <span className="arch-archive-btn-label">CMD MATRIX</span>
           </button>
 
-          {/* Transmissions (comments) */}
           {unreadCommentCount > 0 && (
             <button
               className={`arch-archive-toggle ${showComments ? 'active' : ''}`}
@@ -512,14 +510,12 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
             </button>
           )}
 
-          {/* Broadcast conduit */}
           <ConduitSlider onBroadcast={handleBroadcast} isBroadcasting={isBroadcasting} />
 
-          {/* Planet navigation commands */}
           <div className="arch-command-block">
             <div className="arch-cmd-label">COMMANDS</div>
             <button className="arch-cmd-btn" disabled={!activePlanet} onClick={handleExplore}>
-              EXPLORE {activePlanet ? `→ ${activePlanet.toUpperCase()}` : ''}
+              OPEN VAULT {activePlanet ? `→ ${activePlanet.toUpperCase()}` : ''}
             </button>
             <button className="arch-cmd-btn arch-cmd-void" disabled={!activePlanet} onClick={handleVoidProtocol}>
               VOID PROTOCOL
@@ -531,7 +527,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       {isBroadcasting && <div className="arch-broadcast-pulse">ARCHITECT BROADCAST ACTIVE</div>}
       <div style={SR_ONLY_STYLE} role="status" aria-live="polite" aria-atomic="true">{liveAnnouncement}</div>
 
-      {/* === ROSTER ZONE — inline dense phosphor table === */}
       <AnimatePresence>
         {showRoster && (
           <motion.div
@@ -561,7 +556,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                 <tr>
                   <th>TIER</th>
                   <th>HANDLE</th>
-                  <th>PLANET</th>
+                  <th>DOMAIN</th>
                   <th>CODE</th>
                   <th>REGISTERED</th>
                 </tr>
@@ -575,7 +570,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                     <td className="arch-roster-handle">{m.name}</td>
                     <td className="arch-roster-planet">
                       {m.planet?.startsWith(MOON_PREFIX)
-                        ? `◎ ${m.planet.replace(MOON_PREFIX, '').toUpperCase()}`
+                        ? `FEATURED · ${m.planet.replace(MOON_PREFIX, '').toUpperCase()}`
                         : (m.planet?.toUpperCase() || '—')}
                     </td>
                     <td
@@ -618,15 +613,15 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                   <button type="button" className={`arch-roster-tier-btn ${rosterTier === 'B' ? 'active' : ''}`}
                     onClick={() => setRosterTier('B')}>COLLECTIVE</button>
                   <button type="button" className={`arch-roster-tier-btn ${rosterTier === 'C' ? 'active' : ''}`}
-                    onClick={() => setRosterTier('C')}>MOON ARTIST</button>
+                    onClick={() => setRosterTier('C')}>FEATURED ARTIST</button>
                 </div>
                 {rosterTier === 'B' ? (
                   <select className="arch-roster-select" value={rosterPlanet} onChange={e => setRosterPlanet(e.target.value)}>
-                    <option value="">— NO PLANET —</option>
+                    <option value="">— NO DOMAIN —</option>
                     {PLANETS.map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
                   </select>
                 ) : (
-                  <input className="arch-roster-input" placeholder="MOON NAME" value={rosterMoon}
+                  <input className="arch-roster-input" placeholder="FEATURED TAG" value={rosterMoon}
                     onChange={e => setRosterMoon(e.target.value.toUpperCase())} maxLength={32} required />
                 )}
                 <input className="arch-roster-input" placeholder="SET CODE (e.g. 2112)" value={rosterCode}
@@ -642,7 +637,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
         )}
       </AnimatePresence>
 
-      {/* === CMD MATRIX ZONE — permission grid with ARM/COMMIT interlock === */}
       <AnimatePresence>
         {showMatrix && (
           <motion.div
@@ -681,7 +675,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                 <tr>
                   <th>HANDLE</th>
                   <th>TIER</th>
-                  <th>PLANET</th>
+                  <th>DOMAIN</th>
                   <th>VOID</th>
                   <th>TUNE</th>
                   <th>COMMENT</th>
@@ -700,7 +694,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                       <td className="arch-matrix-tier">{m.tier}</td>
                       <td className="arch-matrix-planet">
                         {m.planet?.startsWith(MOON_PREFIX)
-                          ? m.planet.replace(MOON_PREFIX, '').toUpperCase()
+                          ? `FEATURED · ${m.planet.replace(MOON_PREFIX, '').toUpperCase()}`
                           : (m.planet?.toUpperCase() || '—')}
                       </td>
                       {['void', 'tune', 'comment'].map((perm, i) => {
@@ -731,7 +725,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
         )}
       </AnimatePresence>
 
-      {/* Event Horizon Archive sub-panel */}
       <AnimatePresence>
         {showArchive && (
           <>
@@ -752,7 +745,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
         {showComments && <div id="arch-comments-panel"><CommentPanel viewer="L" onClose={() => setShowComments(false)} /></div>}
       </AnimatePresence>
 
-      {/* Power-down confirmation modal */}
       <AnimatePresence>
         {showVoidConfirm && (
           <motion.div
@@ -769,7 +761,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
               aria-describedby="arch-void-msg"
             >
               <div id="arch-void-title" className="arch-confirm-title">INITIATE VOID PROTOCOL?</div>
-              <div id="arch-void-msg" className="arch-confirm-msg">Capture {activePlanet?.toUpperCase()} transfer event into the Eternal Registry.</div>
+              <div id="arch-void-msg" className="arch-confirm-msg">Move {activePlanet?.toUpperCase()} protocol record into secured archive.</div>
               <div className="arch-confirm-btns">
                 <button className="arch-confirm-yes" onClick={confirmVoidProtocol}>CONFIRM</button>
                 <button className="arch-confirm-no" onClick={() => setShowVoidConfirm(false)}>CANCEL</button>
@@ -793,7 +785,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
               aria-describedby="arch-power-msg"
             >
               <div id="arch-power-title" className="arch-confirm-title">POWER DOWN ARCHITECT TERMINAL?</div>
-              <div id="arch-power-msg" className="arch-confirm-msg">Return to Gate. Binary lock will hold.</div>
+              <div id="arch-power-msg" className="arch-confirm-msg">Return to Gate. Sovereign lock will hold.</div>
               <div className="arch-confirm-btns">
                 <button className="arch-confirm-yes" onClick={confirmPowerDown}>CONFIRM</button>
                 <button className="arch-confirm-no"  onClick={() => setShowPowerConfirm(false)}>CANCEL</button>
