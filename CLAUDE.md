@@ -92,7 +92,8 @@ If the answer is unclear, stop and reframe until it is.
 1. Read `tasks/lessons.md` — internalize recent corrections
 2. Read `tasks/todo.md` — understand current state and next priorities
 3. Read `tasks/plan.active.md` if it exists — pick up exactly where we left off
-4. Apply the artist benefit check to the first task before touching any code
+4. **Read `DESIGN.md`** — all design decisions live here. Do not touch any CSS, JSX, or visual element without reading this first. If what you are about to do contradicts DESIGN.md, stop and say so.
+5. Apply the artist benefit check to the first task before touching any code
 
 ---
 
