@@ -72,6 +72,17 @@ function App() {
     console.log('📍 APP STAGE:', stage);
   }, [stage]);
 
+  // Apply identity theme to <body> based on authenticated owner
+  useEffect(() => {
+    const themeMap = { D: 'd-soul', L: 'l-architect' };
+    const theme = owner ? (themeMap[owner] ?? null) : null;
+    if (theme) {
+      document.body.setAttribute('data-theme', theme);
+    } else {
+      document.body.removeAttribute('data-theme');
+    }
+  }, [owner]);
+
   // Auto-login: skip entry gate if a valid session exists
   useEffect(() => {
     try {
