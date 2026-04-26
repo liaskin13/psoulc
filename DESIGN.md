@@ -219,12 +219,13 @@ CSS grid `repeat(auto-fill, minmax(118px, 1fr))`. Each cell: waveform thumbnail,
 ---
 
 ## Muse Identity Colors (locked)
-| Muse | Identity | Key Track |
-|------|----------|-----------|
-| LARRY | `#7aaa5a` sage green | Empty Pages — Larry June |
-| JANET | `#cc3399` deep magenta | Would You Mind — Janet Jackson |
-| ERIKAH | `#cc6633` terracotta | Honey — Erykah Badu |
-| DRAKE | `#c4a428` OVO gold | Passionfruit — Drake |
+Songs are mood/visual inspiration for each lockbox interior — not literal contents.
+| Muse | Identity | Visual Mood Reference |
+|------|----------|-----------------------|
+| LARRY | `#7aaa5a` sage green | *Empty Pages* — Larry June (smooth, warm, West Coast haze) |
+| JANET | `#cc3399` deep magenta | *Would You Mind* — Janet Jackson (cinematic, sensual, dramatic) |
+| ERIKAH | `#cc6633` terracotta | *Honey* — Erykah Badu (golden, warm, neo-soul) |
+| DRAKE | `#c4a428` OVO gold | *Passionfruit* — Drake (night-time, smooth, tropical warmth) |
 
 ---
 
