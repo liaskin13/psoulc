@@ -1,175 +1,297 @@
-/* ════════════════════════════════════════════════════════════════
-   RECORD SHELF — Vinyl Spine Display
-   Dark Walnut Veneer, Dust Overlay, Analog Warmth
-   ════════════════════════════════════════════════════════════════ */
+/* ========================================================================
+   VAULT WALL — Deep Wood Cubby Grid
+   Reference: warm studio wooden compartment wall, amber overhead lighting,
+   deep dark cell interiors. Center-bright, edge-dark vignette.
+   Each cell = one slot in the wall. Occupied = chakra glow + dp mark.
+   Empty = dark recess only.
+   ======================================================================== */
 
+/* ── WALL CONTAINER ──────────────────────────────────────────────────────── */
 .record-shelf {
-  display: flex;
-  flex-direction: row;
-  gap: 2px;
-  align-items: flex-end;
-  padding: 20px 16px;
-  background: linear-gradient(
-    135deg,
-    var(--walnut-dark) 0%,
-    var(--walnut-grain) 100%
-  );
-  border-radius: 10px;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7),
-              inset 0 -2px 8px rgba(255, 255, 255, 0.05),
-              0 6px 16px rgba(0, 0, 0, 0.5);
-  min-height: 280px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  --cell-size: clamp(86px, 10vw, 112px);
+  --wall-wood-dark:  #1c1008;
+  --wall-wood-mid:   #4a2e14;
+  --wall-wood-warm:  #7a4e28;
+  --wall-amber:      #c87c2a;
+  --cell-depth:      rgba(6, 4, 2, 0.92);
+
   position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--cell-size), 1fr));
+  grid-auto-rows: var(--cell-size);
+  gap: 6px;
+  padding: 12px;
+  align-content: start;
+
+  min-height: 52svh;
+  max-height: 64svh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 6px;
+
+  /* The wall itself: warm amber-wood center, darkens to near-black at edges */
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 38%,
+      rgba(200, 124, 42, 0.38) 0%,
+      rgba(120, 70, 22, 0.24) 38%,
+      rgba(30, 16, 5, 0.0) 68%
+    ),
+    linear-gradient(160deg, var(--wall-wood-dark) 0%, var(--wall-wood-mid) 42%, var(--wall-wood-warm) 72%, var(--wall-wood-dark) 100%);
+
+  box-shadow:
+    inset  0   0  60px rgba(0, 0, 0, 0.80),
+    inset  0  -8px 28px rgba(0, 0, 0, 0.55),
+    inset  0   4px 16px rgba(255, 200, 100, 0.06);
 }
 
-/* ── DUST/CRACKLE OVERLAY ──────────────────────────────────────── */
+/* Wood dividers — the thick lattice between cubbies */
 .record-shelf::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px),
-    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
   pointer-events: none;
-  border-radius: 10px;
-  z-index: 1;
-  opacity: 0.4;
+  border-radius: 6px;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(14, 9, 4, 0.72) 0px,
+      rgba(14, 9, 4, 0.72) 6px,
+      transparent 6px,
+      transparent calc(var(--cell-size) + 6px)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(14, 9, 4, 0.72) 0px,
+      rgba(14, 9, 4, 0.72) 6px,
+      transparent 6px,
+      transparent calc(var(--cell-size) + 6px)
+    );
 }
 
-/* ── SHELF FLOOR ─────────────────────────────────────────────── */
-.shelf-floor {
+/* Radial studio-light vignette — bright center, dark corners */
+.record-shelf::after {
+  content: '';
   position: absolute;
-  bottom: 16px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, #3e2723 50%, transparent 100%);
-  shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+  inset: 0;
+  pointer-events: none;
+  border-radius: 6px;
+  z-index: 2;
+  background:
+    radial-gradient(ellipse 110% 90% at 50% 45%,
+      transparent 0%,
+      transparent 35%,
+      rgba(6, 4, 2, 0.30) 60%,
+      rgba(4, 2, 1, 0.70) 80%,
+      rgba(2, 1, 0, 0.90) 100%
+    );
 }
 
-/* ── VINYL SPINE ────────────────────────────────────────────────– */
-.spine {
+/* Cells above dividers, below vignette */
+.record-shelf > * {
   position: relative;
-  width: 40px;
-  height: 240px;
-  flex-shrink: 0;
-  background: linear-gradient(
-    90deg,
-    var(--spine-highlight, #c5a025) 0%,
-    var(--spine-base, #9d8b7a) 30%,
-    var(--spine-shadow, #5d4037) 100%
-  );
-  border-radius: 2px;
-  box-shadow:
-    inset 1px 0 2px rgba(255, 255, 255, 0.15),
-    inset -1px 0 3px rgba(0, 0, 0, 0.6),
-    0 4px 8px rgba(0, 0, 0, 0.4);
+  z-index: 1;
+}
 
+/* ── SCROLLBAR ───────────────────────────────────────────────────────────── */
+.record-shelf::-webkit-scrollbar { width: 8px; }
+.record-shelf::-webkit-scrollbar-track { background: rgba(10, 6, 3, 0.8); }
+.record-shelf::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--wall-wood-warm) 0%, var(--wall-wood-dark) 100%);
+  border-radius: 4px;
+}
+
+/* ── DP MARK — centered 'dp' glyph on occupied cells ────────────────────── */
+.file-cell-dp-mark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Comfortaa', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1rem, 3vw, 1.6rem);
+  letter-spacing: -0.02em;
+  color: var(--cell-chakra, rgba(255, 191, 0, 0.25));
+  text-shadow:
+    0 0 12px var(--cell-chakra, rgba(255, 191, 0, 0.3)),
+    0 0 28px var(--cell-chakra, rgba(255, 191, 0, 0.15));
+  opacity: 0.32;
+  pointer-events: none;
+  transition: opacity 0.22s ease, text-shadow 0.22s ease;
+  user-select: none;
+}
+
+.file-cell-active .file-cell-dp-mark,
+.file-cell:hover .file-cell-dp-mark {
+  opacity: 0.72;
+  text-shadow:
+    0 0 16px var(--cell-chakra, rgba(255, 191, 0, 0.6)),
+    0 0 40px var(--cell-chakra, rgba(255, 191, 0, 0.3));
+}
+
+/* ── OCCUPIED CELL — inner chakra glow (B) ───────────────────────────────── */
+.file-cell-occupied {
+  background:
+    radial-gradient(ellipse 80% 80% at 50% 50%,
+      color-mix(in srgb, var(--cell-chakra, rgba(255,191,0,0.18)) 22%, transparent 78%) 0%,
+      transparent 65%
+    ),
+    linear-gradient(160deg, rgba(18, 11, 5, 0.0) 0%, rgba(6, 3, 1, 0.55) 100%),
+    #0d0804 !important;
+}
+
+/* ── EMPTY CELL — pure dark recess, no glow ─────────────────────────────── */
+.file-cell-empty {
+  cursor: default;
+  pointer-events: none;
+  background:
+    linear-gradient(160deg, rgba(10, 6, 3, 0.0) 0%, rgba(4, 2, 1, 0.7) 100%),
+    #090603 !important;
+  box-shadow:
+    inset  6px  0   14px rgba(0, 0, 0, 0.85),
+    inset -6px  0   14px rgba(0, 0, 0, 0.85),
+    inset  0    8px 18px rgba(0, 0, 0, 0.95),
+    inset  0   -4px  10px rgba(0, 0, 0, 0.65) !important;
+  border-color: rgba(255, 160, 60, 0.04) !important;
+}
+
+/* ── HOVER-REVEAL CONTENT ────────────────────────────────────────────────── */
+.file-cell-content {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: flex-end;
-  padding: 8px 4px;
+  padding: 8px 9px 7px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  background: linear-gradient(0deg, rgba(4, 2, 1, 0.82) 0%, transparent 55%);
+}
+
+.file-cell:hover .file-cell-content,
+.file-cell-active .file-cell-content {
+  opacity: 1;
+}
+
+/* ── COMMENT FORM (spans full grid row) ──────────────────────────────────── */
+.spine-comment-form {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  border: 1px solid rgba(255, 191, 0, 0.28);
+  background: rgba(6, 4, 2, 0.96);
+  border-radius: 6px;
+  padding: 10px;
+  z-index: 3;
+}
+
+.spine-comment-label {
+  font-family: var(--font-mono);
+  font-size: 0.60rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 191, 0, 0.82);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.spine-comment-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 72px;
+  border: 1px solid rgba(255, 191, 0, 0.24);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.42);
+  color: rgba(255, 237, 212, 0.92);
+  font-family: var(--font-mono);
+  font-size: 0.70rem;
+  line-height: 1.4;
+  padding: 8px;
+}
+
+.spine-comment-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.spine-comment-submit,
+.spine-comment-cancel {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 191, 0, 0.32);
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 191, 0, 0.88);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.16s, color 0.16s;
+}
+
+.spine-comment-submit:hover { color: #ffbf00; border-color: rgba(255, 191, 0, 0.6); }
+.spine-comment-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.shelf-floor { display: none; }
+
+/* ── VOICE HANDLE ────────────────────────────────────────────────────────────── */
+.file-cell-voice-handle {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(180, 60, 0, 0.5);
+  border: 1px solid rgba(255, 120, 30, 0.4);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: rgba(255, 200, 100, 0.9);
+  z-index: 4;
+}
+
+.file-cell:hover .file-cell-voice-handle,
+.file-cell-active .file-cell-voice-handle,
+.file-cell-voice-handle.recording {
+  opacity: 1;
+}
+
+.file-cell-voice-handle.recording {
+  background: rgba(220, 0, 0, 0.7);
+  border-color: rgba(255, 60, 60, 0.8);
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
+}
+
+/* ── WAVEFORM THUMBNAIL ─────────────────────────────────────────────────── */
+.file-cell-waveform {
+  position: absolute;
+  bottom: 26px;
+  left: 5px;
+  right: 5px;
+  height: 22px;
+  opacity: 0.18;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
   z-index: 2;
 }
 
-.spine-active {
-  transform: translateZ(0) scaleY(1.04);
-  box-shadow:
-    inset 1px 0 2px rgba(255, 255, 255, 0.2),
-    inset -1px 0 3px rgba(0, 0, 0, 0.8),
-    0 0 16px var(--spine-glow, rgba(197, 160, 37, 0.3)),
-    0 8px 16px rgba(0, 0, 0, 0.5);
+.file-cell:hover .file-cell-waveform,
+.file-cell-active .file-cell-waveform {
+  opacity: 0.46;
 }
 
-.spine:hover {
-  filter: brightness(1.2);
-}
-
-/* ── SPECULAR HIGHLIGHT (Vinyl gloss) ───────────────────────── */
-.spine-specular {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 40%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
-  border-radius: 2px 2px 0 0;
-  pointer-events: none;
-}
-
-/* ── VINYL LABEL ────────────────────────────────────────────── */
-.spine-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.1em;
-  color: var(--cream-off-white);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  text-transform: uppercase;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  line-height: 1;
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.spine-sublabel {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-family: var(--font-mono);
-  font-size: 6px;
-  letter-spacing: 0.08em;
-  color: var(--burnt-orange);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  opacity: 0.75;
-  margin-top: 4px;
-}
-
-/* ── VOID HANDLE (Top edge dot) ───────────────────────────────– */
-.spine-void-handle {
-  position: absolute;
-  top: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--spine-glow, rgba(210, 105, 30, 0.5));
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-  opacity: 0;
-  transition: all 0.2s ease;
-}
-
-.spine:hover .spine-void-handle {
-  opacity: 1;
-  box-shadow: 0 0 6px var(--spine-glow, #d2691e);
-}
-
-/* ── SCROLLBAR (Warm styling) ──────────────────────────────── */
-.record-shelf::-webkit-scrollbar {
-  height: 6px;
-}
-
-.record-shelf::-webkit-scrollbar-track {
-  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.2), transparent);
-}
-
-.record-shelf::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, #8b7960, #b8a68f, #8b7960);
-  border-radius: 3px;
-  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
-}
-
-.record-shelf::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(90deg, #9d8b7a, #c5a025, #9d8b7a);
+/* ── MOBILE ──────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .record-shelf {
+    --cell-size: clamp(80px, 24vw, 110px);
+    gap: 8px;
+    padding: 14px;
+    max-height: 52svh;
+  }
 }

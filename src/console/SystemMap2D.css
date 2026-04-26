@@ -6,13 +6,11 @@
 .system-map-2d {
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, var(--walnut-dark) 0%, var(--walnut-grain) 100%);
-  border: 2px solid var(--warm-brass);
-  border-radius: 12px;
+  background: radial-gradient(circle at 50% 40%, #0d0b12 0%, #06050a 70%);
+  border: 1px solid rgba(255, 176, 40, 0.35);
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8),
-              inset 0 -2px 6px rgba(255, 255, 255, 0.05),
-              0 8px 24px rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.9), 0 8px 24px rgba(0, 0, 0, 0.65);
   min-width: 380px;
   min-height: 400px;
   position: relative;
@@ -22,18 +20,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--warm-brass);
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 176, 40, 0.18);
+  background: linear-gradient(90deg, rgba(255, 176, 40, 0.08) 0%, transparent 100%);
 }
 
 .map-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: var(--weight-bold);
-  letter-spacing: 0.2em;
-  color: var(--mustard-gold);
-  text-shadow: 0 0 6px var(--mustard-gold);
+  letter-spacing: 0.18em;
+  color: #ffbf00;
+  text-shadow: 0 0 6px rgba(255, 191, 0, 0.75);
   text-transform: uppercase;
 }
 
@@ -41,19 +39,23 @@
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 0.15em;
-  color: var(--cream-off-white);
-  opacity: 0.6;
+  color: rgba(255, 210, 120, 0.6);
 }
 
 /* ── SVG CONTAINER ──────────────────────────────────────────────── */
 .map-svg {
   flex: 1;
-  background: linear-gradient(
-    radial,
-    rgba(62, 39, 35, 0.05) 0%,
-    rgba(62, 39, 35, 0.15) 100%
-  );
-  filter: drop-shadow(inset 0 0 8px rgba(0, 0, 0, 0.3));
+  background: radial-gradient(circle at 50% 50%, rgba(255, 176, 40, 0.04) 0%, rgba(0, 0, 0, 0.35) 65%);
+}
+
+.radar-sweep {
+  transform-origin: 250px 250px;
+  animation: radar-sweep 8s linear infinite;
+}
+
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* ── PLANET NODES ─────────────────────────────────────────────── */
@@ -75,19 +77,42 @@
 }
 
 .planet-node.active .planet-dot {
-  filter: brightness(1.5) drop-shadow(0 0 12px #d2691e);
+  filter: brightness(1.5) drop-shadow(0 0 12px rgba(255, 191, 0, 0.9));
 }
 
 .planet-node.active .planet-glow {
   opacity: 1;
-  stroke: #d2691e;
+  stroke: #ffbf00;
   animation: glow-pulse 0.6s ease-in-out infinite;
 }
 
 .planet-node.active .planet-label {
   opacity: 1;
-  fill: #d2691e;
-  text-shadow: 0 0 4px #d2691e;
+  fill: #ffbf00;
+  text-shadow: 0 0 4px rgba(255, 191, 0, 0.8);
+}
+
+.planet-reticle line,
+.planet-reticle circle {
+  stroke: rgba(255, 191, 0, 0.86);
+  stroke-width: 1;
+}
+
+.planet-reticle circle {
+  animation: reticle-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes reticle-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.92; }
+}
+
+.orbit-micro-label {
+  font-family: var(--font-mono);
+  font-size: 6px;
+  fill: rgba(255, 191, 0, 0.38);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 @keyframes glow-pulse {
@@ -100,18 +125,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 20px;
-  border-top: 1px solid var(--warm-brass);
-  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+  padding: 8px 14px;
+  border-top: 1px solid rgba(255, 176, 40, 0.18);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 176, 40, 0.06) 100%);
 }
 
 .vault-status {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 8px;
   letter-spacing: 0.1em;
-  color: var(--burnt-orange);
+  color: #ffbf00;
   text-transform: uppercase;
-  text-shadow: 0 0 4px var(--burnt-orange);
+  text-shadow: 0 0 4px rgba(255, 191, 0, 0.6);
 }
 
 .status-active {
@@ -124,4 +149,32 @@
 @keyframes status-pulse {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
+}
+
+/* ── GHOST LIGHT NEBULA — Black Star hover animation ──────────────
+   Each index gets a distinct timing so rings drift independently.
+   Previously missing — caused silent animation failure.              */
+@keyframes nebula-pulse-0 {
+  0%, 100% { opacity: 0.08; transform: scale(1);    }
+  50%       { opacity: 0.20; transform: scale(1.08); }
+}
+@keyframes nebula-pulse-1 {
+  0%, 100% { opacity: 0.06; transform: scale(1.03); }
+  55%       { opacity: 0.16; transform: scale(1.12); }
+}
+@keyframes nebula-pulse-2 {
+  0%, 100% { opacity: 0.10; transform: scale(0.97); }
+  45%       { opacity: 0.22; transform: scale(1.06); }
+}
+@keyframes nebula-pulse-3 {
+  0%, 100% { opacity: 0.05; transform: scale(1.05); }
+  60%       { opacity: 0.14; transform: scale(1.14); }
+}
+@keyframes nebula-pulse-4 {
+  0%, 100% { opacity: 0.07; transform: scale(1.01); }
+  40%       { opacity: 0.18; transform: scale(1.09); }
+}
+@keyframes nebula-pulse-5 {
+  0%, 100% { opacity: 0.09; transform: scale(0.98); }
+  50%       { opacity: 0.19; transform: scale(1.10); }
 }

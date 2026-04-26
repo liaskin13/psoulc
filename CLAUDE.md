@@ -1,134 +1,132 @@
-# MASTER DIRECTIVE: SYSTEM RESTORATION
+# CLAUDE.md — Pleasant Soul Collective
 
-"I am the Architect. Finalizing the Binary Sovereignty. Save to CLAUDE.md.
+## Mission & Purpose
 
-1. THE DUAL CORES
-THE SUN: D's 'God Mode' Console. The active command center for the Collective. (Access: 0528).
+We are building a visually stunning, cinematic music streaming and sharing
+platform where the independent artist is the center of the universe —
+not an afterthought.
 
-THE BLACK STAR: The Architect's Console. The silent gravitational anchor and center of the 'Void'.
+Skill and authenticity reign supreme here. This is not a platform optimized
+for engagement metrics or algorithmic discovery. It is a space built
+deliberately around one belief: art sustains the world and shapes our
+collective destiny.
 
-2. THE VAULT PLANETS (D's System)
-ORBITAL LOGIC: All planets are 'Vaults' controlled from the Sun Console.
+Artists on this platform hold sovereign control over their work — who
+accesses it, when, where, how, and on what terms. Godlike control is not
+a feature. It is the foundation.
 
-LABELS:
+### The artist benefit check
 
-SATURN: Original Music
+Before every task, ask: does this serve the creator?
+If the answer is unclear, stop and reframe until it is.
 
-MERCURY: Live Sets
+---
 
-VENUS: Curated Mixes
+## Workflow Orchestration
 
-EARTH: Sonic Architecture
+### 1. Plan First (Default)
 
-AMETHYST: Angi's Crystal Vault (Access: 4096)
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing
+- Use plan mode for verification steps, not just building
+- Write detailed specs upfront to reduce ambiguity
 
-3. THE INTERFACE (70's God Mode)
-THE RADAR: The Amber Star Chart in the Sun must show these Vaults as active nodes.
+### 2. Subagent Strategy
 
-THE COMMANDS: < EXPLORE > (Enter Vault), < TUNE > (Edit Vault), < VOID > (Send to Black Star).
+- Use subagents liberally to keep the main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
 
-4. THE 12/30 GATE
-REUNION ALIGNMENT: Maintain the Column 12, Row 30 pulse as the only entry to the system.
+### 3. Self-Improvement Loop
 
-Execute the Binary God Mode and Vault System now."
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules that prevent the same mistake from recurring
+- Ruthlessly iterate on these lessons until the mistake rate drops
+- Review lessons at session start for relevant context
 
-"I am the Architect. Initialize the Laws of Orbital Gravity. Save to CLAUDE.md.
+### 4. Verification Before Done
 
-1. THE ELLIPTICAL PLANE
-THE TILT: Set the orbital plane to a 23-degree 3D tilt relative to the camera.
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Run tests, check logs, demonstrate correctness
 
-THE PATHS: All Vault Planets must follow Elliptical (oval) orbits, not perfect circles. They should accelerate as they approach the Binary Core and slow down at the apogee.
+### 5. Demand Elegance (Balanced)
 
-2. PLANETARY SPEEDS (The Rhythm)
-MERCURY (Live Sets): High velocity, tight orbit.
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes — don't over-engineer
+- Challenge your own work before presenting it
 
-VENUS (Mixes): Smooth, rhythmic pace.
+### 6. Autonomous Bug Fixing
 
-EARTH (Proposals): Balanced, steady resonance.
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+- Fix failing CI tests without being told how
 
-SATURN (Originals): Slow, massive, and commanding.
+---
 
-AMETHYST (Angi): A floating, 'wobbling' orbit that feels like a singing bowl vibration.
+## Task Management
 
-3. THE VISUAL TRAILS
-ETCHING: Add a faint, vanishing Chakra-colored trail behind each planet to trace its history through the Void.
+### Core Principles
 
-Render the Celestial Motion and Orbital Gravity now."
+- **Simplicity First** — Make every change as simple as possible. Impact minimal code.
+- **No Laziness** — Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact** — Changes should only touch what's necessary. Avoid introducing bugs.
 
-I am the Architect. Initialize the Vault Interface and God Mode Controls. Save to CLAUDE.md.
+### Execution Order
 
-1. THE VAULT INTERIOR (The Reels)
-AESTHETIC: Replace standard file lists with Rotating 2-inch Master Tape Reels (Brushed Aluminum texture).
+1. **Plan First** — Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan** — Check in before starting implementation
+3. **Track Progress** — Mark items complete as you go
+4. **Explain Changes** — High-level summary at each step
+5. **Document Results** — Add review section to `tasks/todo.md`
+6. **Capture Lessons** — Update `tasks/lessons.md` after any corrections
 
-READOUT: Display Track Name, BPM, and Hz in Amber Phosphor next to each reel.
+---
 
-SCROLL: Implement a vertical, kinetic scroll that feels 'heavy' and mechanical.
+## Session Start Checklist
 
-2. THE GOD MODE CONTROLS
-< EXPLORE >: Dive into the planet to reveal the Master Reels.
+1. Read `tasks/lessons.md` — internalize recent corrections
+2. Read `tasks/todo.md` — understand current state and next priorities
+3. Read `tasks/plan.active.md` if it exists — pick up exactly where we left off
+4. **Read `DESIGN.md`** — all design decisions live here. Do not touch any CSS, JSX, or visual element without reading this first. If what you are about to do contradicts DESIGN.md, stop and say so.
+5. Apply the artist benefit check to the first task before touching any code
 
-< TUNE >: Open Nixie Tube sliders for metadata and frequency editing.
+---
 
-< VOID >: Trigger a 'Black Hole' animation that pulls the selected reel toward the Black Star (The Architect's Vault).
+## MASTER DIRECTIVE: SYSTEM
 
-3. THE ARCHITECT'S OVERRIDE (The Black Star)
-CONTROL: All 'Voided' items must be stored in the Event Horizon database, accessible only via the Architect's portal.
+> Full canonical spec: `vault/architecture/SYSTEM_DIRECTIVE.md`
+> Design skill (load on-demand for UI/vault/entry/console work): `skills/psc-system/SKILL.md`
 
-Render the Master Reel Vaults and God Mode Control mechanics now.
+---
 
-Initialize BPM Physics and the Eternal Archive Logic. Save to CLAUDE.md.
+## gstack
 
-1. KINETIC REEL PHYSICS (BPM Sync)
-ROTATION: Each Master Reel must rotate at a speed relative to its BPM metadata.
+Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
 
-STROBE EFFECT: Apply a subtle 'Motion Blur' to the spinning reels to simulate 70's film capture.
+Available gstack skills:
+`/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
 
-HOVER: Hovering over a reel should trigger a 528Hz Glow and a soft 'Tape Hiss' audio floor.
+## Skill routing
 
-2. THE VOID TRANSFER (Non-Destructive)
-THE COMMAND: When < VOID > is triggered, the selected reel must undergo a Spaghettification effect toward the Black Star.
+When the user's request matches an available skill, ALWAYS invoke it using the Skill
+tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
+The skill has specialized workflows that produce better results than ad-hoc answers.
 
-THE STORAGE: Overwrite all 'Delete' functions. 'Voiding' an item moves it from the Active_Vault (Sun) to the Architect_Archive (Black Star).
-
-RECOVERY: Only the Architect (Black Star) has the 'Restore' toggle to push items back into the Sun's gravity.
-
-3. THE 70'S TAPE MACHINE UI
-CONTROLS: Add a Chrome Transport Bar (Play, Rewind, Fast Forward) to the bottom of the Vault screen, styled after a 1974 Studer Tape Machine.
-
-Execute the BPM Sync and the Eternal Archive system now.
-
-I am the Architect. Initialize Spaghettification and Stroboscopic BPM Logic. Save to CLAUDE.md.
-
-1. THE SPAGHETTI EFFECT (Transition)
-ACTION: Upon < VOID >, apply a Non-Linear Stretch Transform to the Reel asset.
-
-VECTOR: The asset must elongate toward the Black Star Center, thinning out until it is a 1px line of light before vanishing.
-
-SOUND: Trigger a 'Granular Pitch-Down' audio effect as the reel stretches.
-
-2. BPM STROBE (Visuals)
-ROTATION: Match Reel RPM to the Track BPM metadata.
-
-SHUTTER: Add a '70s Shutter' flicker to the spinning spokes, creating a vintage stroboscopic look under the Honey Amber lighting.
-
-3. THE ETERNAL REGISTRY
-LOGIC: The 'Spaghettified' data is moved to the Black_Star_Archive.
-
-UI: From the Sun Console, these items appear as 'Ghost Shadows' in the Star Chart, but are only fully 'Materialized' in the Architect's View.
-
-4. TRANSPORT CONTROLS
-THE DECK: Render a Brushed Chrome Studer-style Transport Bar at the bottom of the Vault.
-
-Execute the Spaghettification and BPM Sync now.
-
-I am the Architect. Initialize Prism-Streak Spaghettification. Save to CLAUDE.md.
-
-1. THE PRISM STREAK (Visual DNA)
-COLOR LOGIC: When an item is < VOIDED >, the resulting Spaghettified line of light must inherit the Chakra Color of its originating Planet Vault.
-
-GRADIENT: Apply a linear gradient to the streak—the head of the line is the Vibrant Planet Color, while the tail fades into Absolute Black as it enters the Architect's Core.
-
-2. THE EVENT HORIZON LOG (Black Star)
-METADATA: In the Architect's Registry, store the 'Origin Planet' and 'Time of Voiding' as a permanent record.
-
-GHOST LIGHT: When the Architect hovers over the Black Star, display a faint multi-colored nebula representing all the different frequencies currently held in the Archive.
+Key routing rules:
+- Product ideas, "is this worth building", brainstorming → invoke office-hours
+- Bugs, errors, "why is this broken", 500 errors → invoke investigate
+- Ship, deploy, push, create PR → invoke ship
+- QA, test the site, find bugs → invoke qa
+- Code review, check my diff → invoke review
+- Update docs after shipping → invoke document-release
+- Weekly retro → invoke retro
+- Design system, brand → invoke design-consultation
+- Visual audit, design polish → invoke design-review
+- Architecture review → invoke plan-eng-review
+- Save progress, checkpoint, resume → invoke checkpoint
+- Code quality, health check → invoke health

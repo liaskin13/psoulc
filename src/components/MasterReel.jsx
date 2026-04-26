@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VOID_DRAG_RADIUS_PX } from '../config';
 import { useSystem } from '../state/SystemContext';
+import StrobeVinylCanvas from './StrobeVinylCanvas';
 
 // ── MASTER REEL — BPM-synced tape reel with Shadow Gap void transfer ──────
 //
@@ -12,7 +13,7 @@ import { useSystem } from '../state/SystemContext';
 //   4. Prism streak inherits planet's chakra color (via planetColor prop)
 //   5. Item stored in architectArchive via voidItem()
 //
-function MasterReel({ trackName, bpm, frequency, onVoid, pitchMultiplier = 1.0, planetColor }) {
+function MasterReel({ trackName, bpm, frequency, onVoid, pitchMultiplier = 1.0, planetColor, voidColor }) {
   const [isVoiding, setIsVoiding]           = useState(false);
   const [showStreak, setShowStreak]         = useState(false);
   const [streakAngle, setStreakAngle]       = useState(0);
@@ -60,7 +61,9 @@ function MasterReel({ trackName, bpm, frequency, onVoid, pitchMultiplier = 1.0, 
     }, 1200);
   };
 
-  const chakraColor = planetColor || '#ffbf00';
+  // voidColor: true spectrum chakra (Void events only)
+  // planetColor: warm earth tone (ambient UI accents)
+  const chakraColor = voidColor || planetColor || '#ffbf00';
 
   return (
     <div style={{ position: 'relative' }}>
@@ -102,21 +105,10 @@ function MasterReel({ trackName, bpm, frequency, onVoid, pitchMultiplier = 1.0, 
         onDragEnd={handleDragEnd}
         whileDrag={{ scale: 1.08, zIndex: 100 }}
       >
-        <motion.div
-          className="reel-body"
-          animate={{ rotate: 360 }}
-          transition={{
-            rotate: {
-              duration: 60 / Math.max(bpm * pitchMultiplier, 1),
-              repeat: Infinity,
-              ease: 'linear',
-            },
-          }}
-          style={{
-            // BPM strobe — Decree: "Motion Blur to simulate 70's film capture"
-            filter: `blur(${Math.max(0, (bpm - 100) * 0.012)}px)`,
-          }}
-        >
+        {/* Stroboscopic vinyl canvas — WebGL shader with BPM-synced shutter */}
+        <div className="reel-body" style={{ position: 'relative' }}>
+          <StrobeVinylCanvas bpm={bpm} pitchMultiplier={pitchMultiplier} size={160} />
+          {/* Track info overlay — Amber phosphor readout above the disc */}
           <div className="reel-label">
             <div className="track-info">
               <span className="track-name">{trackName}</span>
@@ -124,7 +116,7 @@ function MasterReel({ trackName, bpm, frequency, onVoid, pitchMultiplier = 1.0, 
               <span className="freq-display">{frequency}</span>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Gravitational pull indicator */}
         {gravitationalPull && !isVoiding && (

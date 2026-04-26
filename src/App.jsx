@@ -1,149 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import './App.css';
 
 import { useSystem } from './state/SystemContext';
-import EntrySequence     from './entry/EntrySequence';
-import IgnitionSequence  from './entry/IgnitionSequence';
-import Viewscreen        from './console/Viewscreen';
-import AnalogConsole     from './console/AnalogConsole';
-import BlackStarConsole  from './black-star/BlackStarConsole';
+import { SESSION_KEY, MOON_PREFIX } from './config';
+import { canVoid, canEdit } from './utils/permissions';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { useBreakpoint } from './hooks/useBreakpoint';
 
-import SaturnVault    from './saturn/SaturnVault';
-import MercuryStream  from './mercury/MercuryStream';
-import VenusArchive   from './venus/VenusArchive';
-import EarthSafe      from './earth/EarthSafe';
-import AmethystVault  from './amethyst/AmethystVault';
+// ── STATIC IMPORTS ───────────────────────────────────────────────────────────
+import EntrySequence from './entry/EntrySequence';
 
-import PlanetApproach from './three/PlanetApproach';
+// ── LAZY IMPORTS ─────────────────────────────────────────────────────────────
+const AnalogConsole     = lazy(() => import('./console/AnalogConsole'));
+const ArchitectConsole  = lazy(() => import('./console/ArchitectConsole'));
+
+const SaturnVault    = lazy(() => import('./saturn/SaturnVault'));
+const MercuryStream  = lazy(() => import('./mercury/MercuryStream'));
+const VenusArchive   = lazy(() => import('./venus/VenusArchive'));
+const EarthSafe      = lazy(() => import('./earth/EarthSafe'));
+const AmethystVault  = lazy(() => import('./amethyst/AmethystVault'));
+const MarsVault      = lazy(() => import('./mars/MarsVault'));
+const MoonVault      = lazy(() => import('./moons/MoonVault'));
+const UploadModal    = lazy(() => import('./components/UploadModal'));
+
+// ── SHARED UI ────────────────────────────────────────────────────────────────
+import VaultSkeleton from './components/VaultSkeleton';
+import BottomNav     from './components/BottomNav';
+
 import { SATURN_MOONS } from './data/saturn';
 import { BROADCAST_DURATION_MS } from './config';
 
-// ── CHAKRA FREQUENCY TONES ────────────────────────────────────────────────
-const PLANET_TONES = {
-  mercury:  480,  // transformation
-  venus:    528,  // connecting relationships
-  earth:    432,  // liberating guilt
-  saturn:   396,  // spiritual order
-  amethyst: 852,  // divine consciousness
-};
+const VAULT_IDS = new Set(['saturn', 'mercury', 'venus', 'earth', 'amethyst', 'mars']);
 
-function playChakraTone(hz) {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator(); // harmonic
-    const gain = ctx.createGain();
-    const harmGain = ctx.createGain();
-
-    osc1.frequency.value = hz;
-    osc1.type = 'sine';
-    osc2.frequency.value = hz * 2; // octave up
-    osc2.type = 'sine';
-
-    harmGain.gain.value = 0.25; // harmonic at 25% volume
-
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.055, ctx.currentTime + 0.18);
-    gain.gain.setValueAtTime(0.055, ctx.currentTime + 2.0);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3.2);
-
-    osc1.connect(gain);
-    osc2.connect(harmGain);
-    harmGain.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc1.start();
-    osc2.start();
-    setTimeout(() => {
-      try { osc1.stop(); osc2.stop(); ctx.close(); } catch (_) {}
-    }, 3500);
-  } catch (_) {
-    // Audio blocked or not available
-  }
+function isVaultId(id) {
+  return VAULT_IDS.has(id) || (typeof id === 'string' && id.startsWith(MOON_PREFIX));
 }
 
-const VAULT_IDS = new Set(['saturn', 'mercury', 'venus', 'earth', 'amethyst']);
+function refreshSessionMeta() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s || Date.now() > s.expires) return null;
+    return { 
+      owner: s.owner, 
+      vault: s.vault ?? s.planet ?? null, 
+      tier: s.tier ?? 'G',
+      residentId: s.residentId ?? null
+    };
+  } catch (_) { return null; }
+}
 
-// Stages:
-//   'entry'           — code input portal
-//   'ignition'        — Sun ignition sequence (D's 0528 path)
-//   'console'         — D's God Mode Console (Sun)
-//   'architect'       — L's Black Star Console (7677 path)
-//   'amethyst-direct' — Angi's direct vault access (4096 path)
-
+// Stages: 'entry' | 'console' | 'architect' | 'room'
 function App() {
-  const { isProtected, setConsoleOwner, voidItem } = useSystem();
+  const { isProtected, setConsoleOwner, voidItem, sessionMeta, setSessionMeta } = useSystem();
+  const online = useNetworkStatus();
+  const { isMobile } = useBreakpoint();
+  const prefersReduced = useReducedMotion();
 
-  const [stage, setStage]                       = useState('entry');
-  const [activeNode, setActiveNode]             = useState(null);
-  const [pendingVaultNode, setPendingVaultNode] = useState(null);
-  const [activeMoon, setActiveMoon]             = useState(null);
-  const [isBroadcasting, setIsBroadcasting]     = useState(false);
-  const [showWelcome, setShowWelcome]           = useState(true);
+  const [stage, setStage]             = useState('entry');
+  const [owner, setOwner]             = useState(null);
+  const [activeNode, setActiveNode]   = useState(null);
+  const [activeMoon, setActiveMoon]   = useState(null);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [latentNodes, setLatentNodes] = useState([]);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const intakeInputRef = useRef(null);
 
   useEffect(() => {
     console.log('📍 APP STAGE:', stage);
   }, [stage]);
 
-  // 528Hz Miracle Hum — fades in on Sun console activation
+  // Apply identity theme to <body> based on authenticated owner
   useEffect(() => {
-    if (stage !== 'console') return;
-    let ctx, osc, gain;
-    try {
-      ctx  = new AudioContext();
-      osc  = ctx.createOscillator();
-      gain = ctx.createGain();
-      osc.frequency.value = 528;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.05);
-      gain.gain.setValueAtTime(0.06, ctx.currentTime + 1.05);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.25);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      setTimeout(() => { try { osc.stop(); ctx.close(); } catch (_) {} }, 1500);
-    } catch (_) { /* Audio blocked — non-critical */ }
-  }, [stage]);
-
-  // Entry dispatch — owner is 'D' (Sun), 'L' (Black Star), or 'ANGI' (Amethyst direct)
-  const handleIgnite = (owner) => {
-    setConsoleOwner(owner);
-    if (owner === 'D') {
-      setStage('ignition');
-    } else if (owner === 'ANGI') {
-      setStage('amethyst-direct');
+    const themeMap = { D: 'd-soul', L: 'l-architect' };
+    const theme = owner ? (themeMap[owner] ?? null) : null;
+    if (theme) {
+      document.body.setAttribute('data-theme', theme);
     } else {
-      setStage('architect');
+      document.body.removeAttribute('data-theme');
+    }
+  }, [owner]);
+
+  // Auto-login: skip entry gate if a valid session exists
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return;
+      const session = JSON.parse(raw);
+      if (session?.owner && session.expires > Date.now()) {
+        handleIgnite(session.owner, session.tier);
+      }
+    } catch (_) {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleIgnite = (ownerVal, tier = 'G') => {
+    const meta = refreshSessionMeta();
+    setOwner(ownerVal);
+    setConsoleOwner(ownerVal);
+    setSessionMeta(meta);
+
+    // Tier-based routing
+    if (tier === 'A') {
+      if (ownerVal === 'L') setStage('architect');
+      else setStage('console');
+    } else {
+      setStage('room');
+      // Auto-focus vault if assigned
+      if (meta?.vault) setActiveNode({ id: meta.vault });
     }
   };
 
-  // Click-to-EXPLORE from 3D SpaceWindow raycasting
-  const handleSpaceWindowClick = (planetId) => {
-    setActiveMoon(null);
-    setShowWelcome(false);
-    setPendingVaultNode({ id: planetId });
-    const tone = PLANET_TONES[planetId];
-    if (tone) playChakraTone(tone);
+
+  const closeVault = () => {
+    setActiveNode(null);
+    if (owner === 'D') setStage('console');
+    else if (owner === 'L') setStage('architect');
+    else setStage('room');
   };
 
-  const closeVault = () => setActiveNode(null);
+  const handlePowerDown = () => {
+    try { localStorage.removeItem(SESSION_KEY); } catch (_) {}
+    setSessionMeta(null);
+    setStage('entry');
+  };
 
   const handleNodeSelect = (node) => {
     setActiveMoon(null);
-    setShowWelcome(false);
-    if (VAULT_IDS.has(node.id)) {
-      // Trigger 3D approach sequence before opening the vault
-      setPendingVaultNode(node);
-      // Play chakra tone for the planet
-      const tone = PLANET_TONES[node.id];
-      if (tone) playChakraTone(tone);
-    } else {
-      setActiveNode(node);
-      // Play chakra tone for binary cores
-      if (node.id === 'sun' || node.id === 'binary-core') playChakraTone(528);
-    }
+    setActiveNode(node);
   };
 
   const handleNodeLongPress = (node) => {
@@ -157,7 +143,6 @@ function App() {
   const handleMoonSync = (moon) => {
     setActiveMoon(moon);
     setActiveNode(null);
-    setShowWelcome(false);
   };
 
   const handleBroadcast = () => {
@@ -165,105 +150,212 @@ function App() {
     setTimeout(() => setIsBroadcasting(false), BROADCAST_DURATION_MS);
   };
 
+  const handleIntakeFiles = (event) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    const targetPlanet = VAULT_IDS.has(activeNode?.id) ? activeNode.id : null;
+    const incoming = files.map((file) => ({
+      id: `latent-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      label: file.name,
+      size: file.size,
+      targetPlanet,
+      receivedAt: new Date().toISOString(),
+    }));
+    setLatentNodes((prev) => [...incoming, ...prev]);
+    event.target.value = '';
+  };
+
+  const handleClaimNode = (node) => {
+    setLatentNodes((prev) => prev.filter((n) => n.id !== node.id));
+    if (node.targetPlanet && VAULT_IDS.has(node.targetPlanet)) {
+      setActiveNode({ id: node.targetPlanet });
+    }
+  };
+
+  const handleArchitectExplore = (planetId) => {
+    if (!planetId || !VAULT_IDS.has(planetId)) return;
+    setActiveNode({ id: planetId });
+  };
+
   const handleVoid = (item, planet) => {
     voidItem(item, planet);
   };
 
   const renderVault = (id) => {
+    const rOnly    = !canEdit(sessionMeta, id);
+    const vAllowed = canVoid(sessionMeta, id);
+    const shared   = { onBack: closeVault, onExitSystem: handlePowerDown, readOnly: rOnly, voidAllowed: vAllowed };
+    const onVoid   = (planet) => (item) => handleVoid(item, planet);
+
+    let vault = null;
     switch (id) {
-      case 'saturn':  return <SaturnVault  onVoid={(item) => handleVoid(item, 'saturn')}  onExplore={() => {}} onTune={() => {}} onBack={closeVault} />;
-      case 'mercury': return <MercuryStream onBack={closeVault} />;
-      case 'venus':   return <VenusArchive  onVoid={(item) => handleVoid(item, 'venus')}  onBack={closeVault} />;
-      case 'earth':   return <EarthSafe     onVoid={(item) => handleVoid(item, 'earth')}  onBack={closeVault} />;
-      case 'amethyst': return <AmethystVault onBack={closeVault} />;
-      default:         return null;
+      case 'saturn':   vault = <SaturnVault   {...shared} onVoid={onVoid('saturn')}   onExplore={() => {}} onTune={() => {}} />; break;
+      case 'mercury':  vault = <MercuryStream  {...shared} />; break;
+      case 'venus':    vault = <VenusArchive   {...shared} onVoid={onVoid('venus')} />; break;
+      case 'earth':    vault = <EarthSafe      {...shared} onVoid={onVoid('earth')} />; break;
+      case 'amethyst': vault = <AmethystVault  {...shared} onVoid={onVoid('amethyst')} />; break;
+      case 'mars':     vault = <MarsVault      {...shared} onVoid={onVoid('mars')} />; break;
+      default: break;
     }
+    if (!vault && typeof id === 'string' && id.startsWith(MOON_PREFIX)) {
+      vault = <MoonVault {...shared} moonId={id} onVoid={onVoid(id)} />;
+    }
+    return <Suspense fallback={<VaultSkeleton />}>{vault}</Suspense>;
   };
 
-  // ── STAGE: ENTRY ──────────────────────────────────────────────────────────
+  const offlineBanner = !online && (
+    <div className="offline-banner" role="status">SIGNAL LOST — ARCHIVE CACHED LOCALLY</div>
+  );
+
+  // ── ENTRY ────────────────────────────────────────────────────────────────
   if (stage === 'entry') {
-    return <EntrySequence onIgnite={handleIgnite} />;
-  }
-
-  // ── STAGE: SUN IGNITION ───────────────────────────────────────────────────
-  if (stage === 'ignition') {
-    return <IgnitionSequence onComplete={() => setStage('console')} />;
-  }
-
-  // ── STAGE: BLACK STAR CONSOLE (L's Architect View) ────────────────────────
-  if (stage === 'architect') {
-    return <BlackStarConsole onExit={() => setStage('entry')} />;
-  }
-
-  // ── STAGE: AMETHYST DIRECT (Angi's 4096 path) ────────────────────────────
-  if (stage === 'amethyst-direct') {
     return (
-      <div className="universe god-mode-mainframe state-create">
-        <div className="glitter-grain" />
-        <div className="receded-logo">dp</div>
-        <AmethystVault onBack={() => setStage('entry')} />
+      <>
+        {offlineBanner}
+        <a href="#main-content" className="skip-nav">Skip to archive</a>
+        <EntrySequence onIgnite={handleIgnite} />
+      </>
+    );
+  }
+
+  // ── ROOM — guest / listener lounge ───────────────────────────────────────
+  // Note: vault check below handles activeNode for room-stage users too
+  if (stage === 'room' && !activeNode) {
+    return (
+      <div className="the-room" id="main-content">
+        <div className="room-backdrop" />
+        <div className="room-light" />
+        <div className="room-header">PLEASANT SOUL COLLECTIVE</div>
+        <div className="room-vault-grid">
+          {[...VAULT_IDS].map(id => (
+            <button
+              key={id}
+              className="vault-panel"
+              onClick={() => setActiveNode({ id })}
+            >
+              <span className="vault-panel-name">{id.toUpperCase()}</span>
+            </button>
+          ))}
+        </div>
       </div>
+    );
+  }
+
+  // ── ARCHITECT CONSOLE ────────────────────────────────────────────────────
+  if (stage === 'architect') {
+    return (
+      <>
+        {offlineBanner}
+        <a href="#main-content" className="skip-nav">Skip to archive</a>
+        <div className="universe god-mode-mainframe state-create" id="main-content">
+          <div className="glitter-grain" />
+          {isBroadcasting && <div className="system-broadcast-pulse" aria-live="polite">SYSTEM BROADCAST ACTIVE</div>}
+          <Suspense fallback={null}>
+            <ArchitectConsole onPowerDown={handlePowerDown} onExplorePlanet={handleArchitectExplore} onBroadcast={handleBroadcast} />
+          </Suspense>
+        </div>
+      </>
+    );
+  }
+
+  // Pull Cord: sealed system evicts non-Tier-A sessions back to entry
+  if (isProtected && sessionMeta && sessionMeta.tier !== 'A') {
+    return (
+      <>
+        {offlineBanner}
+        <EntrySequence onIgnite={handleIgnite} />
+      </>
     );
   }
 
   const stateClass = isProtected ? 'state-protected' : 'state-create';
 
-  // ── STAGE: PLANET APPROACH — 3D flyby to vault entry ─────────────────────
-  if (pendingVaultNode) {
+  // ── VAULT TAKEOVER ───────────────────────────────────────────────────────
+  if (activeNode && isVaultId(activeNode.id)) {
     return (
-      <PlanetApproach
-        planetId={pendingVaultNode.id}
-        onComplete={() => {
-          setActiveNode(pendingVaultNode);
-          setPendingVaultNode(null);
-        }}
-      />
+      <>
+        {offlineBanner}
+        <motion.div
+          className={`universe god-mode-mainframe ${stateClass}`}
+          id="main-content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="glitter-grain" />
+          <div className="receded-logo">dp</div>
+          {renderVault(activeNode.id)}
+          {isMobile && (
+            <BottomNav
+              activeId={activeNode.id}
+              onSelect={(id) => setActiveNode({ id })}
+            />
+          )}
+        </motion.div>
+      </>
     );
   }
 
-  // ── STAGE: VAULT TAKEOVER ─────────────────────────────────────────────────
-  if (activeNode && VAULT_IDS.has(activeNode.id)) {
-    return (
+  // ── D's GOD MODE CONSOLE ─────────────────────────────────────────────────
+  return (
+    <>
+      {offlineBanner}
+      <a href="#main-content" className="skip-nav">Skip to archive</a>
       <div className={`universe god-mode-mainframe ${stateClass}`}>
         <div className="glitter-grain" />
         <div className="receded-logo">dp</div>
-        {renderVault(activeNode.id)}
+        {isBroadcasting && <div className="system-broadcast-pulse" aria-live="polite">SYSTEM BROADCAST ACTIVE</div>}
+
+        <input
+          ref={intakeInputRef}
+          type="file"
+          multiple
+          onChange={handleIntakeFiles}
+          style={{ display: 'none' }}
+          aria-hidden="true"
+        />
+
+        <motion.div
+          id="main-content"
+          className="cockpit"
+          initial={prefersReduced ? { opacity: 1 } : { opacity: 0, scale: 1.06, filter: 'brightness(5) blur(6px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'brightness(1) blur(0px)' }}
+          transition={prefersReduced
+            ? { duration: 0.15 }
+            : { duration: 2, ease: [0.08, 0, 0.3, 1] }
+          }
+        >
+          <Suspense fallback={null}>
+            <AnalogConsole
+              activeNode={activeNode}
+              onNodeSelect={handleNodeSelect}
+              onNodeLongPress={handleNodeLongPress}
+              onClaimNode={handleClaimNode}
+              onBroadcast={handleBroadcast}
+              onIntake={() => setShowUploadModal(true)}
+              isBroadcasting={isBroadcasting}
+              latentNodes={latentNodes}
+              saturnMoons={SATURN_MOONS}
+              onMoonSync={handleMoonSync}
+              onPowerDown={handlePowerDown}
+            />
+          </Suspense>
+
+          {showUploadModal && (
+            <Suspense fallback={null}>
+              <UploadModal onClose={() => setShowUploadModal(false)} />
+            </Suspense>
+          )}
+        </motion.div>
+
+        {isMobile && (
+          <BottomNav
+            activeId={activeNode?.id}
+            onSelect={(id) => setActiveNode({ id })}
+          />
+        )}
       </div>
-    );
-  }
-
-  // ── STAGE: D's GOD MODE CONSOLE ───────────────────────────────────────────
-  return (
-    <div className={`universe god-mode-mainframe ${stateClass}`}>
-      <div className="glitter-grain" />
-      <div className="receded-logo">dp</div>
-
-      <motion.div
-        className="cockpit"
-        initial={{ opacity: 0, scale: 1.06, filter: 'brightness(5) blur(6px)' }}
-        animate={{ opacity: 1, scale: 1,    filter: 'brightness(1) blur(0px)' }}
-        transition={{ duration: 2, ease: [0.08, 0, 0.3, 1] }}
-      >
-        <Viewscreen
-          activeNode={activeNode}
-          activeMoon={activeMoon}
-          isBroadcasting={isBroadcasting}
-          showWelcome={showWelcome}
-          onPlanetClick={handleSpaceWindowClick}
-        />
-        <AnalogConsole
-          activeNode={activeNode}
-          onNodeSelect={handleNodeSelect}
-          onNodeLongPress={handleNodeLongPress}
-          onClaimNode={(node) => console.log('Claiming:', node.label)}
-          onBroadcast={handleBroadcast}
-          onIntake={() => console.log('Asset intake — stealth wealth mode')}
-          isBroadcasting={isBroadcasting}
-          saturnMoons={SATURN_MOONS}
-          onMoonSync={handleMoonSync}
-        />
-      </motion.div>
-    </div>
+    </>
   );
 }
 

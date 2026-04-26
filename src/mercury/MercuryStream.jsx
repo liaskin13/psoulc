@@ -1,15 +1,74 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import RecordShelf from '../components/RecordShelf';
+import StuderTransportBar from '../components/StuderTransportBar';
+import VaultWindow from '../components/VaultWindow';
+import VoidStreakOverlay from '../components/VoidStreakOverlay';
+import { useVaultVoid } from '../hooks/useVaultVoid';
+import { useVaultFileCells } from '../hooks/useVaultFileCells';
+import { MERCURY_TRACKS } from '../data/mercury';
+import { VOID_CHAKRA_COLORS, MEMBER_CHAKRA_COLORS } from '../config';
+import { useSystem } from '../state/SystemContext';
+import { canComment, canEdit } from '../utils/permissions';
 
-// Mercury Live Stream — Liquid Chrome data conduit.
-// No shelves. No archive. Pure passthrough.
-// A canvas waveform represents the live audio pipeline.
-function MercuryStream({ onBack }) {
+// Mercury chrome palette — liquid signal conduit
+const CHROME = { highlight: '#e8f4ff', base: '#6a8caa', shadow: '#0a1420', glow: 'rgba(140,200,255,0.7)' };
+
+const TRACK_ITEMS = MERCURY_TRACKS.map(t => ({
+  id: `track-${t.id}`, label: t.name,
+  sublabel: `${t.bpm} BPM · ${t.frequency}Hz`,
+  metadata: t,
+  createdBy: t.createdBy || 'D',
+  chakraColor: MEMBER_CHAKRA_COLORS[t.createdBy] || MEMBER_CHAKRA_COLORS.D,
+  ...CHROME,
+}));
+
+function MercuryStream({ onBack, onExitSystem, onVoid, readOnly = false }) {
   const canvasRef = useRef(null);
   const rafRef    = useRef(null);
-  const [armed, setArmed] = useState(false);
 
-  // Animated liquid-chrome waveform
+  const [pitchMultiplier, setPitchMultiplier]  = useState(1.0);
+
+  const {
+    cells: trackItems,
+    activeId,
+    activeTrack,
+    transportState,
+    selectCell,
+    findCellById,
+    removeCell,
+    clearSelection,
+    setTransport,
+  } = useVaultFileCells(TRACK_ITEMS);
+
+  const {
+    vaultWindowRef,
+    voidProps,
+    inverseBloom,
+    isVoidArmed,
+    armedVoidLabel,
+    cancelArmedVoid,
+    confirmArmedVoid,
+    handleShelfVoid,
+    handleVoidButton,
+  } =
+    useVaultVoid({
+      voidColor: VOID_CHAKRA_COLORS.mercury,
+      onVoid: (item) => {
+        removeCell(item.id);
+        onVoid?.(item);
+      },
+    });
+
+  const { addComment, sessionMeta } = useSystem();
+  const handleComment = (item, body) => addComment('mercury', item.id, item.label, sessionMeta?.owner || 'member', body);
+  const canAdmin = canEdit(sessionMeta, 'mercury');
+
+  const handleSelect = item => {
+    selectCell(item);
+  };
+
+  // Ambient waveform — low opacity background
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -35,60 +94,28 @@ function MercuryStream({ onBack }) {
         grad.addColorStop(0.3, `rgba(220,240,255,${alpha})`);
         grad.addColorStop(0.6, `rgba(180,220,255,${alpha * 0.8})`);
         grad.addColorStop(1,   `rgba(120,170,220,${alpha * 0.3})`);
-
         ctx.strokeStyle = grad;
         ctx.lineWidth   = lineWidth;
-        ctx.shadowColor = `rgba(160,220,255,${alpha * 0.5})`;
-        ctx.shadowBlur  = 10;
-
+        ctx.shadowColor = `rgba(160,220,255,${alpha * 0.3})`;
+        ctx.shadowBlur  = 6;
         ctx.beginPath();
-        for (let x = 0; x <= W; x += 1.5) {
-          const nx   = x / W;
-          const y    = H / 2
-            + Math.sin(nx * 6  * freqMod + t * speedMod)          * (H * 0.22 * ampScale)
-            + Math.sin(nx * 14 * freqMod + t * speedMod * 1.4)    * (H * 0.10 * ampScale)
-            + Math.sin(nx * 3  * freqMod + t * speedMod * 0.6)    * (H * 0.15 * ampScale)
-            + (armed ? Math.random() * 2 - 1 : 0);          // tape noise when armed
-          if (x === 0) ctx.moveTo(x, y);
-          else         ctx.lineTo(x, y);
+        for (let x = 0; x <= W; x += 2) {
+          const nx = x / W;
+          const y  = H / 2
+            + Math.sin(nx * 6  * freqMod + t * speedMod)       * (H * 0.22 * ampScale)
+            + Math.sin(nx * 14 * freqMod + t * speedMod * 1.4) * (H * 0.10 * ampScale)
+            + Math.sin(nx * 3  * freqMod + t * speedMod * 0.6) * (H * 0.15 * ampScale);
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.stroke();
         ctx.shadowBlur = 0;
       };
 
-      // Three overlapping wave layers — chrome depth
-      drawWave(1.0, 1,    1,    0.80, 1.5);   // primary carrier
-      drawWave(0.5, 1.6,  1.25, 0.40, 1.0);   // harmonic overlay
-      drawWave(0.3, 0.7,  0.75, 0.25, 0.8);   // sub-harmonic
+      drawWave(1.0, 1,   1,    0.18, 1.2);
+      drawWave(0.5, 1.6, 1.25, 0.10, 0.8);
+      drawWave(0.3, 0.7, 0.75, 0.07, 0.6);
 
-      // Data nodes — bright cyan points riding the primary wave
-      ctx.shadowColor = 'rgba(0,255,220,0.9)';
-      ctx.shadowBlur  = 6;
-      ctx.fillStyle   = 'rgba(0,255,200,0.9)';
-      for (let i = 0; i <= 16; i++) {
-        const x  = (W / 16) * i;
-        const nx = x / W;
-        const y  = H / 2
-          + Math.sin(nx * 6 + t)         * (H * 0.22)
-          + Math.sin(nx * 14 + t * 1.4)  * (H * 0.10)
-          + Math.sin(nx * 3  + t * 0.6)  * (H * 0.15);
-        ctx.beginPath();
-        ctx.arc(x, y, armed ? 2 : 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.shadowBlur = 0;
-
-      // Scanline — horizontal tick marks at top and bottom
-      ctx.strokeStyle = 'rgba(0,180,255,0.08)';
-      ctx.lineWidth   = 1;
-      for (let y = 0; y <= H; y += 20) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(W, y);
-        ctx.stroke();
-      }
-
-      t += armed ? 0.055 : 0.025;
+      t += 0.018;
       rafRef.current = requestAnimationFrame(draw);
     };
 
@@ -97,61 +124,96 @@ function MercuryStream({ onBack }) {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, [armed]);
+  }, []);
+
+  // Mercury glow: inherits the soul-chakra of whoever is currently broadcasting.
+  // When D is live = Solar Gold. When another member broadcasts = their color.
+  const broadcasterGlow = (() => {
+    const owner = sessionMeta?.owner;
+    const color = owner ? (MEMBER_CHAKRA_COLORS[owner] || null) : null;
+    return color ? `${color}1a` : 'transparent';
+  })();
 
   return (
     <motion.div
       className="vault-screen mercury-stream"
+      style={{ '--vault-owner-glow': broadcasterGlow }}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
     >
       <div className="vault-header">
-        <h1 className="vault-title">MERCURY</h1>
-        <p className="vault-subtitle">LIVE PIPELINE · HIGH-VELOCITY CONDUIT</p>
+        <h1 className="vault-title">LIVE SETS</h1>
+        <p className="vault-subtitle">SOUL PLEASANT · STREAMING</p>
       </div>
 
       <div className="vault-commands">
-        <button className="god-btn" onClick={onBack}>← BACK</button>
-        <button
-          className={`god-btn ${armed ? 'god-btn-armed' : ''}`}
-          onClick={() => setArmed(prev => !prev)}
-        >
-          {armed ? '■ DISARM' : '● ARM STREAM'}
-        </button>
-        <button className="god-btn">CONFIG</button>
+        <button className="god-btn" onClick={onBack}>SEAL VAULT</button>
+        <button className="god-btn" onClick={onExitSystem}>EXIT SYSTEM</button>
+        {!readOnly && (
+          <button
+            className="god-btn"
+              onClick={() => activeId && handleVoidButton(findCellById(activeId))}
+            disabled={!activeId}
+            style={{ opacity: activeId ? 1 : 0.4 }}
+          >
+            VOID
+          </button>
+        )}
       </div>
 
-      {/* Status line */}
-      <div className="mercury-status">
-        <div className={`mercury-status-dot ${armed ? 'dot-armed' : 'dot-standby'}`} />
-        <span className="mercury-status-label">
-          {armed ? 'PIPELINE ARMED — AWAITING SIGNAL' : 'STANDBY — PIPELINE COLD'}
-        </span>
-      </div>
+      <div className="vault-main-grid">
+        <div className="vault-top-band">
+          <VaultWindow
+            ref={vaultWindowRef}
+            inverseBloom={inverseBloom}
+            voidArmed={isVoidArmed}
+            armedLabel={armedVoidLabel}
+            onCancelVoid={cancelArmedVoid}
+            onConfirmVoid={confirmArmedVoid}
+            activeTrack={activeTrack}
+          />
+        </div>
 
-      {/* Liquid Chrome Waveform */}
-      <div className="mercury-waveform-housing">
-        <canvas ref={canvasRef} className="mercury-canvas" />
-        <div className="waveform-label-left">IN</div>
-        <div className="waveform-label-right">OUT</div>
-      </div>
-
-      {/* Signal telemetry */}
-      <div className="mercury-telemetry">
-        {[
-          { key: 'INPUT FEED',  value: armed ? '——— kHz' : '———',       dim: !armed },
-          { key: 'BITRATE',     value: armed ? '——— kbps' : '———',      dim: !armed },
-          { key: 'LATENCY',     value: armed ? '——— ms' : '———',        dim: !armed },
-          { key: 'UPTIME',      value: '00:00:00',                       dim: false  },
-          { key: 'STATUS',      value: armed ? 'ARMED' : 'STANDBY',     dim: false  },
-        ].map(row => (
-          <div key={row.key} className="telemetry-row">
-            <span className="telemetry-key">{row.key}</span>
-            <span className={`telemetry-value ${row.dim ? 'dim' : ''}`}>{row.value}</span>
+        <div className="vault-library-band">
+          {/* Ambient waveform canvas — behind shelf */}
+          <div className="mercury-waveform-housing mercury-ambient">
+            <canvas ref={canvasRef} className="mercury-canvas" />
           </div>
-        ))}
+
+          <div className="shelf-section">
+            <div className="shelf-section-label">LIVE ARCHIVE</div>
+            <RecordShelf
+              items={trackItems}
+              activeId={activeId}
+              onSelect={handleSelect}
+              onVoid={readOnly ? undefined : handleShelfVoid}
+              onComment={canComment(sessionMeta) ? handleComment : undefined}
+            />
+          </div>
+
+          <StuderTransportBar
+            activeTrack={activeTrack}
+            transportState={transportState}
+            pitchMultiplier={pitchMultiplier}
+            onPlay={()          => setTransport('play')}
+            onStop={()          => setTransport('stop')}
+            onRewind={()        => setTransport('rewind')}
+            onFastForward={()   => setTransport('ff')}
+            onPause={()         => setTransport('pause')}
+            onRecord={()        => setTransport('record')}
+            showAdminCommands={!readOnly}
+            isAdmin={canAdmin}
+            onAdminArm={()    => activeId && handleVoidButton(findCellById(activeId))}
+            onAdminCommit={confirmArmedVoid}
+            onAdminSeal={()   => { cancelArmedVoid(); setTransport('stop'); }}
+            onAdminClear={clearSelection}
+            onPitchChange={setPitchMultiplier}
+          />
+        </div>
       </div>
+
+      {!readOnly && <VoidStreakOverlay {...voidProps} />}
     </motion.div>
   );
 }

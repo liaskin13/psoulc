@@ -1,16 +1,61 @@
-// System Constants — Single source of truth. Change here, applies everywhere.
+// System Constants — Single source of truth.
 
 export const ENTRY_CODE        = '0528';
 export const BLACK_STAR_CODE   = '7677';
-export const AMETHYST_CODE     = '4096'; // Angi's Crystal Vault access
+export const AMETHYST_CODE     = '4096'; // Resonance Chamber
+export const MARS_CODE         = '1984'; // Mars Vault
+export const LISTENER_CODE     = '0000';
 export const ENTRY_FLYBY_DURATION_MS = 3000;
 
-export const IGNITION_WARP_DURATION_MS = 2000;
-export const IGNITION_STAGE_DURATION_MS = 800;
-export const IGNITION_SETTLE_DELAY_MS = 500;
+// Console keys
+export const INBOX_KEY         = 'psc_inbox_requests';
+export const MEMBERS_KEY       = 'psc_members';
+export const LISTENERS_KEY     = 'psc_listeners';
+export const COMMENTS_KEY      = 'psc_comments';
+export const SESSION_KEY      = 'psc_session';
+export const SESSION_TTL_MS   = 4 * 60 * 60 * 1000;
+export const GATE_LOCK_KEY    = 'psc_gate_lock';
+export const GATE_MAX_ATTEMPTS = 3;
+export const GATE_LOCKOUT_MS  = 30 * 1000;
 
-export const SOLAR_FLARE_DURATION_MS = 600;
+// Industrial Identity Colors
+export const STUDER_COPPER = '#B87333';
+export const STUDER_SILVER = '#C0C0C0';
+export const STUDER_AMBER  = '#ffbf00';
+export const AGED_STONE    = '#8B7355';
 
-export const LONG_PRESS_DURATION_MS = 1000;
+// Registry Colors (Replaces Chakra system)
+export const VAULT_COLORS = {
+  saturn:   '#B87333', // Copper — Master Tracks
+  venus:    '#C0C0C0', // Silver — Curated Registry
+  mercury:  '#ffbf00', // Amber  — Live Resonance
+  earth:    '#8B7355', // Stone  — Sonic Architecture
+  mars:     '#7c1212', // Iron Red — Dedicated
+  amethyst: '#6600cc', // Indigo — Resonance Chamber (Legacy Indigo preserved)
+};
+
+export const D_IDENTITY_COLOR = '#B87333'; // Copper
+export const D_CHAKRA_COLOR   = '#B87333'; // Copper — D's personal chakra
 export const BROADCAST_DURATION_MS = 5000;
-export const VOID_DRAG_RADIUS_PX = 100;
+export const MOON_PREFIX = 'moon_';
+
+// True spectrum chakra colors — void events (distinct from ambient earth tones)
+export const VOID_CHAKRA_COLORS = {
+  saturn:   '#cc4400', // Scarlet
+  venus:    '#ff8800', // Orange
+  mercury:  '#ffbf00', // Amber
+  earth:    '#00aa44', // Green
+  mars:     '#cc0033', // Crimson
+  amethyst: '#6600cc', // Violet/Indigo
+  moon:     '#00b4d8', // Cyan (default for moon vaults)
+};
+
+// Member chakra colors — identity tones per collective role
+export const MEMBER_CHAKRA_COLORS = {
+  D:        '#B87333', // Copper
+  L:        '#00e5ff', // Cyan
+  B:        '#ffbf00', // Amber
+  C:        '#6600cc', // Indigo
+  default:  '#8B7355', // Stone
+};
+

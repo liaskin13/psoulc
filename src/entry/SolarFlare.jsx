@@ -1,16 +1,31 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useAnimate } from 'framer-motion';
+import { useEffect } from 'react';
 
-// SolarFlare — Fixed-position white-out that bridges code validation → flyby.
-// z-index: 9999 ensures it burns over everything.
+// SolarFlare — White strobe → honey amber glow bridge before AstralFlyby.
+// Phase 1 (~150ms): sharp white strobe
+// Phase 2 (~650ms): amber flood fades out
 function SolarFlare({ onComplete }) {
+  const [scope, animate] = useAnimate();
+
+  useEffect(() => {
+    async function run() {
+      // Phase 1: white strobe hit
+      await animate(scope.current, { opacity: 1, backgroundColor: '#ffffff' }, { duration: 0.12, ease: 'easeIn' });
+      // Phase 2: shift to honey amber, bloom out
+      await animate(scope.current, { backgroundColor: '#ffbf00', opacity: [1, 0.85, 0] }, { duration: 0.65, times: [0, 0.4, 1], ease: 'easeOut' });
+      onComplete?.();
+    }
+    run();
+  }, []);
+
   return (
-    <motion.div
-      className="solar-flare"
-      initial={{ opacity: 0, scale: 0.4, filter: 'blur(40px) brightness(1)' }}
-      animate={{ opacity: [0, 1, 1, 0], scale: [0.4, 1.2, 1.4, 2], filter: 'blur(20px) brightness(2)' }}
-      transition={{ duration: 0.6, times: [0, 0.3, 0.6, 1], ease: 'easeOut' }}
-      onAnimationComplete={onComplete}
+    <div
+      ref={scope}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        backgroundColor: '#000', opacity: 0, pointerEvents: 'none',
+      }}
     />
   );
 }
