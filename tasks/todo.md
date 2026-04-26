@@ -608,36 +608,46 @@ No code until design exists. Goes to `/design-consultation` → `/design-shotgun
 ### Build Order
 
 ```
-P10-2 (D7 collaborator wiring)
+P10-A (contrast audit)
+  → P10-B (matrix persistence)
+  → P10-C (design law CI)
+  → P10-2 (D7 collaborator wiring)
   → P10-6 (moon vault access layer, depends on D7)
   → P10-8 (pull cord surgery)
-  → P10-3 (Amethyst parity)
   → P10-5 (voice comments)
   → P10-4 (ID3 auto-read)
   → P10-1 (QA)
-  → P10-7 (design session)
+  → P10-7 (design session — the A+ move)
 ```
 
 ---
 
 ### Tasks
 
-- [ ] **P10-2** — D7 Collaborator object system: `src/data/collaborators.js` schema (`name, planet, tier, grantedVaults[], moonGrants: { moonId, grantedBy, grantedAt }[], activeSince`). Wire into SystemContext: `collaborators` state, `addCollaborator`, `canCollaboratorAccess`. Data layer only — no UI yet.
+#### Hardening (complete Phase 10 exit criteria)
+
+- [ ] **P10-A** — Contrast audit: verify D amber (#ffb347) and L cyan (#00e5ff) meet WCAG AA against their respective dark surfaces. Check console labels, vault titles, nav items, focus rings. Flag any failures; fix or document as accepted.
+
+- [ ] **P10-B** — Matrix permission persistence: CMD MATRIX changes must survive a page reload. Persist committed state to localStorage (`psc_matrix_state`). Rollback must restore the previous committed snapshot. Logged in commandLog.
+
+- [ ] **P10-C** — Design law CI check: add a one-command preflight script (`npm run audit:design-law`) that greps for non-whitelisted Comfortaa usage and Space Mono. Fails with exit code 1 if found. Wire into `npm run build` as a pre-step.
+
+#### Feature depth
+
+- [ ] **P10-2** — D7 Collaborator object system: `src/data/collaborators.js` schema (`name, vault, tier, grantedVaults[], moonGrants: { moonId, grantedBy, grantedAt }[], activeSince`). Wire into SystemContext: `collaborators` state, `addCollaborator`, `canCollaboratorAccess`. Data layer only — no UI yet. (Note: Angi → vault `venus`, Jess B → vault `saturn`. Mars/Amethyst assignments removed.)
 
 - [ ] **P10-6** — Moon vault access layer (data only): double-key check in `canEnterVault` — moon vault requires `owner === 'D'` OR session matches the Muse OR explicit `moonGrants` entry. Locked-door placeholder render for denied access (no interior revealed). Depends on P10-2.
 
-- [ ] **P10-8** — Pull cord surgery: strip `isProtected` from SystemContext, remove grayscale CSS from all surfaces, remove pull cord from ArchitectConsole (L). Move pull cord to D-only. Verify spaghettification still fires in MasterReel / AnalogConsole.
-
-- [ ] **P10-3** — Amethyst vault interior: replace bowl rings + session rows with file-cell cubby wall. Same dark recess interior, amber radial lighting, wood lattice dividers. Parity with Saturn / Venus / Earth — no design decisions.
+- [ ] **P10-8** — Pull cord surgery: strip `isProtected` from SystemContext, remove grayscale CSS from all surfaces, remove pull cord from ArchitectConsole (L). Move pull cord to D-only. Verify power-down still fires in AnalogConsole.
 
 - [ ] **P10-5** — REC voice comments: MediaRecorder → audio blob per selected cell, stored in comment thread (`audioData` field already stubbed). Wire record/playback UI. Timed timestamp pins on track progress bar (Soundcloud-style).
   - *⚠ Open: access scope = full M³ (Masters + Members + Muses) or Masters + Members only?*
 
 - [ ] **P10-4** — ID3 auto-read on upload: on audio file select in UploadModal, read ID3 metadata (`jsmediatags` or File API) and pre-fill title / artist / BPM. Add TAGS field (comma-delimited). Write access: Masters only.
 
-- [ ] **P10-1** — QA sweep: load dev server, confirm cubby wall renders correctly in Saturn / Venus / Earth vaults. Visual browser pass — do last before calling phase complete.
+- [ ] **P10-1** — QA sweep: load dev server, confirm vault interiors render correctly. Visual browser pass — do last before calling phase complete.
 
-- [ ] **P10-7** — D console design: run `/design-consultation` then `/design-shotgun`. No code written until design is locked. Inputs: UBC music production degree, 70s soul vibe, sovereign sanctum frame above.
+- [ ] **P10-7** — D console design: run `/design-consultation` then `/design-shotgun`. No code written until design is locked. Inputs: UBC music production degree, 70s soul vibe, sovereign sanctum frame. **This is the A+ move.**
 
 ---
 
