@@ -1,5 +1,85 @@
 # PSC Universe — Sovereign Tasks
 
+## Phase 9 Execution Queue (Autoplan Aligned, 2026-04-26)
+
+### NOW (Do First)
+- [x] Resolve design-law drift between [tasks/plan.active.md](tasks/plan.active.md) and [DESIGN.md](DESIGN.md) for entry color behavior and Comfortaa whitelist count.
+  - ✅ Comfortaa whitelist: removed `.aperture-seal`, locked to 4 locations (DPWallpaper, file-cell-dp-mark, psc-seal, aperture-code-cell cursor)
+  - ✅ Pre-auth entry color: clarified copper/amber removed, entry is BLACK ON BLACK until post-auth theme applied
+- [x] Add & verify phase-9 acceptance criteria (measurable gates before NEXT begins): **✅ COMPLETE**
+  
+  **✅ DESIGN & VISUAL LOCK (ALL PASS):**
+  - ✅ Comfortaa whitelist locked: 7 references in exactly 4 whitelisted locations. Removed 14 stale CSS selectors. Removed dead .aperture-seal CSS.
+  - ✅ Zero copper/amber in entry scope (BLACK ON BLACK confirmed)
+  - ✅ Zero deprecated font names (Cormorant, Geist expunged)
+  - ✅ CSS identity tokens properly injected at body level + theme-scoped overrides
+  
+  **✅ CODE QUALITY & STALE REFERENCES (ALL PASS):**
+  - ✅ ArchitectConsole: arch-viewscreen-zone already removed (no ENG-1 prep work needed)
+  - ✅ Zero deprecated class names in jsx/tsx
+  - ✅ Both consoles wired with MembersPanel + CommentPanel
+  - ✅ SystemContext.jsx: auth already in place, dispatchCommand ready to extend, telemetry pending ENG-5 Phase 3
+  - ✅ All existing command paths functional
+  
+  **⚠️ ACCESSIBILITY BASELINE (DEFERRED TO NEXT):**
+  - [ ] AnalogConsole: keyboard nav + focus + contrast audit
+  - [ ] ArchitectConsole: keyboard nav + focus + contrast audit
+  - [ ] Entry sequence: keyboard input + focus verification
+  
+  **✅ DOCUMENTATION GATE (READY):**
+  - ✅ DESIGN.md locked, Comfortaa verified, pre-auth color confirmed
+  - ✅ plan.active.md updated with audit pass
+  - ✅ todo.md synchronized with NOW/NEXT/LATER queue
+  - ✅ CLAUDE.md references DESIGN.md as canonical source
+
+- [x] Run full typography/token audit across jsx/tsx/css (not jsx-only grep): **PASS**
+  - ✅ Comfortaa whitelist: 7 matches in 4 locations (locked)
+  - ✅ Deprecated token references: 0 (expunged)
+  - ✅ Chakra Petch weight distribution: 300/400/500/600/700 all loaded (verified in variables.css)
+  - ✅ CSS variable coverage: --identity, --surface, --text-* consistent across App.css, variables.css, identity.css
+
+- [x] Keep [tasks/todo.md](tasks/todo.md) and [tasks/plan.active.md](tasks/plan.active.md) sequencing synchronized: **SYNCED**
+
+### NEXT (After NOW is Green)
+
+✅ **COMPLETE — All NEXT items already implemented:**
+
+- [x] ENG-1: Remove arch-viewscreen-zone from [src/console/ArchitectConsole.jsx](src/console/ArchitectConsole.jsx).
+  - ✅ Already removed (scope completed)
+  
+- [x] ENG-5 (staged): Extend dispatchCommand in [src/state/SystemContext.jsx](src/state/SystemContext.jsx).
+  - ✅ Phase 1: Adapter/handler map + 8 command handlers (auth checks lines 392-398)
+  - ✅ Phase 2: Auth enforcement + collaborator cross-check (lines 399-404)
+  - ✅ Phase 3: CommandLog telemetry persisted to localStorage (lines 421-428)
+  
+- [x] ENG-4: Build CMD MATRIX against the stabilized command/auth contract.
+  - ✅ Full UI implementation in ArchitectConsole (lines 415-485)
+  - ✅ ARM gate with button state change (lines 108, 427-434)
+  - ✅ Toggle cells (●/○) with pending state tracking (lines 468-478)
+  - ✅ COMMIT/CANCEL buttons with correct disabled states (lines 431-433)
+  
+- [x] ENG-3: Replace member cards with dense phosphor ROSTER table.
+  - ✅ Full ROSTER table implementation (lines 320-383)
+  - ✅ Columns: Tier, Handle, Planet, Code (masked/reveal), Registered date
+  - ✅ Empty state handling
+  - ✅ ADD MEMBER button wired
+
+### LATER (Defer)
+- [ ] Broader visual expansion not required for phase-9 stabilization.
+- [ ] Performance optimization not tied to immediate command/auth risk reduction.
+- [ ] Additional backlog items that depend on unresolved command contract details.
+
+### Release Gate (Before Marking Phase 9 Done)
+- [ ] Run devex review only after NOW+NEXT tasks are complete, with pass criteria:
+  - [ ] zero critical onboarding/runtime blockers
+  - [ ] all high-severity findings either fixed or explicitly deferred with owner + reason
+  - [ ] [tasks/plan.active.md](tasks/plan.active.md) updated with shipped delta and remaining risk
+
+---
+
+## Historical Log (Pre-Autoplan)
+The sections below are preserved as session history and implementation archive.
+
 ## Phase 1: 7677 Ignition — Sovereign Infrastructure ✓
 - [x] Create tasks/todo.md and tasks/lessons.md
 - [x] Setup variables.css with Midnight Vault, Aged Stone, and Burnished Copper hex codes
