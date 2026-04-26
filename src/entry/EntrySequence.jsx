@@ -150,7 +150,6 @@ function EntrySequence({ onIgnite }) {
                 LOCKED {Math.ceil(lockoutRemaining / 1000)}s
               </div>
             )}
-            <div className="aperture-seal">dp</div>
           </motion.div>
         )}
       </AnimatePresence>
