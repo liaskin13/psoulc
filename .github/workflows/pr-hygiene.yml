@@ -1,0 +1,35 @@
+name: PR Hygiene
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - phase-*
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve base ref
+        id: base
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "ref=origin/${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+            git fetch origin "${{ github.base_ref }}" --depth=1
+          else
+            echo "ref=origin/main" >> "$GITHUB_OUTPUT"
+            git fetch origin main --depth=1
+          fi
+
+      - name: Run PR hygiene check
+        run: bash scripts/check-pr-hygiene.sh "${{ steps.base.outputs.ref }}"
+
+      - name: Run design law check
+        run: bash scripts/check-design-law.sh

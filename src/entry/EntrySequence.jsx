@@ -67,7 +67,7 @@ function EntrySequence({ onIgnite }) {
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 
       // Quiet Opening Delay
-      setTimeout(() => onIgnite(res.name), 1200);
+      setTimeout(() => onIgnite(res.name, res.tier), 1200);
     } else {
       // Failed attempt logic
       const newCount = lock.count + 1;
@@ -92,18 +92,43 @@ function EntrySequence({ onIgnite }) {
     }
   };
 
+  const focusInput = () => inputRef.current?.focus();
+
+  const handleApertureKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      focusInput();
+    }
+  };
+
   return (
-    <div className="entry-aperture" onClick={() => inputRef.current?.focus()}>
+    <div
+      className="entry-aperture"
+      onClick={focusInput}
+      onKeyDown={handleApertureKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label="Focus master key input"
+    >
       <DPWallpaper opacity={isIgnited ? 0 : 1} />
+
+      <div className="entry-maison-mark" aria-hidden="true">
+        <span className="entry-maison-line">PLEASANT SOUL COLLECTIVE</span>
+        <span className="entry-maison-sub">EST. SOVEREIGN ARCHIVE</span>
+      </div>
 
       <input
         ref={inputRef}
         type="text"
         maxLength={8}
+        inputMode="numeric"
+        autoComplete="one-time-code"
         value={input}
         onChange={handleInputChange}
         className="entry-hidden-input"
         autoFocus
+        aria-label="Master key input"
+        aria-describedby={lockoutRemaining > 0 ? 'aperture-lockout-status' : undefined}
       />
 
       {/* The Heavy Silence — Background split animation */}
@@ -146,7 +171,12 @@ function EntrySequence({ onIgnite }) {
               <div className="aperture-line-right" />
             </div>
             {lockoutRemaining > 0 && (
-              <div className="aperture-lockout">
+              <div
+                id="aperture-lockout-status"
+                className="aperture-lockout"
+                role="status"
+                aria-live="polite"
+              >
                 LOCKED {Math.ceil(lockoutRemaining / 1000)}s
               </div>
             )}

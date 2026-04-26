@@ -24,7 +24,7 @@
   left: 0;
   width: 100%;
   height: 50%;
-  background: var(--void);
+  background: rgba(5, 5, 5, 0.78);
   z-index: 10;
 }
 
@@ -39,6 +39,36 @@
   flex-direction: column;
   align-items: center;
   gap: 2rem;
+}
+
+.entry-maison-mark {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.entry-maison-line {
+  font-family: var(--font-ui);
+  font-size: clamp(11px, 1.6vw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.38em;
+  color: rgba(255, 255, 255, 0.34);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+.entry-maison-sub {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.26em;
+  color: rgba(255, 255, 255, 0.2);
 }
 
 /* Black on black — no color until the artist's identity is revealed */
@@ -621,9 +651,24 @@
   color: rgba(255, 176, 40, 0.54);
   text-transform: uppercase;
 }
+.anim-toggle-btn:focus-visible {
+  outline: 2px solid rgba(255, 191, 0, 0.95);
+  outline-offset: 2px;
+  border-color: rgba(255, 191, 0, 0.7);
+  color: rgba(255, 191, 0, 0.95);
+}
 
 .readout-v {
   font-family: var(--font-mono);
+.console-pad:focus-visible {
+  outline: 2px solid rgba(255, 191, 0, 0.95);
+  outline-offset: 2px;
+  border-color: rgba(255, 191, 0, 0.75);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.6),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.04),
+    0 0 0 2px rgba(255, 191, 0, 0.18);
+}
   font-size: 8px;
   letter-spacing: 0.1em;
   color: rgba(255, 191, 0, 0.88);
@@ -1920,6 +1965,10 @@
   background: transparent;
   color: transparent;
   caret-color: transparent;
+}
+.entry-aperture:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.45);
+  outline-offset: -6px;
 }
 
 /* ─── SPRINT 1: Missing Viewscreen overlays ─── */
@@ -3274,6 +3323,556 @@
   transition: border-color 0.2s, color 0.2s;
 }
 .arch-exit-btn:hover { border-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.7); }
+
+/* Architect bridge controls and hardening surfaces */
+.architect-console {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, rgba(0, 229, 255, 0.05) 0%, rgba(0, 0, 0, 0) 45%), #050505;
+  color: #d3f7ff;
+  overflow: hidden;
+}
+
+.arch-grain-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0, rgba(255, 255, 255, 0.04) 1px, transparent 1px, transparent 3px);
+}
+
+.arch-bg-mark {
+  position: absolute;
+  right: 32px;
+  bottom: 18px;
+  font-family: var(--font-display);
+  font-size: clamp(48px, 6vw, 88px);
+  color: rgba(0, 229, 255, 0.07);
+  letter-spacing: -0.02em;
+  user-select: none;
+  pointer-events: none;
+}
+
+.arch-strip-left,
+.arch-strip-center,
+.arch-strip-right {
+  padding: 16px;
+  border-right: 1px solid rgba(0, 229, 255, 0.14);
+}
+
+.arch-strip-left {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.arch-strip-center {
+  flex: 1;
+  min-width: 0;
+}
+
+.arch-strip-right {
+  width: 340px;
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arch-map-pit {
+  margin-top: 10px;
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  background: rgba(0, 20, 24, 0.45);
+  padding: 8px;
+}
+
+.arch-identity-block {
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  padding: 10px;
+  background: rgba(0, 16, 20, 0.45);
+}
+
+.arch-identity-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: rgba(0, 229, 255, 0.94);
+}
+
+.arch-identity-status,
+.arch-identity-tier {
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(211, 247, 255, 0.88);
+}
+
+.arch-archive-toggle {
+  min-height: 38px;
+  border: 1px solid rgba(0, 229, 255, 0.34);
+  background: rgba(0, 30, 38, 0.44);
+  color: #d9fbff;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.arch-archive-toggle:hover {
+  border-color: rgba(0, 229, 255, 0.72);
+  background: rgba(0, 38, 50, 0.68);
+}
+
+.arch-archive-toggle.active {
+  border-color: #00e5ff;
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.45), 0 0 18px rgba(0, 229, 255, 0.16);
+}
+
+.arch-archive-toggle.arch-toggle-armed {
+  border-color: #ff6633;
+  box-shadow: inset 0 0 0 1px rgba(255, 102, 51, 0.42), 0 0 14px rgba(255, 102, 51, 0.18);
+}
+
+.arch-archive-toggle:focus-visible,
+.arch-matrix-cell:focus-visible,
+.arch-matrix-arm:focus-visible,
+.arch-matrix-commit:focus-visible,
+.arch-matrix-cancel:focus-visible,
+.arch-matrix-rollback:focus-visible,
+.arch-roster-add-btn:focus-visible,
+.arch-roster-commit:focus-visible,
+.arch-roster-cancel:focus-visible,
+.arch-confirm-yes:focus-visible,
+.arch-confirm-no:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
+}
+
+.arch-archive-icon {
+  color: #00e5ff;
+  font-size: 12px;
+  min-width: 12px;
+}
+
+.arch-archive-btn-label {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.arch-archive-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 7px;
+  border: 1px solid rgba(0, 229, 255, 0.7);
+  color: #b9f7ff;
+  font-size: 9px;
+  font-family: var(--font-mono);
+}
+
+.arch-command-block {
+  margin-top: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  background: rgba(0, 20, 24, 0.36);
+  padding: 10px;
+}
+
+.arch-cmd-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: rgba(0, 229, 255, 0.82);
+  margin-bottom: 8px;
+}
+
+.arch-cmd-btn {
+  width: 100%;
+  min-height: 32px;
+  margin-bottom: 7px;
+  border: 1px solid rgba(0, 229, 255, 0.38);
+  background: rgba(0, 26, 34, 0.62);
+  color: #d9fbff;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.arch-cmd-btn:last-child {
+  margin-bottom: 0;
+}
+
+.arch-cmd-btn.arch-cmd-void {
+  border-color: rgba(255, 120, 80, 0.56);
+  color: #ffc1b0;
+}
+
+.arch-cmd-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.arch-broadcast-pulse {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  padding: 5px 9px;
+  border: 1px solid rgba(0, 229, 255, 0.6);
+  background: rgba(0, 35, 42, 0.8);
+  color: #dbfcff;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+}
+
+.arch-roster-zone,
+.arch-matrix-zone {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  max-height: 44vh;
+  overflow: auto;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  background: rgba(3, 12, 15, 0.94);
+  padding: 10px;
+  z-index: 12;
+}
+
+.arch-roster-header,
+.arch-matrix-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.arch-roster-title,
+.arch-matrix-title {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #e6fcff;
+}
+
+.arch-roster-count,
+.arch-matrix-sub {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: rgba(208, 246, 255, 0.84);
+}
+
+.arch-roster-table,
+.arch-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.arch-roster-table th,
+.arch-roster-table td,
+.arch-matrix-table th,
+.arch-matrix-table td {
+  border-bottom: 1px solid rgba(0, 229, 255, 0.14);
+  padding: 7px 6px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #d4f8ff;
+}
+
+.arch-roster-table th,
+.arch-matrix-table th {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: rgba(0, 229, 255, 0.86);
+}
+
+.arch-roster-empty,
+.arch-matrix-empty {
+  text-align: center;
+  color: rgba(212, 248, 255, 0.68);
+}
+
+.arch-roster-code {
+  cursor: pointer;
+}
+
+.arch-roster-code:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 1px;
+}
+
+.arch-roster-add-btn,
+.arch-roster-commit,
+.arch-roster-cancel,
+.arch-matrix-arm,
+.arch-matrix-commit,
+.arch-matrix-cancel,
+.arch-matrix-rollback {
+  min-height: 30px;
+  border: 1px solid rgba(0, 229, 255, 0.42);
+  background: rgba(0, 30, 38, 0.64);
+  color: #dbfcff;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.arch-matrix-interlocks {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.arch-matrix-rollback:disabled,
+.arch-matrix-commit:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.arch-matrix-cell {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(0, 229, 255, 0.38);
+  background: rgba(0, 20, 24, 0.82);
+  color: #c9f7ff;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.arch-cell-on {
+  border-color: rgba(0, 229, 255, 0.75);
+  color: #00e5ff;
+}
+
+.arch-cell-off {
+  color: rgba(201, 247, 255, 0.62);
+}
+
+.arch-cell-pending {
+  box-shadow: inset 0 0 0 1px rgba(255, 153, 102, 0.6);
+}
+
+.arch-cell-locked {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.arch-matrix-row-pending td {
+  background: rgba(255, 153, 102, 0.08);
+}
+
+.arch-panel-backdrop,
+.arch-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.58);
+  z-index: 16;
+}
+
+.arch-event-horizon-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(560px, 92vw);
+  height: 100svh;
+  z-index: 17;
+  border-left: 1px solid rgba(0, 229, 255, 0.28);
+  background: rgba(5, 12, 14, 0.98);
+  padding: 14px;
+  overflow: auto;
+}
+
+.arch-panel-header {
+  border-bottom: 1px solid rgba(0, 229, 255, 0.24);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.arch-panel-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: #00e5ff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.55);
+}
+
+.arch-panel-title {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #dcfcff;
+}
+
+.arch-panel-sub {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: rgba(212, 248, 255, 0.82);
+  letter-spacing: 0.1em;
+}
+
+.arch-horizon-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.arch-horizon-empty {
+  text-align: center;
+  color: rgba(212, 248, 255, 0.62);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 16px;
+}
+
+.arch-horizon-entry {
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  background: rgba(0, 28, 35, 0.38);
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.arch-entry-name {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #e6fcff;
+}
+
+.arch-entry-meta {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(212, 248, 255, 0.82);
+}
+
+.arch-restore-btn,
+.arch-restored-badge {
+  min-width: 78px;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.arch-restore-btn {
+  border: 1px solid rgba(0, 229, 255, 0.5);
+  background: rgba(0, 28, 35, 0.78);
+  color: #d9fbff;
+  min-height: 28px;
+  cursor: pointer;
+}
+
+.arch-restored-badge {
+  color: rgba(188, 246, 255, 0.66);
+}
+
+.arch-panel-footer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(212, 248, 255, 0.74);
+}
+
+.arch-confirm-overlay {
+  display: grid;
+  place-items: center;
+}
+
+.arch-confirm-dialog {
+  width: min(420px, 90vw);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  background: rgba(5, 12, 14, 0.98);
+  padding: 14px;
+}
+
+.arch-confirm-title {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: #e6fcff;
+  letter-spacing: 0.12em;
+}
+
+.arch-confirm-msg {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(212, 248, 255, 0.86);
+  letter-spacing: 0.08em;
+}
+
+.arch-confirm-btns {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.arch-confirm-yes,
+.arch-confirm-no {
+  flex: 1;
+  min-height: 32px;
+  border: 1px solid rgba(0, 229, 255, 0.42);
+  background: rgba(0, 28, 35, 0.78);
+  color: #d9fbff;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .arch-console-strip {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .arch-strip-left,
+  .arch-strip-center,
+  .arch-strip-right {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.14);
+  }
+
+  .arch-strip-right {
+    border-bottom: none;
+  }
+
+  .arch-roster-zone,
+  .arch-matrix-zone {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    max-height: 52vh;
+  }
+}
 
 /* ─── VAULT-CMD — Angi's Amethyst control buttons (crystal purple, not gold god-mode) ─── */
 .vault-cmd {

@@ -70,10 +70,29 @@
 - [ ] Additional backlog items that depend on unresolved command contract details.
 
 ### Release Gate (Before Marking Phase 9 Done)
-- [ ] Run devex review only after NOW+NEXT tasks are complete, with pass criteria:
-  - [ ] zero critical onboarding/runtime blockers
-  - [ ] all high-severity findings either fixed or explicitly deferred with owner + reason
-  - [ ] [tasks/plan.active.md](tasks/plan.active.md) updated with shipped delta and remaining risk
+- [x] Run devex review only after NOW+NEXT tasks are complete, with pass criteria:
+  - [x] zero critical onboarding/runtime blockers
+  - [x] all high-severity findings either fixed or explicitly deferred with owner + reason
+  - [x] [tasks/plan.active.md](tasks/plan.active.md) updated with shipped delta and remaining risk
+
+## Phase 10 Planning Queue (Draft, 2026-04-26)
+
+### NOW (Kickoff)
+- [x] PR hygiene cleanup: remove generated artifacts from tracked diff (`.venv`, `dist`, `node_modules`) and tighten ignore policy.
+- [x] Re-cut a review-safe PR with product-intent files only.
+- [x] Lock merge checklist for phase-10 branch hygiene.
+
+### NEXT (Hardening)
+- [ ] Accessibility baseline: keyboard flow + focus-visible + contrast for entry, AnalogConsole, ArchitectConsole.
+  - ✅ Entry: keyboard focus semantics + lockout live-region messaging
+  - ✅ Console controls: stronger focus-visible treatment + ARIA state wiring
+  - [ ] Final contrast verification pass (D amber and L cyan themes)
+- [ ] Command matrix persistence and rollback-safe permission transitions.
+- [ ] Add local/CI design-law guardrail checks (Comfortaa whitelist + token policy).
+
+### LATER (Post-Hardening)
+- [ ] Performance tuning by route (entry, consoles, vault views).
+- [ ] Collaborator workflow expansion after permission model hardening is complete.
 
 ---
 

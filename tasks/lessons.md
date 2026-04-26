@@ -1,5 +1,13 @@
 # PSC Universe — Lessons Learned
 
+### Session: Phase 10 Regression Guard (April 26, 2026)
+
+#### Active Surface Drift Is a Process Failure, Not a One-Off Bug
+
+- **Root Cause**: Legacy space-era language remained in active UI components (`ArchitectConsole` route and copy) and there was no failing design-law check for banned display phrases in active files.
+- **Rule**: When DESIGN.md bans a language family (for example space-themed vocabulary), enforce it in CI/local guardrails for active UI files. Do not rely on memory or manual review.
+- **How to apply**: Keep a narrow banned-display-phrase check in `scripts/check-design-law.sh` scoped to active surface files (`App.jsx`, `EntrySequence.jsx`, `ArchitectConsole.jsx`) and fail fast on prohibited phrases.
+
 ## Agent Routing Calibration Log
 
 Use this template when an intent routes to the wrong custom agent.
@@ -259,3 +267,19 @@ Captures patterns, mistakes, and corrections to prevent "Shadow Gaps" from repea
 - **Lesson**: An entire session was spent correcting `CLAUDE.md` content that was demonstrably wrong. Had the agent audited the file at session start (cross-checking planets, tiers, vault description against the plan log), the corrections would have been caught before any user effort was spent flagging them.
 - **Rule**: If the session involves architectural planning, design spec work, or anything touching `CLAUDE.md` or `SYSTEM_DIRECTIVE.md`, read those files and cross-check key facts (planet list, tier names, vault description, recent D-series log entries) before responding to any request.
 - **How to apply**: Session start checklist (from `CLAUDE.md`) already requires reading lessons and `plan.active.md`. Add: if task touches design canon, also read `SYSTEM_DIRECTIVE.md` and grep `plan.log.ndjson` for entries from the last 7 days.
+
+---
+
+### Session: Phase 10 Hardening (April 26, 2026)
+
+#### Tooling Assumption Drift — Guardrails Must Run Without rg
+
+- **Lesson**: `scripts/check-design-law.sh` initially hard-failed in environments without `rg`, blocking preflight despite valid code.
+- **Rule**: Validation scripts must gracefully fallback to standard `grep` when `rg` is missing.
+- **How to apply**: For source scans, implement dual-path search (`rg` when available, `grep -RsnE` fallback) and only fail when neither exists.
+
+#### Shell Quoting in PR Comments — Avoid Inline Backticks in Terminal Commands
+
+- **Lesson**: Posting a PR comment via `gh pr comment --body` with unescaped markdown tokens can trigger shell execution (`tabIndex: command not found`, `:focus-visible: command not found`).
+- **Rule**: For long/mixed-content comments, avoid backticks in terminal inline strings or use a heredoc/file payload.
+- **How to apply**: Prefer plain text in `--body` when speed matters, or use `gh pr comment --body-file <file>` for markdown-safe formatting.
