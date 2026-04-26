@@ -1,0 +1,1 @@
+var e=[{id:`mars-01`,name:`Iron Frequency`,bpm:98,frequency:`432Hz`,released:!1,createdBy:`JessB`},{id:`mars-02`,name:`Red Soil Sessions`,bpm:114,frequency:`528Hz`,released:!1,createdBy:`JessB`},{id:`mars-03`,name:`Olympus Mons`,bpm:128,frequency:`741Hz`,released:!1,createdBy:`JessB`}];export{e as t};

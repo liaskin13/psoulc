@@ -17,6 +17,7 @@ function MembersPanel({ onClose, viewer = 'D' }) {
   const [newPlanet,    setNewPlanet]    = useState('');
   const [newTier,      setNewTier]      = useState('B');
   const [newMoonName,  setNewMoonName]  = useState('');
+  const [newCode,      setNewCode]      = useState('');
   const [flashCode,    setFlashCode]    = useState(null);
   const [revealId,     setRevealId]     = useState(null);
 
@@ -29,11 +30,12 @@ function MembersPanel({ onClose, viewer = 'D' }) {
     const planet = newTier === 'C'
       ? (newMoonName.trim() ? `${MOON_PREFIX}${newMoonName.trim().toLowerCase()}` : null)
       : (newPlanet || null);
-    const code = addMember(newName.trim(), planet, viewer, newTier);
+    const code = addMember(newName.trim(), planet, viewer, newTier, isL ? newCode : null);
     setFlashCode({ name: newName.trim(), code });
     setNewName('');
     setNewPlanet('');
     setNewMoonName('');
+    setNewCode('');
     setNewTier('B');
     setShowAdd(false);
   };
@@ -162,6 +164,16 @@ function MembersPanel({ onClose, viewer = 'D' }) {
                     onChange={e => setNewMoonName(e.target.value.toUpperCase())}
                     maxLength={32}
                     required
+                  />
+                )}
+                {/* SET CODE — L only: manual code entry */}
+                {isL && (
+                  <input
+                    className="access-input"
+                    placeholder="set code (e.g. 2112)"
+                    value={newCode}
+                    onChange={e => setNewCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    maxLength={8}
                   />
                 )}
                 <div className="inbox-card-actions">

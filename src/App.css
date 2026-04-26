@@ -63,16 +63,6 @@
   display: none;
 }
 
-.aperture-seal {
-  font-family: 'Comfortaa', cursive;  /* logo mark — quarantined */
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.07);
-  margin-top: 3rem;
-  letter-spacing: 0.06em;
-  text-transform: lowercase;
-}
-
 .aperture-lockout {
   font-family: var(--font-ui);
   font-size: 9px;
@@ -2333,7 +2323,7 @@
 
 /* God buttons — inherit from index.css but override font */
 .god-btn {
-  font-family: 'Comfortaa', sans-serif !important;
+  font-family: 'Chakra Petch', sans-serif !important;
   font-size: 11px !important;
   letter-spacing: 0.12em !important;
 }
@@ -2351,7 +2341,7 @@
 }
 
 .shelf-section-label {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.4em;
@@ -2632,7 +2622,7 @@
 }
 
 .voided-item {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 10px;
   color: rgba(140,80,255,0.8);
   letter-spacing: 0.1em;
@@ -2669,7 +2659,7 @@
   border-radius: 4px;
   padding: 6px 14px;
   min-height: 28px;
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
 }
 
 .transport-readout.idle {
@@ -2732,7 +2722,7 @@
   border-bottom: 2px solid #202020; /* mechanical depth */
   color: #ccc;
   padding: 8px 14px;
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 10px;
   font-weight: 700;
   cursor: pointer;
@@ -2802,7 +2792,7 @@
   color: rgba(255,196,92,0.85);
   padding: 5px 10px;
   border-radius: 4px;
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -2835,7 +2825,7 @@
 }
 
 .pitch-label {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -2862,7 +2852,7 @@
 }
 
 .pitch-value {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 10px;
   color: #ffbf00;
   min-width: 38px;
@@ -2904,7 +2894,7 @@
 }
 
 .mercury-status-label {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -2939,7 +2929,7 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -2965,7 +2955,7 @@
 }
 
 .telemetry-key {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -2974,7 +2964,7 @@
 }
 
 .telemetry-value {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 11px;
   color: rgba(180,220,255,0.85);
   letter-spacing: 0.1em;
@@ -3291,7 +3281,7 @@
   border: 1px solid rgba(155,89,182,0.45);
   color: rgba(200,160,240,0.9);
   padding: 8px 18px;
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -3617,7 +3607,7 @@
 }
 
 .tune-btn {
-  font-family: 'Comfortaa', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.18em;

@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node -e \"const fs=require('fs'),path=require('path');const lessons=fs.existsSync('tasks/lessons.md')?fs.readFileSync('tasks/lessons.md','utf8').split('\\n').filter(l=>l.startsWith('- **Rule**')).slice(-8).join('\\n'):'';const msg=['=== PSC SESSION START ===','','Artist benefit check: does this serve the creator? If unclear, stop and reframe.','','Canonical vocab: VOID · TUNE · EXPLORE · RESTORE · BROADCAST · INTAKE · CLAIM · UPLOAD','','Design canon: vault/architecture/SYSTEM_DIRECTIVE.md','Plan log ground truth: tasks/plan.log.ndjson (wins over design doc if conflict)','','Recent rules from lessons.md:',lessons,'','RecordShelf has been redesigned — do not use as a pattern reference. Use SaturnVault.jsx.'].join('\\n');console.log(JSON.stringify({systemMessage:msg}));\"",
+        "timeout": 5
+      }
+    ]
+  }
+}

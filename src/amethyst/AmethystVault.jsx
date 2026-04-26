@@ -134,8 +134,8 @@ function AmethystVault({ onBack, onExitSystem, onVoid, readOnly = false }) {
       <div className="amethyst-refraction" />
 
       <div className="vault-header">
-        <h1 className="vault-title">AMETHYST</h1>
-        <p className="vault-subtitle">ANGI'S CRYSTAL VAULT · SOVEREIGN RESONANCE</p>
+        <h1 className="vault-title">ANGI</h1>
+        <p className="vault-subtitle">MEMBER VAULT · SOVEREIGN RESONANCE</p>
       </div>
 
       <div className="vault-commands">
@@ -171,6 +171,7 @@ function AmethystVault({ onBack, onExitSystem, onVoid, readOnly = false }) {
             armedLabel={armedVoidLabel}
             onCancelVoid={cancelArmedVoid}
             onConfirmVoid={confirmArmedVoid}
+            activeTrack={activeTrack}
           />
         </div>
 

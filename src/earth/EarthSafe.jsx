@@ -119,8 +119,8 @@ function EarthSafe({ onBack, onExitSystem, onVoid, readOnly = false }) {
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
     >
       <div className="vault-header">
-        <h1 className="vault-title">EARTH</h1>
-        <p className="vault-subtitle">SONIC ARCHITECTURE · EYES ONLY</p>
+        <h1 className="vault-title">SONIC ARCHITECTURE</h1>
+        <p className="vault-subtitle">PROPOSALS · EYES ONLY</p>
       </div>
 
       <div className="vault-commands">
@@ -159,6 +159,7 @@ function EarthSafe({ onBack, onExitSystem, onVoid, readOnly = false }) {
             armedLabel={armedVoidLabel}
             onCancelVoid={cancelArmedVoid}
             onConfirmVoid={confirmArmedVoid}
+            activeTrack={activeTrack}
           />
         </div>
 

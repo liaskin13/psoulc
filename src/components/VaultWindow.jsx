@@ -2,6 +2,36 @@ import React, { useRef, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
+import { getWaveformBars } from '../utils/waveform';
+
+function HelixWaveform({ seed, chakra }) {
+  const bars = getWaveformBars(String(seed), 22);
+  const barW = 2.5, gap = 1.5, H = 18;
+  const W = bars.length * (barW + gap) - gap;
+  return (
+    <svg
+      className="helix-waveform-svg"
+      aria-hidden="true"
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+    >
+      {bars.map((pct, i) => {
+        const h = (pct / 100) * H;
+        return (
+          <rect
+            key={i}
+            x={i * (barW + gap)}
+            y={H - h}
+            width={barW}
+            height={h}
+            rx="0.8"
+            fill={chakra || 'rgba(255,191,0,0.7)'}
+          />
+        );
+      })}
+    </svg>
+  );
+}
 
 // ── BINARY CORE — Sun + Black Star orbiting their barycenter ──────────────
 // Viewed through the vault porthole window, always facing the system center.
@@ -150,6 +180,7 @@ const VaultWindow = forwardRef(function VaultWindow({
   armedLabel = 'SELECTED FILE',
   onCancelVoid,
   onConfirmVoid,
+  activeTrack = null,
 }, ref) {
   const containerRef = useRef();
 
@@ -196,6 +227,14 @@ const VaultWindow = forwardRef(function VaultWindow({
       >
         <BinaryPair />
       </Canvas>
+
+      {/* Helix overlay — selected track mini waveform (top-right, hidden when void is armed) */}
+      {activeTrack && !voidArmed && (
+        <div className="vault-helix-overlay">
+          <span className="helix-track-label">{activeTrack.label}</span>
+          <HelixWaveform seed={activeTrack.id} chakra={activeTrack.chakraColor} />
+        </div>
+      )}
 
       {/* Inverse Bloom — Flash of Darkness on void confirmation */}
       {inverseBloom && (

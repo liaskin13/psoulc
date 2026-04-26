@@ -108,8 +108,8 @@ function MarsVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
     >
       <div className="vault-header">
-        <h1 className="vault-title">MARS</h1>
-        <p className="vault-subtitle">JESS B · IRON FREQUENCY ARCHIVE</p>
+        <h1 className="vault-title">JESS B</h1>
+        <p className="vault-subtitle">MEMBER VAULT · ACCESS RESTRICTED</p>
       </div>
 
       <div className="vault-commands">
@@ -154,6 +154,7 @@ function MarsVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
             armedLabel={armedVoidLabel}
             onCancelVoid={cancelArmedVoid}
             onConfirmVoid={confirmArmedVoid}
+            activeTrack={activeTrack}
           />
         </div>
 

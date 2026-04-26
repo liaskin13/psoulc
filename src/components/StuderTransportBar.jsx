@@ -1,12 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import {
-  transportPlay,
-  transportStop,
-  transportRewind,
-  transportFastForward,
-  transportPitchChange,
-} from '../audio/transportAudio';
 import StrobeVinylCanvas from './StrobeVinylCanvas';
 
 // Studer Transport Bar — 1974 A-807 style.
@@ -33,25 +26,10 @@ function StuderTransportBar({
     return match ? parseInt(match[1], 10) : 98;
   })();
 
-  const handlePlay = () => {
-    transportPlay(activeBpm, pitchMultiplier);
-    onPlay?.();
-  };
-
-  const handleStop = () => {
-    transportStop();
-    onStop?.();
-  };
-
-  const handleRewind = () => {
-    transportRewind(activeBpm);
-    onRewind?.();
-  };
-
-  const handleFastForward = () => {
-    transportFastForward(activeBpm);
-    onFastForward?.();
-  };
+  const handlePlay = () => { onPlay?.(); };
+  const handleStop = () => { onStop?.(); };
+  const handleRewind = () => { onRewind?.(); };
+  const handleFastForward = () => { onFastForward?.(); };
 
   const handlePause = () => {
     onPause?.();
@@ -61,10 +39,7 @@ function StuderTransportBar({
     onRecord?.();
   };
 
-  const handlePitchChange = (val) => {
-    transportPitchChange(val);
-    onPitchChange?.(val);
-  };
+  const handlePitchChange = (val) => { onPitchChange?.(val); };
 
   const transportButtons = [
     { id: 'rewind', symbol: '◀◀', label: 'REW',   action: handleRewind      },

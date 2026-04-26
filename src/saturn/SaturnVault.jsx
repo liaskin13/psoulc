@@ -118,8 +118,8 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
     >
       <div className="vault-header">
-        <h1 className="vault-title">SATURN</h1>
-        <p className="vault-subtitle">ORIGINAL MUSIC · BRUSHED STEEL ARCHIVE</p>
+        <h1 className="vault-title">ORIGINAL MUSIC</h1>
+        <p className="vault-subtitle">MASTER TRACKS · SOUL PLEASANT</p>
       </div>
 
       <div className="vault-commands">
@@ -157,6 +157,7 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
             armedLabel={armedVoidLabel}
             onCancelVoid={cancelArmedVoid}
             onConfirmVoid={confirmArmedVoid}
+            activeTrack={activeTrack}
           />
         </div>
 

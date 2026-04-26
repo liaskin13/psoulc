@@ -1,6 +1,4 @@
 import { useState, useRef, useCallback } from 'react';
-import { playGranularPitchDown, stopTapeHiss } from '../audio/vaultAudio';
-
 // ── useVaultVoid ───────────────────────────────────────────────────────────
 // Shared void animation state for all vaults.
 // Handles spaghettification animation, inverse bloom, and archive callback.
@@ -36,9 +34,6 @@ export function useVaultVoid({ onVoid, voidColor }) {
     setVoidTarget(target);
     setVoidActive(true);
 
-    // Audio: stop tape hiss + fire granular pitch-down
-    stopTapeHiss();
-    playGranularPitchDown();
   }, []);
 
   const handleShelfVoid = useCallback((item, sourcePos) => {

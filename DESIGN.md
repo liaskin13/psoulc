@@ -24,7 +24,7 @@
 | Role | Font | Notes |
 |------|------|-------|
 | All UI: display titles, labels, nav, console controls, body | **Chakra Petch** | Singular font. Geometric, technical, cinematic. The voice of the console. No serif, no alternate stacks. |
-| Logo mark "dp" | **Comfortaa** | QUARANTINED — logo use only. Never assigned to `--font-display`, `--font-primary`, `--font-ui`, or `--font-headers`. Only appears in: DPWallpaper canvas, `.file-cell-dp-mark`, `.psc-seal`, `.aperture-seal`, `.aperture-code-cell.aperture-cell-active::after`. |
+| Logo mark "dp" | **Comfortaa** | QUARANTINED — logo use only. Never assigned to `--font-display`, `--font-primary`, `--font-ui`, or `--font-headers`. Only appears in: DPWallpaper canvas, `.file-cell-dp-mark`, `.psc-seal`, `.aperture-code-cell.aperture-cell-active::after`. |
 
 **Loading:**
 ```html
@@ -86,8 +86,8 @@ Note: Space Mono is kept in `--font-mono` only for genuine numeric data readouts
 }
 ```
 
-### Pre-Auth Entry Accent
-Before any theme is applied (the entry screen), the accent color is `--studer-copper: #B87333` — a raw copper. This communicates the premium hardware aesthetic without committing to any artist's identity color.
+### Pre-Auth Entry Accent (Scrapped — see Settled Entry Design)
+Concept: copper accent before theme applied. **Current state (settled 2026-04-26):** This has been removed. Entry screen is now BLACK ON BLACK (no copper, no amber, no color identity until post-auth theme applied). All entry controls use near-white rgba only (0.07–0.22 opacity). The DPWallpaper canvas is the sole visual element on entry.
 
 ### D's Theme (70s Soul)
 Applied via `data-theme="d-soul"` on `<body>`:

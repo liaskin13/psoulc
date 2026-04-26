@@ -143,8 +143,8 @@ function MercuryStream({ onBack, onExitSystem, onVoid, readOnly = false }) {
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
     >
       <div className="vault-header">
-        <h1 className="vault-title">MERCURY</h1>
-        <p className="vault-subtitle">LIVE SETS · HIGH-VELOCITY CONDUIT</p>
+        <h1 className="vault-title">LIVE SETS</h1>
+        <p className="vault-subtitle">SOUL PLEASANT · STREAMING</p>
       </div>
 
       <div className="vault-commands">
@@ -171,6 +171,7 @@ function MercuryStream({ onBack, onExitSystem, onVoid, readOnly = false }) {
             armedLabel={armedVoidLabel}
             onCancelVoid={cancelArmedVoid}
             onConfirmVoid={confirmArmedVoid}
+            activeTrack={activeTrack}
           />
         </div>
 

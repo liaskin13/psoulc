@@ -2,6 +2,36 @@ import React, { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SpaceWindow from '../three/SpaceWindow';
 import VaultSkeleton from '../components/VaultSkeleton';
+import { getWaveformBars } from '../utils/waveform';
+
+function ListenerWatermark() {
+  const bars = getWaveformBars('listener-ambient', 48);
+  const barW = 4, gap = 3, H = 80;
+  const W = bars.length * (barW + gap) - gap;
+  return (
+    <svg
+      className="listener-waveform-watermark"
+      aria-hidden="true"
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="xMidYMid meet"
+    >
+      {bars.map((pct, i) => {
+        const h = (pct / 100) * H;
+        return (
+          <rect
+            key={i}
+            x={i * (barW + gap)}
+            y={H - h}
+            width={barW}
+            height={h}
+            rx="1"
+            fill="rgba(255,191,0,0.12)"
+          />
+        );
+      })}
+    </svg>
+  );
+}
 
 const PlanetApproach = lazy(() => import('../three/PlanetApproach'));
 const SaturnVault    = lazy(() => import('../saturn/SaturnVault'));
@@ -11,14 +41,13 @@ const MercuryStream  = lazy(() => import('../mercury/MercuryStream'));
 const AmethystVault  = lazy(() => import('../amethyst/AmethystVault'));
 const MarsVault      = lazy(() => import('../mars/MarsVault'));
 
-// Planet dock definitions — LISTENER sees all main planets, no Moons
-const LISTENER_PLANETS = [
-  { id: 'mercury', symbol: '☿', label: 'MERCURY', color: '#b8a68f' },
-  { id: 'venus',   symbol: '♀', label: 'VENUS',   color: '#d2691e' },
-  { id: 'earth',   symbol: '⊕', label: 'EARTH',   color: '#8B7355' },
-  { id: 'mars',    symbol: '♂', label: 'MARS',    color: '#c1440e' },
-  { id: 'saturn',  symbol: '♄', label: 'SATURN',  color: '#b8860b' },
-  { id: 'amethyst',symbol: '✦', label: 'CRYSTAL', color: '#9b7aa8' },
+// Active vaults only — in launch priority order.
+// Crystal (Amethyst) and Mars excluded: no content to upload yet.
+// Earth (Sonic Architecture) exists but is not a listener priority yet.
+const LISTENER_VAULTS = [
+  { id: 'venus',   label: 'MIXES',          color: '#d2691e' },
+  { id: 'saturn',  label: 'ORIGINAL MUSIC', color: '#b8860b' },
+  { id: 'mercury', label: 'LIVE SETS',      color: '#b8a68f' },
 ];
 
 function renderVault(id, onBack) {
@@ -36,6 +65,7 @@ function renderVault(id, onBack) {
 function ListenerShell({ onPowerDown }) {
   const [pendingPlanet, setPendingPlanet] = useState(null);
   const [activeVault,   setActiveVault]   = useState(null);
+  const [lastPlayed,    setLastPlayed]    = useState(null);
 
   const handlePlanetSelect = (id) => {
     setPendingPlanet(id);
@@ -47,6 +77,7 @@ function ListenerShell({ onPowerDown }) {
   };
 
   const handleVaultBack = () => {
+    setLastPlayed(activeVault);
     setActiveVault(null);
   };
 
@@ -75,6 +106,10 @@ function ListenerShell({ onPowerDown }) {
     );
   }
 
+  const lastVaultMeta = lastPlayed
+    ? LISTENER_VAULTS.find(v => v.id === lastPlayed)
+    : null;
+
   // ── MAIN LISTENER SHELL ─────────────────────────────────────────
   return (
     <div className="listener-shell">
@@ -91,21 +126,44 @@ function ListenerShell({ onPowerDown }) {
         <span className="listener-title">PSC · LISTENER</span>
       </div>
 
-      {/* Bottom planet dock */}
-      <div className="listener-dock">
-        {LISTENER_PLANETS.map(planet => (
-          <motion.button
-            key={planet.id}
-            className="listener-planet-btn"
-            style={{ '--planet-color': planet.color }}
-            onClick={() => handlePlanetSelect(planet.id)}
-            whileHover={{ scale: 1.15, y: -4 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            title={planet.label}
+      {/* Background waveform watermark */}
+      <ListenerWatermark />
+
+      {/* Now playing strip — shown after leaving a vault */}
+      <AnimatePresence>
+        {lastVaultMeta && (
+          <motion.div
+            className="listener-now-playing"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
           >
-            <span className="listener-planet-symbol">{planet.symbol}</span>
-            <span className="listener-planet-label">{planet.label}</span>
+            <span
+              className="listener-np-dot"
+              style={{ background: lastVaultMeta.color }}
+              aria-hidden="true"
+            />
+            <span className="listener-np-label">{lastVaultMeta.label}</span>
+            <span className="listener-np-status">LISTENING</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom vault dock */}
+      <div className="listener-dock">
+        {LISTENER_VAULTS.map(vault => (
+          <motion.button
+            key={vault.id}
+            className={`listener-vault-btn ${lastPlayed === vault.id ? 'listener-vault-active' : ''}`}
+            style={{ '--vault-color': vault.color }}
+            onClick={() => handlePlanetSelect(vault.id)}
+            whileHover={{ scale: 1.08, y: -3 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
+            <span className="listener-vault-pip" aria-hidden="true" />
+            <span className="listener-vault-label">{vault.label}</span>
           </motion.button>
         ))}
       </div>

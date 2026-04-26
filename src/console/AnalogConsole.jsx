@@ -1,6 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
+import { SATURN_TRACKS } from '../data/saturn';
+import { VENUS_MIXES } from '../data/venus';
+import { EARTH_DOCUMENTS } from '../data/earth';
+import { MARS_TRACKS } from '../data/mars';
+import { MERCURY_TRACKS } from '../data/mercury';
+import { AMETHYST_BOWLS, AMETHYST_SESSIONS } from '../data/amethyst';
+
+const TOTAL_TRACKS =
+  SATURN_TRACKS.length +
+  VENUS_MIXES.length +
+  EARTH_DOCUMENTS.length +
+  MARS_TRACKS.length +
+  MERCURY_TRACKS.length +
+  AMETHYST_BOWLS.length +
+  AMETHYST_SESSIONS.length;
 import GodModePullCord from './GodModePullCord';
 import MasterClock from './MasterClock';
 import ReadoutNavigator from './ReadoutNavigator';
@@ -14,12 +29,12 @@ import CommentPanel from './CommentPanel';
 // ── Vault pad bank — left AKAI zone ────────────────────────────────────────
 // Each pad maps to a planet vault. Chakra-lit when active.
 const VAULT_PADS = [
-  { id: 'mercury',  abbr: 'MCY',  label: 'MERCURY',  color: '#8B0000' },
-  { id: 'venus',    abbr: 'VNS',  label: 'VENUS',    color: '#ff7c00' },
-  { id: 'earth',    abbr: 'ETH',  label: 'EARTH',    color: '#00cc44' },
-  { id: 'mars',     abbr: 'MRS',  label: 'MARS',     color: '#c1440e' },
-  { id: 'saturn',   abbr: 'SAT',  label: 'SATURN',   color: '#9b59b6' },
-  { id: 'amethyst', abbr: 'AME',  label: 'AMETHYST', color: '#6600cc' },
+  { id: 'venus',    abbr: 'MIX',  label: 'MIXES',          color: '#ff7c00' },
+  { id: 'saturn',   abbr: 'OG',   label: 'ORIGINAL MUSIC', color: '#9b59b6' },
+  { id: 'mercury',  abbr: 'LST',  label: 'LIVE SETS',      color: '#8B0000' },
+  { id: 'earth',    abbr: 'ARC',  label: 'SONIC ARCH',     color: '#00cc44' },
+  { id: 'mars',     abbr: 'JB',   label: 'JESS B',         color: '#c1440e' },
+  { id: 'amethyst', abbr: 'AGI',  label: 'ANGI',           color: '#6600cc' },
 ];
 
 // ── LED meter strip — Neve-style visual indicator ────────────────────────────
@@ -81,6 +96,39 @@ function ActionPad({ label, color = '#ffbf00', badge, armed, disabled, onClick, 
   );
 }
 
+// ── Console topbar — live clock + vault health ────────────────────────────────
+function ConsoleTopbar() {
+  const [time, setTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const hh = String(time.getHours()).padStart(2, '0');
+  const mm = String(time.getMinutes()).padStart(2, '0');
+  const ss = String(time.getSeconds()).padStart(2, '0');
+
+  return (
+    <div className="console-topbar">
+      <div className="topbar-clock">
+        <span className="topbar-clock-digits">{hh}:{mm}:{ss}</span>
+        <span className="topbar-clock-label">LOCAL</span>
+      </div>
+      <div className="topbar-divider" />
+      <div className="topbar-vault-health">
+        <span className="topbar-health-count">{TOTAL_TRACKS}</span>
+        <span className="topbar-health-label">TRK · ALL VAULTS</span>
+      </div>
+      <div className="topbar-divider" />
+      <div className="topbar-status">
+        <span className="topbar-status-dot" aria-hidden="true" />
+        <span className="topbar-status-label">VAULT ONLINE</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Main console ─────────────────────────────────────────────────────────────
 function AnalogConsole({
   activeNode,
@@ -108,6 +156,7 @@ function AnalogConsole({
 
   return (
     <div className={`analog-console ${isProtected ? 'protected' : 'create'}`}>
+      <ConsoleTopbar />
 
       {/* ── LEFT ZONE — Vault pad grid ────────────────────────────────────── */}
       <div className="console-left console-pad-zone">

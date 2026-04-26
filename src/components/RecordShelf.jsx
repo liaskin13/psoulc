@@ -2,6 +2,36 @@ import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { hasHover } from '../utils/device';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
+import { getWaveformBars } from '../utils/waveform';
+
+function WaveformThumb({ seed, chakra }) {
+  const bars = getWaveformBars(String(seed));
+  const barW = 3, gap = 2, H = 22;
+  const W = bars.length * (barW + gap) - gap;
+  return (
+    <svg
+      className="file-cell-waveform"
+      aria-hidden="true"
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+    >
+      {bars.map((pct, i) => {
+        const h = (pct / 100) * H;
+        return (
+          <rect
+            key={i}
+            x={i * (barW + gap)}
+            y={H - h}
+            width={barW}
+            height={h}
+            rx="1"
+            fill={chakra || 'rgba(255,191,0,0.4)'}
+          />
+        );
+      })}
+    </svg>
+  );
+}
 
 function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComment, capacity = 20 }) {
   const [commentingId, setCommentingId] = useState(null);
@@ -59,6 +89,7 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComm
         >
           <div className="file-cell-specular" aria-hidden="true" />
           <div className="file-cell-chakra-rail" aria-hidden="true" />
+          <WaveformThumb seed={item.id} chakra={item.chakraColor} />
 
           {/* Centered 'dp' mark — occupied indicator (C) */}
           <div className="file-cell-dp-mark" aria-hidden="true">dp</div>

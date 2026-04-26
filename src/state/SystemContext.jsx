@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { INBOX_KEY, MEMBERS_KEY, LISTENERS_KEY, COMMENTS_KEY, SESSION_KEY, AMETHYST_CODE, MARS_CODE } from '../config';
 import { fetchVaultTracks } from '../lib/tracks';
+import { getResidencySplit, isMaintenanceDue } from '../utils/sovereignFinance';
+import { RESIDENT_REGISTRY, findResidentByCode } from '../data/residentBlueprint';
 import {
   COLLABORATORS_KEY,
   makeCollaborator,
@@ -90,30 +92,37 @@ function loadCollaborators(members, listeners) {
   } catch (_) { return []; }
 }
 
-// Seed founding members (Angi + Jess B) if registry is empty.
-// Migrates the two hardcoded codes into the dynamic registry.
+// Seed founding residents if registry is empty.
 function loadMembers() {
   try {
     const raw = localStorage.getItem(MEMBERS_KEY);
     if (raw) return JSON.parse(raw);
-    const seed = [
-      { id: 'mem-angi', name: 'Angi',   code: AMETHYST_CODE, planet: 'amethyst', tier: 'B', createdBy: 'D', createdAt: new Date().toISOString() },
-      { id: 'mem-jess', name: 'Jess B', code: MARS_CODE,     planet: 'mars',     tier: 'B', createdBy: 'D', createdAt: new Date().toISOString() },
-    ];
+    // Seed directly from the Blueprint Registry
+    const seed = RESIDENT_REGISTRY.map(r => ({
+      ...r,
+      id: `res-${r.residentId}`,
+      createdAt: new Date().toISOString()
+    }));
     localStorage.setItem(MEMBERS_KEY, JSON.stringify(seed));
     return seed;
   } catch (_) { return []; }
 }
 
+
 // Derive session metadata from localStorage once on mount.
-// { owner, planet, tier, expires } — written by EntrySequence on successful auth.
+// { owner, vault, tier, residentId, expires }
 function readSessionMeta() {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s || Date.now() > s.expires) return null;
-    return { owner: s.owner, planet: s.planet ?? null, tier: s.tier ?? 'G' };
+    return { 
+      owner: s.owner, 
+      vault: s.vault ?? s.planet ?? null, 
+      tier: s.tier ?? 'G',
+      residentId: s.residentId ?? null 
+    };
   } catch (_) { return null; }
 }
 
@@ -143,6 +152,9 @@ export function SystemProvider({ children }) {
   const [comments,          setComments]           = useState(loadComments);
   const [tuneOverrides,     setTuneOverrides]      = useState(loadTuneOverrides);
   const [animationsEnabled, setAnimationsEnabled]  = useState(loadAnimationsEnabled);
+  const [commandLog,        setCommandLog]          = useState(() => {
+    try { return JSON.parse(localStorage.getItem('psc_command_log')) || []; } catch (_) { return []; }
+  });
   // A3: Live vault tracks (keyed by vault id)
   const [tracks,            setTracks]             = useState({ saturn: [], venus: [] });
 
@@ -278,8 +290,8 @@ export function SystemProvider({ children }) {
 
   // ─── Member management ────────────────────────────────────────────────────
   // tier defaults to 'B'; pass 'C' for Saturn moon artists
-  const addMember = (name, planet = null, createdBy = 'D', tier = 'B') => {
-    const code = generateCode(members);
+  const addMember = (name, planet = null, createdBy = 'D', tier = 'B', manualCode = null) => {
+    const code = manualCode?.trim() || generateCode(members);
     const newMember = { id: `mem-${Date.now()}`, name, code, planet, tier, createdBy, createdAt: new Date().toISOString() };
     setMembers(prev => [...prev, newMember]);
     // D7: create matching collaborator record
@@ -376,13 +388,46 @@ export function SystemProvider({ children }) {
 
   // ─── Command dispatcher ───────────────────────────────────────────────────
   const dispatchCommand = useCallback((cmd, payload = {}) => {
+    // 1. Tier-based authorization
     if (!checkAuthorization(cmd, consoleOwner)) {
       console.warn(`[PSC] CMD "${cmd}" denied for owner "${consoleOwner}"`);
-      return false;
+      return { success: false, error: 'UNAUTHORIZED' };
     }
+    // 2. Collaborator cross-check — if session is a collaborator, verify vault access
+    const collab = collaborators.find(c => isCollaboratorActive(c) && (c.name === sessionMeta?.owner || c.planet === sessionMeta?.planet)) ?? null;
+    if (collab && payload.vaultId && !canCollaboratorAccess(collab, payload.vaultId)) {
+      console.warn(`[PSC] CMD "${cmd}" denied — collaborator lacks access to vault "${payload.vaultId}"`);
+      return { success: false, error: 'VAULT_ACCESS_DENIED' };
+    }
+    // 3. Handler map
+    const handlers = {
+      [CMD.VOID_ITEM]:    () => { if (payload.item && payload.vaultId) { voidItem(payload.item, payload.vaultId); return payload.item; } },
+      [CMD.RESTORE_ITEM]: () => { if (payload.id) { restoreItem(payload.id); return payload.id; } },
+      [CMD.BROADCAST]:    () => payload,
+      [CMD.EXPLORE_VAULT]: () => payload,
+      [CMD.TUNE_VAULT]:   () => { if (payload.vaultId && payload.itemId) { saveTuneOverride(payload.vaultId, payload.itemId, payload.override); return payload; } },
+      [CMD.UPLOAD_TRACK]: () => payload,
+      [CMD.INTAKE_ASSET]: () => payload,
+      [CMD.CLAIM_NODE]:   () => payload,
+    };
+    const handler = handlers[cmd];
+    let result = null;
+    try {
+      result = handler ? handler() : null;
+    } catch (err) {
+      console.error(`[PSC] CMD "${cmd}" handler threw:`, err);
+      return { success: false, error: err.message };
+    }
+    // 4. Append to commandLog, cap at 500
+    const entry = { cmd, payload, ts: new Date().toISOString(), by: consoleOwner };
+    setCommandLog(prev => {
+      const next = [...prev, entry].slice(-500);
+      try { localStorage.setItem('psc_command_log', JSON.stringify(next)); } catch (_) {}
+      return next;
+    });
     console.info(`[PSC] CMD "${cmd}"`, payload);
-    return true;
-  }, [consoleOwner]);
+    return { success: true, result };
+  }, [consoleOwner, sessionMeta, collaborators, voidItem, restoreItem, saveTuneOverride]);
 
   return (
     <SystemContext.Provider value={{
@@ -425,6 +470,7 @@ export function SystemProvider({ children }) {
       // Command dispatch
       CMD,
       dispatchCommand,
+      commandLog,
       // Animation toggle (D console setting)
       animationsEnabled,
       setAnimationsEnabled,

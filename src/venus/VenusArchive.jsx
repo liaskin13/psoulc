@@ -118,8 +118,8 @@ function VenusArchive({ onBack, onExitSystem, onVoid, readOnly = false }) {
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
     >
       <div className="vault-header">
-        <h1 className="vault-title">VENUS</h1>
-        <p className="vault-subtitle">CURATED MIXES · 120-MINUTE DEEP STORAGE</p>
+        <h1 className="vault-title">MIXES</h1>
+        <p className="vault-subtitle">SOUL PLEASANT · DEEP STORAGE</p>
       </div>
 
       <div className="vault-commands">
@@ -157,6 +157,7 @@ function VenusArchive({ onBack, onExitSystem, onVoid, readOnly = false }) {
             armedLabel={armedVoidLabel}
             onCancelVoid={cancelArmedVoid}
             onConfirmVoid={confirmArmedVoid}
+            activeTrack={activeTrack}
           />
         </div>
 
