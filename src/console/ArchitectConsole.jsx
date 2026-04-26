@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
 import GodModePullCord from './GodModePullCord';
@@ -86,6 +86,8 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
 // No 70s warmth, no amber. Clean, precise, surgical.
 function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   const { isProtected, architectArchive, restoreItem, unreadCountL, members, unreadCommentCount, voidItem, addMember } = useSystem();
+  const MATRIX_COMMITTED_KEY = 'psc_matrix_committed';
+  const MATRIX_HISTORY_KEY = 'psc_matrix_history';
   const [showArchive,      setShowArchive]      = useState(false);
   const [showInbox,        setShowInbox]        = useState(false);
   const [showRoster,       setShowRoster]       = useState(false);
@@ -108,6 +110,31 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   const [matrixArmed,    setMatrixArmed]    = useState(false);
   const [matrixPending,  setMatrixPending]  = useState({}); // { [memberId]: { void, tune, comment } }
   const [matrixCommitted, setMatrixCommitted] = useState({});
+  const [matrixHistory, setMatrixHistory] = useState([]);
+
+  useEffect(() => {
+    try {
+      const committed = JSON.parse(localStorage.getItem(MATRIX_COMMITTED_KEY) || '{}');
+      const history = JSON.parse(localStorage.getItem(MATRIX_HISTORY_KEY) || '[]');
+      if (committed && typeof committed === 'object') setMatrixCommitted(committed);
+      if (Array.isArray(history)) setMatrixHistory(history);
+    } catch (_) {
+      setMatrixCommitted({});
+      setMatrixHistory([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MATRIX_COMMITTED_KEY, JSON.stringify(matrixCommitted));
+    } catch (_) {}
+  }, [matrixCommitted]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MATRIX_HISTORY_KEY, JSON.stringify(matrixHistory));
+    } catch (_) {}
+  }, [matrixHistory]);
 
   const handlePlanetSelect = (planetId) => {
     setActivePlanet(planetId === activePlanet ? null : planetId);
@@ -150,12 +177,22 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   };
 
   const handleMatrixCommit = () => {
+    setMatrixHistory(prev => [...prev.slice(-9), matrixCommitted]);
     setMatrixCommitted(prev => ({ ...prev, ...matrixPending }));
     setMatrixPending({});
     setMatrixArmed(false);
   };
 
   const handleMatrixDisarm = () => {
+    setMatrixPending({});
+    setMatrixArmed(false);
+  };
+
+  const handleMatrixRollback = () => {
+    if (matrixHistory.length === 0) return;
+    const previous = matrixHistory[matrixHistory.length - 1] || {};
+    setMatrixCommitted(previous);
+    setMatrixHistory(prev => prev.slice(0, -1));
     setMatrixPending({});
     setMatrixArmed(false);
   };
@@ -378,7 +415,18 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                       onMouseLeave={() => setRosterReveal(null)}
                       onFocus={() => setRosterReveal(m.id)}
                       onBlur={() => setRosterReveal(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setRosterReveal(prev => (prev === m.id ? null : m.id));
+                        }
+                        if (e.key === 'Escape') {
+                          setRosterReveal(null);
+                        }
+                      }}
                       tabIndex={0}
+                      role="button"
+                      aria-pressed={rosterReveal === m.id}
                       aria-label={`Member ${m.name} access code`}
                     >
                       {rosterReveal === m.id ? m.code : '••••'}
@@ -449,6 +497,13 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                     <button className="arch-matrix-cancel" onClick={handleMatrixDisarm}>CANCEL</button>
                   </>
                 )}
+                <button
+                  className="arch-matrix-rollback"
+                  onClick={handleMatrixRollback}
+                  disabled={matrixHistory.length === 0}
+                >
+                  ROLLBACK
+                </button>
               </div>
             </div>
 

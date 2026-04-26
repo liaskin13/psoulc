@@ -30,3 +30,6 @@ jobs:
 
       - name: Run PR hygiene check
         run: bash scripts/check-pr-hygiene.sh "${{ steps.base.outputs.ref }}"
+
+      - name: Run design law check
+        run: bash scripts/check-design-law.sh

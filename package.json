@@ -7,7 +7,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "hygiene:check": "bash scripts/check-pr-hygiene.sh origin/main",
-    "preflight": "npm run hygiene:check && npm run build",
+    "design-law:check": "bash scripts/check-design-law.sh",
+    "preflight": "npm run hygiene:check && npm run design-law:check && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
