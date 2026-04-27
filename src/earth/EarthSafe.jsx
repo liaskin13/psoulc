@@ -64,6 +64,7 @@ function EarthSafe({ onBack, onExitSystem, onVoid, readOnly = false }) {
     findCellById,
     updateCell,
     removeCell,
+    clearSelection,
     setTransport,
   } = useVaultFileCells(initialDocItems);
 
