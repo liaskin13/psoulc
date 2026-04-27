@@ -10,6 +10,7 @@ import {
   listenerToCollaborator,
   migrateToCollaborators,
   canCollaboratorAccess,
+  canLockboxAccess,
   isCollaboratorActive,
 } from '../data/collaborators';
 
@@ -139,7 +140,6 @@ function generateCode(members) {
 const SystemContext = createContext(null);
 
 export function SystemProvider({ children }) {
-  const [isProtected,       setIsProtected]       = useState(false);
   const [consoleOwner,      setConsoleOwner]       = useState(null);
   const [sessionMeta,       setSessionMeta]        = useState(readSessionMeta);   // { owner, planet, tier }
   const [voidedItems,       setVoidedItems]        = useState([]);
@@ -190,23 +190,6 @@ export function SystemProvider({ children }) {
   useEffect(() => {
     try { localStorage.setItem(ANIMATIONS_KEY, JSON.stringify(animationsEnabled)); } catch (_) {}
   }, [animationsEnabled]);
-
-  // ─── Pull Cord ────────────────────────────────────────────────────────────
-  const toggleProtected = () => setIsProtected(prev => !prev);
-
-  // sealSystem: set isProtected + evict non-Tier-A sessions.
-  // Tier A (D/L) keeps their console; Tier B/C/G/D are kicked to entry.
-  const sealSystem = () => {
-    setIsProtected(true);
-    const meta = sessionMeta;
-    if (meta && meta.tier !== 'A') {
-      try { localStorage.removeItem(SESSION_KEY); } catch (_) {}
-      setSessionMeta(null);
-    }
-  };
-
-  // unsealSystem: restore open state without touching sessions.
-  const unsealSystem = () => setIsProtected(false);
 
   // ─── Void / Restore ───────────────────────────────────────────────────────
   const voidItem = (item, originPlanet) => {
@@ -322,6 +305,12 @@ export function SystemProvider({ children }) {
     ));
   };
 
+  const addCollaborator = (collabData) => {
+    const collab = makeCollaborator(collabData);
+    setCollaborators(prev => [...prev, collab]);
+    return collab;
+  };
+
   // Look up the collaborator record for the current session by code or owner name.
   const getCollaboratorForSession = (meta = sessionMeta) => {
     if (!meta) return null;
@@ -338,6 +327,16 @@ export function SystemProvider({ children }) {
     if (collab) return canCollaboratorAccess(collab, vaultId);
     // Fallback: Tier B can access their own planet
     return meta.tier === 'B' && meta.planet === vaultId;
+  };
+
+  // P10-6: lockbox-entry check — double-key: Tier A, Muse session, or explicit lockboxGrant.
+  const canEnterLockbox = (meta, lockboxId) => {
+    if (!meta) return false;
+    if (meta.tier === 'A') return true;
+    if (meta.vault === lockboxId) return true;
+    const collab = getCollaboratorForSession(meta);
+    if (collab) return canLockboxAccess(collab, lockboxId);
+    return false;
   };
 
   // ─── Comment system ───────────────────────────────────────────────────────
@@ -431,8 +430,6 @@ export function SystemProvider({ children }) {
 
   return (
     <SystemContext.Provider value={{
-      // Pull Cord
-      isProtected, toggleProtected, sealSystem, unsealSystem,
       // Identity
       consoleOwner, setConsoleOwner,
       sessionMeta,  setSessionMeta,
@@ -476,11 +473,13 @@ export function SystemProvider({ children }) {
       setAnimationsEnabled,
       // D7: Collaborator registry
       collaborators,
+      addCollaborator,
       revokeCollaborator,
       grantVaultAccess,
       revokeVaultAccess,
       getCollaboratorForSession,
       canEnterVault,
+      canEnterLockbox,
     }}>
       {children}
     </SystemContext.Provider>

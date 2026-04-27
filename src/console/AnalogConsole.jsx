@@ -11,7 +11,6 @@ const TOTAL_TRACKS =
   VENUS_MIXES.length +
   EARTH_DOCUMENTS.length +
   MERCURY_TRACKS.length;
-import GodModePullCord from './GodModePullCord';
 import MasterClock from './MasterClock';
 import ReadoutNavigator from './ReadoutNavigator';
 import ConduitSlider from './ConduitSlider';
@@ -132,11 +131,11 @@ function AnalogConsole({
   onIntake,
   isBroadcasting,
   latentNodes = [],
-  saturnMoons,
-  onMoonSync,
+  artistLockboxes,
+  onLockboxSync,
   onPowerDown
 }) {
-  const { isProtected, unreadCount, members, unreadCommentCount, animationsEnabled, setAnimationsEnabled } = useSystem();
+  const { unreadCount, members, unreadCommentCount, animationsEnabled, setAnimationsEnabled } = useSystem();
   const [showInbox,    setShowInbox]    = useState(false);
   const [showMembers,  setShowMembers]  = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -148,7 +147,7 @@ function AnalogConsole({
   };
 
   return (
-    <div className={`analog-console ${isProtected ? 'protected' : 'create'}`}>
+    <div className="analog-console">
       <ConsoleTopbar />
 
       {/* ── LEFT ZONE — Vault pad grid ────────────────────────────────────── */}
@@ -167,14 +166,7 @@ function AnalogConsole({
         </div>
         {/* Power controls below pads */}
         <div className="console-power-row">
-          <GodModePullCord onPowerDown={onPowerDown} />
-          <button
-            className="anim-toggle-btn"
-            onClick={() => setAnimationsEnabled(v => !v)}
-            aria-label={`Entry animations ${animationsEnabled ? 'on' : 'off'}`}
-          >
-            {animationsEnabled ? '◉' : '○'}
-          </button>
+          <button className="god-btn power-btn" onClick={onPowerDown}>EXIT SYSTEM</button>
         </div>
       </div>
 

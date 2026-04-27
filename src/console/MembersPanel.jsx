@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
-import { MOON_PREFIX } from '../config';
+import { LOCKBOX_PREFIX } from '../config';
 
 // ── MEMBERS PANEL — D + L Console ─────────────────────────────────────────
 // Two tabs: MEMBERS (Tier B) + LISTENERS (registry of 0000 users).
@@ -28,7 +28,7 @@ function MembersPanel({ onClose, viewer = 'D' }) {
     e.preventDefault();
     if (!newName.trim()) return;
     const planet = newTier === 'C'
-      ? (newMoonName.trim() ? `${MOON_PREFIX}${newMoonName.trim().toLowerCase()}` : null)
+      ? (newMoonName.trim() ? `${LOCKBOX_PREFIX}${newMoonName.trim().toLowerCase()}` : null)
       : (newPlanet || null);
     const code = addMember(newName.trim(), planet, viewer, newTier, isL ? newCode : null);
     setFlashCode({ name: newName.trim(), code });
@@ -94,9 +94,9 @@ function MembersPanel({ onClose, viewer = 'D' }) {
                 <div key={m.id} className="members-card">
                   <div className="members-card-name">{m.name}</div>
                   <div className="members-card-meta">
-                    {m.tier === 'C' && m.planet?.startsWith(MOON_PREFIX) ? (
+                    {m.tier === 'C' && m.planet?.startsWith(LOCKBOX_PREFIX) ? (
                       <span className="members-planet-badge members-moon-badge">
-                        ◎ {m.planet.replace(MOON_PREFIX, '').toUpperCase()}
+                        ◎ {m.planet.replace(LOCKBOX_PREFIX, '').toUpperCase()}
                       </span>
                     ) : m.planet ? (
                       <span className="members-planet-badge">{m.planet.toUpperCase()}</span>

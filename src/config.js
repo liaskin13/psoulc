@@ -34,7 +34,13 @@ export const D_IDENTITY_COLOR = '#B87333'; // Copper
 export const D_CHAKRA_COLOR   = '#B87333'; // Copper — D's personal chakra
 export const BROADCAST_DURATION_MS = 5000;
 export const LOCKBOX_PREFIX = 'lockbox_';
-export const MOON_PREFIX = LOCKBOX_PREFIX; // deprecated alias — use LOCKBOX_PREFIX
+
+export const VAULT_DISPLAY_NAMES = {
+  venus:   'MIXES',
+  saturn:  'ORIGINAL MUSIC',
+  mercury: 'LIVE SETS',
+  earth:   'SONIC ARCH',
+};
 
 // True spectrum chakra colors — void events (distinct from ambient earth tones)
 export const VOID_CHAKRA_COLORS = {

@@ -7,7 +7,7 @@ export const COLLABORATORS_KEY = 'psc_collaborators';
 export const COLLABORATOR_ROLES = ['listener', 'featured-artist', 'editor', 'co-owner'];
 
 // Vault IDs that can appear in vaultAccess
-export const VAULT_IDS = ['saturn', 'mercury', 'venus', 'earth'];
+export const VAULT_IDS = ['saturn', 'mercury', 'venus', 'earth', 'lockbox_janet', 'lockbox_erikah', 'lockbox_larry', 'lockbox_drake'];
 
 // Role → tier mapping used by permissions.js
 export const ROLE_TO_TIER = {
@@ -20,7 +20,7 @@ export const ROLE_TO_TIER = {
 /**
  * makeCollaborator — factory for a new collaborator record.
  */
-export function makeCollaborator({ name, role, grantedBy, vaultAccess = [], expiresAt = null, code = null, planet = null }) {
+export function makeCollaborator({ name, role, grantedBy, vaultAccess = [], lockboxGrants = [], expiresAt = null, code = null, planet = null }) {
   if (!COLLABORATOR_ROLES.includes(role)) {
     throw new Error(`Invalid collaborator role: "${role}". Must be one of: ${COLLABORATOR_ROLES.join(', ')}`);
   }
@@ -30,6 +30,7 @@ export function makeCollaborator({ name, role, grantedBy, vaultAccess = [], expi
     role,
     grantedBy,
     vaultAccess: vaultAccess.filter(v => VAULT_IDS.includes(v)),
+    lockboxGrants: lockboxGrants.filter(v => VAULT_IDS.includes(v)),
     planet: planet ?? null,
     code: code ?? null,
     grantedAt: new Date().toISOString(),
@@ -55,6 +56,16 @@ export function canCollaboratorAccess(collab, vaultId) {
   if (!isCollaboratorActive(collab)) return false;
   if (collab.role === 'co-owner') return true;
   return collab.vaultAccess.includes(vaultId);
+}
+
+/**
+ * canLockboxAccess — checks lockbox access for a specific collaborator.
+ * co-owners bypass; others must have the lockboxId in their lockboxGrants[].
+ */
+export function canLockboxAccess(collab, lockboxId) {
+  if (!isCollaboratorActive(collab)) return false;
+  if (collab.role === 'co-owner') return true;
+  return (collab.lockboxGrants ?? []).includes(lockboxId);
 }
 
 // ── Migration helpers ──────────────────────────────────────────────────────────

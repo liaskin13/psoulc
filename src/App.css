@@ -440,7 +440,6 @@
   z-index: 10;
 }
 
-/* Animation toggle — small amber readout button below pull cord */
 .anim-toggle-btn {
   margin-top: 12px;
   font-family: var(--font-mono);
@@ -1472,112 +1471,6 @@
   color: rgba(255, 191, 0, 0.52);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-/* THE GOD MODE PULL CORD */
-.pull-cord-system {
-  position: absolute;
-  left: 2rem;
-  top: -200px;
-  height: 150vh;
-  cursor: pointer;
-  transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.pull-cord-system.pulled {
-  transform: translateY(350px);
-}
-
-.amber-braid {
-  width: 5px; height: 75%;
-  background: linear-gradient(to bottom, #000, #ffbf00, #000);
-}
-
-.sovereign-stone {
-  width: 45px; height: 80px;
-  background: #050505;
-  border: 1px solid #1a1a1a;
-  box-shadow: 0 20px 60px #000;
-}
-
-.core-glow {
-  color: #ffbf00;
-  font-family: var(--font-primary);
-  font-size: 12px;
-  text-align: center;
-  padding-top: 25px;
-  text-shadow: 0 0 10px #ffbf00;
-  transition: all 0.5s ease;
-}
-
-.core-glow.create-pulse {
-  color: #ffbf00;
-  text-shadow: 0 0 15px #ffbf00, 0 0 30px #ffbf00;
-  animation: create-hum 2s infinite;
-}
-
-.core-glow.protected-pulse {
-  color: #ff6b35;
-  text-shadow: 0 0 5px #ff6b35;
-  opacity: 0.6;
-}
-
-@keyframes create-hum {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-/* THE SYSTEM-WIDE TRANSITION */
-.god-mode-mainframe {
-  transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* PROTECT MODE (Dark / Closed) */
-.state-protected {
-  background: #000;
-  filter: grayscale(1) contrast(1.1);
-}
-
-.state-protected .viewscreen {
-  opacity: 0.3;
-}
-
-.state-protected .sun-node {
-  box-shadow: 0 0 20px #333;
-}
-
-.state-protected .amethyst-node {
-  box-shadow: 0 0 15px #333;
-}
-
-.state-protected .saturn-node {
-  box-shadow: 0 0 15px #333;
-}
-
-.state-protected .black-star-node {
-  box-shadow: 0 0 120px #000, 0 0 40px #111;
-}
-
-/* CREATE MODE (Light / Open) */
-.state-create {
-  background: #050505;
-  filter: grayscale(0) contrast(1);
-}
-
-.state-create .sun-node {
-  box-shadow: 0 0 100px #ffea00, inset 0 0 30px #ffea00;
-}
-
-.state-create .black-star-node {
-  box-shadow: 0 0 40px #ffbf00;
-}
-
-.state-create .amethyst-node {
-  box-shadow: 0 0 30px #9d65c9;
-}
-
-.state-create .saturn-node {
-  box-shadow: 0 0 25px #c5a059;
 }
 
 /* LEGACY STYLES */

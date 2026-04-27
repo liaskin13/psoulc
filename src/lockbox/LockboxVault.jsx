@@ -7,71 +7,71 @@ import VaultWindow from '../components/VaultWindow';
 import VoidStreakOverlay from '../components/VoidStreakOverlay';
 import { useVaultVoid } from '../hooks/useVaultVoid';
 import { useVaultFileCells } from '../hooks/useVaultFileCells';
-import { SATURN_MOONS } from '../data/saturn';
-import { D_CHAKRA_COLOR, MEMBER_CHAKRA_COLORS, VOID_CHAKRA_COLORS, MOON_PREFIX } from '../config';
+import { ARTIST_LOCKBOXES } from '../data/saturn';
+import { D_CHAKRA_COLOR, MEMBER_CHAKRA_COLORS, VOID_CHAKRA_COLORS, LOCKBOX_PREFIX } from '../config';
 import { useSystem } from '../state/SystemContext';
 import { canComment, canEdit } from '../utils/permissions';
 
-const MOON_SKIN = {
+const LOCKBOX_SKIN = {
   highlight: '#f5ddff',
   base: '#6f3f9c',
   shadow: '#1b0728',
   glow: 'rgba(137, 79, 193, 0.65)',
 };
 
-function titleFromMoonId(moonId) {
-  if (!moonId) return 'MOON';
-  return moonId.replace(MOON_PREFIX, '').replace(/_/g, ' ').toUpperCase();
+function titleFromLockboxId(lockboxId) {
+  if (!lockboxId) return 'LOCKBOX';
+  return lockboxId.replace(LOCKBOX_PREFIX, '').replace(/_/g, ' ').toUpperCase();
 }
 
-function MoonVault({ moonId, onBack, onExitSystem, onVoid, readOnly = false }) {
+function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = false }) {
   const [pitchMultiplier, setPitchMultiplier] = useState(1.0);
   const [tuneItem, setTuneItem] = useState(null);
   const [voidLog, setVoidLog] = useState([]);
   const { addComment, sessionMeta, getTuneOverride, saveTuneOverride } = useSystem();
 
-  const moonKey = (moonId || '').replace(MOON_PREFIX, '');
-  const moonData = SATURN_MOONS.find((m) => m.id === moonKey);
-  const moonName = moonData?.name || titleFromMoonId(moonId);
-  const moonHz = moonData?.frequency || 528;
+  const lockboxKey = (lockboxId || '').replace(LOCKBOX_PREFIX, '');
+  const lockboxData = ARTIST_LOCKBOXES.find((m) => m.id === lockboxKey);
+  const lockboxName = lockboxData?.name || titleFromLockboxId(lockboxId);
+  const lockboxHz = lockboxData?.frequency || 528;
 
   const baseItems = useMemo(() => {
-    const stems = moonData?.stems || ['VOCAL', 'MUSIC', 'ALT'];
+    const stems = lockboxData?.stems || ['VOCAL', 'MUSIC', 'ALT'];
     const bpms = [112, 124, 98];
     const base = stems.map((stem, idx) => ({
-      id: `moon-${moonKey}-${idx + 1}`,
-      label: `${moonName} ${stem} CUT ${idx + 1}`,
-      sublabel: `${bpms[idx % bpms.length]} BPM · ${moonHz}Hz`,
-      metadata: { bpm: bpms[idx % bpms.length], frequency: `${moonHz}Hz`, stem },
+      id: `lockbox-${lockboxKey}-${idx + 1}`,
+      label: `${lockboxName} ${stem} CUT ${idx + 1}`,
+      sublabel: `${bpms[idx % bpms.length]} BPM · ${lockboxHz}Hz`,
+      metadata: { bpm: bpms[idx % bpms.length], frequency: `${lockboxHz}Hz`, stem },
       createdBy: 'D',
       chakraColor: MEMBER_CHAKRA_COLORS.D,
-      ...MOON_SKIN,
+      ...LOCKBOX_SKIN,
     }));
 
     const remix = stems.map((stem, idx) => ({
-      id: `moon-${moonKey}-rx-${idx + 1}`,
-      label: `${moonName} ${stem} REMIX ${idx + 1}`,
-      sublabel: `${bpms[(idx + 1) % bpms.length] + 6} BPM · ${moonHz}Hz`,
-      metadata: { bpm: bpms[(idx + 1) % bpms.length] + 6, frequency: `${moonHz}Hz`, stem },
+      id: `lockbox-${lockboxKey}-rx-${idx + 1}`,
+      label: `${lockboxName} ${stem} REMIX ${idx + 1}`,
+      sublabel: `${bpms[(idx + 1) % bpms.length] + 6} BPM · ${lockboxHz}Hz`,
+      metadata: { bpm: bpms[(idx + 1) % bpms.length] + 6, frequency: `${lockboxHz}Hz`, stem },
       createdBy: 'D',
       chakraColor: MEMBER_CHAKRA_COLORS.D,
-      ...MOON_SKIN,
+      ...LOCKBOX_SKIN,
     }));
 
     return [...base, ...remix];
-  }, [moonData, moonHz, moonKey, moonName]);
+  }, [lockboxData, lockboxHz, lockboxKey, lockboxName]);
 
   const initialItems = baseItems.map((item) => {
-    const override = getTuneOverride(moonId, item.id);
+    const override = getTuneOverride(lockboxId, item.id);
     if (!override) return item;
     return {
       ...item,
       label: override.label ?? item.label,
-      sublabel: `${override.bpm ?? item.metadata?.bpm ?? 120} BPM · ${override.frequency ?? moonHz}Hz`,
+      sublabel: `${override.bpm ?? item.metadata?.bpm ?? 120} BPM · ${override.frequency ?? lockboxHz}Hz`,
       metadata: {
         ...item.metadata,
         bpm: override.bpm ?? item.metadata?.bpm ?? 120,
-        frequency: `${override.frequency ?? moonHz}Hz`,
+        frequency: `${override.frequency ?? lockboxHz}Hz`,
       },
     };
   });
@@ -107,12 +107,12 @@ function MoonVault({ moonId, onBack, onExitSystem, onVoid, readOnly = false }) {
     },
   });
 
-  const canAdmin = canEdit(sessionMeta, moonId);
-  const handleComment = (item, body) => addComment(moonId, item.id, item.label, sessionMeta?.owner || 'member', body);
-  const handleVoiceComment = (item, audioData) => addComment(moonId, item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
+  const canAdmin = canEdit(sessionMeta, lockboxId);
+  const handleComment = (item, body) => addComment(lockboxId, item.id, item.label, sessionMeta?.owner || 'member', body);
+  const handleVoiceComment = (item, audioData) => addComment(lockboxId, item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
 
   const handleTuneSave = (updates) => {
-    saveTuneOverride(moonId, tuneItem.id, updates);
+    saveTuneOverride(lockboxId, tuneItem.id, updates);
     updateCell(tuneItem.id, (cell) => ({
       ...cell,
       label: updates.label,
@@ -124,15 +124,15 @@ function MoonVault({ moonId, onBack, onExitSystem, onVoid, readOnly = false }) {
 
   return (
     <motion.div
-      className="vault-screen moon-vault"
+      className="vault-screen lockbox-vault"
       style={{ '--vault-owner-glow': `${D_CHAKRA_COLOR}1a` }}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
     >
       <div className="vault-header">
-        <h1 className="vault-title">{moonName}</h1>
-        <p className="vault-subtitle">SATURN MOON VAULT · ORIGINALS + D REMIXES</p>
+        <h1 className="vault-title">{lockboxName}</h1>
+        <p className="vault-subtitle">LOCKBOX VAULT · ORIGINALS + D REMIXES</p>
       </div>
 
       <div className="vault-commands">
@@ -152,7 +152,7 @@ function MoonVault({ moonId, onBack, onExitSystem, onVoid, readOnly = false }) {
 
       {tuneItem && (
         <TuneModal
-          item={{ label: tuneItem.label, bpm: tuneItem.metadata?.bpm, frequency: parseInt(tuneItem.metadata?.frequency, 10) || moonHz }}
+          item={{ label: tuneItem.label, bpm: tuneItem.metadata?.bpm, frequency: parseInt(tuneItem.metadata?.frequency, 10) || lockboxHz }}
           onSave={handleTuneSave}
           onClose={() => setTuneItem(null)}
         />
@@ -172,7 +172,7 @@ function MoonVault({ moonId, onBack, onExitSystem, onVoid, readOnly = false }) {
 
         <div className="vault-library-band">
           <div className="shelf-section">
-            <div className="shelf-section-label">MOON LIBRARY</div>
+            <div className="shelf-section-label">LOCKBOX LIBRARY</div>
             <RecordShelf
               items={cells}
               activeId={activeId}
@@ -219,4 +219,4 @@ function MoonVault({ moonId, onBack, onExitSystem, onVoid, readOnly = false }) {
   );
 }
 
-export default MoonVault;
+export default LockboxVault;

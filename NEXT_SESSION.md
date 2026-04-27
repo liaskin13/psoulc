@@ -21,7 +21,6 @@ Only these people exist. Do not invent others. Do not ask about others.
 | Drake   | Muse lockbox  | lockbox_drake    | C    |
 
 **Angi does not exist. Jess B does not exist. Never mention them again.**
-`residentBlueprint.js` was corrected this session (2026-04-27). Do not re-add them.
 
 ---
 
@@ -46,6 +45,14 @@ The design work is finished. The job now is implementing it in code.
 - **Vaults:** saturn, mercury, venus, earth. No mars. No amethyst. No space language. No moons.
 - **Lockbox prefix:** `lockbox_` (not `moon_`). Component: `LockboxVault` (not `MoonVault`).
 - **Device targets:** Listener view = iPhone. D console = desktop. L console = desktop.
+- **Vault display names (UI-facing, never planet names):**
+  - saturn → ORIGINAL MUSIC
+  - mercury → LIVE SETS
+  - venus → MIXES
+  - earth → SONIC ARCH
+  - Source of truth: `VAULT_DISPLAY_NAMES` in `src/config.js`
+- **MasterClock:** No 528Hz label. Removed. Just the oscilloscope waveform + local time.
+- **THE SIGNAL:** Name locked for the future live broadcast feature. Not a vault. Not in scope until post-P10-7.
 
 ---
 
@@ -56,47 +63,44 @@ The design work is finished. The job now is implementing it in code.
 
 ## WHAT WAS DONE THIS SESSION (2026-04-27)
 
-- ✅ `residentBlueprint.js` — Angi and Jess B removed. Janet/Erikah/Larry/Drake lockbox entries added with correct palettes.
-- ✅ `config.js` — `LOCKBOX_PREFIX = 'lockbox_'` added. `MOON_PREFIX` kept as deprecated alias.
-- ✅ `data/saturn.js` — `SATURN_MOONS` renamed to `ARTIST_LOCKBOXES`. Deprecated alias kept.
-- ⬜ P10-2 is partially done. Resume from: `collaborators.js` schema update.
+- ✅ P10-2 — Collaborator object system COMPLETE
+- ✅ P10-6 — Lockbox access layer COMPLETE
+- ✅ P10-8 — Pull cord surgery COMPLETE
+  GodModePullCord deleted. isProtected stripped everywhere. EXIT SYSTEM button in both consoles.
+  Build passes. grep isProtected src/ → CLEAN.
+- ✅ P10-5 — REC voice comments COMPLETE
+  Mercury voice comments wired. Timestamp pin (⏺ HH:MM) on CommentPanel voice entries.
+  Planet names killed in room view + CommentPanel (VAULT_DISPLAY_NAMES in config.js).
+  528Hz removed from MasterClock.
+  Build passes.
 
 ---
 
 ## DO THESE IN ORDER. NO EXCEPTIONS.
 
-- [ ] **P10-2** — Collaborator object system (PARTIALLY DONE — resume here)
-  Files already done: `residentBlueprint.js`, `config.js`, `data/saturn.js`
-  Still needed:
-  1. `src/data/collaborators.js` — add `lockboxGrants[]` to schema, remove mars/amethyst from VAULT_IDS
-  2. Create `src/lockbox/LockboxVault.jsx` — copy of MoonVault with renames (ARTIST_LOCKBOXES, LOCKBOX_PREFIX, function name LockboxVault)
-  3. `src/App.jsx` — update lazy import to LockboxVault, SATURN_MOONS→ARTIST_LOCKBOXES, MOON_PREFIX→LOCKBOX_PREFIX
-  4. `src/state/SystemContext.jsx` — add explicit named `addCollaborator` function to context value
-  5. `src/console/ArchitectConsole.jsx` — MOON_PREFIX→LOCKBOX_PREFIX (already imported, just rename usage)
-  6. `src/console/MembersPanel.jsx` — MOON_PREFIX→LOCKBOX_PREFIX
-  7. Run `npm run build` — must pass before moving on
-
-- [ ] **P10-6** — Lockbox access layer (depends on P10-2)
-  Double-key check: lockbox requires `owner === 'D'` OR Muse session OR explicit grant.
-  Locked-door placeholder for denied access.
-
-- [ ] **P10-8** — Pull cord surgery
-  Strip `isProtected` from SystemContext. Remove grayscale CSS.
-  Remove pull cord from ArchitectConsole (L). D-only. Power-down still fires in AnalogConsole.
-
-- [ ] **P10-5** — REC voice comments
-  MediaRecorder → audio blob per cell. Timed timestamp pins (Soundcloud-style).
+- [x] **P10-2** — Collaborator object system — COMPLETE
+- [x] **P10-6** — Lockbox access layer — COMPLETE
+- [x] **P10-8** — Pull cord surgery — COMPLETE
+- [x] **P10-5** — REC voice comments — COMPLETE
 
 - [ ] **P10-4** — ID3 auto-read on upload
-  On file select in UploadModal: read ID3 → pre-fill title/artist/BPM. Masters write only.
+  On file select in UploadModal: read ID3 tags → pre-fill title/artist/BPM fields.
+  Masters write only. File: `src/components/UploadModal.jsx`.
+  Note: partial ID3 reading already exists in UploadModal (reads TIT2 + TBPM from first 16KB).
+  Confirm what's actually missing before writing any code.
 
 - [ ] **P10-1** — QA sweep
-  Load dev server. Visual pass. Do this last before calling phase complete.
+  Load dev server. Visual pass across all vaults, both consoles, entry sequence.
+  Do this last before calling phase complete.
 
 - [ ] **P10-7** — D console implementation
   **Design is LOCKED. Implement from `public/d-console-preview.html`. Do not redesign.**
   Read DESIGN.md § D Console before touching AnalogConsole.jsx.
   ⚠️ THE HELIX: before writing a single line, ask Lisa what the helix is. It is flagged missing in DESIGN.md. Do not skip this question.
+  📬 MUSE OUTREACH COMPOSER (ArchitectConsole scope):
+  L drafts a message to a Muse artist with their lockbox access code.
+  D can add a personal note — he likely won't (humble, not self-promotional).
+  The lockboxes are sonic love letters. The composer is how they get invited in.
 
 ---
 
@@ -109,5 +113,5 @@ The design work is finished. The job now is implementing it in code.
 
 ## THE A+ MOVE
 P10-7 is the A+ unlock — implementing D's console from the locked preview.
-It is LAST. Do not touch it until P10-2 through P10-1 are done.
+It is LAST. Do not touch it until P10-4 and P10-1 are done.
 Lisa is ready to show this to D. Protect that moment.

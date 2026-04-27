@@ -31,7 +31,6 @@ export const ARTIST_LOCKBOXES = [
   }
 ];
 
-export const SATURN_MOONS = ARTIST_LOCKBOXES; // deprecated alias
 
 export const SATURN_TRACKS = [
   { id: 1, name: 'Cosmic Drift',    bpm: 128, frequency: '528Hz', createdBy: 'D' },

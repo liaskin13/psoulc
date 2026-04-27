@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
-import GodModePullCord from './GodModePullCord';
 import ConduitSlider from './ConduitSlider';
 import InboxPanel from './InboxPanel';
 import CommentPanel from './CommentPanel';
-import { VOID_CHAKRA_COLORS, MOON_PREFIX } from '../config';
+import { VOID_CHAKRA_COLORS, LOCKBOX_PREFIX } from '../config';
 import {
   tierDefaultsForMember,
   resolveMatrixPerm,
@@ -106,7 +105,7 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
 }
 
 function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
-  const { isProtected, architectArchive, restoreItem, unreadCountL, members, unreadCommentCount, voidItem, addMember } = useSystem();
+  const { architectArchive, restoreItem, unreadCountL, members, unreadCommentCount, voidItem, addMember } = useSystem();
   const MATRIX_COMMITTED_KEY = 'psc_matrix_committed';
   const MATRIX_HISTORY_KEY = 'psc_matrix_history';
   const [showArchive,      setShowArchive]      = useState(false);
@@ -241,7 +240,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     e.preventDefault();
     if (!rosterName.trim()) return;
     const planet = rosterTier === 'C'
-      ? (rosterMoon.trim() ? `${MOON_PREFIX}${rosterMoon.trim().toLowerCase()}` : null)
+      ? (rosterMoon.trim() ? `${LOCKBOX_PREFIX}${rosterMoon.trim().toLowerCase()}` : null)
       : (rosterPlanet || null);
     const code = addMember(rosterName.trim(), planet, 'L', rosterTier, rosterCode || null);
     setRosterFlash({ name: rosterName.trim(), code });
@@ -391,7 +390,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
 
   return (
     <motion.div
-      className={`architect-console ${isProtected ? 'arch-protected' : 'arch-active'}`}
+      className="architect-console"
       initial={{ opacity: 0, filter: 'brightness(0) blur(8px)' }}
       animate={{ opacity: 1, filter: 'brightness(1) blur(0px)' }}
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}
@@ -403,7 +402,7 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       <div className="arch-console-strip">
 
         <div className="arch-strip-left">
-          <GodModePullCord onPowerDown={handlePowerDown} />
+          <button className="god-btn power-btn" onClick={handlePowerDown}>EXIT SYSTEM</button>
           <div className="arch-identity-block">
             <div className="arch-identity-label">L · ARCHITECT</div>
             <div className="arch-identity-status">
@@ -566,8 +565,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                     <td className="arch-roster-tier">{m.tier}</td>
                     <td className="arch-roster-handle">{m.name}</td>
                     <td className="arch-roster-planet">
-                      {m.planet?.startsWith(MOON_PREFIX)
-                        ? `FEATURED · ${m.planet.replace(MOON_PREFIX, '').toUpperCase()}`
+                      {m.planet?.startsWith(LOCKBOX_PREFIX)
+                        ? `FEATURED · ${m.planet.replace(LOCKBOX_PREFIX, '').toUpperCase()}`
                         : (m.planet?.toUpperCase() || '—')}
                     </td>
                     <td
@@ -690,8 +689,8 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
                       <td className="arch-matrix-handle">{m.name}</td>
                       <td className="arch-matrix-tier">{m.tier}</td>
                       <td className="arch-matrix-planet">
-                        {m.planet?.startsWith(MOON_PREFIX)
-                          ? `FEATURED · ${m.planet.replace(MOON_PREFIX, '').toUpperCase()}`
+                        {m.planet?.startsWith(LOCKBOX_PREFIX)
+                          ? `FEATURED · ${m.planet.replace(LOCKBOX_PREFIX, '').toUpperCase()}`
                           : (m.planet?.toUpperCase() || '—')}
                       </td>
                       {['void', 'tune', 'comment'].map((perm, i) => {

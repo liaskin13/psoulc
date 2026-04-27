@@ -249,7 +249,6 @@ h1, h2, h3,
   transform: translateX(-50%);
   font-size: 2rem;
   color: var(--aged-stone);
-  filter: grayscale(100%);
 }
 
 .sun-core-flyby {
@@ -1051,9 +1050,24 @@ h1, h2, h3,
 /* ── Voice comment audio player ─────────────────────────────────────────────── */
 .comment-voice-player {
   width: 100%;
-  margin-top: 6px;
+  margin-top: 4px;
   height: 28px;
   border-radius: 4px;
   accent-color: var(--amber-phosphor, #ffbf00);
   background: rgba(0, 0, 0, 0.4);
+}
+
+.comment-voice-pin {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comment-pin-anchor {
+  font-family: var(--font-primary);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: #ffbf00;
+  opacity: 0.85;
 }

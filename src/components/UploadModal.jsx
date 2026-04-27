@@ -60,6 +60,10 @@ async function readId3Tags(file) {
       result.title = decodeTextFrame(bytes, frame.dataStart, frame.dataEnd)
         ?.replace(/\0/g, '').trim() || null;
     }
+    if (frame.id === 'TPE1') {
+      result.artist = decodeTextFrame(bytes, frame.dataStart, frame.dataEnd)
+        ?.replace(/\0/g, '').trim() || null;
+    }
     if (frame.id === 'TBPM') {
       const raw = decodeTextFrame(bytes, frame.dataStart, frame.dataEnd)?.replace(/\0/g, '').trim();
       const bpm = parseInt(raw, 10);
@@ -85,6 +89,8 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
   const { consoleOwner, loadVaultTracks, dispatchCommand } = useSystem();
   const [file,        setFile]        = useState(null);
   const [title,       setTitle]       = useState('');
+  const [artist,      setArtist]      = useState('');
+  const [tags,        setTags]        = useState('');
   const [bpm,         setBpm]         = useState(120);
   const [frequencyHz, setFrequencyHz] = useState(528);
   const [vault,       setVault]       = useState(defaultVault);
@@ -97,9 +103,10 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
     setFile(f);
     const fallbackTitle = f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').toUpperCase();
     try {
-      const tags = await readId3Tags(f);
-      if (!title) setTitle(tags.title ? tags.title.toUpperCase() : fallbackTitle);
-      if (tags.bpm) setBpm(tags.bpm);
+      const id3 = await readId3Tags(f);
+      if (!title)  setTitle(id3.title  ? id3.title.toUpperCase()  : fallbackTitle);
+      if (id3.artist) setArtist(id3.artist.toUpperCase());
+      if (id3.bpm) setBpm(id3.bpm);
     } catch (_) {
       if (!title) setTitle(fallbackTitle);
     }
@@ -118,6 +125,7 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
       await uploadTrack(file, {
         vault,
         title:        title.trim(),
+        artist:       artist.trim() || null,
         bpm:          parseInt(bpm),
         frequency_hz: parseInt(frequencyHz),
         uploaded_by:  consoleOwner,
@@ -203,6 +211,19 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
             />
           </div>
 
+          {/* Artist */}
+          <div className="tune-field">
+            <label className="tune-field-label">ARTIST</label>
+            <input
+              className="tune-label-input"
+              value={artist}
+              onChange={(e) => setArtist(e.target.value)}
+              maxLength={64}
+              spellCheck={false}
+              placeholder="PERFORMER / COLLECTIVE"
+            />
+          </div>
+
           {/* BPM */}
           <div className="tune-field">
             <label className="tune-field-label">BPM</label>
@@ -230,6 +251,19 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
                 >{hz}</button>
               ))}
             </div>
+          </div>
+
+          {/* Tags */}
+          <div className="tune-field">
+            <label className="tune-field-label">TAGS</label>
+            <input
+              className="tune-label-input"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              maxLength={128}
+              spellCheck={false}
+              placeholder="COMMA-DELIMITED  ·  SOUL, BPM90, VOCALS"
+            />
           </div>
 
           {error && <div className="upload-error">{error}</div>}

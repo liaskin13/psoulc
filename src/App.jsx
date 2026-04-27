@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import './App.css';
 
 import { useSystem } from './state/SystemContext';
-import { SESSION_KEY, MOON_PREFIX } from './config';
+import { SESSION_KEY, LOCKBOX_PREFIX, VAULT_DISPLAY_NAMES } from './config';
 import { canVoid, canEdit } from './utils/permissions';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { useBreakpoint } from './hooks/useBreakpoint';
@@ -19,20 +19,21 @@ const SaturnVault    = lazy(() => import('./saturn/SaturnVault'));
 const MercuryStream  = lazy(() => import('./mercury/MercuryStream'));
 const VenusArchive   = lazy(() => import('./venus/VenusArchive'));
 const EarthSafe      = lazy(() => import('./earth/EarthSafe'));
-const MoonVault      = lazy(() => import('./moons/MoonVault'));
+const LockboxVault   = lazy(() => import('./lockbox/LockboxVault'));
+const LockedDoor     = lazy(() => import('./lockbox/LockedDoor'));
 const UploadModal    = lazy(() => import('./components/UploadModal'));
 
 // ── SHARED UI ────────────────────────────────────────────────────────────────
 import VaultSkeleton from './components/VaultSkeleton';
 import BottomNav     from './components/BottomNav';
 
-import { SATURN_MOONS } from './data/saturn';
+import { ARTIST_LOCKBOXES } from './data/saturn';
 import { BROADCAST_DURATION_MS } from './config';
 
 const VAULT_IDS = new Set(['saturn', 'mercury', 'venus', 'earth']);
 
 function isVaultId(id) {
-  return VAULT_IDS.has(id) || (typeof id === 'string' && id.startsWith(MOON_PREFIX));
+  return VAULT_IDS.has(id) || (typeof id === 'string' && id.startsWith(LOCKBOX_PREFIX));
 }
 
 function refreshSessionMeta() {
@@ -52,7 +53,7 @@ function refreshSessionMeta() {
 
 // Stages: 'entry' | 'console' | 'architect' | 'room'
 function App() {
-  const { isProtected, setConsoleOwner, voidItem, sessionMeta, setSessionMeta } = useSystem();
+  const { setConsoleOwner, voidItem, sessionMeta, setSessionMeta, canEnterLockbox } = useSystem();
   const online = useNetworkStatus();
   const { isMobile } = useBreakpoint();
   const prefersReduced = useReducedMotion();
@@ -60,7 +61,7 @@ function App() {
   const [stage, setStage]             = useState('entry');
   const [owner, setOwner]             = useState(null);
   const [activeNode, setActiveNode]   = useState(null);
-  const [activeMoon, setActiveMoon]   = useState(null);
+  const [activeLockbox, setActiveLockbox] = useState(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [latentNodes, setLatentNodes] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -126,7 +127,7 @@ function App() {
   };
 
   const handleNodeSelect = (node) => {
-    setActiveMoon(null);
+    setActiveLockbox(null);
     setActiveNode(node);
   };
 
@@ -138,8 +139,8 @@ function App() {
     }
   };
 
-  const handleMoonSync = (moon) => {
-    setActiveMoon(moon);
+  const handleLockboxSync = (lockbox) => {
+    setActiveLockbox(lockbox);
     setActiveNode(null);
   };
 
@@ -193,8 +194,12 @@ function App() {
       case 'earth':    vault = <EarthSafe      {...shared} onVoid={onVoid('earth')} />; break;
       default: break;
     }
-    if (!vault && typeof id === 'string' && id.startsWith(MOON_PREFIX)) {
-      vault = <MoonVault {...shared} moonId={id} onVoid={onVoid(id)} />;
+    if (!vault && typeof id === 'string' && id.startsWith(LOCKBOX_PREFIX)) {
+      if (canEnterLockbox(sessionMeta, id)) {
+        vault = <LockboxVault {...shared} lockboxId={id} onVoid={onVoid(id)} />;
+      } else {
+        vault = <LockedDoor lockboxId={id} onBack={closeVault} />;
+      }
     }
     return <Suspense fallback={<VaultSkeleton />}>{vault}</Suspense>;
   };
@@ -229,7 +234,7 @@ function App() {
               className="vault-panel"
               onClick={() => setActiveNode({ id })}
             >
-              <span className="vault-panel-name">{id.toUpperCase()}</span>
+              <span className="vault-panel-name">{VAULT_DISPLAY_NAMES[id] ?? id.toUpperCase()}</span>
             </button>
           ))}
         </div>
@@ -255,25 +260,13 @@ function App() {
     );
   }
 
-  // Pull Cord: sealed system evicts non-Tier-A sessions back to entry
-  if (isProtected && sessionMeta && sessionMeta.tier !== 'A') {
-    return (
-      <>
-        {offlineBanner}
-        <EntrySequence onIgnite={handleIgnite} />
-      </>
-    );
-  }
-
-  const stateClass = isProtected ? 'state-protected' : 'state-create';
-
   // ── VAULT TAKEOVER ───────────────────────────────────────────────────────
   if (activeNode && isVaultId(activeNode.id)) {
     return (
       <>
         {offlineBanner}
         <motion.div
-          className={`universe god-mode-mainframe ${stateClass}`}
+          className="universe god-mode-mainframe state-create"
           id="main-content"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -299,7 +292,7 @@ function App() {
     <>
       {offlineBanner}
       <a href="#main-content" className="skip-nav">Skip to archive</a>
-      <div className={`universe god-mode-mainframe ${stateClass}`}>
+      <div className="universe god-mode-mainframe state-create">
         <div className="glitter-grain" />
         <div className="receded-logo">dp</div>
         <div className="psc-wordmark-footer" aria-hidden="true">PLEASANT SOUL COLLECTIVE</div>
@@ -334,8 +327,8 @@ function App() {
               onIntake={() => setShowUploadModal(true)}
               isBroadcasting={isBroadcasting}
               latentNodes={latentNodes}
-              saturnMoons={SATURN_MOONS}
-              onMoonSync={handleMoonSync}
+              artistLockboxes={ARTIST_LOCKBOXES}
+              onLockboxSync={handleLockboxSync}
               onPowerDown={handlePowerDown}
             />
           </Suspense>

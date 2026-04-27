@@ -62,6 +62,7 @@ function MercuryStream({ onBack, onExitSystem, onVoid, readOnly = false }) {
 
   const { addComment, sessionMeta } = useSystem();
   const handleComment = (item, body) => addComment('mercury', item.id, item.label, sessionMeta?.owner || 'member', body);
+  const handleVoiceComment = (item, audioData) => addComment('mercury', item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
   const canAdmin = canEdit(sessionMeta, 'mercury');
 
   const handleSelect = item => {
@@ -189,6 +190,7 @@ function MercuryStream({ onBack, onExitSystem, onVoid, readOnly = false }) {
               onSelect={handleSelect}
               onVoid={readOnly ? undefined : handleShelfVoid}
               onComment={canComment(sessionMeta) ? handleComment : undefined}
+              onVoiceComment={canComment(sessionMeta) ? handleVoiceComment : undefined}
             />
           </div>
 
