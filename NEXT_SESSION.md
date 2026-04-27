@@ -73,6 +73,15 @@ The design work is finished. The job now is implementing it in code.
   Planet names killed in room view + CommentPanel (VAULT_DISPLAY_NAMES in config.js).
   528Hz removed from MasterClock.
   Build passes.
+- ✅ P10-4 — ID3 auto-read COMPLETE
+  UploadModal: added TPE1 (artist) parsing, artist + tags state, ARTIST + TAGS fields.
+  Artist wired to uploadTrack(). Tags field is UI-only (no DB column yet).
+  Build passes.
+- ✅ P10-1 — QA sweep COMPLETE
+  2 bugs found and fixed:
+  • ISSUE-001 (Critical): EarthSafe crash — clearSelection missing from useVaultFileCells destructure. Fixed: ea256d9.
+  • ISSUE-002 (Medium): ArchitectConsole vault names hardcoded, not using VAULT_DISPLAY_NAMES. Fixed: 51f0362.
+  All vaults, both consoles, entry sequence verified clean. Build passes.
 
 ---
 
@@ -82,16 +91,8 @@ The design work is finished. The job now is implementing it in code.
 - [x] **P10-6** — Lockbox access layer — COMPLETE
 - [x] **P10-8** — Pull cord surgery — COMPLETE
 - [x] **P10-5** — REC voice comments — COMPLETE
-
-- [ ] **P10-4** — ID3 auto-read on upload
-  On file select in UploadModal: read ID3 tags → pre-fill title/artist/BPM fields.
-  Masters write only. File: `src/components/UploadModal.jsx`.
-  Note: partial ID3 reading already exists in UploadModal (reads TIT2 + TBPM from first 16KB).
-  Confirm what's actually missing before writing any code.
-
-- [ ] **P10-1** — QA sweep
-  Load dev server. Visual pass across all vaults, both consoles, entry sequence.
-  Do this last before calling phase complete.
+- [x] **P10-4** — ID3 auto-read on upload — COMPLETE
+- [x] **P10-1** — QA sweep — COMPLETE
 
 - [ ] **P10-7** — D console implementation
   **Design is LOCKED. Implement from `public/d-console-preview.html`. Do not redesign.**
