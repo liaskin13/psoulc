@@ -1,6 +1,6 @@
 // SATURN MODULE DATA — Moons (child processes) and Master Vault tracks.
 
-export const SATURN_MOONS = [
+export const ARTIST_LOCKBOXES = [
   {
     id: 'janet',
     name: 'JANET',
@@ -30,6 +30,8 @@ export const SATURN_MOONS = [
     stems: ['MELODY', 'PAD', 'FX']
   }
 ];
+
+export const SATURN_MOONS = ARTIST_LOCKBOXES; // deprecated alias
 
 export const SATURN_TRACKS = [
   { id: 1, name: 'Cosmic Drift',    bpm: 128, frequency: '528Hz', createdBy: 'D' },
