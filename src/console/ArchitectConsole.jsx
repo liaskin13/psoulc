@@ -4,7 +4,7 @@ import { useSystem } from '../state/SystemContext';
 import ConduitSlider from './ConduitSlider';
 import InboxPanel from './InboxPanel';
 import CommentPanel from './CommentPanel';
-import { VOID_CHAKRA_COLORS, LOCKBOX_PREFIX } from '../config';
+import { VOID_CHAKRA_COLORS, LOCKBOX_PREFIX, VAULT_DISPLAY_NAMES } from '../config';
 import {
   tierDefaultsForMember,
   resolveMatrixPerm,
@@ -14,10 +14,10 @@ import {
 } from './matrixState';
 
 const VAULT_ROUTES = [
-  { id: 'saturn',  label: 'ORIGINAL MUSIC' },
-  { id: 'venus',   label: 'CURATED MIXES' },
-  { id: 'earth',   label: 'SONIC ARCHIVE' },
-  { id: 'mercury', label: 'LIVE SETS' },
+  { id: 'saturn',  label: VAULT_DISPLAY_NAMES.saturn },
+  { id: 'venus',   label: VAULT_DISPLAY_NAMES.venus },
+  { id: 'earth',   label: VAULT_DISPLAY_NAMES.earth },
+  { id: 'mercury', label: VAULT_DISPLAY_NAMES.mercury },
 ];
 
 const SR_ONLY_STYLE = {
