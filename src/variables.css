@@ -23,7 +23,7 @@
   --font-primary:  'Chakra Petch', sans-serif;
   --font-ui:       'Chakra Petch', sans-serif;
   --font-headers:  'Chakra Petch', sans-serif;
-  --font-mono:     'SF Mono', 'Monaco', 'Courier New', monospace;
+  --font-mono:     "SF Mono", "JetBrains Mono", monospace;
 
   /* ── SYSTEM STATES ───────────────────────────────── */
   --record-red:         #cc2200;

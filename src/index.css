@@ -204,53 +204,6 @@ h1, h2, h3,
   }
 }
 
-/* Orbital Mechanics - 23° Axial Tilt Elliptical Orbits */
-.orbit {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid rgba(139, 115, 85, 0.3);
-  transform-style: preserve-3d;
-}
-
-.mercury-orbit {
-  width: 200px;
-  height: 180px; /* Elliptical */
-  border-radius: 50% / 45%; /* Elliptical shape */
-}
-
-.venus-orbit {
-  width: 300px;
-  height: 250px;
-  border-radius: 50% / 42%;
-}
-
-.earth-orbit {
-  width: 400px;
-  height: 320px;
-  border-radius: 50% / 40%;
-}
-
-.saturn-orbit {
-  width: 500px;
-  height: 380px;
-  border-radius: 50% / 38%;
-}
-
-.amethyst-orbit {
-  width: 350px;
-  height: 280px;
-  border-radius: 50% / 40%;
-}
-
-.planet {
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 2rem;
-  color: var(--aged-stone);
-}
-
 .sun-core-flyby {
   position: absolute;
   font-size: 4rem;

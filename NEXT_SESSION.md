@@ -61,27 +61,41 @@ The design work is finished. The job now is implementing it in code.
 
 ---
 
-## WHAT WAS DONE THIS SESSION (2026-04-27)
+## WHAT WAS DONE THIS SESSION (2026-04-27 — SESSION 2)
 
-- ✅ P10-2 — Collaborator object system COMPLETE
-- ✅ P10-6 — Lockbox access layer COMPLETE
-- ✅ P10-8 — Pull cord surgery COMPLETE
-  GodModePullCord deleted. isProtected stripped everywhere. EXIT SYSTEM button in both consoles.
-  Build passes. grep isProtected src/ → CLEAN.
-- ✅ P10-5 — REC voice comments COMPLETE
-  Mercury voice comments wired. Timestamp pin (⏺ HH:MM) on CommentPanel voice entries.
-  Planet names killed in room view + CommentPanel (VAULT_DISPLAY_NAMES in config.js).
-  528Hz removed from MasterClock.
-  Build passes.
-- ✅ P10-4 — ID3 auto-read COMPLETE
-  UploadModal: added TPE1 (artist) parsing, artist + tags state, ARTIST + TAGS fields.
-  Artist wired to uploadTrack(). Tags field is UI-only (no DB column yet).
-  Build passes.
-- ✅ P10-1 — QA sweep COMPLETE
-  2 bugs found and fixed:
-  • ISSUE-001 (Critical): EarthSafe crash — clearSelection missing from useVaultFileCells destructure. Fixed: ea256d9.
-  • ISSUE-002 (Medium): ArchitectConsole vault names hardcoded, not using VAULT_DISPLAY_NAMES. Fixed: 51f0362.
-  All vaults, both consoles, entry sequence verified clean. Build passes.
+### P10-7 partial implementation — INCOMPLETE, resume immediately
+
+**What IS done (all unstaged, not yet committed):**
+- ✅ `src/console/SpectralStack.jsx` — NEW file, untracked. BPM-derived stacked sine-wave canvas. Uses FALLBACK_BPMS if no tracks. Ready to use.
+- ✅ `src/App.css` — Full 5-zone D console CSS added. `.analog-console`, `.d-rail`, `.d-bins`, `.d-monitor`, `.d-chain`, `.d-transport`, `.d-cursor`, `.d-spotlight`, aurora blobs, gold foil, CRT scanlines, MUSE panel styles — all present.
+- ✅ `src/config.js` — `LOCKBOX_CODES` added (`lockbox_janet: 'J528'`, etc.)
+- ✅ `src/console/ArchitectConsole.jsx` — MUSE Outreach Composer panel added. MUSE tab button + full panel with lockbox selector, L's message, D's note, COPY INVITE.
+
+**What is NOT done (do immediately):**
+- ❌ `src/console/AnalogConsole.jsx` — THE COMPLETE REWRITE WAS NEVER WRITTEN. Still old 263-line 3-zone version importing SATURN_TRACKS. This is the entire console. All CSS and SpectralStack are ready but nothing uses them yet.
+
+**4 fixes to apply while writing the rewrite:**
+1. **D1**: Add a VOICE toggle in the CHAIN system-toggles block (alongside Members) — opens CommentPanel. Use the `.d-tog` pattern, same as the Members toggle.
+2. **D2**: Add `countVaultTracks(vault)` to `src/lib/tracks.js` using `select('*', { count: 'exact', head: true })`. Use it in `loadCounts` instead of fetching full arrays.
+3. **D3**: Fix MUSE clipboard output format in ArchitectConsole.jsx (line ~844). Change `'Access code:'` → `'Your lockbox:'` and add `'— D\n'` before D's note text.
+4. **Bonus**: Add `handleNext` — track navigation forward. Transport has ◀◀ and ■ Stop but no ▶▶.
+
+### How to write AnalogConsole.jsx
+
+The complete spec is in `tasks/plan.active.md` (search for `# P10-7 Implementation Plan`). The locked preview is at `public/d-console-preview.html`.
+
+Key implementation notes:
+- `export default function AnalogConsole({ onBroadcast, onIntake, isBroadcasting, onPowerDown, activeNode, onNodeSelect, onNodeLongPress, onClaimNode, latentNodes, artistLockboxes, onLockboxSync })` — keep legacy props for App.jsx compat
+- Imports: `fetchVaultTracks, getAudioUrl` from `'../lib/tracks'`; `countVaultTracks` from `'../lib/tracks'` (after you add it); `VAULT_COLORS, VAULT_DISPLAY_NAMES` from `'../config'`; `SpectralStack` from `'./SpectralStack'`
+- Vault labels (local, for bins): `{ saturn: 'Original Music', venus: 'Curated Mixes', mercury: 'Live Sets', earth: 'Sonic Archive' }`
+- VAULT_ORDER: `['saturn', 'venus', 'mercury', 'earth']`
+- M³ defaults: `masterCount || 2` and `museCount || 4` (because members array may show 0 before load)
+- Audio useEffect deps: include `isPlaying` to avoid stale closure
+- Cancelled flag pattern: `let cancelled = false; return () => { cancelled = true; }` in vault load effect
+- Total tracks: `Object.values(vaultCounts).reduce((a, b) => a + b, 0)`
+- The `.analog-console` CSS now uses `flex: 1` + CSS grid. The `.cockpit` in App.jsx is already `display: flex; flex-direction: column; height: 100svh`.
+
+After writing, run `npm run preflight` — must be green before done.
 
 ---
 
@@ -94,14 +108,11 @@ The design work is finished. The job now is implementing it in code.
 - [x] **P10-4** — ID3 auto-read on upload — COMPLETE
 - [x] **P10-1** — QA sweep — COMPLETE
 
-- [ ] **P10-7** — D console implementation
-  **Design is LOCKED. Implement from `public/d-console-preview.html`. Do not redesign.**
-  Read DESIGN.md § D Console before touching AnalogConsole.jsx.
-  ⚠️ THE HELIX: before writing a single line, ask Lisa what the helix is. It is flagged missing in DESIGN.md. Do not skip this question.
-  📬 MUSE OUTREACH COMPOSER (ArchitectConsole scope):
-  L drafts a message to a Muse artist with their lockbox access code.
-  D can add a personal note — he likely won't (humble, not self-promotional).
-  The lockboxes are sonic love letters. The composer is how they get invited in.
+- [ ] **P10-7** — D console implementation — IN PROGRESS
+  **RESUME HERE. Write AnalogConsole.jsx + apply 4 fixes above. Run preflight. Then /plan-eng-review.**
+  Design is LOCKED. CSS is done. SpectralStack.jsx is done. ArchitectConsole MUSE is done.
+  The ONLY missing piece is AnalogConsole.jsx itself.
+  📬 MUSE OUTREACH COMPOSER: done in ArchitectConsole.jsx (except D3 format fix).
 
 ---
 

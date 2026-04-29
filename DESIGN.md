@@ -2,8 +2,8 @@
 
 ## Product Context
 - **What this is:** A cinematic, artist-first music platform. Sovereign infrastructure for independent creators.
-- **Who it's for:** D (primary), L (co-architect), and invited collaborators with personal access codes.
-- **Space/industry:** Music creation, archival, and selective sharing. Not a streaming platform — a private instrument.
+- **Who it's for:** D (primary), L (co-architect), and  muses, members, those who aspire to collaborate, and discerning listeners to whom autheticity and skill reign supreme..
+- **Space/industry:** Music creation, archival, and selective sharing. The future, forward thinking,  streaming platform — a private instrumentdesigned for the true artist..
 - **Project type:** Web app / artist console system.
 
 ## Memorable Thing

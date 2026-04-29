@@ -2,10 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const NAV_ITEMS = [
-  { id: 'saturn',  label: 'ORIGINAL', glyph: '◉' },
-  { id: 'venus',   label: 'MIXES',    glyph: '◈' },
-  { id: 'earth',   label: 'ARCHIVE',  glyph: '◧' },
-  { id: 'mercury', label: 'LIVE',     glyph: '▶' },
+  { id: 'saturn',  label: 'ORIGINAL COMPOSITIONS', glyph: '◉' },
+  { id: 'venus',   label: 'CURATED MIXES',    glyph: '◈' },
+  { id: 'earth',   label: 'SONIC ARCHITECTURE',  glyph: '◧' },
+  { id: 'mercury', label: 'LIVE SETS',     glyph: '▶' },
 ];
 
 /**

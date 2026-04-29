@@ -410,3 +410,380 @@ Primary concerns to clear before heavy implementation:
 1. Resolve design-law drift (`tasks/plan.active.md` vs `DESIGN.md`).
 2. Add hard acceptance criteria for audit and phase completion.
 3. Stage dispatch/auth work with explicit rollback-safe increments.
+
+---
+
+# P10-7 Implementation Plan — D Console + Muse Outreach Composer
+
+**DX-reviewed 2026-04-27 via /plan-devex-review EXPANSION**
+**Branch:** phase-10 | **Status:** READY TO IMPLEMENT
+**Design law:** [DESIGN.md](../DESIGN.md) § D Console (locked 2026-04-26)
+**Preview ref:** [public/d-console-preview.html](../public/d-console-preview.html) (722 lines — locked, do not edit)
+
+```
+READ DESIGN.md BEFORE TOUCHING A SINGLE LINE.
+```
+
+## Artist Benefit Check
+
+D gets a console that looks and feels like a professional instrument — not a web app.
+Every visual decision (aurora, gold foil, custom cursor, Spectral Stack) signals: *this is built for you.*
+
+---
+
+## Magical Moment Sequence (design target)
+
+Three-beat sequence, in this order, on first load:
+
+1. **Aurora** — ambient amber light blobs behind the whole UI. D feels warmth before he touches anything.
+2. **Gold foil** — his own track title shimmers in animated gold. His music gets the luxury treatment.
+3. **M³ counts** — real numbers from Supabase. His catalog. His masters. Proof it's real.
+
+Every implementation decision about animation timing serves this sequence.
+
+---
+
+## Scope
+
+### In Scope — P10-7
+
+| # | Task | File | Est |
+|---|------|------|-----|
+| 1 | Wire real Supabase tracks (replace SATURN_TRACKS) | AnalogConsole.jsx | 15 min |
+| 2 | Aurora blobs (3 animated CSS divs) | AnalogConsole.jsx + App.css | 20 min |
+| 3 | Gold foil animation on hero track title | App.css | 15 min |
+| 4 | Custom amber cursor + spotlight follower | App.css + AnalogConsole.jsx | 15 min |
+| 5 | CRT scanlines on waveform + chain readout blocks | App.css | 10 min |
+| 6 | SpectralStack (helix) — canvas in MONITOR bg | src/console/SpectralStack.jsx (new) | 30 min |
+| 7 | 5-zone grid layout matching preview | AnalogConsole.jsx + App.css | 30 min |
+| 8 | Vault pad colors from VAULT_COLORS in config | AnalogConsole.jsx | 5 min |
+| 9 | M³ block with real member/muse counts | AnalogConsole.jsx | 10 min |
+| 10 | Muse Outreach Composer — MUSE panel in ArchitectConsole | ArchitectConsole.jsx + App.css | 30 min |
+
+**Total estimate:** ~3 hours
+
+### Out of Scope (do not touch)
+
+- New Supabase schema columns (waveform_peaks — not needed, BPM-derived)
+- Email sending or mailto links
+- THE SIGNAL live broadcast feature
+- Any layout changes to ArchitectConsole beyond adding the MUSE tab
+- `public/d-console-preview.html` — locked, never edit
+
+---
+
+## Implementation Order
+
+**Do these in strict order. Layout before decoration. Data before UI that depends on data.**
+
+1. CSS grid layout (5-zone: RAIL/BINS/MONITOR/CHAIN/TRANSPORT)
+2. Aurora blobs (CSS only, no JS)
+3. Gold foil animation (CSS only)
+4. CRT scanlines (CSS only)
+5. Supabase data wiring (replace SATURN_TRACKS → fetchVaultTracks)
+6. SpectralStack.jsx (new canvas component)
+7. Custom cursor + spotlight (JS + CSS)
+8. Vault pad color wiring from config
+9. M³ counts from real member data
+10. MUSE panel in ArchitectConsole
+
+**Before writing line 1:** Run `npm run dev` — confirm current console loads. Baseline confirmed.
+**After step 5:** Run `npm run build` — confirm no import errors.
+**After step 10:** Run `npm run preflight` — full green before done.
+
+---
+
+## Component Specs
+
+### 5-Zone Layout (Step 1)
+
+```css
+.d-console {
+  display: grid;
+  grid-template-rows: 30px 1fr 52px;
+  grid-template-columns: 214px 1fr 188px;
+  grid-template-areas:
+    "rail   rail    rail"
+    "bins   monitor chain"
+    "trans  trans   trans";
+  height: 100vh;
+  background: #000;
+}
+.d-rail      { grid-area: rail;    background: #0d0d0d; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.d-bins      { grid-area: bins;    background: #0b0806; border-right: 1px solid rgba(255,255,255,0.04); }
+.d-monitor   { grid-area: monitor; background: #000000; position: relative; overflow: hidden; }
+.d-chain     { grid-area: chain;   background: #060608; border-left: 1px solid rgba(255,255,255,0.04); }
+.d-transport { grid-area: trans;   background: #0a0a0a; border-top: 1px solid rgba(255,255,255,0.04); }
+```
+
+**Preserve in new layout:** AssetIntakeSlot, UploadModal, CommentPanel, MembersPanel, InboxPanel, MasterClock, VaultPad navigation — all must survive the layout change.
+
+### Aurora Blobs (Step 2)
+
+Three `<div>` elements inside `.d-monitor`, `z-index: 0`, `pointer-events: none`, wrapped in `.aurora-layer`:
+
+```css
+.aurora-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.aurora-blob { position: absolute; border-radius: 50%; filter: blur(80px); mix-blend-mode: screen; }
+.aurora-blob-1 {
+  width: 600px; height: 400px;
+  background: radial-gradient(ellipse, #ffb34780, #d4890a40);
+  top: -100px; left: -100px; opacity: 0.12;
+  animation: aurora-drift-1 18s ease-in-out infinite alternate;
+}
+.aurora-blob-2 {
+  width: 400px; height: 500px;
+  background: radial-gradient(ellipse, #d4890a60, #ffb34730);
+  top: 30%; left: 40%; opacity: 0.10;
+  animation: aurora-drift-2 24s ease-in-out infinite alternate;
+}
+.aurora-blob-3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(ellipse, #ffe4a050, #d4890a40);
+  bottom: -50px; right: -50px; opacity: 0.14;
+  animation: aurora-drift-3 20s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift-1 { from { transform: translate(0,0); } to { transform: translate(80px, 60px); } }
+@keyframes aurora-drift-2 { from { transform: translate(0,0); } to { transform: translate(-60px, 40px); } }
+@keyframes aurora-drift-3 { from { transform: translate(0,0); } to { transform: translate(40px, -50px); } }
+```
+
+### Gold Foil on Hero Title (Step 3)
+
+```css
+.hero-title {
+  font-size: 54px;
+  font-weight: 700;
+  font-family: var(--font-display); /* Chakra Petch */
+  background: linear-gradient(90deg, #d4890a 0%, #ffbf00 25%, #ffe4a0 50%, #ffbf00 75%, #d4890a 100%);
+  background-size: 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gold-foil 5s linear infinite;
+}
+@keyframes gold-foil { 0% { background-position: 0%; } 100% { background-position: 300%; } }
+```
+
+### CRT Scanlines (Step 4)
+
+```css
+.console-waveform, .chain-readout-block { position: relative; overflow: hidden; }
+.console-waveform::after, .chain-readout-block::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 4px);
+  pointer-events: none; z-index: 2;
+}
+```
+
+### Supabase Data Wiring (Step 5)
+
+In `AnalogConsole.jsx` — replace the static import:
+
+```javascript
+// REMOVE: import { SATURN_TRACKS } from '../data/saturn';
+import { fetchVaultTracks } from '../lib/tracks';
+
+// ADD state:
+const [tracks, setTracks] = useState([]);
+const [tracksLoading, setTracksLoading] = useState(false);
+
+// ADD effect — fetch on vault change:
+useEffect(() => {
+  async function load() {
+    setTracksLoading(true);
+    const data = await fetchVaultTracks(activeVault);
+    setTracks(data);
+    setTracksLoading(false);
+  }
+  load();
+}, [activeVault]);
+```
+
+Empty state (no tracks, not loading): show `— NO TRACKS —` row in tracklist. No spinner — aurora and SpectralStack keep UI alive during load.
+
+### SpectralStack — The Helix (Step 6)
+
+New file: `src/console/SpectralStack.jsx`
+
+**Purpose:** Renders 5–10 track waveforms from the active vault as stacked amber sine-wave layers. Position: absolute, behind hero + tracklist in MONITOR column.
+
+**Data:** `tracks` array (from Step 5). Each track generates:
+```
+amplitude = 20 + (track.bpm % 40)       // varies 20–60px
+frequency = track.bpm / 120             // cycles per viewport width
+phase = trackIndex * (Math.PI / 5)      // offset layers
+y = baseline + amplitude * sin(frequency * x + phase + elapsed)
+```
+
+**Rendering:**
+- Canvas element, `position: absolute`, `inset: 0`, `width: 100%`, `height: 100%`, `pointer-events: none`, `z-index: 1`
+- Each layer: `rgba(255, 191, 0, 0.08)` to `rgba(255, 191, 0, 0.14)` — stepped opacity per layer
+- Stroke: 1.5px
+- 60fps rAF loop — scrolls left at 20px/sec
+
+**Empty state:** If `tracks.length === 0`, render 3 static fallback sine waves at BPMs [88, 93, 104]. Silent fallback, no error.
+
+**Error state:** Canvas fetch failure → `display: none`. Aurora still provides atmosphere.
+
+### Custom Cursor + Spotlight (Step 7)
+
+```css
+/* Scoped to D console — cursor:none on body when D theme is active */
+[data-theme="d-soul"] { cursor: none; }
+
+.d-cursor {
+  position: fixed; width: 12px; height: 12px; border-radius: 50%;
+  background: #ffbf00;
+  box-shadow: 0 0 8px #ffbf00, 0 0 20px #ffbf00, 0 0 50px #ffbf0080;
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.1s, height 0.1s;
+}
+.d-cursor.clicking { width: 7px; height: 7px; }
+.d-spotlight {
+  position: fixed; width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,191,0,0.04) 0%, transparent 70%);
+  pointer-events: none; z-index: 1;
+  transform: translate(-50%, -50%);
+}
+```
+
+Cursor JS tracker in AnalogConsole.jsx useEffect — listen to `mousemove`, update `left`/`top` on `.d-cursor` and `.d-spotlight` divs.
+
+### Vault Pad Colors (Step 8)
+
+Replace hardcoded hex values in VAULT_PADS array with values from `VAULT_COLORS` in `src/config.js`:
+
+```javascript
+import { VAULT_COLORS } from '../config';
+
+const VAULT_PADS = [
+  { id: 'venus',   abbr: 'MIX', label: 'MIXES',          color: VAULT_COLORS.venus   },
+  { id: 'saturn',  abbr: 'OG',  label: 'ORIGINAL MUSIC', color: VAULT_COLORS.saturn  },
+  { id: 'mercury', abbr: 'LST', label: 'LIVE SETS',      color: VAULT_COLORS.mercury },
+  { id: 'earth',   abbr: 'ARC', label: 'SONIC ARCH',     color: VAULT_COLORS.earth   },
+];
+```
+
+### M³ Counts (Step 9)
+
+Pull real member and muse counts from SystemContext:
+
+```javascript
+const { members } = useSystem(); // already available
+const masterCount = members.filter(m => m.tier === 'A').length;
+const memberCount = members.filter(m => m.tier === 'B').length;
+const museCount   = members.filter(m => m.tier === 'C').length;
+// Online: use members.length or a future presence signal; default to members.length for now
+```
+
+### Muse Outreach Composer — MUSE Tab (Step 10)
+
+**Add to ArchitectConsole.jsx** following the existing `aria-controls` panel pattern:
+
+**Tab button** (alongside MEMBERS / INBOX / ROSTER / CMD MATRIX):
+```jsx
+<button className="arch-archive-btn" aria-controls="arch-muse-panel" onClick={() => setActiveSection('muse')}>
+  <span className="arch-archive-btn-label">MUSE</span>
+</button>
+```
+
+**Panel** (`id="arch-muse-panel"`):
+```
+Fields:
+  - Lockbox selector: 4 buttons (JANET / ERIKAH / LARRY / DRAKE)
+    Each button in that Muse's identity color when selected:
+    Janet: #cc3399  |  Erikah: #cc6633  |  Larry: #7aaa5a  |  Drake: #c4a428
+  - Lockbox code display: shown when a Muse is selected (from LOCKBOX_CODES in config)
+  - L's message: textarea (6 rows), placeholder "Compose your invite…"
+  - D's note: textarea (2 rows), placeholder "Add a note from D…" — labeled OPTIONAL
+  - COPY INVITE button
+```
+
+**Add to `src/config.js`:**
+```javascript
+export const LOCKBOX_CODES = {
+  lockbox_janet:  'J528',
+  lockbox_erikah: 'E432',
+  lockbox_larry:  'L396',
+  lockbox_drake:  'D741',
+};
+```
+
+**COPY INVITE output format:**
+```
+{L's message text}
+
+Your lockbox: {code}
+
+— D
+{D's note, if present}
+```
+
+Copy via `navigator.clipboard.writeText()`. On success: button shows "COPIED ✓" for 2s, then resets. On failure: show "Copy failed — select text manually" inline.
+
+---
+
+## Error States (all required)
+
+| Component | Condition | Behavior |
+|-----------|-----------|----------|
+| AnalogConsole | fetchVaultTracks fails | Show `— NO TRACKS —` in tracklist. Console stays functional. |
+| SpectralStack | fetch fails or 0 tracks | Render 3 fallback static sine waves. Silent. |
+| Muse Composer | clipboard.writeText fails | Show inline "Copy failed — select text manually" |
+| Custom cursor | `cursor: none` not supported | Reverts to default cursor. No error. |
+
+---
+
+## Acceptance Checklist (binary — verify each in 30 seconds)
+
+```
+VISUAL — AnalogConsole
+[ ] Aurora: 3 blobs visible and drifting on page load
+[ ] Gold foil: hero track title animates amber/gold gradient
+[ ] SpectralStack: waveform layers visible behind tracklist in MONITOR
+[ ] Custom cursor: amber glowing ball follows mouse on D console
+[ ] Spotlight: subtle radial glow follows cursor
+[ ] CRT scanlines: visible on waveform zone and signal chain readout blocks
+[ ] 5-zone grid: RAIL/BINS/MONITOR/CHAIN/TRANSPORT matches locked preview
+[ ] Vault pads: amber/copper/silver/stone colors from VAULT_COLORS config
+[ ] M³: Masters=2, Members={count}, Muses=4, Online={count}
+
+DATA
+[ ] fetchVaultTracks wired — vault nav changes tracklist from Supabase
+[ ] Now Playing shows real track title (or "—" if empty)
+[ ] Track count in RAIL shows real Supabase count
+
+EXISTING FUNCTIONALITY (must not break)
+[ ] Drag-to-upload still works (AssetIntakeSlot)
+[ ] Voice comments still accessible (CommentPanel)
+[ ] Vault navigation still switches vaults
+[ ] Build passes: npm run build (clean, 0 errors)
+[ ] Preflight passes: npm run preflight (green)
+
+MUSE OUTREACH COMPOSER
+[ ] MUSE tab visible in ArchitectConsole panel nav
+[ ] Clicking each Muse button highlights it in that Muse's identity color
+[ ] Lockbox code visible on Muse selection
+[ ] L's message textarea accepts input
+[ ] D's note textarea accepts input (labeled OPTIONAL)
+[ ] COPY INVITE copies formatted message to clipboard
+[ ] Button shows "COPIED ✓" for 2s then resets
+```
+
+---
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAR | phase-10 scope accepted 2026-04-24 |
+| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | — |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 0 | — | — |
+| Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | — |
+| DX Review | `/plan-devex-review` | Developer experience gaps | 1 | CLEAR | score: 5/10 → 8/10, TTHW: 25min → 3min |
+
+**UNRESOLVED:** 0
+**VERDICT:** DX CLEARED — P10-7 plan is ready to implement. Eng Review required before merge to main.

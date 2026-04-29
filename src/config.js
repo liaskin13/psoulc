@@ -35,6 +35,13 @@ export const D_CHAKRA_COLOR   = '#B87333'; // Copper — D's personal chakra
 export const BROADCAST_DURATION_MS = 5000;
 export const LOCKBOX_PREFIX = 'lockbox_';
 
+export const LOCKBOX_CODES = {
+  lockbox_janet:  'J528',
+  lockbox_erikah: 'E432',
+  lockbox_larry:  'L396',
+  lockbox_drake:  'D741',
+};
+
 export const VAULT_DISPLAY_NAMES = {
   venus:   'MIXES',
   saturn:  'ORIGINAL MUSIC',

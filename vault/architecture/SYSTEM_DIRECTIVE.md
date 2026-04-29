@@ -6,14 +6,19 @@
 
 ---
 
-## 1. THE DUAL CORES (Founding Authority)
+## 1. SOVEREIGN CONSOLES (Tier A)
 
-* **D's GOD MODE CONSOLE:** The active command center of the Collective. Full sovereign control. (**Access: 0528**).
-* **VOID TRIGGER:** A button (or equivalent control) in D's console that activates the Void.
-  * **MECHANIC:** Triggers a system-wide drain — all color bleeds out into High-Contrast Grayscale.
-  * **ACTION:** Severs access for all tiers below Master. Access is restored only when D deactivates via the same control.
-  * **VISUAL FORM:** TBD — button, toggle, or gesture. Not a pull cord. Design to be decided.
-* **L's ARCHITECT CONSOLE (THE VOID):** The silent governance layer. The Architect has full visibility and elevated permissions, including the exclusive `RESTORE` command. (**Access: 7677**).
+> The platform is a private instrument. Achromatic Brutalist Futurism provides the architecture; the Artist brings the sovereignty through color.
+
+* **D's ANALOG CONSOLE (The Soul):** The primary command center. A high-luxury instrument combining Dark OLED depth with 70s Soul warmth.
+  * **AESTHETIC:** Aurora mesh gradients, Honey Amber accents, and Gold Foil typography.
+  * **IDENTITY:** Amber (#ffb347).
+  * **ACCESS:** Master Tier A (0528).
+* **L's ARCHITECT CONSOLE:** The governance layer. A cold, systematic interface for structural control, permission matrix, and archival restoration.
+  * **AESTHETIC:** Graphite surfaces and Cyan signal lines.
+  * **IDENTITY:** Cyan (#00e5ff).
+  * **ACCESS:** Master Tier A (7677).
+* **CONSOLE ACCESS:** The Consoles are the exclusive instruments of Tier A (Masters). Access is strictly forbidden for all other tiers. All session management and signal protocols are integrated directly into the console interface. Hardware "Void Triggers" and pull-cords have been scrapped.
 
 ---
 
@@ -88,14 +93,21 @@
 
 | Tier        | Who                       | Access                                                                 |
 |-------------|---------------------------|------------------------------------------------------------------------|
-| **MASTER**  | D, L                      | God Mode — total admin control. Founders.                              |
-| **MUSE**    | Angi, Jess B, invited artists | Admin of assigned vault + explore all vaults. Assigned jointly by L and D. |
-| **MEMBER**  | Collective members        | Explore all vaults. Elevated from Listener by L or D.                  |
+| **MASTER**  | D, L (+ DJ's/ARTISTS  VETTED BY L, APPROVED BY D)                     | God Mode — total admin control. Founders.                              |
+| **MUSE**    | ALTRUISTIC ARTIST DREAMS, invited artists | AAccess to DIRECT MESSAGING to D and L  explore all vaults. Assigned  by L and D. |
+| **MEMBER**  | Collective members        | Explore all vaults. Elevated from Listener by L or D. Elevated by subscription, auto assigned.                 |
 | **ASPIRING** | Self-submitted pipeline  | Browse-only until elevated. Artists who believe they belong here.      |
 | **LISTENER** | Open access              | Browse-only. No edit, comment, or void. Auto-assigned on entry request. No approval required. |
+| **MASTER (A)**  | D, L                      | God Mode — Full Console Access + total admin control. Founders.         |
+| **MUSE (C)**    |  invited artists | Vault-only access.  + explore others.            |
+| **MEMBER (B)**  | Collective members        | Vault-only access. Explore all vaults.                                 |
+| **LISTENER (G)** | Open access              | Vault-only access. Browse-only.             |
 
-### Onboarding Pipeline (Muse / Member)
-Potential member submits request → L reviews → D confirms → code auto-generated and assigned.
+### ROUTING PROTOCOL
+Upon successful authentication, the system checks `canAccessConsole`. Tier A users are routed to their respective **Console**. All other Tiers (B, C, G) are routed to the **Vault** view.
+
+### Onboarding Pipeline (  Aspiring)
+Potentialspiring collaborator submits request → L reviews → D confirms → code auto-generated and assigned.
 
 ---
 
@@ -107,7 +119,7 @@ Potential member submits request → L reviews → D confirms → code auto-gene
 * **READOUT:** Hovering over a file displays **Track Name** and **BPM** in Amber.
 * **CONTROLS:** Selecting a file reveals options: **PLAY, FFWD, REWIND, STOP, REC**.
 * **SCROLL:** Vertical, kinetic scroll that feels heavy and mechanical.
-* **VOICE TRANSMISSIONS:** The **REC** button on the Studer transport arms a voice-note capture. Any authenticated tier may leave a voice note on any track they can access — **audio only, no text**. Notes are pinned to the track and visible to the vault owner. *(Full mic/MediaRecorder implementation — pending.)*
+* **VOICE TRANSMISSIONS:** The **REC** button on the Studer transport arms a voice-note capture. Any authenticated tier may leave a voice note on any track they can access — **audio &/or text**. Notes are pinned to the track and visible to the vault owner. *(Full mic/MediaRecorder implementation — pending.)*
 
 ---
 
@@ -121,11 +133,8 @@ Potential member submits request → L reviews → D confirms → code auto-gene
 
 ## 7. THE VOID TRANSFER
 
-* **THE ACTION:** Non-Linear Stretch Transform toward the Eternal Registry.
-* **VECTOR:** Asset elongates and thins until it is a **1px line of light**.
-* **COLOR LOGIC:** The streak inherits the **identity color** of the originating vault, fading into absolute black at the void threshold.
-* **SOUND:** Granular pitch-down audio effect as the asset stretches.
-* **THE STICK:** Successful capture triggers an Inverse Bloom (Flash of Darkness) at the Registry core.
+* **THE ACTION:**  **Assets are never deleted; they are archived.**
+* 
 * **LOGIC:** Only the Architect has the Restore command.
 
 ---
@@ -133,7 +142,9 @@ Potential member submits request → L reviews → D confirms → code auto-gene
 ## 8. THE ETERNAL REGISTRY
 
 * **PURPOSE:** Permanent archive of voided assets. Immutable record of origin vault and timestamp of voiding.
+* **PURPOSE:** Permanent, immutable archive of voided assets. Files are moved here to preserve the "Eternal Record" and are never purged from the system.
 * **METADATA:** Origin vault and time of voiding stored permanently.
 * **VISUALIZATION:** Hovering over the Registry core in the vault map displays a multi-colored ambient layer representing the stored frequencies.
-* **CONFIRMATION:** *"Commit to the Void? This cannot be undone."*
+* **CONFIRMATION:** *"Commit to the Void? "*
 * **RESTORE:** L-only command. Retrieves asset and re-attaches original metadata.
+* **RESTORE:** L-only command. Only the Architect can view the Registry or retrieve assets from it.
