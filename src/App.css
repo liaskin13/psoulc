@@ -1,3 +1,174 @@
+/* ─── THE ENTRY APERTURE (VELVET ROPE) ─── */
+.entry-aperture {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100svh;
+  background: transparent; /* DPWallpaper canvas provides the background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: text;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.aperture-gate-upper,
+.aperture-gate-lower {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: rgba(5, 5, 5, 0.78);
+  z-index: 10;
+}
+
+.aperture-gate-upper { top: 0; }
+.aperture-gate-lower { bottom: 0; }
+
+.aperture-controls {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.entry-maison-mark {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.entry-maison-line {
+  font-family: 'Comfortaa', cursive;
+  font-size: clamp(11px, 1.6vw, 15px);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  color: rgba(255, 255, 255, 0.34);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+.entry-maison-sub {
+  font-family: var(--font-ui);
+  font-size: 8px;
+  letter-spacing: 0.26em;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.aperture-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.4em;
+  color: rgba(255, 255, 255, 0.18);
+  text-transform: uppercase;
+}
+
+.aperture-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aperture-line-left,
+.aperture-line-right {
+  display: none;
+}
+
+.aperture-lockout {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--record-red);
+  letter-spacing: 0.2em;
+  margin-top: 1rem;
+}
+
+/* ─── ENTRY GATE — 4-CELL CODE GRID ─── */
+.aperture-code-grid {
+  display: flex;
+  gap: 14px;
+}
+
+.aperture-code-cell {
+  position: relative;
+  width: 38px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.18s ease, color 0.18s ease;
+}
+
+.aperture-code-cell.aperture-cell-filled {
+  color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.aperture-code-cell.aperture-cell-active {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.aperture-code-cell.aperture-cell-active::after {
+  content: 'dp';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Comfortaa', sans-serif;
+  font-weight: 700;
+  font-size: 7px;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+  animation: dp-cursor-blink 1.25s ease-in-out infinite;
+}
+
+@keyframes dp-cursor-blink {
+  0%, 100% { opacity: 0.05; }
+  45%, 55% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aperture-code-cell.aperture-cell-active::after {
+    animation: none;
+  }
+}
+
+/* ─── ENTRY: Hidden mobile input + focus ring ─── */
+.entry-hidden-input {
+  position: fixed;
+  top: 0; left: 0;
+  width: 1px; height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  border: none;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+}
+
+.entry-aperture:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.45);
+  outline-offset: -6px;
+}
+
 /* ─── CUSTOM CURSOR SYSTEM (D-SOUL) ─── */
 [data-theme="d-soul"] {
   cursor: none;
