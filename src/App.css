@@ -1,3 +1,9 @@
+/* ─── CHAKRA PETCH: Singular console typeface ─── */
+*, *::before, *::after {
+  font-family: 'Chakra Petch', sans-serif;
+  box-sizing: border-box;
+}
+
 /* ─── THE ENTRY APERTURE (VELVET ROPE) ─── */
 .entry-aperture {
   position: fixed;
