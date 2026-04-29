@@ -1,6 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import SpaceWindow from '../three/SpaceWindow';
 import VaultSkeleton from '../components/VaultSkeleton';
 import { getWaveformBars } from '../utils/waveform';
 
@@ -33,13 +32,10 @@ function ListenerWatermark() {
   );
 }
 
-const PlanetApproach = lazy(() => import('../three/PlanetApproach'));
 const SaturnVault    = lazy(() => import('../saturn/SaturnVault'));
 const VenusArchive   = lazy(() => import('../venus/VenusArchive'));
 const EarthSafe      = lazy(() => import('../earth/EarthSafe'));
 const MercuryStream  = lazy(() => import('../mercury/MercuryStream'));
-const AmethystVault  = lazy(() => import('../amethyst/AmethystVault'));
-const MarsVault      = lazy(() => import('../mars/MarsVault'));
 
 // Active vaults only — in launch priority order.
 // Crystal (Amethyst) and Mars excluded: no content to upload yet.
@@ -56,8 +52,6 @@ function renderVault(id, onBack) {
     case 'venus':    return <VenusArchive  readOnly onBack={onBack} />;
     case 'earth':    return <EarthSafe     readOnly onBack={onBack} />;
     case 'mercury':  return <MercuryStream readOnly onBack={onBack} />;
-    case 'amethyst': return <AmethystVault readOnly onBack={onBack} />;
-    case 'mars':     return <MarsVault     readOnly onBack={onBack} />;
     default:         return null;
   }
 }
@@ -81,16 +75,11 @@ function ListenerShell({ onPowerDown }) {
     setActiveVault(null);
   };
 
-  // ── PLANET APPROACH ──────────────────────────────────────────────
+  // ── VAULT TRANSITION ─────────────────────────────────────────────
   if (pendingPlanet) {
-    return (
-      <Suspense fallback={<VaultSkeleton />}>
-        <PlanetApproach
-          planetId={pendingPlanet}
-          onComplete={handleApproachComplete}
-        />
-      </Suspense>
-    );
+    // Skip approach animation (three.js removed) — go straight to vault
+    handleApproachComplete();
+    return <VaultSkeleton />;
   }
 
   // ── VAULT VIEW ───────────────────────────────────────────────────
@@ -113,10 +102,7 @@ function ListenerShell({ onPowerDown }) {
   // ── MAIN LISTENER SHELL ─────────────────────────────────────────
   return (
     <div className="listener-shell">
-      {/* 3D Solar System — ambient, non-clickable */}
-      <div className="listener-space">
-        <SpaceWindow onPlanetClick={undefined} />
-      </div>
+      <div className="listener-space" />
 
       {/* Top bar */}
       <div className="listener-topbar">
