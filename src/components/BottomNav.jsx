@@ -1,12 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { VAULT_DISPLAY_NAMES } from '../config';
 
 const NAV_ITEMS = [
-  { id: 'saturn',  label: 'ORIGINAL COMPOSITIONS', glyph: '◉' },
-  { id: 'venus',   label: 'CURATED MIXES',    glyph: '◈' },
-  { id: 'earth',   label: 'SONIC ARCHITECTURE',  glyph: '◧' },
-  { id: 'mercury', label: 'LIVE SETS',     glyph: '▶' },
-];
+  { id: 'saturn',  glyph: '◉' },
+  { id: 'venus',   glyph: '◈' },
+  { id: 'earth',   glyph: '◧' },
+  { id: 'mercury', glyph: '▶' },
+].map(item => ({ ...item, label: VAULT_DISPLAY_NAMES[item.id] ?? item.id.toUpperCase() }));
 
 /**
  * BottomNav — Mobile-only vault switcher.
