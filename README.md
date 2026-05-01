@@ -7,8 +7,8 @@ the independent creator.
 
 ## Why this exists
 
-Art sustains the world. It shapes our collective destiny — and the
-independent artists who make it deserve infrastructure worthy of that role.
+Art sustains the world.  It shapes our collective destiny.  The 
+independent artists who create deserve infrastructure worthy of that role.
 
 This platform is built around one radical premise: the creator holds
 sovereign control. Who hears their work, when, where, how it's shared,
