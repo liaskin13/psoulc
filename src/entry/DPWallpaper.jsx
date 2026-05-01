@@ -1,107 +1,147 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 
-// ── DP MONOGRAM WALLPAPER — Stealth Wealth ─────────────────────────────────
-// Canvas-based repeating "dp" pattern in Comfortaa.
-// Waits for document.fonts.ready so the web font is guaranteed loaded.
-//
-// Aesthetic target: Fendi / Gucci — gloss letter on matte black ground.
-//   • Background:  deep matte black (#050505)
-//   • Letter base: barely-lighter dark (#111111 → #0b0b0b gradient)
-//   • Specular:    1-2px offset highlight on upper-left edge
-//   • Shadow:      1px offset darkening on lower-right edge
-//   • Net contrast: ~6–8% above background — visible only on close inspection
-//
-// Tessellation: half-drop repeat (every odd row shifts right by half a tile),
-// the same layout used by Louis Vuitton and Fendi monograms.
+const SERATO = ['#e52020','#e56020','#e5a020','#14dc14','#00c8dc','#1464dc','#8c14dc','#e5e5e5'];
 
 function DPWallpaper({ opacity = 1 }) {
   const canvasRef = useRef(null);
+  const seratoIdxRef = useRef(0);
+  const timerRef = useRef(null);
+  const animFrameRef = useRef(null);
+
+  const getPositions = useCallback((W, H) => {
+    const CW = 110, CH = 80;
+    const COLS = Math.ceil(W / CW) + 3;
+    const ROWS = Math.ceil(H / CH) + 3;
+    const pos = [];
+    for (let row = -1; row < ROWS; row++) {
+      const odd = row % 2 !== 0;
+      for (let col = -1; col < COLS; col++) {
+        pos.push({
+          x: col * CW + (odd ? CW / 2 : 0) + CW / 2,
+          y: row * CH + CH / 2,
+          mir: (row + col) % 2 !== 0,
+        });
+      }
+    }
+    return pos;
+  }, []);
+
+  const drawBase = useCallback((ctx, W, H) => {
+    const FS = 40, CW = 110, CH = 80;
+    const COLS = Math.ceil(W / CW) + 3;
+    const ROWS = Math.ceil(H / CH) + 3;
+    const passes = [
+      { ox: 1.5,  oy: 1.5,  fill: 'rgba(0,0,0,0.97)' },
+      { ox: 0,    oy: 0,    fill: 'rgba(14,12,10,0.91)' },
+      { ox: -0.8, oy: -0.8, fill: 'rgba(24,21,17,0.75)' },
+    ];
+    ctx.font = `700 ${FS}px Comfortaa`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    for (let row = -1; row < ROWS; row++) {
+      const odd = row % 2 !== 0;
+      for (let col = -1; col < COLS; col++) {
+        const cx = col * CW + (odd ? CW / 2 : 0) + CW / 2;
+        const cy = row * CH + CH / 2;
+        const mir = (row + col) % 2 !== 0;
+        passes.forEach(p => {
+          ctx.save();
+          ctx.translate(cx + p.ox, cy + p.oy);
+          if (mir) ctx.scale(-1, 1);
+          ctx.fillStyle = p.fill;
+          ctx.fillText('dp', 0, 0);
+          ctx.restore();
+        });
+      }
+    }
+  }, []);
+
+  const glowOne = useCallback((ctx, pos, colorHex, onDone) => {
+    const passes = [
+      { ox: 1.5,  oy: 1.5,  fill: 'rgba(0,0,0,0.97)' },
+      { ox: 0,    oy: 0,    fill: 'rgba(14,12,10,0.91)' },
+      { ox: -0.8, oy: -0.8, fill: 'rgba(24,21,17,0.75)' },
+    ];
+    ctx.font = '700 40px Comfortaa';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const hex = colorHex.replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const holdFrames = 30 + Math.floor(Math.random() * 90);
+    let alpha = 0, phase = 'in', held = 0;
+    const step = () => {
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      passes.forEach(p => {
+        ctx.save();
+        ctx.translate(pos.x + p.ox, pos.y + p.oy);
+        if (pos.mir) ctx.scale(-1, 1);
+        ctx.fillStyle = p.fill;
+        ctx.fillText('dp', 0, 0);
+        ctx.restore();
+      });
+      ctx.save();
+      ctx.translate(pos.x, pos.y);
+      if (pos.mir) ctx.scale(-1, 1);
+      ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+      ctx.fillText('dp', 0, 0);
+      ctx.restore();
+      ctx.restore();
+      if (phase === 'in') {
+        alpha += 0.005;
+        if (alpha >= 0.45) { alpha = 0.45; phase = 'hold'; }
+      } else if (phase === 'hold') {
+        held++;
+        if (held >= holdFrames) phase = 'out';
+      } else {
+        alpha -= 0.0025;
+        if (alpha <= 0) { onDone(); return; }
+      }
+      animFrameRef.current = requestAnimationFrame(step);
+    };
+    step();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-
-    // ── TILE CONFIG ────────────────────────────────────────────────────────
-    const TILE_W   = 110;   // horizontal step between repeats
-    const TILE_H   = 72;    // vertical step
-    const FONT_SZ  = 44;    // px — Comfortaa 700
-    const FONT     = `700 ${FONT_SZ}px Comfortaa, sans-serif`;
-
-    // Colour palette — everything lives within 0–15% lightness
-    const BG          = '#050505';
-    const FILL_LIGHT  = '#161616';   // letter body highlight corner
-    const FILL_DARK   = '#0a0a0a';   // letter body shadow corner
-    const SPEC_COLOR  = '#242424';   // 1px specular stroke (top-left edge)
-    const SHADOW_CLR  = '#020202';   // 1px shadow stroke (bottom-right edge)
-
-    const draw = () => {
-      const W = canvas.width;
-      const H = canvas.height;
-
-      // ── BG ──────────────────────────────────────────────────────────────
-      ctx.fillStyle = BG;
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.font           = FONT;
-      ctx.textAlign      = 'center';
-      ctx.textBaseline   = 'middle';
-      ctx.globalAlpha    = 1;
-
-      const cols = Math.ceil(W / TILE_W) + 2;
-      const rows = Math.ceil(H / TILE_H) + 2;
-
-      for (let row = -1; row < rows; row++) {
-        // Half-drop: odd rows shift right by half a tile
-        const xShift = (row % 2 !== 0) ? TILE_W * 0.5 : 0;
-
-        for (let col = -1; col < cols; col++) {
-          const cx = col * TILE_W + TILE_W / 2 + xShift;
-          const cy = row * TILE_H + TILE_H / 2;
-
-          // ── SPECULAR LAYER (top-left offset +1px) ──────────────────────
-          ctx.globalAlpha = 0.55;
-          ctx.fillStyle   = SPEC_COLOR;
-          ctx.fillText('dp', cx - 0.8, cy - 0.8);
-
-          // ── SHADOW LAYER (bottom-right offset +1px) ────────────────────
-          ctx.globalAlpha = 0.7;
-          ctx.fillStyle   = SHADOW_CLR;
-          ctx.fillText('dp', cx + 0.8, cy + 0.8);
-
-          // ── MAIN LETTER BODY — top-left → bottom-right gradient ────────
-          const grad = ctx.createLinearGradient(
-            cx - FONT_SZ * 0.55, cy - FONT_SZ * 0.45,   // top-left corner of bounding box
-            cx + FONT_SZ * 0.55, cy + FONT_SZ * 0.45    // bottom-right corner
-          );
-          grad.addColorStop(0,    FILL_LIGHT);   // specular face
-          grad.addColorStop(0.35, '#111111');    // mid highlight
-          grad.addColorStop(0.65, '#0d0d0d');    // mid shadow
-          grad.addColorStop(1,    FILL_DARK);    // receding face
-
-          ctx.globalAlpha = 1;
-          ctx.fillStyle   = grad;
-          ctx.fillText('dp', cx, cy);
-        }
-      }
-
-      ctx.globalAlpha = 1;
-    };
+    let W = 0, H = 0;
 
     const resize = () => {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-      draw();
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
     };
 
-    // Guarantee Comfortaa is loaded before painting
-    document.fonts.ready.then(() => {
+    const paint = () => {
       resize();
+      drawBase(ctx, W, H);
+    };
+
+    const runLoop = (idx) => {
+      const positions = getPositions(W, H);
+      const pos = positions[Math.floor(Math.random() * positions.length)];
+      glowOne(ctx, pos, SERATO[idx % SERATO.length], () => {
+        timerRef.current = setTimeout(() => runLoop(idx + 1), 50);
+      });
+    };
+
+    document.fonts.ready.then(() => {
+      paint();
+      timerRef.current = setTimeout(() => runLoop(0), 1200);
     });
 
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
+    window.addEventListener('resize', paint);
+    return () => {
+      window.removeEventListener('resize', paint);
+      clearTimeout(timerRef.current);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [drawBase, getPositions, glowOne]);
 
   return (
     <canvas
@@ -112,7 +152,7 @@ function DPWallpaper({ opacity = 1 }) {
         zIndex:        0,
         pointerEvents: 'none',
         opacity,
-        transition:    'opacity 1.6s ease',
+        transition:    'opacity 1.4s ease',
       }}
     />
   );

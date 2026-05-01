@@ -4,175 +4,200 @@
   box-sizing: border-box;
 }
 
-/* ─── THE ENTRY APERTURE (VELVET ROPE) ─── */
+/* ─── ENTRY APERTURE — LOCKED DESIGN ─── */
 .entry-aperture {
   position: fixed;
-  top: 0; left: 0;
+  inset: 0;
   width: 100vw; height: 100svh;
-  background: transparent; /* DPWallpaper canvas provides the background */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: text;
-  z-index: 1000;
+  background: transparent;
   overflow: hidden;
+  z-index: 1000;
 }
 
-.aperture-gate-upper,
-.aperture-gate-lower {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: 50%;
-  background: rgba(5, 5, 5, 0.78);
-  z-index: 10;
+/* Gate panels — left/right split */
+.entry-gate {
+  position: fixed;
+  top: 0; bottom: 0;
+  width: 50%;
+  background: rgba(0,0,0,.55);
+  z-index: 8;
+  transition: transform 1.1s cubic-bezier(.76,0,.24,1), opacity .8s ease;
 }
+.entry-gate-l { left: 0; }
+.entry-gate-r { right: 0; }
+.entry-gate-l.entry-gate-open { transform: translateX(-100%); }
+.entry-gate-r.entry-gate-open { transform: translateX(100%); }
 
-.aperture-gate-upper { top: 0; }
-.aperture-gate-lower { bottom: 0; }
+/* Wordmark — top-left, locked forever */
+.entry-wordmark {
+  position: fixed;
+  top: 28px; left: 32px;
+  z-index: 20;
+  font-family: 'Comfortaa', cursive;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .16em;
+  color: rgba(232,228,222,.32);
+  user-select: none;
+  pointer-events: none;
+  animation: entryFadeIn .7s ease .3s both;
+}
+.entry-wordmark span { font-size: 22px; }
 
-.aperture-controls {
-  position: relative;
+@keyframes entryFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Center — request access form */
+.entry-center-form {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
+  gap: 18px;
+  animation: entryFadeIn .7s ease .3s both;
 }
 
-.entry-maison-mark {
+.entry-request-input {
+  width: 280px;
+  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.18);
+  padding: 13px 16px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 12px;
+  color: rgba(232,228,222,.8);
+  outline: none;
+  letter-spacing: .06em;
+  text-align: center;
+  transition: border-color 200ms, background 200ms;
+}
+.entry-request-input::placeholder {
+  color: rgba(255,255,255,.2);
+  font-size: 10px;
+  letter-spacing: .24em;
+}
+.entry-request-input:focus {
+  border-color: rgba(255,255,255,.2);
+  border-bottom-color: rgba(255,255,255,.4);
+  background: rgba(255,255,255,.04);
+}
+
+.entry-request-btn {
+  width: 280px;
+  padding: 12px 0;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.12);
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .32em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  cursor: none;
+  transition: border-color 200ms, color 200ms, background 200ms;
+}
+.entry-request-btn:hover {
+  border-color: rgba(255,255,255,.3);
+  color: rgba(232,228,222,.7);
+  background: rgba(255,255,255,.03);
+}
+
+/* Bottom-right — mystery code cells */
+.entry-code-corner {
   position: fixed;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 21;
+  bottom: 28px; right: 32px;
+  z-index: 20;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  text-transform: uppercase;
-  pointer-events: none;
+  align-items: flex-end;
+  gap: 12px;
+  animation: entryFadeIn .7s ease .5s both;
 }
 
-.entry-maison-line {
-  font-family: 'Comfortaa', cursive;
-  font-size: clamp(11px, 1.6vw, 15px);
-  font-weight: 700;
-  letter-spacing: 0.28em;
-  color: rgba(255, 255, 255, 0.34);
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+.entry-cells {
+  display: flex;
+  gap: 8px;
 }
 
-.entry-maison-sub {
-  font-family: var(--font-ui);
-  font-size: 8px;
-  letter-spacing: 0.26em;
-  color: rgba(255, 255, 255, 0.2);
-}
-
-.aperture-label {
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.4em;
-  color: rgba(255, 255, 255, 0.18);
-  text-transform: uppercase;
-}
-
-.aperture-input-wrapper {
+.entry-cell {
+  width: 40px; height: 50px;
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.015);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.aperture-line-left,
-.aperture-line-right {
-  display: none;
-}
-
-.aperture-lockout {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 500;
-  color: var(--record-red);
-  letter-spacing: 0.2em;
-  margin-top: 1rem;
-}
-
-/* ─── ENTRY GATE — 4-CELL CODE GRID ─── */
-.aperture-code-grid {
-  display: flex;
-  gap: 14px;
-}
-
-.aperture-code-cell {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255,255,255,.85);
   position: relative;
-  width: 38px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-ui);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0;
-  color: rgba(255, 255, 255, 0.55);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  transition: border-color 0.18s ease, color 0.18s ease;
+  overflow: hidden;
+  transition: border-color 180ms, background 180ms;
 }
-
-.aperture-code-cell.aperture-cell-filled {
-  color: rgba(255, 255, 255, 0.75);
-  border-color: rgba(255, 255, 255, 0.22);
+.entry-cell.entry-cell-active {
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.035);
 }
-
-.aperture-code-cell.aperture-cell-active {
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
-.aperture-code-cell.aperture-cell-active::after {
-  content: 'dp';
+.entry-cell.entry-cell-active::before {
+  content: '';
   position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Comfortaa', sans-serif;
-  font-weight: 700;
-  font-size: 7px;
-  letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.12);
-  pointer-events: none;
-  animation: dp-cursor-blink 1.25s ease-in-out infinite;
+  bottom: 0; left: 15%; right: 15%;
+  height: 1px;
+  background: rgba(255,255,255,.28);
+  animation: entryCellBlink 1.2s ease-in-out infinite;
 }
-
-@keyframes dp-cursor-blink {
-  0%, 100% { opacity: 0.05; }
-  45%, 55% { opacity: 0.55; }
-}
-
+@keyframes entryCellBlink { 0%,100%{opacity:.3} 50%{opacity:1} }
 @media (prefers-reduced-motion: reduce) {
-  .aperture-code-cell.aperture-cell-active::after {
-    animation: none;
-  }
+  .entry-cell.entry-cell-active::before { animation: none; }
+}
+.entry-cell.entry-cell-correct {
+  border-color: rgba(255,179,71,.4);
+  background: rgba(255,179,71,.04);
+}
+.entry-cell.entry-cell-correct::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,179,71,.55);
+}
+.entry-cell.entry-cell-wrong {
+  border-color: rgba(200,40,0,.4);
+  background: rgba(200,40,0,.03);
 }
 
-/* ─── ENTRY: Hidden mobile input + focus ring ─── */
-.entry-hidden-input {
+.entry-err {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(200,40,0,.65);
+  height: 14px;
+}
+
+/* Custom cursor */
+.cur-ball {
   position: fixed;
-  top: 0; left: 0;
-  width: 1px; height: 1px;
-  opacity: 0;
   pointer-events: none;
-  z-index: -1;
-  border: none;
-  background: transparent;
-  color: transparent;
-  caret-color: transparent;
+  z-index: 9999;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(232,228,222,.7);
+  transform: translate(-50%,-50%);
+  transition: width 60ms, height 60ms;
 }
-
-.entry-aperture:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.45);
-  outline-offset: -6px;
+.cur-ring {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(232,228,222,.14);
+  transform: translate(-50%,-50%);
+  transition: width 150ms, height 150ms;
 }
 
 /* ─── MAIN LAYOUT SHELL ─── */
