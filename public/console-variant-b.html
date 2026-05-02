@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSC // D — VARIANT B: THE SANCTUM</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+:root{
+  --void:#000;--s1:#060606;--s2:#0a0a0a;--b1:#111;--b2:#1a1a1a;
+  --tp:#e8e4de;--ts:#484848;--tm:#252525;
+  --id:#ffb347;--id2:#d4890a;--id-dim:rgba(255,179,71,.07);
+  --red:#cc2200;--font:'Chakra Petch',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html,body,#root{width:100vw;height:100vh;overflow:hidden;background:var(--void);color:var(--tp);font-family:var(--font);}
+body{cursor:none;}
+::-webkit-scrollbar{width:2px;}::-webkit-scrollbar-thumb{background:var(--b2);}
+.console{display:grid;grid-template-rows:36px 1fr 60px;width:100vw;height:100vh;}
+.main{display:flex;min-height:0;overflow:hidden;}
+
+/* RAIL */
+.rail{display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--void);border-bottom:1px solid var(--b1);z-index:20;}
+.rail-mark{font-family:'Comfortaa',sans-serif;font-size:13px;font-weight:700;color:var(--id);letter-spacing:-.01em;}
+.r-sep{width:1px;height:14px;background:var(--b1);flex-shrink:0;}
+.r-lbl{font-size:9px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ts);}
+.r-lbl.id{color:var(--id);opacity:.8;}
+.r-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.r-bpm{font-family:var(--font);font-size:13px;font-weight:700;color:var(--id);}
+.r-clock{font-family:var(--font);font-size:9px;color:var(--ts);}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:rp 1.6s ease-in-out infinite;flex-shrink:0;}
+@keyframes rp{0%,100%{opacity:.2}50%{opacity:1}}
+.r-icon{width:22px;height:22px;border:1px solid var(--b2);background:transparent;color:var(--ts);cursor:none;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all 100ms;}
+.r-icon:hover{border-color:var(--id);color:var(--id);}
+
+/* BINS */
+.bins{width:200px;min-width:200px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.bins-accent{position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--id);opacity:.35;}
+.bins-hd{padding:12px 14px 10px 16px;display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--b1);flex-shrink:0;}
+.bins-lbl{font-size:8px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--id);opacity:.6;}
+.bins-cnt{font-family:var(--font);font-size:8px;color:var(--tm);}
+.vrow{display:flex;align-items:center;gap:8px;padding:9px 14px 9px 16px;border-bottom:1px solid var(--b1);cursor:none;transition:background 80ms;flex-shrink:0;}
+.vrow:hover{background:rgba(255,255,255,.015);}
+.vrow.on{background:rgba(255,255,255,.022);}
+.vdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.vname{font-size:8px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;line-height:1.3;}
+.vcnt{font-family:var(--font);font-size:7px;color:var(--tm);margin-left:auto;flex-shrink:0;}
+.bins-tracks{flex:1;overflow-y:auto;}
+.trow{display:flex;align-items:center;padding:0 12px 0 16px;height:42px;cursor:none;position:relative;transition:background 80ms;border-bottom:1px solid rgba(255,255,255,.018);}
+.trow:hover{background:rgba(255,255,255,.02);}
+.trow.on{background:var(--id-dim);}
+.tbar{position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--id);opacity:0;}
+.trow.on .tbar{opacity:1;}
+.tr-n{font-family:var(--font);font-size:7px;color:var(--tm);width:16px;flex-shrink:0;}
+.tr-info{flex:1;min-width:0;}
+.tr-title{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.trow.on .tr-title{color:var(--id);}
+.tr-sub{font-size:7px;color:var(--ts);margin-top:1px;}
+.tr-bpm{font-family:var(--font);font-size:7px;color:var(--tm);flex-shrink:0;margin-left:4px;}
+.tier-badge{width:13px;height:13px;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;flex-shrink:0;margin-left:4px;}
+.bins-wm{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-family:'Comfortaa',sans-serif;font-size:54px;font-weight:700;color:var(--tp);opacity:.016;pointer-events:none;user-select:none;}
+
+/* MONITOR — pure hero + waveform + aurora */
+.monitor{flex:1;background:#000;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.dp-tex{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.dp-tex::before{content:'dp dp dp dp dp\A dp dp dp dp dp\A dp dp dp dp dp\A dp dp dp dp dp\A dp dp dp dp dp';font-family:'Comfortaa',sans-serif;font-size:46px;font-weight:700;white-space:pre;color:var(--tp);opacity:.013;line-height:1.7;letter-spacing:.32em;position:absolute;top:0;left:0;width:200%;transform:rotate(-15deg) translate(-20%,5%);}
+.aurora{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.ab{position:absolute;border-radius:50%;filter:blur(90px);mix-blend-mode:screen;}
+@keyframes au0{0%{transform:translate(0,0)}100%{transform:translate(55px,38px)}}
+@keyframes au1{0%{transform:translate(0,0)}100%{transform:translate(-38px,52px)}}
+@keyframes au2{0%{transform:translate(0,0)}100%{transform:translate(28px,-42px)}}
+.signal-banner{position:relative;z-index:3;display:flex;align-items:center;gap:12px;padding:8px 28px;background:rgba(255,48,48,.06);border-bottom:1px solid rgba(255,48,48,.2);flex-shrink:0;}
+.sig-ban-dot{width:6px;height:6px;border-radius:50%;background:#ff3030;animation:rp .8s ease-in-out infinite;flex-shrink:0;}
+.sig-ban-lbl{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#ff3030;}
+.sig-ban-stat{font-family:var(--font);font-size:9px;color:rgba(255,48,48,.7);}
+.sig-ban-right{margin-left:auto;display:flex;align-items:center;gap:14px;}
+.hero{padding:28px 28px 14px;position:relative;z-index:2;flex-shrink:0;flex:1;display:flex;flex-direction:column;justify-content:center;}
+.hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.hero-sect{font-size:7px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:var(--ts);}
+.hero-idx{font-family:var(--font);font-size:9px;color:var(--tm);}
+.hero-title{font-size:clamp(52px,6.5vw,104px);font-weight:700;line-height:.92;letter-spacing:-.01em;background:linear-gradient(95deg,var(--tp) 0%,var(--id) 38%,var(--id2) 62%,var(--tp) 100%);background-size:250% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:foil 6s linear infinite;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:14px;}
+@keyframes foil{0%{background-position:0% 50%}100%{background-position:250% 50%}}
+.hero-meta{display:flex;align-items:center;gap:16px;}
+.hero-artist{font-size:13px;font-weight:400;color:var(--ts);}
+.hero-key{font-family:var(--font);font-size:8px;color:var(--ts);background:var(--s1);border:1px solid var(--b2);padding:2px 7px;}
+.hero-dur{font-family:var(--font);font-size:10px;color:var(--id);margin-left:auto;}
+.wf-zone{position:relative;z-index:2;flex-shrink:0;}
+.wf-canvas{width:100%;height:140px;display:block;cursor:crosshair;}
+.wf-armed{position:absolute;top:6px;left:16px;font-size:7px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:2px 8px;border:1px solid;animation:rp .5s ease-in-out infinite;pointer-events:none;z-index:3;}
+.wf-stamps{display:flex;justify-content:space-between;padding:3px 28px 6px;}
+.wf-t{font-family:var(--font);font-size:7px;color:var(--tm);}
+
+/* CHAIN — 280px, 6 always-visible zones */
+.chain{width:280px;min-width:280px;background:var(--s1);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow-y:auto;}
+.zone{border-bottom:1px solid var(--b1);padding:11px 14px;flex-shrink:0;}
+.zone-lbl{font-size:7px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:var(--id);opacity:.5;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.zone-lbl span{opacity:.4;font-weight:400;}
+.bpm-hero{text-align:center;padding:2px 0 4px;}
+.bpm-val{font-family:var(--font);font-size:52px;font-weight:700;color:var(--id);line-height:1;letter-spacing:-.02em;}
+.bpm-lbl{font-size:7px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--ts);margin-top:1px;}
+.key-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:5px;}
+.key-val{font-family:var(--font);font-size:14px;font-weight:600;color:rgba(255,179,71,.5);}
+.key-lbl{font-size:7px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--tm);}
+.rdpair{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1);border:1px solid var(--b1);margin-top:8px;}
+.rdcell{background:var(--void);padding:5px 8px;}
+.rd-l{font-size:6px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--tm);margin-bottom:2px;}
+.rd-v{font-family:var(--font);font-size:12px;font-weight:700;color:var(--ts);}
+.broadcast-btn{width:100%;padding:10px 0;font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;border:1px solid var(--ts);color:var(--ts);background:transparent;cursor:none;transition:all 120ms;margin-bottom:10px;font-family:var(--font);}
+.broadcast-btn.live{border-color:#ff3030;color:#ff3030;background:rgba(255,48,48,.07);}
+.sig-stat{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.sig-lbl{font-size:7px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--tm);}
+.sig-val{font-family:var(--font);font-size:9px;color:var(--ts);}
+.sig-val.live{color:#ff3030;}
+.padgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--b1);border:1px solid var(--b1);}
+.pad{aspect-ratio:1.1;background:var(--void);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:4px 2px;cursor:none;transition:all 60ms;position:relative;overflow:hidden;}
+.pad-num{font-size:6px;font-weight:700;letter-spacing:.06em;color:var(--tm);}
+.pad-st{font-size:5px;letter-spacing:.05em;color:var(--tm);margin-top:1px;}
+.pad.armed{animation:rp .45s ease-in-out infinite;}
+.pad-dot{position:absolute;top:5px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;}
+.vault-access{margin-bottom:8px;}
+.va-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.va-lbl{font-size:7px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:6px;}
+.va-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.va-cnt{font-family:var(--font);font-size:8px;color:var(--tm);}
+.vault-actions{display:flex;gap:1px;margin-top:8px;background:var(--b1);}
+.v-act{flex:1;background:var(--void);border:none;padding:7px 0;font-size:7px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ts);cursor:none;font-family:var(--font);transition:color 80ms;}
+.v-act:hover{color:var(--tp);}
+.v-act.hi{color:var(--id);}
+.msg-btn{width:100%;padding:8px 0;font-size:7px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;border:none;border-bottom:1px solid rgba(255,255,255,.04);color:var(--ts);background:transparent;cursor:none;text-align:left;display:flex;align-items:center;gap:8px;transition:color 80ms;font-family:var(--font);}
+.msg-btn:hover{color:var(--tp);}
+.msg-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.an-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.an-lbl{font-size:7px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--tm);}
+.an-val{font-family:var(--font);font-size:9px;color:var(--ts);}
+.an-val.hi{color:var(--id);}
+.pill{width:26px;height:12px;background:var(--b1);border:1px solid var(--b2);border-radius:9999px !important;position:relative;cursor:none;transition:all 180ms;}
+.pill.on{background:var(--id);border-color:var(--id);}
+.pill-k{position:absolute;width:8px;height:8px;background:#fff;top:1px;left:1px;border-radius:50% !important;transition:transform 180ms;}
+.pill.on .pill-k{transform:translateX(14px);}
+.sys-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.sys-lbl{font-size:7px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ts);}
+.sys-action{padding:2px 8px;border:1px solid var(--b2);color:var(--ts);font-size:7px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;background:transparent;cursor:none;font-family:var(--font);transition:all 80ms;}
+.sys-action:hover{border-color:var(--ts);color:var(--tp);}
+.m3g{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1);border:1px solid var(--b1);margin-top:6px;}
+.m3c{background:var(--void);padding:6px 8px;}
+.m3n{font-family:var(--font);font-size:14px;font-weight:700;color:var(--ts);display:block;line-height:1;margin-bottom:2px;}
+.m3l{font-size:6px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tm);}
+.tele-row{font-family:var(--font);font-size:7px;color:var(--tm);padding:2px 0;border-bottom:1px solid rgba(255,255,255,.02);display:flex;gap:6px;}
+.tele-ts{color:var(--b2);flex-shrink:0;}
+.tele-ok{color:#2a5a3a;}
+
+/* TRANSPORT */
+.transport{display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--void);border-top:1px solid var(--b1);z-index:20;}
+.tbtn{width:34px;height:34px;border:1px solid var(--b2);background:transparent;color:var(--ts);cursor:none;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all 100ms;font-family:var(--font);}
+.tbtn:hover{border-color:var(--ts);color:var(--tp);}
+.tbtn.play{width:42px;height:42px;font-size:15px;border-color:var(--id);color:var(--id);}
+.tbtn.play.on,.tbtn.active{border-color:var(--id);color:var(--id);background:var(--id-dim);}
+.tbtn.sm{width:auto;padding:0 10px;font-size:7px;letter-spacing:.14em;text-transform:uppercase;}
+.t-time{font-family:var(--font);font-size:11px;color:var(--id);letter-spacing:.04em;flex-shrink:0;}
+.t-tot{font-family:var(--font);font-size:9px;color:var(--ts);flex-shrink:0;}
+.prog{flex:1;height:1px;background:var(--b2);position:relative;cursor:crosshair;margin:0 6px;}
+.prog-fill{position:absolute;left:0;top:0;height:100%;background:var(--id);}
+.prog-head{position:absolute;top:50%;width:5px;height:5px;background:var(--id);transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 6px var(--id);}
+.gain-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;margin-left:6px;}
+.gain-lbl{font-size:6px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--tm);}
+input[type=range].gain-sl{-webkit-appearance:none;width:58px;height:1px;background:var(--b2);outline:none;cursor:none;}
+input[type=range].gain-sl::-webkit-slider-thumb{-webkit-appearance:none;width:5px;height:9px;background:var(--id);cursor:none;}
+
+/* CURSOR */
+.cur-ball{position:fixed;pointer-events:none;z-index:9999;width:10px;height:10px;border-radius:50% !important;background:var(--id);transform:translate(-50%,-50%);box-shadow:0 0 10px var(--id),0 0 20px rgba(255,179,71,.3);}
+.cur-ball.click{width:6px;height:6px;}
+.cur-spot{position:fixed;pointer-events:none;z-index:1;width:480px;height:480px;border-radius:50% !important;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,179,71,.065) 0%,transparent 70%);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+const TRACKS = [
+  {id:1,title:"eightysixty",artist:"Soul Pleasant",bpm:80,key:"F min",dur:"4:22",tier:"M",vault:"orig"},
+  {id:2,title:"fucked dis house 124",artist:"Soul Pleasant",bpm:124,key:"A min",dur:"5:44",tier:"M",vault:"orig"},
+  {id:3,title:"That's What U R",artist:"Amerie",bpm:96,key:"D min",dur:"3:58",tier:"B",vault:"arch"},
+  {id:4,title:"96tagetemvvv",artist:"Soul Pleasant",bpm:96,key:"G min",dur:"6:12",tier:"M",vault:"orig"},
+  {id:5,title:"120'em Pt.2",artist:"Soul Pleasant",bpm:120,key:"C min",dur:"7:03",tier:"U",vault:"mixes"},
+  {id:6,title:"onetwentyfaackin3mmmm",artist:"Soul Pleasant",bpm:120,key:"F min",dur:"5:31",tier:"A",vault:"mixes"},
+  {id:7,title:"91enounting",artist:"Soul Pleasant",bpm:91,key:"B♭",dur:"4:47",tier:"M",vault:"orig"},
+  {id:8,title:"93'was infinity",artist:"Soul Pleasant",bpm:93,key:"E min",dur:"8:15",tier:"M",vault:"orig"},
+  {id:9,title:"sumtimg wright rongbbb",artist:"Soul Pleasant",bpm:88,key:"D min",dur:"5:22",tier:"U",vault:"mixes"},
+];
+const VAULTS=[{id:"orig",name:"ORIGINAL MUSIC",color:"#ffb347",count:9},{id:"mixes",name:"MIXES",color:"#4488ff",count:14},{id:"live",name:"LIVE SETS",color:"#ff4488",count:6},{id:"arch",name:"SONIC ARCH",color:"#44ffaa",count:22}];
+const TIER={M:{c:"#ffb347"},B:{c:"#555"},U:{c:"#cc44aa"},A:{c:"#777"}};
+const PAD_COLORS=["#ff4444","#44aaff","#44ff88","#ffaa00","#ff44cc","#44ffff","#ff8800","#aa44ff"];
+const AURORA=[{w:500,h:360,c:"rgba(230,100,10,0.09)",t:"-10%",l:"-5%",d:20},{w:360,h:440,c:"rgba(160,70,0,0.08)",t:"25%",l:"35%",d:26},{w:300,h:300,c:"rgba(190,120,0,0.07)",t:"58%",l:"65%",d:18}];
+const TELE=[{ts:"02:14",msg:"UPLOAD — eightysixty",ok:true},{ts:"01:22",msg:"VAULT_LOAD — ORIGINALS",ok:true},{ts:"00:58",msg:"SESSION_START D8P",ok:true},{ts:"00:12",msg:"AUTH — Soul Pleasant",ok:true}];
+
+const ds=d=>{const[m,s]=d.split(":").map(Number);return m*60+s;};
+const sd=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+const prng=n=>{let s=n;return()=>{s=(s*1664525+1013904223)&0xffffffff;return Math.abs(s)/2147483648;};};
+
+function Cursor(){
+  const b=useRef(),sp=useRef();
+  const[click,setClick]=useState(false);
+  useEffect(()=>{
+    const mv=e=>{if(b.current){b.current.style.left=e.clientX+"px";b.current.style.top=e.clientY+"px";}if(sp.current){sp.current.style.left=e.clientX+"px";sp.current.style.top=e.clientY+"px";}};
+    const dn=()=>setClick(true),up=()=>setClick(false);
+    window.addEventListener("mousemove",mv);window.addEventListener("mousedown",dn);window.addEventListener("mouseup",up);
+    return()=>{window.removeEventListener("mousemove",mv);window.removeEventListener("mousedown",dn);window.removeEventListener("mouseup",up);};
+  },[]);
+  return<><div ref={sp} className="cur-spot"/><div ref={b} className={`cur-ball${click?" click":""}`}/></>;
+}
+
+function Waveform({track,progress,onSeek,cues,armedPad}){
+  const cv=useRef();
+  const bars=useMemo(()=>{const r=prng(track.id*7331);return Array.from({length:240},()=>0.1+r()*.9);},[track.id]);
+  const draw=useCallback(()=>{
+    const c=cv.current;if(!c)return;
+    const ctx=c.getContext("2d"),W=c.width,H=c.height,bw=W/bars.length,px=W*progress;
+    ctx.clearRect(0,0,W,H);
+    bars.forEach((h,i)=>{
+      const x=i*bw,bh=h*H*.88,y=(H-bh)/2,played=x<px,al=played?.9:.2;
+      let col;
+      if(h<.28)col=`rgba(32,96,255,${al})`;
+      else if(h<.50)col=`rgba(32,188,96,${al})`;
+      else if(h<.72)col=`rgba(255,179,71,${al})`;
+      else col=`rgba(255,55,25,${al})`;
+      ctx.fillStyle=col;ctx.fillRect(x,y,bw-.5,bh);
+    });
+    ctx.fillStyle="#ffb347";ctx.shadowColor="#ffb347";ctx.shadowBlur=10;ctx.fillRect(px-1,0,2,H);ctx.shadowBlur=0;
+    for(let y=0;y<H;y+=2){ctx.fillStyle="rgba(0,0,0,.16)";ctx.fillRect(0,y,W,1);}
+    Object.entries(cues).forEach(([n,pos])=>{
+      const x=pos*W,color=PAD_COLORS[(n-1)%PAD_COLORS.length];
+      ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=6;
+      ctx.beginPath();ctx.moveTo(x-8,2);ctx.lineTo(x+8,2);ctx.lineTo(x,15);ctx.closePath();ctx.fill();
+      ctx.shadowBlur=0;ctx.fillStyle=color;ctx.font="bold 8px 'Chakra Petch'";ctx.textAlign="center";ctx.fillText(n,x,28);ctx.textAlign="left";
+    });
+  },[bars,progress,cues]);
+  useEffect(()=>{draw();},[draw]);
+  return(
+    <div className="wf-zone">
+      {armedPad&&<div className="wf-armed" style={{color:PAD_COLORS[(armedPad-1)%PAD_COLORS.length],borderColor:PAD_COLORS[(armedPad-1)%PAD_COLORS.length]}}>CUE {armedPad} ARMED — CLICK TO PLACE</div>}
+      <canvas ref={cv} width={1200} height={140} className="wf-canvas"
+        onClick={e=>{const r=e.currentTarget.getBoundingClientRect();onSeek((e.clientX-r.left)/r.width);}}/>
+      <div className="wf-stamps">
+        <span className="wf-t">00:00</span>
+        <span className="wf-t" style={{color:"rgba(255,179,71,.45)"}}>{sd(Math.floor(ds(track.dur)*progress))}</span>
+        <span className="wf-t">{track.dur}</span>
+      </div>
+    </div>
+  );
+}
+
+function Monitor({track,progress,onSeek,cues,armedPad,broadcasting,btime}){
+  const idx=TRACKS.findIndex(t=>t.id===track.id)+1;
+  const el=Math.floor(ds(track.dur)*progress);
+  const bsd=s=>`${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+  return(
+    <div className="monitor">
+      <div className="dp-tex"/>
+      <div className="aurora">{AURORA.map((b,i)=><div key={i} className="ab" style={{width:b.w,height:b.h,background:b.c,top:b.t,left:b.l,animation:`au${i} ${b.d}s ease-in-out infinite alternate`}}/>)}</div>
+      {broadcasting&&(
+        <div className="signal-banner">
+          <div className="sig-ban-dot"/>
+          <span className="sig-ban-lbl">THE SIGNAL — LIVE</span>
+          <span className="sig-ban-stat">{bsd(btime)}</span>
+          <div className="sig-ban-right">
+            <span style={{fontSize:7,fontWeight:600,letterSpacing:".18em",textTransform:"uppercase",color:"rgba(255,48,48,.6)"}}>3 MASTERS WATCHING</span>
+            <span style={{fontSize:7,fontWeight:600,letterSpacing:".18em",textTransform:"uppercase",color:"rgba(255,48,48,.4)"}}>VIDEO OFF</span>
+          </div>
+        </div>
+      )}
+      <div className="hero">
+        <div className="hero-top">
+          <span className="hero-sect">{track.vault.toUpperCase()}</span>
+          <span className="hero-idx">{String(idx).padStart(2,"0")} / {String(TRACKS.length).padStart(2,"0")}</span>
+        </div>
+        <div className="hero-title">{track.title}</div>
+        <div className="hero-meta">
+          <span className="hero-artist">{track.artist}</span>
+          <span className="hero-key">{track.key}</span>
+          <span className="hero-dur">{sd(el)} / {track.dur}</span>
+        </div>
+      </div>
+      <Waveform track={track} progress={progress} onSeek={onSeek} cues={cues} armedPad={armedPad}/>
+    </div>
+  );
+}
+
+function Chain({track,cues,armedPad,onPadClick,broadcasting,setBroadcasting,btime,setBtime,activeVault,onVault}){
+  const[sys,setSys]=useState({EQ:true,EFX:false,VOICE:false,AURORA:true});
+  return(
+    <div className="chain">
+      {/* ZONE 1: SIGNAL */}
+      <div className="zone">
+        <div className="zone-lbl">SIGNAL <span>DECK</span></div>
+        <div className="bpm-hero"><div className="bpm-val">{track.bpm}</div><div className="bpm-lbl">BPM</div></div>
+        <div className="key-row"><span className="key-val">{track.key}</span><span className="key-lbl">KEY</span></div>
+        <div className="rdpair">
+          <div className="rdcell"><div className="rd-l">kbps</div><div className="rd-v">320</div></div>
+          <div className="rdcell"><div className="rd-l">kHz</div><div className="rd-v">44.1</div></div>
+        </div>
+        <div style={{marginTop:10}}>
+          <button className={`broadcast-btn${broadcasting?" live":""}`} onClick={()=>{setBroadcasting(b=>!b);if(broadcasting)setBtime(0);}}>
+            {broadcasting?"◉ END — THE SIGNAL":"◎ GO LIVE — THE SIGNAL"}
+          </button>
+          {[["STATUS",broadcasting?"LIVE":"OFFLINE",broadcasting?"live":""],["TIMER",broadcasting?`${String(Math.floor(btime/3600)).padStart(2,"0")}:${String(Math.floor((btime%3600)/60)).padStart(2,"0")}:${String(btime%60).padStart(2,"0")}`:"—"],["VIEWERS",broadcasting?"3":"—"]].map(([l,v,cls])=>(
+            <div key={l} className="sig-stat"><span className="sig-lbl">{l}</span><span className={`sig-val${cls?" "+cls:""}`}>{v}</span></div>
+          ))}
+        </div>
+      </div>
+
+      {/* ZONE 2: CUES */}
+      <div className="zone">
+        <div className="zone-lbl">CUES <span>ARM PAD → CLICK WAVEFORM</span></div>
+        <div className="padgrid">
+          {[1,2,3,4,5,6,7,8].map(n=>{
+            const c=PAD_COLORS[(n-1)%PAD_COLORS.length],has=cues[n]!==undefined,arm=armedPad===n;
+            return(
+              <div key={n} className={`pad${arm?" armed":""}`}
+                style={arm?{background:`${c}16`,boxShadow:`inset 0 0 0 1px ${c}55`}:has?{boxShadow:`inset 0 0 0 1px ${c}28`}:{}}
+                onClick={()=>onPadClick(n)}>
+                {has&&<div className="pad-dot" style={{background:c,boxShadow:`0 0 4px ${c}`}}/>}
+                <div className="pad-num" style={{color:arm||has?c:undefined}}>C{n}</div>
+                <div className="pad-st" style={{color:arm?c+"aa":has?"rgba(255,255,255,.25)":undefined}}>{arm?"ARM":has?"SET":"—"}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ZONE 3: VAULT */}
+      <div className="zone">
+        <div className="zone-lbl">VAULT <span>ACCESS + UPLOAD</span></div>
+        <div className="vault-access">
+          {VAULTS.map(v=>(
+            <div key={v.id} className="va-row">
+              <span className="va-lbl"><div className="va-dot" style={{background:v.color}}/>{v.name}</span>
+              <span className="va-cnt">{v.count}</span>
+            </div>
+          ))}
+        </div>
+        <div className="vault-actions">
+          <button className="v-act hi">↑ UPLOAD</button>
+          <button className="v-act">⊘ VOID</button>
+          <button className="v-act">↕ REORDER</button>
+        </div>
+      </div>
+
+      {/* ZONE 4: COMMS */}
+      <div className="zone">
+        <div className="zone-lbl">COMMS <span>MESSAGE</span></div>
+        {[["#00e5ff","MESSAGE L"],["#ffb347","MESSAGE MASTERS"],["#cc44aa","MESSAGE MUSES"],["#888","MESSAGE COLLAB"],["#cc2200","VOICE NOTE — TRACK"]].map(([c,lbl])=>(
+          <button key={lbl} className="msg-btn"><div className="msg-dot" style={{background:c}}/>{lbl}</button>
+        ))}
+      </div>
+
+      {/* ZONE 5: ANALYTICS */}
+      <div className="zone">
+        <div className="zone-lbl">ANALYTICS <span>{track.title.slice(0,16)}{track.title.length>16?"…":""}</span></div>
+        {[["PLAYS","247","hi"],["DOWNLOADS","12"],["REVENUE","$180","hi"],["MASTERS","8 heard"],["MUSES","3 heard"],["ALL TIME","1,847","hi"]].map(([l,v,hi])=>(
+          <div key={l} className="an-row"><span className="an-lbl">{l}</span><span className={`an-val${hi?" hi":""}`}>{v}</span></div>
+        ))}
+      </div>
+
+      {/* ZONE 6: SYSTEM */}
+      <div className="zone">
+        <div className="zone-lbl">SYSTEM</div>
+        {Object.entries(sys).map(([k,v])=>(
+          <div key={k} className="sys-row">
+            <span className="sys-lbl">{k}</span>
+            <div className={`pill${v?" on":""}`} onClick={()=>setSys(s=>({...s,[k]:!s[k]}))}>
+              <div className="pill-k"/>
+            </div>
+          </div>
+        ))}
+        <div className="sys-row" style={{marginTop:8}}>
+          <button className="sys-action">PROFILE</button>
+          <button className="sys-action">LOGOUT</button>
+        </div>
+        <div style={{fontSize:7,fontWeight:600,letterSpacing:".16em",textTransform:"uppercase",color:"var(--tm)",marginTop:10,marginBottom:4}}>M³</div>
+        <div className="m3g">
+          {[["12","MASTERS","#ffb347"],["89","MEMBERS",""],["5","MUSES","#cc44aa"],["3","COLLAB",""]].map(([n,l,c])=>(
+            <div key={l} className="m3c"><span className="m3n" style={c?{color:c}:{}}>{n}</span><span className="m3l">{l}</span></div>
+          ))}
+        </div>
+        <div style={{fontSize:7,fontWeight:600,letterSpacing:".16em",textTransform:"uppercase",color:"var(--tm)",marginTop:10,marginBottom:4}}>TELEMETRY</div>
+        {TELE.map((e,i)=>(
+          <div key={i} className={`tele-row${e.ok?" tele-ok":""}`}>
+            <span className="tele-ts">[{e.ts}]</span><span>{e.msg}</span>
+            <span style={{marginLeft:"auto"}}>{e.ok?"OK":"ERR"}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Transport({track,playing,onPlay,progress,onSeek,onPrev,onNext}){
+  const[loop,setLoop]=useState(false);
+  const[gain,setGain]=useState(80);
+  const el=Math.floor(ds(track.dur)*progress);
+  return(
+    <div className="transport">
+      <button className="tbtn" onClick={onPrev}>⏮</button>
+      <button className={`tbtn play${playing?" on":""}`} onClick={onPlay}>{playing?"⏸":"▶"}</button>
+      <button className="tbtn" onClick={onNext}>⏭</button>
+      <button className="tbtn sm">CUE</button>
+      <button className={`tbtn sm${loop?" active":""}`} onClick={()=>setLoop(l=>!l)}>⟳ LOOP</button>
+      <span className="t-time" style={{marginLeft:6}}>{sd(el)}</span>
+      <div className="prog" onClick={e=>{const r=e.currentTarget.getBoundingClientRect();onSeek((e.clientX-r.left)/r.width);}}>
+        <div className="prog-fill" style={{width:`${progress*100}%`}}/>
+        <div className="prog-head" style={{left:`${progress*100}%`}}/>
+      </div>
+      <span className="t-tot">{track.dur}</span>
+      <div className="gain-wrap">
+        <span className="gain-lbl">GAIN</span>
+        <input type="range" className="gain-sl" min={0} max={100} value={gain} onChange={e=>setGain(+e.target.value)}/>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const[track,setTrack]=useState(TRACKS[0]);
+  const[playing,setPlaying]=useState(false);
+  const[progress,setProgress]=useState(0);
+  const[sessec,setSessec]=useState(0);
+  const[vault,setVault]=useState("orig");
+  const[cues,setCues]=useState({});
+  const[armedPad,setArmedPad]=useState(null);
+  const[broadcasting,setBroadcasting]=useState(false);
+  const[btime,setBtime]=useState(0);
+  useEffect(()=>{if(!playing)return;const tot=ds(track.dur);const t=setInterval(()=>setProgress(p=>{if(p>=1){setPlaying(false);return 0;}return p+1/tot;}),1000);return()=>clearInterval(t);},[playing,track]);
+  useEffect(()=>{const t=setInterval(()=>setSessec(s=>s+1),1000);return()=>clearInterval(t);},[]);
+  useEffect(()=>{if(!broadcasting)return;const t=setInterval(()=>setBtime(s=>s+1),1000);return()=>clearInterval(t);},[broadcasting]);
+  const sess=`${String(Math.floor(sessec/3600)).padStart(2,"0")}:${String(Math.floor((sessec%3600)/60)).padStart(2,"0")}:${String(sessec%60).padStart(2,"0")}`;
+  const load=t=>{setTrack(t);setProgress(0);setCues({});setArmedPad(null);};
+  const handlePad=n=>{if(armedPad===n){setArmedPad(null);}else if(cues[n]!==undefined){setProgress(cues[n]);setArmedPad(null);}else{setArmedPad(n);}};
+  const handleSeek=pos=>{if(armedPad!==null){setCues(c=>({...c,[armedPad]:pos}));setArmedPad(null);}else{setProgress(pos);}};
+  useEffect(()=>{const h=e=>{if(e.target.tagName==="INPUT")return;if(e.code==="Space"){e.preventDefault();setPlaying(p=>!p);}};window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);});
+  return(
+    <div className="console">
+      <Cursor/>
+      <div className="rail">
+        <span style={{fontFamily:"'Comfortaa',sans-serif",fontSize:13,fontWeight:700,color:"var(--id)",letterSpacing:"-.01em"}}>dp</span>
+        <div className="r-sep"/>
+        <span className="r-lbl id">D8P CONSOLE</span>
+        <div className="r-sep"/>
+        <div style={{display:"flex",alignItems:"center",gap:6}}><div className="live-dot"/><span className="r-lbl">LIVE</span></div>
+        <div className="r-sep"/>
+        <span className="r-lbl">SESSION {sess}</span>
+        <div className="r-right">
+          <span className="r-bpm">{track.bpm} BPM</span>
+          <div className="r-sep"/>
+          <span className="r-clock">{new Date().toLocaleTimeString("en-US",{hour12:false})}</span>
+          <div className="r-sep"/>
+          <button className="r-icon" title="Profile">⊙</button>
+          <button className="r-icon" title="Logout">↪</button>
+        </div>
+      </div>
+      <div className="main">
+        <div className="bins">
+          <div className="bins-accent"/>
+          <div className="bins-hd"><span className="bins-lbl">VAULT</span><span className="bins-cnt">{TRACKS.length}</span></div>
+          {VAULTS.map(v=>(
+            <div key={v.id} className={`vrow${vault===v.id?" on":""}`} onClick={()=>setVault(v.id)}>
+              <div className="vdot" style={{background:v.color,boxShadow:`0 0 5px ${v.color}`}}/>
+              <span className="vname" style={{color:vault===v.id?v.color:undefined}}>{v.name}</span>
+              <span className="vcnt">{v.count}</span>
+            </div>
+          ))}
+          <div className="bins-tracks">
+            {TRACKS.map((t,i)=>(
+              <div key={t.id} className={`trow${track.id===t.id?" on":""}`} onClick={()=>load(t)}>
+                <div className="tbar"/>
+                <span className="tr-n">{String(i+1).padStart(2,"0")}</span>
+                <div className="tr-info"><div className="tr-title">{t.title}</div><div className="tr-sub">{t.artist}</div></div>
+                <span className="tr-bpm">{t.bpm}</span>
+                <div className="tier-badge" style={{background:`${TIER[t.tier].c}18`,border:`1px solid ${TIER[t.tier].c}40`,color:TIER[t.tier].c}}>{t.tier}</div>
+              </div>
+            ))}
+          </div>
+          <div className="bins-wm">dp</div>
+        </div>
+        <Monitor track={track} progress={progress} onSeek={handleSeek} cues={cues} armedPad={armedPad} broadcasting={broadcasting} btime={btime}/>
+        <Chain track={track} cues={cues} armedPad={armedPad} onPadClick={handlePad} broadcasting={broadcasting} setBroadcasting={setBroadcasting} btime={btime} setBtime={setBtime} activeVault={vault} onVault={setVault}/>
+      </div>
+      <Transport track={track} playing={playing} onPlay={()=>setPlaying(p=>!p)} progress={progress} onSeek={handleSeek}
+        onPrev={()=>{const i=TRACKS.findIndex(t=>t.id===track.id);load(TRACKS[(i-1+TRACKS.length)%TRACKS.length]);}}
+        onNext={()=>{const i=TRACKS.findIndex(t=>t.id===track.id);load(TRACKS[(i+1)%TRACKS.length]);}}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

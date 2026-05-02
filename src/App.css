@@ -303,6 +303,51 @@
   }
 }
 
+/* ─── ANALOG CONSOLE HOLDING SCREEN ─── */
+.d-holding-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  grid-template-rows: auto auto auto;
+  gap: 16px;
+  padding: 40px;
+  z-index: 2;
+}
+
+.d-holding-direct {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+.d-holding-seal {
+  font-family: 'Comfortaa', cursive;
+  font-size: clamp(48px, 8vw, 96px);
+  color: var(--identity);
+  opacity: 0.15;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  user-select: none;
+}
+
+.d-holding-headline {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(13px, 2vw, 18px);
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: var(--identity);
+  text-align: center;
+}
+
+.d-holding-sub {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(10px, 1.2vw, 12px);
+  letter-spacing: 0.18em;
+  color: var(--identity-dim);
+  text-align: center;
+}
+
 /* ─── MONITOR SYSTEM ─── */
 .d-monitor {
   background: #000000; /* Absolute OLED Black per DESIGN.md - ensures highest contrast for glows */

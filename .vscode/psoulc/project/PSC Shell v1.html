@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSC // Select Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;border-radius:0;-webkit-font-smoothing:antialiased;}
+:root{
+  --void:#000;--s1:#080808;--b1:#111;--b2:#1a1a1a;
+  --tp:#e8e4de;--ts:#444;--tm:#222;
+  --fd:'Syne',sans-serif;--fb:'Syne',sans-serif;
+}
+html,body,#root{width:100vw;height:100vh;overflow:hidden;background:var(--void);color:var(--tp);font-family:var(--fd);}
+body{cursor:none;}
+
+/* wallpaper canvas — fixed, behind everything */
+#dp-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;}
+
+/* cursor */
+.cur{position:fixed;z-index:9999;pointer-events:none;border-radius:50%;}
+.cur-ball{width:9px;height:9px;background:#e8e4de;transform:translate(-50%,-50%);transition:width 60ms,height 60ms,background 300ms;}
+.cur-ball.click{width:5px;height:5px;}
+.cur-ring{width:28px;height:28px;border:1px solid rgba(232,228,222,.18);transform:translate(-50%,-50%);transition:width 150ms,height 150ms,border-color 300ms;}
+
+/* shell layout */
+.shell{position:relative;z-index:2;display:flex;flex-direction:column;width:100vw;height:100vh;}
+
+/* NAV */
+.nav{
+  height:64px;display:flex;align-items:center;padding:0 40px;gap:16px;
+  border-bottom:1px solid rgba(255,255,255,.04);flex-shrink:0;
+  position:relative;
+}
+.nav-mark{font-family:'Comfortaa',sans-serif;font-size:18px;font-weight:700;color:var(--tp);letter-spacing:-.01em;opacity:.9;}
+.nav-sep{width:1px;height:18px;background:rgba(255,255,255,.07);flex-shrink:0;}
+.nav-wordmark{font-family:'Comfortaa',sans-serif;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ts);}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:14px;}
+.nav-lbl{font-size:9px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--tm);}
+.nav-lbl.live{color:rgba(200,40,0,.55);}
+.nav-clock{font-family:'SF Mono','Monaco',monospace;font-size:10px;color:var(--tm);}
+
+/* center stage */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;}
+
+.stage-label{
+  font-size:9px;font-weight:600;letter-spacing:.36em;text-transform:uppercase;
+  color:rgba(255,255,255,.12);
+}
+
+/* vault grid */
+.vgrid{display:flex;gap:2px;}
+
+/* VAULT CARD */
+.vcard{
+  width:188px;height:268px;
+  background:rgba(6,6,6,.92);
+  border:1px solid rgba(255,255,255,.05);
+  position:relative;overflow:hidden;cursor:none;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:20px 18px;
+  transition:border-color 350ms;
+}
+/* dp pattern fill per card — drawn by canvas into data URL */
+.vcard-texture{position:absolute;inset:0;pointer-events:none;z-index:0;}
+/* identity bloom */
+.vcard-bloom{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  opacity:0;transition:opacity 350ms cubic-bezier(.25,0,0,1);
+}
+/* identity top bar */
+.vcard-bar{
+  position:absolute;top:0;left:0;right:0;height:1px;
+  transition:opacity 350ms;opacity:.35;
+}
+/* hover state */
+.vcard:hover{border-color:rgba(255,255,255,.12);}
+.vcard:hover .vcard-bloom{opacity:1;}
+.vcard:hover .vcard-bar{opacity:.9;}
+.vcard:hover .vcard-name{opacity:1;}
+.vcard:hover .vcard-enter{opacity:.6;}
+
+/* card content */
+.vcard-content{position:relative;z-index:2;}
+.vcard-dot{width:6px;height:6px;border-radius:50%;margin-bottom:14px;transition:box-shadow 350ms;}
+.vcard.hovered .vcard-dot{box-shadow:0 0 10px currentColor,0 0 22px currentColor;}
+.vcard-name{
+  font-size:22px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  line-height:1;margin-bottom:8px;opacity:.75;transition:opacity 350ms, color 350ms;color:var(--tp);
+}
+.vcard-meta{font-size:9px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--tm);margin-bottom:12px;}
+.vcard-enter{
+  font-size:8px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--ts);opacity:0;transition:opacity 350ms;
+  display:flex;align-items:center;gap:6px;
+}
+.vcard-enter::before{content:'';width:12px;height:1px;background:currentColor;}
+
+/* bottom status */
+.status{
+  padding:0 40px 28px;display:flex;align-items:center;gap:20px;
+  border-top:1px solid rgba(255,255,255,.03);padding-top:16px;flex-shrink:0;
+}
+.status-item{display:flex;align-items:center;gap:8px;}
+.status-dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.15);}
+.status-dot.ok{background:rgba(40,160,80,.45);}
+.status-txt{font-size:8px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--tm);}
+
+/* sealed overlay — animate on load */
+.sealed{
+  position:fixed;inset:0;z-index:100;background:#000;
+  animation:unseal 1.2s cubic-bezier(.25,0,0,1) .3s forwards;
+  pointer-events:none;
+}
+@keyframes unseal{0%{opacity:1}100%{opacity:0;pointer-events:none;}}
+</style>
+</head>
+<body>
+
+<!-- dp monogram wallpaper -->
+<canvas id="dp-canvas"></canvas>
+<div id="root"></div>
+
+<!-- Wallpaper engine (vanilla JS — no Babel needed) -->
+<script>
+(function(){
+  const canvas = document.getElementById('dp-canvas');
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+  resize();
+  window.addEventListener('resize',()=>{resize();draw();});
+
+  async function draw(){
+    // Wait for Comfortaa
+    try{ await document.fonts.load('700 36px Comfortaa'); }catch(e){}
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    // Void fill
+    ctx.fillStyle='#000';
+    ctx.fillRect(0,0,W,H);
+
+    const FS = 40;          // font size
+    const CW = 88;          // cell width
+    const CH = 64;          // cell height
+    const COLS = Math.ceil(W/CW)+3;
+    const ROWS = Math.ceil(H/CH)+3;
+
+    ctx.font = `700 ${FS}px Comfortaa`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Three passes: shadow → body → specular
+    // This gives the black-gloss-on-black-matte luxury depth
+    const passes = [
+      { offsetX:1.4, offsetY:1.4, fill:'rgba(0,0,0,0.95)' },
+      { offsetX:0,   offsetY:0,   fill:'rgba(26,24,20,0.78)' },
+      { offsetX:-.7, offsetY:-.7, fill:'rgba(44,40,34,0.62)' },
+    ];
+
+    for(let row=-1; row<ROWS; row++){
+      const isOdd = row%2 !== 0;
+      for(let col=-1; col<COLS; col++){
+        const cx = col*CW + (isOdd ? CW/2 : 0) + CW/2;
+        const cy = row*CH + CH/2;
+
+        // Alternate: normal dp vs horizontally mirrored dp (like Fendi FF)
+        const isMirror = (row+col)%2 !== 0;
+
+        passes.forEach(p=>{
+          ctx.save();
+          ctx.translate(cx + p.offsetX, cy + p.offsetY);
+          if(isMirror) ctx.scale(-1,1);
+          ctx.fillStyle = p.fill;
+          ctx.fillText('dp', 0, 0);
+          ctx.restore();
+        });
+      }
+    }
+  }
+
+  draw();
+  window.drawDPWallpaper = draw; // expose for re-draws
+})();
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const VAULTS = [
+  { id:'d8p',   name:'D8P',   color:'#ffb347', tracks:9,  genre:'PRODUCER / DJ' },
+  { id:'larry', name:'LARRY', color:'#7aaa5a', tracks:4,  genre:'WEST COAST / SOUL' },
+  { id:'janet', name:'JANET', color:'#cc3399', tracks:6,  genre:'CINEMATIC / R&B' },
+  { id:'erikah',name:'ERIKAH',color:'#cc6633', tracks:3,  genre:'NEO-SOUL' },
+  { id:'drake', name:'DRAKE', color:'#c4a428', tracks:7,  genre:'NIGHT / AMBIENT' },
+];
+
+/* ── CURSOR ── */
+function Cursor(){
+  const ball = useRef(), ring = useRef();
+  const [click, setClick] = useState(false);
+  const [hue, setHue] = useState(null);
+
+  useEffect(()=>{
+    const mv = e=>{
+      [ball,ring].forEach(r=>{ if(r.current){r.current.style.left=e.clientX+'px';r.current.style.top=e.clientY+'px';}});
+    };
+    const dn=()=>setClick(true), up=()=>setClick(false);
+    window.addEventListener('mousemove',mv);
+    window.addEventListener('mousedown',dn);
+    window.addEventListener('mouseup',up);
+    return()=>{window.removeEventListener('mousemove',mv);window.removeEventListener('mousedown',dn);window.removeEventListener('mouseup',up);};
+  },[]);
+
+  window.__setCursorColor = (c)=>setHue(c);
+
+  return <>
+    <div ref={ring} className="cur cur-ring" style={hue?{borderColor:`rgba(${hexRgb(hue)},.45)`}:{}}/>
+    <div ref={ball} className={`cur cur-ball${click?' click':''}`} style={hue?{background:hue}:{}}/>
+  </>;
+}
+
+function hexRgb(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+/* ── NAV ── */
+function Nav(){
+  const [clk,setClk] = useState(()=>new Date().toLocaleTimeString('en-US',{hour12:false}));
+  useEffect(()=>{const t=setInterval(()=>setClk(new Date().toLocaleTimeString('en-US',{hour12:false})),1000);return()=>clearInterval(t);},[]);
+  return(
+    <div className="nav">
+      <span className="nav-mark">dp</span>
+      <div className="nav-sep"/>
+      <span className="nav-wordmark">Pleasant Soul Collective</span>
+      <div className="nav-right">
+        <span className="nav-lbl live">● LIVE</span>
+        <div style={{width:1,height:12,background:'rgba(255,255,255,.06)'}}/>
+        <span className="nav-clock">{clk}</span>
+        <div style={{width:1,height:12,background:'rgba(255,255,255,.06)'}}/>
+        <span className="nav-lbl">{VAULTS.reduce((a,v)=>a+v.tracks,0)} TRACKS</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── VAULT CARD ── */
+function VaultCard({ vault, onEnter }){
+  const [hov, setHov] = useState(false);
+  const r = parseInt(vault.color.slice(1,3),16);
+  const g = parseInt(vault.color.slice(3,5),16);
+  const b = parseInt(vault.color.slice(5,7),16);
+
+  return(
+    <div
+      className={`vcard${hov?' hovered':''}`}
+      onMouseEnter={()=>{ setHov(true); window.__setCursorColor&&window.__setCursorColor(vault.color); }}
+      onMouseLeave={()=>{ setHov(false); window.__setCursorColor&&window.__setCursorColor(null); }}
+      onClick={()=>onEnter(vault)}
+      style={hov?{borderColor:`rgba(${r},${g},${b},.25)`}:{}}
+    >
+      {/* identity top bar */}
+      <div className="vcard-bar" style={{background:vault.color}}/>
+
+      {/* identity bloom */}
+      <div className="vcard-bloom" style={{
+        background:`radial-gradient(ellipse 100% 140% at 50% 100%, rgba(${r},${g},${b},.13) 0%, transparent 70%)`
+      }}/>
+
+      {/* dp card texture — canvas-drawn inline */}
+      <DPCardTexture color={vault.color} active={hov}/>
+
+      <div className="vcard-content">
+        <div className="vcard-dot" style={{background:vault.color,boxShadow:hov?`0 0 10px ${vault.color},0 0 24px rgba(${r},${g},${b},.4)`:undefined}}/>
+        <div className="vcard-name" style={hov?{color:vault.color,opacity:1}:{}}>{vault.name}</div>
+        <div className="vcard-meta">{vault.genre} · {vault.tracks} TRACKS</div>
+        <div className="vcard-enter" style={hov?{color:vault.color}:{}}>ENTER VAULT</div>
+      </div>
+    </div>
+  );
+}
+
+/* dp texture per card — tiny canvas */
+function DPCardTexture({ color, active }){
+  const cv = useRef();
+  useEffect(()=>{
+    const c = cv.current; if(!c) return;
+    const ctx = c.getContext('2d');
+    const W=c.width, H=c.height;
+    ctx.clearRect(0,0,W,H);
+
+    const FS=22, CW=52, CH=38;
+    ctx.font=`700 ${FS}px Comfortaa`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+
+    const ROWS=Math.ceil(H/CH)+2, COLS=Math.ceil(W/CW)+2;
+    for(let row=-1;row<ROWS;row++){
+      const odd=row%2!==0;
+      for(let col=-1;col<COLS;col++){
+        const cx=col*CW+(odd?CW/2:0)+CW/2, cy=row*CH+CH/2;
+        const mir=(row+col)%2!==0;
+        ctx.save();
+        ctx.translate(cx,cy);
+        if(mir) ctx.scale(-1,1);
+        ctx.fillStyle=active?`rgba(255,255,255,0.028)`:`rgba(255,255,255,0.018)`;
+        ctx.fillText('dp',0,0);
+        ctx.restore();
+      }
+    }
+  },[active]);
+
+  return <canvas ref={cv} width={188} height={268} className="vcard-texture"
+    style={{position:'absolute',inset:0,width:'100%',height:'100%'}}/>;
+}
+
+/* ── STATUS BAR ── */
+function Status(){
+  return(
+    <div className="status">
+      {[
+        {label:'SYSTEM ONLINE', ok:true},
+        {label:'5 VAULTS LOADED', ok:true},
+        {label:'29 UNRELEASED', ok:true},
+        {label:'ARCHITECT ACTIVE', ok:false},
+      ].map((s,i)=>(
+        <div key={i} className="status-item">
+          <div className={`status-dot${s.ok?' ok':''}`}/>
+          <span className="status-txt">{s.label}</span>
+        </div>
+      ))}
+      <div style={{marginLeft:'auto'}}>
+        <span className="status-txt" style={{color:'rgba(255,255,255,.08)'}}>PSC v2.0 · 2026</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── APP ── */
+function App(){
+  const [entered, setEntered] = useState(null);
+
+  const handleEnter = (vault) => {
+    setEntered(vault.id);
+    // Navigate to console with vault context
+    setTimeout(()=>{
+      window.location.href = `PSC Console.html?vault=${vault.id}`;
+    }, 600);
+  };
+
+  return(
+    <div className="shell">
+      <div className="sealed"/>
+      <Cursor/>
+      <Nav/>
+      <div className="stage">
+        <span className="stage-label">Select Vault</span>
+        <div className="vgrid">
+          {VAULTS.map(v=>(
+            <VaultCard key={v.id} vault={v} onEnter={handleEnter}/>
+          ))}
+        </div>
+      </div>
+      <Status/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

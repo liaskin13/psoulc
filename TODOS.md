@@ -45,6 +45,71 @@ first.
 
 ---
 
+---
+
+## Phase 10 — Captured from plan-eng-review (2026-05-01)
+
+### Orphan file cleanup in uploadTrack()
+**Priority:** Medium
+**Blocked by:** nothing
+
+If `supabase.storage.upload()` succeeds but the `tracks` table insert fails, the audio
+file is orphaned in storage with no DB record. No cleanup logic exists.
+
+**Fix:** In `src/lib/tracks.js:uploadTrack()`, wrap the DB insert in a try/catch. On
+insert failure, call `supabase.storage.from('audio').remove([path])` to delete the orphan,
+then re-throw. ~5 lines.
+
+---
+
+### Pagination / infinite scroll for vault
+**Priority:** Low
+**Blocked by:** nothing (implement when track count approaches 200+)
+
+`fetchVaultTracks()` does an unbounded SELECT. Fine at 50 tracks, problematic at 500+.
+
+Add `LIMIT 100 ORDER BY created_at DESC` and an offset/cursor-based load-more. The vault
+component shows a "Load more" button or infinite scroll trigger at the bottom.
+
+---
+
+### AnalogConsole.jsx — holding screen
+**Priority:** High (before D's first login)
+**Blocked by:** nothing
+
+`AnalogConsole.jsx` is currently a cursor/spotlight stub with no console UI. If D logs in
+before P10-7 is built, he sees a blank screen with a cursor effect. Add a minimal holding
+screen: black background, `dp` seal centered, "YOUR CONSOLE IS BEING BUILT" in Chakra Petch,
+amber glow. One file, ~30 lines.
+
+---
+
+### Replace prompt() dialogs in App.jsx
+**Priority:** High (before D sees his console)
+**Blocked by:** nothing
+
+`handleNodeLongPress()` in `App.jsx` uses native `window.prompt()` and `window.alert()`.
+These are browser-native dialogs — wrong design language for PSC. Replace with an in-UI
+modal (can reuse the existing confirm modal pattern from VoidConfirm). Before D's first
+login.
+
+**Files:** `src/App.jsx` — handleNodeLongPress handler.
+
+---
+
+### Tags field — Phase 11
+**Priority:** Low
+**Blocked by:** Phase 10 completion
+
+Tags were dropped from UploadModal for Phase 10 (data was silently dropped — not passed
+to Supabase). Phase 11 implementation:
+- Add `tags text[]` column to Supabase `tracks` table
+- Wire through `uploadTrack()` in `src/lib/tracks.js`
+- Restore tags input to UploadModal
+- Add tag-based filtering to TheVault.jsx
+
+---
+
 ## Implementation Decisions (pending)
 
 ### Voice comment signed URL TTL strategy

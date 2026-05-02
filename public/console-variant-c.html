@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSC // D — VARIANT C: THE VOID</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+:root{
+  --void:#000;--s1:#050505;--b1:#0e0e0e;--b2:#181818;
+  --tp:#e8e4de;--ts:#3e3e3e;--tm:#1e1e1e;
+  --id:#ffb347;--id2:#d4890a;--id-dim:rgba(255,179,71,.06);
+  --red:#cc2200;--font:'Chakra Petch',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html,body,#root{width:100vw;height:100vh;overflow:hidden;background:var(--void);color:var(--tp);font-family:var(--font);}
+body{cursor:none;}
+::-webkit-scrollbar{width:2px;}::-webkit-scrollbar-thumb{background:var(--b1);}
+.console{width:100vw;height:100vh;display:flex;flex-direction:column;}
+.main{flex:1;display:flex;min-height:0;position:relative;}
+
+/* RAIL — minimal */
+.rail{height:36px;min-height:36px;display:flex;align-items:center;gap:10px;padding:0 16px;background:rgba(0,0,0,.98);border-bottom:1px solid var(--b1);z-index:30;flex-shrink:0;}
+.rail-mark{font-family:'Comfortaa',sans-serif;font-size:13px;font-weight:700;color:var(--id);letter-spacing:-.01em;}
+.r-sep{width:1px;height:14px;background:var(--b1);flex-shrink:0;}
+.r-lbl{font-size:9px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ts);}
+.r-lbl.id{color:var(--id);opacity:.8;}
+.r-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.r-bpm{font-family:var(--font);font-size:13px;font-weight:700;color:var(--id);}
+.r-clock{font-family:var(--font);font-size:9px;color:var(--ts);}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:rp 1.6s ease-in-out infinite;flex-shrink:0;}
+@keyframes rp{0%,100%{opacity:.2}50%{opacity:1}}
+.signal-btn{font-size:8px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:3px 10px;border:1px solid var(--ts);color:var(--ts);background:transparent;cursor:none;transition:all 120ms;}
+.signal-btn.live{border-color:#ff3030;color:#ff3030;background:rgba(255,48,48,.08);animation:rp .8s ease-in-out infinite;}
+.r-icon{width:22px;height:22px;border:1px solid var(--b1);background:transparent;color:var(--ts);cursor:none;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all 100ms;}
+.r-icon:hover{border-color:var(--id);color:var(--id);}
+
+/* BINS — 52px icon rail, hover expands */
+.bins{width:52px;flex-shrink:0;background:rgba(0,0,0,.95);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden;transition:width 280ms cubic-bezier(.4,0,.2,1);position:relative;z-index:20;}
+.bins:hover{width:220px;}
+.bins-accent{position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--id);opacity:.3;}
+.bins-logo{height:48px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-bottom:1px solid var(--b1);overflow:hidden;padding:0 16px;}
+.bins-logo-mark{font-family:'Comfortaa',sans-serif;font-size:14px;font-weight:700;color:rgba(255,179,71,.35);white-space:nowrap;}
+.vrow{display:flex;align-items:center;height:44px;padding:0 14px 0 14px;border-bottom:1px solid var(--b1);cursor:none;transition:background 80ms;flex-shrink:0;overflow:hidden;}
+.vrow:hover{background:rgba(255,255,255,.015);}
+.vrow.on{background:rgba(255,255,255,.02);}
+.vdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.vname{font-size:8px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;margin-left:10px;opacity:0;transition:opacity 180ms 60ms;}
+.bins:hover .vname{opacity:1;}
+.vcnt{font-family:var(--font);font-size:7px;color:var(--tm);margin-left:auto;white-space:nowrap;opacity:0;transition:opacity 180ms 80ms;}
+.bins:hover .vcnt{opacity:1;}
+.bins-tracks-lbl{font-size:7px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--id);opacity:.4;padding:8px 14px 4px;white-space:nowrap;overflow:hidden;flex-shrink:0;}
+.bins-tracks{flex:1;overflow-y:auto;overflow-x:hidden;}
+.trow{display:flex;align-items:center;height:38px;padding:0 12px 0 14px;cursor:none;position:relative;transition:background 80ms;border-bottom:1px solid rgba(255,255,255,.015);overflow:hidden;}
+.trow:hover{background:rgba(255,255,255,.02);}
+.trow.on{background:var(--id-dim);}
+.tbar{position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--id);opacity:0;}
+.trow.on .tbar{opacity:1;}
+.tr-dot{width:4px;height:4px;border-radius:50%;background:var(--ts);flex-shrink:0;}
+.trow.on .tr-dot{background:var(--id);}
+.tr-info{flex:1;min-width:0;margin-left:10px;opacity:0;transition:opacity 180ms 80ms;}
+.bins:hover .tr-info{opacity:1;}
+.tr-title{font-size:10px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.trow.on .tr-title{color:var(--id);}
+.tr-bpm{font-family:var(--font);font-size:7px;color:var(--tm);white-space:nowrap;opacity:0;transition:opacity 180ms;margin-left:6px;}
+.bins:hover .tr-bpm{opacity:1;}
+.bins-wm{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-family:'Comfortaa',sans-serif;font-size:54px;font-weight:700;color:var(--tp);opacity:.012;pointer-events:none;user-select:none;}
+
+/* MONITOR — fills everything */
+.monitor{flex:1;background:#000;position:relative;overflow:hidden;display:flex;flex-direction:column;}
+.dp-tex{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.dp-tex::before{content:'dp dp dp dp dp dp\A dp dp dp dp dp dp\A dp dp dp dp dp dp\A dp dp dp dp dp dp\A dp dp dp dp dp dp';font-family:'Comfortaa',sans-serif;font-size:52px;font-weight:700;white-space:pre;color:var(--tp);opacity:.012;line-height:1.6;letter-spacing:.3em;position:absolute;top:0;left:0;width:200%;transform:rotate(-15deg) translate(-20%,5%);}
+.aurora{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.ab{position:absolute;border-radius:50%;filter:blur(100px);mix-blend-mode:screen;}
+@keyframes au0{0%{transform:translate(0,0)}100%{transform:translate(60px,40px)}}
+@keyframes au1{0%{transform:translate(0,0)}100%{transform:translate(-40px,55px)}}
+@keyframes au2{0%{transform:translate(0,0)}100%{transform:translate(32px,-48px)}}
+
+/* SIGNAL TAKEOVER */
+.signal-takeover{position:absolute;inset:0;z-index:40;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.sig-tk-dot{width:8px;height:8px;border-radius:50%;background:#ff3030;animation:rp .8s ease-in-out infinite;margin:0 auto;}
+.sig-tk-lbl{font-size:10px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:#ff3030;text-align:center;}
+.sig-tk-timer{font-family:var(--font);font-size:48px;font-weight:700;color:rgba(255,48,48,.6);letter-spacing:-.02em;}
+.sig-tk-stat{font-size:8px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,48,48,.4);}
+.sig-tk-end{font-size:8px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;padding:6px 20px;border:1px solid rgba(255,48,48,.4);color:rgba(255,48,48,.6);background:transparent;cursor:none;}
+
+/* HERO — huge */
+.hero{padding:32px 36px 0;position:relative;z-index:2;flex-shrink:0;}
+.hero-meta-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.hero-sect{font-size:7px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:var(--ts);}
+.hero-idx{font-family:var(--font);font-size:9px;color:var(--tm);}
+.hero-title{font-size:clamp(72px,9vw,140px);font-weight:700;line-height:.9;letter-spacing:-.02em;background:linear-gradient(95deg,var(--tp) 0%,var(--id) 35%,var(--id2) 58%,var(--tp) 100%);background-size:250% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:foil 6s linear infinite;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:18px;}
+@keyframes foil{0%{background-position:0% 50%}100%{background-position:250% 50%}}
+.hero-meta{display:flex;align-items:center;gap:18px;}
+.hero-artist{font-size:14px;font-weight:400;color:var(--ts);}
+.hero-key{font-family:var(--font);font-size:8px;color:var(--ts);background:rgba(255,255,255,.03);border:1px solid var(--b2);padding:2px 7px;}
+.hero-dur{font-family:var(--font);font-size:11px;color:var(--id);margin-left:auto;}
+
+/* WAVEFORM */
+.wf-zone{position:relative;z-index:2;flex-shrink:0;margin-top:24px;}
+.wf-canvas{width:100%;height:160px;display:block;cursor:crosshair;}
+.wf-armed{position:absolute;top:6px;left:20px;font-size:7px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:2px 8px;border:1px solid;animation:rp .5s ease-in-out infinite;pointer-events:none;z-index:3;}
+.wf-stamps{display:flex;justify-content:space-between;padding:3px 36px 0;}
+.wf-t{font-family:var(--font);font-size:7px;color:var(--tm);}
+
+/* FLOATING CUES — anchored to waveform bottom */
+.float-cues{position:relative;z-index:3;display:flex;gap:1px;padding:0 36px 0;margin-top:6px;background:var(--b1);background:transparent;}
+.fcue{flex:1;aspect-ratio:2;background:rgba(0,0,0,.8);border:1px solid var(--b1);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:4px 2px;cursor:none;transition:all 60ms;position:relative;overflow:hidden;max-width:52px;}
+.fcue.armed{animation:rp .45s ease-in-out infinite;}
+.fcue-dot{position:absolute;top:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;}
+.fcue-num{font-size:6px;font-weight:700;color:var(--tm);}
+.fcue-st{font-size:5px;color:var(--tm);}
+
+/* FLOATING CHAIN — glass panel inside monitor */
+.float-chain{position:absolute;bottom:80px;right:20px;width:196px;background:rgba(6,6,6,.92);border:1px solid var(--b1);backdrop-filter:blur(16px);z-index:10;box-shadow:0 8px 32px rgba(0,0,0,.6);}
+.fc-tabs{display:flex;border-bottom:1px solid var(--b1);}
+.fc-tab{flex:1;font-size:6px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:6px 0;text-align:center;color:var(--tm);cursor:none;border-right:1px solid var(--b1);transition:color 80ms;}
+.fc-tab:last-child{border-right:none;}
+.fc-tab.on{color:var(--id);}
+.fc-body{padding:10px 12px;max-height:260px;overflow-y:auto;}
+.fc-bpm{text-align:center;padding:4px 0 6px;}
+.fc-bpmv{font-family:var(--font);font-size:44px;font-weight:700;color:var(--id);line-height:1;letter-spacing:-.02em;}
+.fc-bpml{font-size:7px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--ts);}
+.fc-key{font-family:var(--font);font-size:13px;font-weight:600;color:rgba(255,179,71,.5);text-align:center;margin-top:4px;}
+.fc-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.fc-lbl{font-size:7px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--tm);}
+.fc-val{font-family:var(--font);font-size:9px;color:var(--ts);}
+.fc-val.hi{color:var(--id);}
+.fc-val.live{color:#ff3030;}
+.broadcast-btn{width:100%;padding:9px 0;font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;border:1px solid var(--ts);color:var(--ts);background:transparent;cursor:none;transition:all 120ms;margin-bottom:8px;font-family:var(--font);}
+.broadcast-btn.live{border-color:#ff3030;color:#ff3030;background:rgba(255,48,48,.07);}
+.msg-btn-sm{width:100%;padding:6px 0;font-size:7px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border:none;border-bottom:1px solid rgba(255,255,255,.04);color:var(--ts);background:transparent;cursor:none;text-align:left;display:flex;align-items:center;gap:7px;transition:color 80ms;font-family:var(--font);}
+.msg-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.pill{width:26px;height:12px;background:var(--b1);border:1px solid var(--b2);border-radius:9999px !important;position:relative;cursor:none;transition:all 180ms;}
+.pill.on{background:var(--id);border-color:var(--id);}
+.pill-k{position:absolute;width:8px;height:8px;background:#fff;top:1px;left:1px;border-radius:50% !important;transition:transform 180ms;}
+.pill.on .pill-k{transform:translateX(14px);}
+.m3g{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1);border:1px solid var(--b1);margin-top:6px;}
+.m3c{background:rgba(0,0,0,.8);padding:5px 7px;}
+.m3n{font-family:var(--font);font-size:13px;font-weight:700;color:var(--ts);display:block;line-height:1;margin-bottom:1px;}
+.m3l{font-size:6px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tm);}
+
+/* TRANSPORT — minimal strip */
+.transport{height:60px;min-height:60px;display:flex;align-items:center;gap:8px;padding:0 20px;background:rgba(0,0,0,.98);border-top:1px solid var(--b1);z-index:20;flex-shrink:0;}
+.tbtn{width:34px;height:34px;border:1px solid var(--b2);background:transparent;color:var(--ts);cursor:none;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all 100ms;font-family:var(--font);}
+.tbtn:hover{border-color:var(--ts);color:var(--tp);}
+.tbtn.play{width:42px;height:42px;font-size:15px;border-color:var(--id);color:var(--id);}
+.tbtn.play.on,.tbtn.active{border-color:var(--id);color:var(--id);background:var(--id-dim);}
+.tbtn.sm{width:auto;padding:0 10px;font-size:7px;letter-spacing:.14em;text-transform:uppercase;}
+.t-time{font-family:var(--font);font-size:11px;color:var(--id);letter-spacing:.04em;flex-shrink:0;}
+.t-tot{font-family:var(--font);font-size:9px;color:var(--ts);flex-shrink:0;}
+.prog{flex:1;height:1px;background:var(--b2);position:relative;cursor:crosshair;margin:0 6px;}
+.prog-fill{position:absolute;left:0;top:0;height:100%;background:var(--id);}
+.prog-head{position:absolute;top:50%;width:5px;height:5px;background:var(--id);transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 6px var(--id);}
+.gain-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;margin-left:6px;}
+.gain-lbl{font-size:6px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--tm);}
+input[type=range].gain-sl{-webkit-appearance:none;width:58px;height:1px;background:var(--b2);outline:none;cursor:none;}
+input[type=range].gain-sl::-webkit-slider-thumb{-webkit-appearance:none;width:5px;height:9px;background:var(--id);cursor:none;}
+
+/* CURSOR */
+.cur-ball{position:fixed;pointer-events:none;z-index:9999;width:10px;height:10px;border-radius:50% !important;background:var(--id);transform:translate(-50%,-50%);box-shadow:0 0 12px var(--id),0 0 24px rgba(255,179,71,.25);}
+.cur-ball.click{width:6px;height:6px;}
+.cur-spot{position:fixed;pointer-events:none;z-index:1;width:480px;height:480px;border-radius:50% !important;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,179,71,.055) 0%,transparent 70%);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+const TRACKS = [
+  {id:1,title:"eightysixty",artist:"Soul Pleasant",bpm:80,key:"F min",dur:"4:22",tier:"M"},
+  {id:2,title:"fucked dis house 124",artist:"Soul Pleasant",bpm:124,key:"A min",dur:"5:44",tier:"M"},
+  {id:3,title:"That's What U R",artist:"Amerie",bpm:96,key:"D min",dur:"3:58",tier:"B"},
+  {id:4,title:"96tagetemvvv",artist:"Soul Pleasant",bpm:96,key:"G min",dur:"6:12",tier:"M"},
+  {id:5,title:"120'em Pt.2",artist:"Soul Pleasant",bpm:120,key:"C min",dur:"7:03",tier:"U"},
+  {id:6,title:"onetwentyfaackin3mmmm",artist:"Soul Pleasant",bpm:120,key:"F min",dur:"5:31",tier:"A"},
+  {id:7,title:"91enounting",artist:"Soul Pleasant",bpm:91,key:"B♭",dur:"4:47",tier:"M"},
+  {id:8,title:"93'was infinity",artist:"Soul Pleasant",bpm:93,key:"E min",dur:"8:15",tier:"M"},
+  {id:9,title:"sumtimg wright rongbbb",artist:"Soul Pleasant",bpm:88,key:"D min",dur:"5:22",tier:"U"},
+];
+const VAULTS=[{id:"orig",name:"ORIGINAL MUSIC",color:"#ffb347",count:9},{id:"mixes",name:"MIXES",color:"#4488ff",count:14},{id:"live",name:"LIVE SETS",color:"#ff4488",count:6},{id:"arch",name:"SONIC ARCH",color:"#44ffaa",count:22}];
+const TIER={M:{c:"#ffb347"},B:{c:"#555"},U:{c:"#cc44aa"},A:{c:"#777"}};
+const PAD_COLORS=["#ff4444","#44aaff","#44ff88","#ffaa00","#ff44cc","#44ffff","#ff8800","#aa44ff"];
+const AURORA=[{w:600,h:420,c:"rgba(230,100,10,0.08)",t:"-10%",l:"-5%",d:22},{w:440,h:500,c:"rgba(160,70,0,0.07)",t:"20%",l:"30%",d:28},{w:360,h:360,c:"rgba(190,120,0,0.06)",t:"55%",l:"60%",d:20}];
+
+const ds=d=>{const[m,s]=d.split(":").map(Number);return m*60+s;};
+const sd=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+const prng=n=>{let s=n;return()=>{s=(s*1664525+1013904223)&0xffffffff;return Math.abs(s)/2147483648;};};
+
+function Cursor(){
+  const b=useRef(),sp=useRef();
+  const[click,setClick]=useState(false);
+  useEffect(()=>{
+    const mv=e=>{if(b.current){b.current.style.left=e.clientX+"px";b.current.style.top=e.clientY+"px";}if(sp.current){sp.current.style.left=e.clientX+"px";sp.current.style.top=e.clientY+"px";}};
+    const dn=()=>setClick(true),up=()=>setClick(false);
+    window.addEventListener("mousemove",mv);window.addEventListener("mousedown",dn);window.addEventListener("mouseup",up);
+    return()=>{window.removeEventListener("mousemove",mv);window.removeEventListener("mousedown",dn);window.removeEventListener("mouseup",up);};
+  },[]);
+  return<><div ref={sp} className="cur-spot"/><div ref={b} className={`cur-ball${click?" click":""}`}/></>;
+}
+
+function Waveform({track,progress,onSeek,cues,armedPad}){
+  const cv=useRef();
+  const bars=useMemo(()=>{const r=prng(track.id*7331);return Array.from({length:240},()=>0.1+r()*.9);},[track.id]);
+  const draw=useCallback(()=>{
+    const c=cv.current;if(!c)return;
+    const ctx=c.getContext("2d"),W=c.width,H=c.height,bw=W/bars.length,px=W*progress;
+    ctx.clearRect(0,0,W,H);
+    bars.forEach((h,i)=>{
+      const x=i*bw,bh=h*H*.9,y=(H-bh)/2,played=x<px,al=played?.92:.18;
+      let col;
+      if(h<.28)col=`rgba(32,96,255,${al})`;
+      else if(h<.50)col=`rgba(32,188,96,${al})`;
+      else if(h<.72)col=`rgba(255,179,71,${al})`;
+      else col=`rgba(255,55,25,${al})`;
+      ctx.fillStyle=col;ctx.fillRect(x,y,bw-.5,bh);
+    });
+    ctx.fillStyle="#ffb347";ctx.shadowColor="#ffb347";ctx.shadowBlur=12;ctx.fillRect(px-1,0,2,H);ctx.shadowBlur=0;
+    for(let y=0;y<H;y+=2){ctx.fillStyle="rgba(0,0,0,.15)";ctx.fillRect(0,y,W,1);}
+    Object.entries(cues).forEach(([n,pos])=>{
+      const x=pos*W,color=PAD_COLORS[(n-1)%PAD_COLORS.length];
+      ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=8;
+      ctx.beginPath();ctx.moveTo(x-9,2);ctx.lineTo(x+9,2);ctx.lineTo(x,17);ctx.closePath();ctx.fill();
+      ctx.shadowBlur=0;ctx.fillStyle=color;ctx.font="bold 9px 'Chakra Petch'";ctx.textAlign="center";ctx.fillText(n,x,30);ctx.textAlign="left";
+    });
+  },[bars,progress,cues]);
+  useEffect(()=>{draw();},[draw]);
+  return(
+    <div className="wf-zone">
+      {armedPad&&<div className="wf-armed" style={{color:PAD_COLORS[(armedPad-1)%PAD_COLORS.length],borderColor:PAD_COLORS[(armedPad-1)%PAD_COLORS.length]}}>CUE {armedPad} ARMED — CLICK WAVEFORM</div>}
+      <canvas ref={cv} width={1400} height={160} className="wf-canvas"
+        onClick={e=>{const r=e.currentTarget.getBoundingClientRect();onSeek((e.clientX-r.left)/r.width);}}/>
+      <div className="wf-stamps">
+        <span className="wf-t">00:00</span>
+        <span className="wf-t" style={{color:"rgba(255,179,71,.4)"}}>{sd(Math.floor(ds(track.dur)*progress))}</span>
+        <span className="wf-t">{track.dur}</span>
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const[track,setTrack]=useState(TRACKS[0]);
+  const[playing,setPlaying]=useState(false);
+  const[progress,setProgress]=useState(0);
+  const[sessec,setSessec]=useState(0);
+  const[vault,setVault]=useState("orig");
+  const[cues,setCues]=useState({});
+  const[armedPad,setArmedPad]=useState(null);
+  const[broadcasting,setBroadcasting]=useState(false);
+  const[btime,setBtime]=useState(0);
+  const[fcTab,setFcTab]=useState("deck");
+  const[sys,setSys]=useState({EQ:true,EFX:false,AURORA:true});
+  const[gain,setGain]=useState(80);
+  const[loop,setLoop]=useState(false);
+  const[clk,setClk]=useState(()=>new Date().toLocaleTimeString("en-US",{hour12:false}));
+
+  useEffect(()=>{if(!playing)return;const tot=ds(track.dur);const t=setInterval(()=>setProgress(p=>{if(p>=1){setPlaying(false);return 0;}return p+1/tot;}),1000);return()=>clearInterval(t);},[playing,track]);
+  useEffect(()=>{const t=setInterval(()=>setSessec(s=>s+1),1000);return()=>clearInterval(t);},[]);
+  useEffect(()=>{if(!broadcasting)return;const t=setInterval(()=>setBtime(s=>s+1),1000);return()=>clearInterval(t);},[broadcasting]);
+  useEffect(()=>{const t=setInterval(()=>setClk(new Date().toLocaleTimeString("en-US",{hour12:false})),1000);return()=>clearInterval(t);},[]);
+
+  const sess=`${String(Math.floor(sessec/3600)).padStart(2,"0")}:${String(Math.floor((sessec%3600)/60)).padStart(2,"0")}:${String(sessec%60).padStart(2,"0")}`;
+  const bsd=s=>`${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+  const load=t=>{setTrack(t);setProgress(0);setCues({});setArmedPad(null);};
+  const handlePad=n=>{if(armedPad===n){setArmedPad(null);}else if(cues[n]!==undefined){setProgress(cues[n]);setArmedPad(null);}else{setArmedPad(n);}};
+  const handleSeek=pos=>{if(armedPad!==null){setCues(c=>({...c,[armedPad]:pos}));setArmedPad(null);}else{setProgress(pos);}};
+  const el=Math.floor(ds(track.dur)*progress);
+  const idx=TRACKS.findIndex(t=>t.id===track.id)+1;
+
+  useEffect(()=>{const h=e=>{if(e.target.tagName==="INPUT")return;if(e.code==="Space"){e.preventDefault();setPlaying(p=>!p);}};window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);});
+
+  return(
+    <div className="console">
+      <Cursor/>
+      {/* RAIL */}
+      <div className="rail">
+        <span style={{fontFamily:"'Comfortaa',sans-serif",fontSize:13,fontWeight:700,color:"var(--id)"}}>dp</span>
+        <div className="r-sep"/>
+        <span className="r-lbl id">D8P CONSOLE</span>
+        <div className="r-sep"/>
+        <div style={{display:"flex",alignItems:"center",gap:6}}><div className="live-dot"/><span className="r-lbl">LIVE</span></div>
+        <div className="r-sep"/>
+        <span className="r-lbl">SESSION {sess}</span>
+        <div className="r-right">
+          <span className="r-bpm">{track.bpm} BPM</span>
+          <div className="r-sep"/>
+          <button className={`signal-btn${broadcasting?" live":""}`} onClick={()=>{setBroadcasting(b=>!b);if(broadcasting)setBtime(0);}}>{broadcasting?"◉ ON AIR":"◎ THE SIGNAL"}</button>
+          <div className="r-sep"/>
+          <span className="r-clock">{clk}</span>
+          <div className="r-sep"/>
+          <button className="r-icon">⊙</button>
+          <button className="r-icon">↪</button>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div className="main">
+        {/* BINS — collapsible icon rail */}
+        <div className="bins">
+          <div className="bins-accent"/>
+          <div className="bins-logo"><span className="bins-logo-mark">dp</span></div>
+          {VAULTS.map(v=>(
+            <div key={v.id} className={`vrow${vault===v.id?" on":""}`} onClick={()=>setVault(v.id)}>
+              <div className="vdot" style={{background:v.color,boxShadow:`0 0 5px ${v.color}`}}/>
+              <span className="vname" style={{color:vault===v.id?v.color:undefined}}>{v.name}</span>
+              <span className="vcnt">{v.count}</span>
+            </div>
+          ))}
+          <div className="bins-tracks-lbl">TRACKS</div>
+          <div className="bins-tracks">
+            {TRACKS.map((t,i)=>(
+              <div key={t.id} className={`trow${track.id===t.id?" on":""}`} onClick={()=>load(t)}>
+                <div className="tbar"/>
+                <div className="tr-dot"/>
+                <div className="tr-info">
+                  <div className="tr-title">{t.title}</div>
+                </div>
+                <span className="tr-bpm">{t.bpm}</span>
+              </div>
+            ))}
+          </div>
+          <div className="bins-wm">dp</div>
+        </div>
+
+        {/* MONITOR — art fills screen */}
+        <div className="monitor">
+          <div className="dp-tex"/>
+          <div className="aurora">{AURORA.map((b,i)=><div key={i} className="ab" style={{width:b.w,height:b.h,background:b.c,top:b.t,left:b.l,animation:`au${i} ${b.d}s ease-in-out infinite alternate`}}/>)}</div>
+
+          {/* THE SIGNAL TAKEOVER */}
+          {broadcasting&&(
+            <div className="signal-takeover">
+              <div className="sig-tk-dot"/>
+              <div className="sig-tk-lbl">THE SIGNAL — BROADCASTING</div>
+              <div className="sig-tk-timer">{bsd(btime)}</div>
+              <div className="sig-tk-stat">3 MASTERS WATCHING</div>
+              <button className="sig-tk-end" onClick={()=>{setBroadcasting(false);setBtime(0);}}>END BROADCAST</button>
+            </div>
+          )}
+
+          {/* HERO — enormous */}
+          <div className="hero">
+            <div className="hero-meta-top">
+              <span className="hero-sect">VAULT — SOUL PLEASANT</span>
+              <span className="hero-idx">{String(idx).padStart(2,"0")} / {String(TRACKS.length).padStart(2,"0")}</span>
+            </div>
+            <div className="hero-title">{track.title}</div>
+            <div className="hero-meta">
+              <span className="hero-artist">{track.artist}</span>
+              <span className="hero-key">{track.key}</span>
+              <span className="hero-dur">{sd(el)} / {track.dur}</span>
+            </div>
+          </div>
+
+          {/* WAVEFORM — the visual centerpiece */}
+          <Waveform track={track} progress={progress} onSeek={handleSeek} cues={cues} armedPad={armedPad}/>
+
+          {/* FLOATING CUE PADS — anchored to waveform */}
+          <div className="float-cues">
+            {[1,2,3,4,5,6,7,8].map(n=>{
+              const c=PAD_COLORS[(n-1)%PAD_COLORS.length],has=cues[n]!==undefined,arm=armedPad===n;
+              return(
+                <div key={n} className={`fcue${arm?" armed":""}`}
+                  style={arm?{background:`${c}14`,boxShadow:`inset 0 0 0 1px ${c}44`,borderColor:`${c}44`}:has?{borderColor:`${c}28`}:{}}
+                  onClick={()=>handlePad(n)}>
+                  {has&&<div className="fcue-dot" style={{background:c}}/>}
+                  <div className="fcue-num" style={{color:arm||has?c:undefined}}>{n}</div>
+                  <div className="fcue-st" style={{color:arm?c+"99":undefined}}>{arm?"A":has?"S":"—"}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* FLOATING CHAIN PANEL */}
+          <div className="float-chain">
+            <div className="fc-tabs">
+              {["deck","vault","comms","anlyt","sys"].map(t=>(
+                <div key={t} className={`fc-tab${fcTab===t?" on":""}`} onClick={()=>setFcTab(t)}>{t.toUpperCase()}</div>
+              ))}
+            </div>
+            <div className="fc-body">
+              {fcTab==="deck"&&<>
+                <div className="fc-bpm"><div className="fc-bpmv">{track.bpm}</div><div className="fc-bpml">BPM</div></div>
+                <div className="fc-key">{track.key}</div>
+                {[["kbps","320"],["kHz","44.1"],["DUR",track.dur]].map(([l,v])=>(
+                  <div key={l} className="fc-row"><span className="fc-lbl">{l}</span><span className="fc-val">{v}</span></div>
+                ))}
+              </>}
+              {fcTab==="vault"&&<>
+                {VAULTS.map(v=>(
+                  <div key={v.id} className="fc-row">
+                    <span className="fc-lbl" style={{display:"flex",alignItems:"center",gap:5}}>
+                      <div style={{width:4,height:4,borderRadius:"50%",background:v.color,flexShrink:0}}/>
+                      {v.name}
+                    </span>
+                    <span className="fc-val">{v.count}</span>
+                  </div>
+                ))}
+                <div style={{display:"flex",gap:1,marginTop:8,background:"var(--b1)"}}>
+                  {["↑ UPLOAD","⊘ VOID","↕ SORT"].map(a=>(
+                    <button key={a} style={{flex:1,background:"var(--void)",border:"none",padding:"6px 0",fontSize:6,fontWeight:700,letterSpacing:".1em",textTransform:"uppercase",color:"var(--ts)",cursor:"none",fontFamily:"var(--font)"}}>{a}</button>
+                  ))}
+                </div>
+              </>}
+              {fcTab==="comms"&&<>
+                {[["#00e5ff","MESSAGE L"],["#ffb347","MASTERS"],["#cc44aa","MUSES"],["#888","COLLAB"],["var(--red)","VOICE NOTE"]].map(([c,l])=>(
+                  <button key={l} className="msg-btn-sm"><div className="msg-dot" style={{background:c}}/>{l}</button>
+                ))}
+              </>}
+              {fcTab==="anlyt"&&<>
+                {[["PLAYS","247","hi"],["DWNLD","12"],["REV","$180","hi"],["MASTERS","8"],["MUSES","3"],["ALL","1,847","hi"]].map(([l,v,hi])=>(
+                  <div key={l} className="fc-row"><span className="fc-lbl">{l}</span><span className={`fc-val${hi?" hi":""}`}>{v}</span></div>
+                ))}
+              </>}
+              {fcTab==="sys"&&<>
+                {Object.entries(sys).map(([k,v])=>(
+                  <div key={k} className="fc-row">
+                    <span className="fc-lbl">{k}</span>
+                    <div className={`pill${v?" on":""}`} onClick={()=>setSys(s=>({...s,[k]:!s[k]}))}>
+                      <div className="pill-k"/>
+                    </div>
+                  </div>
+                ))}
+                <div style={{fontSize:7,fontWeight:600,letterSpacing:".14em",textTransform:"uppercase",color:"var(--tm)",marginTop:8,marginBottom:2}}>M³</div>
+                <div className="m3g">
+                  {[["12","MSTRS","#ffb347"],["89","MMBRS",""],["5","MUSES","#cc44aa"],["3","COLLAB",""]].map(([n,l,c])=>(
+                    <div key={l} className="m3c"><span className="m3n" style={c?{color:c}:{}}>{n}</span><span className="m3l">{l}</span></div>
+                  ))}
+                </div>
+                <div style={{display:"flex",gap:4,marginTop:8}}>
+                  <button style={{flex:1,padding:"5px 0",border:"1px solid var(--b2)",background:"transparent",color:"var(--ts)",fontSize:7,fontWeight:600,letterSpacing:".12em",textTransform:"uppercase",cursor:"none",fontFamily:"var(--font)"}}>PROFILE</button>
+                  <button style={{flex:1,padding:"5px 0",border:"1px solid var(--b2)",background:"transparent",color:"var(--ts)",fontSize:7,fontWeight:600,letterSpacing:".12em",textTransform:"uppercase",cursor:"none",fontFamily:"var(--font)"}}>LOGOUT</button>
+                </div>
+              </>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* TRANSPORT */}
+      <div className="transport">
+        <button className="tbtn" onClick={()=>{const i=TRACKS.findIndex(t=>t.id===track.id);load(TRACKS[(i-1+TRACKS.length)%TRACKS.length]);}}>⏮</button>
+        <button className={`tbtn play${playing?" on":""}`} onClick={()=>setPlaying(p=>!p)}>{playing?"⏸":"▶"}</button>
+        <button className="tbtn" onClick={()=>{const i=TRACKS.findIndex(t=>t.id===track.id);load(TRACKS[(i+1)%TRACKS.length]);}}>⏭</button>
+        <button className="tbtn sm">CUE</button>
+        <button className={`tbtn sm${loop?" active":""}`} onClick={()=>setLoop(l=>!l)}>⟳ LOOP</button>
+        <span className="t-time" style={{marginLeft:6}}>{sd(el)}</span>
+        <div className="prog" onClick={e=>{const r=e.currentTarget.getBoundingClientRect();handleSeek((e.clientX-r.left)/r.width);}}>
+          <div className="prog-fill" style={{width:`${progress*100}%`}}/>
+          <div className="prog-head" style={{left:`${progress*100}%`}}/>
+        </div>
+        <span className="t-tot">{track.dur}</span>
+        <div className="gain-wrap">
+          <span className="gain-lbl">GAIN</span>
+          <input type="range" className="gain-sl" min={0} max={100} value={gain} onChange={e=>setGain(+e.target.value)}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

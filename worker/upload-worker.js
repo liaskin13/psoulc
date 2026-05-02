@@ -1,69 +1,129 @@
-// Cloudflare Worker: R2 Upload Proxy
-// Securely handles audio file uploads to R2 without exposing credentials to frontend
+// Cloudflare Worker: PSC Audio Upload + Database Proxy
+// Handles R2 storage + D1 database without exposing credentials
 
 export default {
   async fetch(request, env) {
-    // CORS preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      });
-    }
+    const url = new URL(request.url);
 
-    if (request.method !== "POST") {
-      return new Response("Method not allowed", { status: 405 });
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
     }
 
     try {
-      const formData = await request.formData();
-      const file = formData.get("file");
-      const vault = formData.get("vault");
+      // GET /tracks/:vault
+      if (request.method === "GET" && url.pathname.startsWith("/tracks/")) {
+        const vault = url.pathname.split("/")[2];
+        const { results } = await env.PSC_DB.prepare(
+          "SELECT * FROM tracks WHERE vault = ? AND is_voided = 0 ORDER BY created_at DESC",
+        )
+          .bind(vault)
+          .all();
 
-      if (!file) {
-        return new Response("No file provided", { status: 400 });
+        return new Response(JSON.stringify(results), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      if (!vault) {
-        return new Response("No vault specified", { status: 400 });
+      // GET /tracks
+      if (request.method === "GET" && url.pathname === "/tracks") {
+        const { results } = await env.PSC_DB.prepare(
+          "SELECT id, vault, title, artist, bpm, created_at FROM tracks WHERE is_voided = 0 ORDER BY created_at DESC",
+        ).all();
+
+        return new Response(JSON.stringify(results), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      // Generate R2 key: {vault}/{timestamp}-{random}.{ext}
-      const ext = file.name.split(".").pop();
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const key = `${vault}/${filename}`;
+      // POST /upload
+      if (request.method === "POST" && url.pathname === "/upload") {
+        const formData = await request.formData();
+        const file = formData.get("file");
+        const vault = formData.get("vault");
+        const title = formData.get("title");
+        const artist = formData.get("artist");
+        const bpm = formData.get("bpm");
+        const uploaded_by = formData.get("uploaded_by");
 
-      // Upload to R2
-      await env.PSC_AUDIO.put(key, file.stream(), {
-        httpMetadata: {
-          contentType: file.type || "application/octet-stream",
-        },
-      });
+        if (!file || !vault || !title) {
+          return new Response(
+            JSON.stringify({ error: "Missing required fields" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
 
-      // Return public URL
-      // Format: https://{bucket}.{account-id}.r2.cloudflarestorage.com/{key}
-      // Or use custom domain if configured
-      const publicUrl = `${env.R2_PUBLIC_URL}/${key}`;
+        const ext = file.name.split(".").pop();
+        const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const key = `${vault}/${filename}`;
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          audio_path: key,
-          public_url: publicUrl,
-        }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
+        await env.PSC_AUDIO.put(key, file.stream(), {
+          httpMetadata: {
+            contentType: file.type || "application/octet-stream",
           },
-        },
-      );
+        });
+
+        const result = await env.PSC_DB.prepare(
+          "INSERT INTO tracks (vault, title, artist, bpm, audio_path, uploaded_by) VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+        )
+          .bind(
+            vault,
+            title,
+            artist || null,
+            bpm ? parseFloat(bpm) : null,
+            key,
+            uploaded_by,
+          )
+          .first();
+
+        if (!result) {
+          await env.PSC_AUDIO.delete(key);
+          throw new Error("Database insert failed");
+        }
+
+        const publicUrl = `${env.R2_PUBLIC_URL}/${key}`;
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            id: result.id,
+            audio_path: key,
+            public_url: publicUrl,
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      // PUT /tracks/:id/void
+      if (
+        request.method === "PUT" &&
+        url.pathname.match(/^\/tracks\/[^\/]+\/void$/)
+      ) {
+        const id = url.pathname.split("/")[2];
+        const { success } = await env.PSC_DB.prepare(
+          "UPDATE tracks SET is_voided = 1 WHERE id = ?",
+        )
+          .bind(id)
+          .run();
+
+        return new Response(JSON.stringify({ success }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response("Not found", { status: 404 });
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("Worker error:", error);
       return new Response(
         JSON.stringify({
           success: false,
@@ -71,10 +131,7 @@ export default {
         }),
         {
           status: 500,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-          },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }

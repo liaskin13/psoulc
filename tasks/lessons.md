@@ -31,6 +31,15 @@ All of it was deleted. The code now matches the docs. See DESIGN.md's ⛔ HARD S
 
 ## Agent Routing Calibration Log
 
+### Session: Architect Console Contract Lock (May 2, 2026)
+
+- **Lesson**: When L asks for Serato-familiar controls, implement from the explicit keep/drop contract in `tasks/plan.active.md:10-24` before any visual polish.
+- **Rule**: Do not ship `ArchitectConsole` changes without a keep/drop audit pass: 1) kept controls present, 2) dropped controls absent, 3) direct D↔L dialogue box present in both consoles, 4) all three signature animations still active.
+- **Enforcement checklist**:
+	- `DirectLinePanel` mounted in both `ArchitectConsole` and `AnalogConsole`.
+	- `arch-standing-wave`, `arch-scan-line`/`arch-row-ignite`, and magnetic `arch-tab-glider` transitions remain in `ArchitectConsole.css`.
+	- Build passes and no planet names are rendered in L console UI text.
+
 Use this template when an intent routes to the wrong custom agent.
 
 Template entry:

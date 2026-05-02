@@ -15,10 +15,7 @@ import EntrySequence from './entry/EntrySequence';
 const AnalogConsole     = lazy(() => import('./console/AnalogConsole'));
 const ArchitectConsole  = lazy(() => import('./console/ArchitectConsole'));
 
-const SaturnVault    = lazy(() => import('./saturn/SaturnVault'));
-const MercuryStream  = lazy(() => import('./mercury/MercuryStream'));
-const VenusArchive   = lazy(() => import('./venus/VenusArchive'));
-const EarthSafe      = lazy(() => import('./earth/EarthSafe'));
+const TheVault       = lazy(() => import('./components/TheVault'));
 const LockboxVault   = lazy(() => import('./lockbox/LockboxVault'));
 const LockedDoor     = lazy(() => import('./lockbox/LockedDoor'));
 const UploadModal    = lazy(() => import('./components/UploadModal'));
@@ -131,12 +128,8 @@ function App() {
     setActiveNode(node);
   };
 
-  const handleNodeLongPress = (node) => {
-    const action = prompt(`Architect Override for ${node.label}:\n1. Rename\n2. Move\n3. Delete`);
-    if (action === '1') {
-      const newName = prompt('New name:');
-      if (newName) console.log(`Renaming ${node.label} to ${newName}`);
-    }
+  const handleNodeLongPress = (_node) => {
+    // TODO: replace with in-UI modal before D sees his console (Gate B)
   };
 
   const handleLockboxSync = (lockbox) => {
@@ -187,12 +180,8 @@ function App() {
     const onVoid   = (planet) => (item) => handleVoid(item, planet);
 
     let vault = null;
-    switch (id) {
-      case 'saturn':   vault = <SaturnVault   {...shared} onVoid={onVoid('saturn')}   onExplore={() => {}} onTune={() => {}} />; break;
-      case 'mercury':  vault = <MercuryStream  {...shared} />; break;
-      case 'venus':    vault = <VenusArchive   {...shared} onVoid={onVoid('venus')} />; break;
-      case 'earth':    vault = <EarthSafe      {...shared} onVoid={onVoid('earth')} />; break;
-      default: break;
+    if (VAULT_IDS.has(id)) {
+      vault = <TheVault vault={id} {...shared} onVoid={onVoid(id)} />;
     }
     if (!vault && typeof id === 'string' && id.startsWith(LOCKBOX_PREFIX)) {
       if (canEnterLockbox(sessionMeta, id)) {
@@ -242,7 +231,7 @@ function App() {
     );
   }
 
-  // ── ARCHITECT CONSOLE ────────────────────────────────────────────────────
+  // ── L's CONSOLE — GOD MODE PLUS (sovereign root) ──────────────────────────
   if (stage === 'architect') {
     return (
       <>
@@ -252,8 +241,13 @@ function App() {
           <div className="glitter-grain" />
           {isBroadcasting && <div className="system-broadcast-pulse" aria-live="polite">SYSTEM BROADCAST ACTIVE</div>}
           <Suspense fallback={null}>
-            <ArchitectConsole onPowerDown={handlePowerDown} onExplorePlanet={handleArchitectExplore} onBroadcast={handleBroadcast} />
+            <ArchitectConsole onPowerDown={handlePowerDown} onExplorePlanet={handleArchitectExplore} onBroadcast={handleBroadcast} onIntake={() => setShowUploadModal(true)} />
           </Suspense>
+          {showUploadModal && (
+            <Suspense fallback={null}>
+              <UploadModal onClose={() => setShowUploadModal(false)} />
+            </Suspense>
+          )}
           <div className="psc-wordmark-footer" aria-hidden="true">PLEASANT SOUL COLLECTIVE</div>
         </div>
       </>
@@ -287,7 +281,7 @@ function App() {
     );
   }
 
-  // ── D's GOD MODE CONSOLE ─────────────────────────────────────────────────
+  // ── D's CONSOLE — ARTIST VIEW ──────────────────────────────────────────────
   return (
     <>
       {offlineBanner}

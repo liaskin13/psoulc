@@ -1,19 +1,19 @@
-# Cloudflare Worker configuration for PSC audio upload proxy
+# Cloudflare Worker configuration for PSC audio upload + database proxy
 name = "psc-upload-worker"
 main = "upload-worker.js"
 compatibility_date = "2024-01-01"
 
+# D1 database binding
+[[d1_databases]]
+binding = "PSC_DB"
+database_name = "psc-tracks"
+database_id = "YOUR_D1_DATABASE_ID"  # Set after: wrangler d1 create psc-tracks
+
 # R2 bucket binding
-# After creating your R2 bucket in Cloudflare dashboard, bind it here
 [[r2_buckets]]
 binding = "PSC_AUDIO"
-bucket_name = "psc-audio"  # Change this to your actual bucket name
+bucket_name = "psc-audio"
 
 # Environment variables
-# Set R2_PUBLIC_URL via: wrangler secret put R2_PUBLIC_URL
-# Format: https://pub-{hash}.r2.dev or your custom domain
 [vars]
-# R2_PUBLIC_URL will be set as a secret, not here
-
-# Routes (deploy to workers.dev subdomain first, then add custom domain)
-# workers_dev = true
+# R2_PUBLIC_URL will be set as a secret

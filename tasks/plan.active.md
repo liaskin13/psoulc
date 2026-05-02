@@ -1,3 +1,120 @@
+## Unresolved Design Decisions (Phase 10)
+
+## Locked Decisions (2026-05-01 Recovery)
+
+- Locked entry is immutable. Do not edit `src/entry/EntrySequence.jsx`, `src/entry/DPWallpaper.jsx`, or `public/psc-entry-v2.html` unless Lisa explicitly asks.
+- Canonical source recovered from checkpoint: `/home/codespace/.gstack/projects/liaskin13-psoulc/checkpoints/20260501-111518-d-console-feature-audit-complete.md`.
+
+### D Console Approved Feature Contract
+
+Serato-derived keeps/modifications (single-deck adapted):
+- Top rail: mode, VU/master meters, record/broadcast controls, status, setup.
+- Deck core: title, artist, BPM, key, elapsed/remaining time, main frequency waveform, overview strip, playhead, cue markers, loop region, needle drop, zoom.
+- Transport core: play/pause, cue.
+- Performance modes retained: Hot Cue and Loop only.
+- Monitoring retained: VU, EQ Hi/Mid/Low, filter, gain, master gain, headphone gain.
+- Library model retained with PSC mapping: vaults replace crates, search, sort, smart crates, history, prepare queue.
+- Track list retained: title/artist/BPM/key/length/added/plays, played indicator, color rows, waveform preview, context actions.
+- Settings retained with PSC scope: display prefs, playback prefs, vault management.
+
+Serato sections dropped for D scope:
+- Pitch range/tempo slider/key lock/sync.
+- Crossfader and two-deck mix split behaviors.
+- FX rack/effect send stack.
+- SP-6 sampler.
+- iTunes integration, raw files browser, BPM tap.
+- DVS/timecode stack.
+- Hardware/MIDI/expansion-pack setup tabs.
+
+Video is kept for THE SIGNAL mode:
+- Video preview.
+- Source selection.
+- Text overlays.
+- Transitions.
+
+### PSC-Specific Features (34 Approved)
+
+Vault system (7):
+- Vaults replace crates with named content domains.
+- Add/remove/rename vaults.
+- Per-vault identity color dot.
+- Track count per vault.
+- Non-destructive void track.
+- Upload from console.
+- Reorder tracks in vault.
+
+Access control (3):
+- Per-track access tier assignment.
+- Upload does not auto-share.
+- Lockbox invitation status visibility.
+
+THE SIGNAL broadcast (6):
+- Broadcast toggle.
+- Live video feed.
+- Broadcast timer.
+- Live viewer count.
+- Text overlay.
+- Track transitions.
+
+Communication (6):
+- Message L.
+- Message Masters.
+- Message Muses.
+- Message Collaborators.
+- Voice comments per track.
+- Typed comments viewer.
+
+Analytics (4):
+- Play count per track.
+- Listener visibility by tier/time.
+- Download count.
+- Revenue/payment visibility.
+
+Identity/system (8):
+- M3 counts.
+- Session telemetry log.
+- dp watermark texture.
+- Aurora blobs behind monitor.
+- Gold foil hero title motion.
+- Amber cursor ball + spotlight.
+- Logout.
+- Profile block.
+
+| Decision Needed                | If Deferred, What Happens                |
+|-------------------------------|------------------------------------------|
+| What does empty state look like for new vaults? | Engineer ships generic "No items found." |
+| Mobile nav pattern for new consoles? | Desktop nav hides behind hamburger or breaks on small screens |
+| A11y for BottomNav and modals? | Keyboard/screen reader users blocked     |
+| Touch target sizing on mobile? | Users miss controls, fail to interact    |
+## Responsive & Accessibility (Phase 10)
+
+- All layouts must be intentionally designed for mobile, tablet, and desktop. No "stacked on mobile" defaults—each viewport gets a unique layout.
+- BottomNav: fixed, 44px min touch targets, glows on focus/hover, always visible on mobile.
+- Keyboard navigation: all interactive elements must be tabbable in logical order. Use :focus-visible for clear focus states.
+- ARIA: all modals, overlays, and nav landmarks must have correct ARIA roles and labels.
+- Color contrast: all text must meet WCAG AA (4.5:1) minimum contrast.
+- No placeholder-only labels in forms—visible labels required.
+## Design System Alignment (Phase 10)
+
+All plan changes must align with DESIGN.md. Any new components, tokens, or layout patterns introduced in implementation must be reviewed for DESIGN.md compliance before merging. No deviations from canonical font, color, or spacing law are permitted.
+## User Journey & Emotional Arc (Phase 10)
+
+| Step | User Does                | User Feels                | Plan Supports?                |
+|------|--------------------------|---------------------------|-------------------------------|
+| 1    | Lands on entry screen    | Intrigued, cinematic awe  | DPWallpaper, Comfortaa wordmark, black-on-black, no distractions |
+| 2    | Enters access code       | Anticipation, exclusivity | Minimal prompt, no branding until auth, error shake if wrong     |
+| 3    | Auth success             | Identity, belonging       | Theme floods in, D/L color logic, console UI animates in         |
+| 4    | Browses vault/console    | Empowered, in control     | Chakra Petch UI, clear nav, file-cell grid, BottomNav feedback    |
+| 5    | Encounters empty/error   | Reassured, not lost       | Warm empty states, clear error/retry, context for next action     |
+| 6    | Returns after days/months| Familiarity, trust        | Persistent design law, identity color, no onboarding friction     |
+## Interaction State Coverage (Phase 10)
+
+| Feature         | Loading                | Empty State                | Error State                | Success State             | Partial State           |
+|-----------------|------------------------|----------------------------|----------------------------|---------------------------|-------------------------|
+| Entry Screen    | Animated dp wallpaper, Comfortaa wordmark fades in | "Enter access code" prompt, no error | "Invalid code" message, shake animation | Auth success, theme floods in | N/A                     |
+| Vault Wall      | Spinner overlay, blurred file-cells | "No files yet" with warm context, upload CTA | "Failed to load files" with retry | File-cells animate in, ready | Some files load, others show error |
+| Console Shell   | Skeleton nav, shimmer on controls | "No vaults available" with context | "Console error" banner, reload CTA | Console controls active | Some controls disabled, partial data |
+| BottomNav       | Faded, non-interactive | N/A                        | "Nav error" toast         | Nav glows on hover        | Some nav items disabled |
 <!-- /autoplan restore point: /home/codespace/.gstack/projects/liaskin13-psoulc/phase-9-autoplan-restore-20260426-002852.md -->
 # Active Plan — Phase 9 Design System Migration
 
@@ -11,9 +128,51 @@ READ DESIGN.md BEFORE TOUCHING ANY CSS OR JSX.
 That file is law. Every settled decision lives there.
 ```
 
----
 
 ## What is this project
+
+## Information Architecture (Phase 10)
+
+### Desktop Hierarchy
+
+1. Entry Screen (full-screen DPWallpaper, Comfortaa wordmark)
+2. Console Shell (D or L theme, Chakra Petch UI)
+3. Vault Wall (file-cell grid, chakra color rails)
+4. BottomNav (fixed, 70s chrome, 528Hz glow)
+5. Modal/Overlay (Upload, Lockbox, Voice Comment)
+
+### Mobile Hierarchy
+
+1. Entry Screen (same as desktop, responsive canvas)
+2. Console Shell (collapsible nav, single-column)
+3. Vault Wall (stacked file-cells, swipe to reveal details)
+4. BottomNav (fixed, larger touch targets)
+5. Modal/Overlay (full-screen, swipe to dismiss)
+
+### ASCII Diagram
+
+```
+Desktop:
+┌──────────────────────────────┐
+│        Entry Screen         │
+├──────────────────────────────┤
+│        Console Shell        │
+│ ┌────────────┬────────────┐ │
+│ │  Vault     │  Vault     │ │
+│ │  Wall      │  Wall      │ │
+│ └────────────┴────────────┘ │
+│        BottomNav           │
+└──────────────────────────────┘
+
+Mobile:
+┌──────────────────────────────┐
+│        Entry Screen         │
+├──────────────────────────────┤
+│        Console Shell        │
+│        Vault Wall           │
+│        BottomNav            │
+└──────────────────────────────┘
+```
 
 A cinematic, private music platform for D (primary) and L (co-architect). Not public.
 Not a streaming platform. A sovereign instrument for independent artists.

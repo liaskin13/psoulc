@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>PSC · THE GALLERY — Variant A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border-radius: 0 !important;
+  }
+
+  :root {
+    --void: #050505;
+    --text-primary: #f0ede8;
+    --text-secondary: #555555;
+    --border: #1a1a1a;
+    --border-faint: #111111;
+    --surface: #0a0a0a;
+  }
+
+  html, body {
+    width: 390px;
+    height: 844px;
+    overflow: hidden;
+    background: var(--void);
+    font-family: 'Chakra Petch', monospace;
+    color: var(--text-primary);
+    position: relative;
+  }
+
+  /* ── dp wallpaper ─────────────────────────────────────────── */
+  .wallpaper {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .wallpaper-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── layout shell ─────────────────────────────────────────── */
+  .shell {
+    position: relative;
+    z-index: 1;
+    width: 390px;
+    height: 844px;
+    display: grid;
+    grid-template-rows: 44px 52px 1fr 60px;
+  }
+
+  /* ── status bar ───────────────────────────────────────────── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 11px;
+    color: #444;
+    font-family: 'Chakra Petch', monospace;
+    font-weight: 400;
+  }
+
+  .status-bar .time { color: #888; font-size: 12px; letter-spacing: 0.05em; }
+  .status-bar .icons { display: flex; gap: 6px; align-items: center; }
+  .status-bar .icon-bar { width: 3px; height: 9px; background: #555; display: inline-block; }
+  .status-bar .icon-bar:nth-child(2) { height: 7px; }
+  .status-bar .icon-bar:nth-child(3) { height: 5px; }
+  .status-bar .icon-wifi { width: 10px; height: 8px; border: 1.5px solid #555; border-bottom: none; border-radius: 50% 50% 0 0 !important; position: relative; }
+  .status-bar .icon-batt { width: 20px; height: 10px; border: 1px solid #555; position: relative; display: flex; align-items: center; padding: 2px; }
+  .status-bar .icon-batt::after { content: ''; width: 2px; height: 5px; background: #555; position: absolute; right: -3px; top: 50%; transform: translateY(-50%); border-radius: 0 1px 1px 0 !important; }
+  .status-bar .batt-fill { width: 70%; height: 100%; background: #555; }
+
+  /* ── header ───────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border-faint);
+  }
+
+  .wordmark {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700;
+    color: rgba(240, 237, 232, 0.65);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .wordmark .pleasant { font-size: 9px; display: block; margin-bottom: 0px; }
+  .wordmark .soul { font-size: 12px; display: block; margin-bottom: 0px; }
+  .wordmark .collective { font-size: 9px; display: block; }
+
+  .vault-tabs {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .vault-tab {
+    font-family: 'Chakra Petch', monospace;
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    color: #333;
+    cursor: pointer;
+    padding: 4px 0;
+    border-bottom: none;
+    text-transform: uppercase;
+    user-select: none;
+  }
+
+  .vault-tab.active {
+    color: var(--text-primary);
+  }
+
+  .vault-sep {
+    color: #222;
+    font-size: 9px;
+    font-weight: 300;
+  }
+
+  /* ── gallery ──────────────────────────────────────────────── */
+  .gallery {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── track card ───────────────────────────────────────────── */
+  .track-card {
+    width: 100%;
+    height: 120px;
+    position: relative;
+    border-bottom: 1px solid var(--border-faint);
+    flex-shrink: 0;
+    overflow: hidden;
+    background: var(--void);
+  }
+
+  .track-card.active {
+    border-left: 1px solid rgba(240, 237, 232, 0.3);
+  }
+
+  .track-card canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 96px;
+  }
+
+  .track-meta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    background: linear-gradient(to bottom, transparent, rgba(5,5,5,0.95) 40%);
+  }
+
+  .track-title {
+    font-family: 'Chakra Petch', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 240px;
+  }
+
+  .track-bpm {
+    font-family: 'Chakra Petch', monospace;
+    font-size: 9px;
+    font-weight: 400;
+    color: #444;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  /* ── bottom nav ───────────────────────────────────────────── */
+  .bottom-nav {
+    border-top: 1px solid var(--border-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+
+  .nav-item {
+    font-family: 'Chakra Petch', monospace;
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.4em;
+    color: #333;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 4px 0;
+    user-select: none;
+  }
+
+  .nav-item.active {
+    color: var(--text-primary);
+  }
+</style>
+</head>
+<body>
+
+<!-- wallpaper -->
+<div class="wallpaper">
+  <canvas class="wallpaper-canvas" id="wallpaper-canvas" width="390" height="844"></canvas>
+</div>
+
+<!-- shell -->
+<div class="shell">
+
+  <!-- status bar -->
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="icons">
+      <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+      <span style="width:8px"></span>
+      <span class="icon-wifi"></span>
+      <span style="width:8px"></span>
+      <span class="icon-batt"><span class="batt-fill"></span></span>
+    </div>
+  </div>
+
+  <!-- header -->
+  <div class="header">
+    <div class="wordmark">
+      <span class="pleasant">pleasant</span>
+      <span class="soul">soul</span>
+      <span class="collective">collective</span>
+    </div>
+    <div class="vault-tabs">
+      <span class="vault-tab active">MIXES</span>
+      <span class="vault-sep">·</span>
+      <span class="vault-tab">ORIGINAL</span>
+      <span class="vault-sep">·</span>
+      <span class="vault-tab">LIVE</span>
+    </div>
+  </div>
+
+  <!-- gallery -->
+  <div class="gallery" id="gallery">
+    <!-- cards injected by JS -->
+  </div>
+
+  <!-- bottom nav -->
+  <div class="bottom-nav">
+    <span class="nav-item active">VAULTS</span>
+    <span class="nav-item">NOW</span>
+    <span class="nav-item">PROFILE</span>
+  </div>
+
+</div>
+
+<script>
+// ── wallpaper ──────────────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('wallpaper-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 390, H = 844;
+  canvas.width = W; canvas.height = H;
+
+  // Draw dp + mirrored dp tessellation
+  const TILE_W = 48, TILE_H = 28;
+  const LOGO_COLOR = 'rgba(200,170,120,0.025)';
+  const LOGO_ACTIVE = 'rgba(220,190,140,0.045)';
+
+  function drawDP(cx, cy, mirror, color) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (mirror) ctx.scale(-1, 1);
+    ctx.font = '700 12px Comfortaa, sans-serif';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('dp', 0, 0);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = '#050505';
+  ctx.fillRect(0, 0, W, H);
+
+  // Half-drop tessellation
+  const cols = Math.ceil(W / TILE_W) + 2;
+  const rows = Math.ceil(H / TILE_H) + 2;
+
+  for (let row = -1; row < rows; row++) {
+    for (let col = -1; col < cols; col++) {
+      const offsetX = (row % 2 === 0) ? 0 : TILE_W * 0.5;
+      const x = col * TILE_W + offsetX + TILE_W * 0.5;
+      const y = row * TILE_H + TILE_H * 0.5;
+      const mirror = (col + row) % 2 !== 0;
+      drawDP(x, y, mirror, LOGO_COLOR);
+    }
+  }
+})();
+
+// ── track data ─────────────────────────────────────────────────
+const tracks = [
+  {
+    title: 'LATE NIGHT FREQUENCY',
+    bpm: '128 BPM',
+    type: 'house',    // wide bass, dense
+    active: true
+  },
+  {
+    title: 'SOUL RESIDUE',
+    bpm: '92 BPM',
+    type: 'soul',     // smooth rolling hills
+    active: false
+  },
+  {
+    title: 'PHANTOM CIPHER',
+    bpm: '140 BPM',
+    type: 'hiphop',   // punchy transients, heavy hits
+    active: false
+  },
+  {
+    title: 'BROKEN GRID',
+    bpm: '103 BPM',
+    type: 'ambient',  // sparse, elevated mids
+    active: false
+  },
+  {
+    title: 'PRESENCE OF MIND',
+    bpm: '118 BPM',
+    type: 'deep',     // very bass-heavy, low valleys
+    active: false
+  },
+  {
+    title: 'IRON CURTAIN',
+    bpm: '133 BPM',
+    type: 'techno',   // aggressive, uniform transients
+    active: false
+  }
+];
+
+// ── waveform renderer ─────────────────────────────────────────
+function drawWaveform(canvas, type) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // dark card background
+  ctx.fillStyle = '#060606';
+  ctx.fillRect(0, 0, W, H);
+
+  const centerY = H * 0.5;
+  const seed = type.charCodeAt(0) * 31 + type.charCodeAt(1) * 17;
+
+  // Seeded pseudo-random
+  function seededRand(s) {
+    let x = Math.sin(s) * 10000;
+    return x - Math.floor(x);
+  }
+
+  // Generate amplitude envelope per column
+  const COLS = W;
+  const lowH   = [];
+  const midH   = [];
+  const highH  = [];
+
+  // Base parameters by type
+  const params = {
+    house:  { bassBase: 0.55, bassVar: 0.3,  midBase: 0.25, midVar: 0.2,  highBase: 0.08, highVar: 0.12, smoothing: 0.82 },
+    soul:   { bassBase: 0.3,  bassVar: 0.2,  midBase: 0.3,  midVar: 0.25, highBase: 0.06, highVar: 0.1,  smoothing: 0.88 },
+    hiphop: { bassBase: 0.5,  bassVar: 0.42, midBase: 0.2,  midVar: 0.28, highBase: 0.1,  highVar: 0.18, smoothing: 0.65 },
+    ambient:{ bassBase: 0.18, bassVar: 0.15, midBase: 0.35, midVar: 0.3,  highBase: 0.08, highVar: 0.12, smoothing: 0.92 },
+    deep:   { bassBase: 0.68, bassVar: 0.28, midBase: 0.18, midVar: 0.15, highBase: 0.05, highVar: 0.08, smoothing: 0.78 },
+    techno: { bassBase: 0.45, bassVar: 0.48, midBase: 0.22, midVar: 0.32, highBase: 0.12, highVar: 0.22, smoothing: 0.55 },
+  };
+
+  const p = params[type] || params.house;
+
+  // Generate raw values with smoothing
+  let prevLow = p.bassBase, prevMid = p.midBase, prevHigh = p.highBase;
+  for (let x = 0; x < COLS; x++) {
+    const r1 = seededRand(seed + x * 3.7);
+    const r2 = seededRand(seed + x * 5.3 + 100);
+    const r3 = seededRand(seed + x * 7.1 + 200);
+
+    const rawLow  = p.bassBase  + (r1 - 0.5) * 2 * p.bassVar;
+    const rawMid  = p.midBase   + (r2 - 0.5) * 2 * p.midVar;
+    const rawHigh = p.highBase  + (r3 - 0.5) * 2 * p.highVar;
+
+    prevLow  = prevLow  * p.smoothing + rawLow  * (1 - p.smoothing);
+    prevMid  = prevMid  * p.smoothing + rawMid  * (1 - p.smoothing);
+    prevHigh = prevHigh * p.smoothing + rawHigh * (1 - p.smoothing);
+
+    lowH.push(Math.max(0.02, Math.min(0.95, prevLow)));
+    midH.push(Math.max(0.01, Math.min(0.7,  prevMid)));
+    highH.push(Math.max(0.005, Math.min(0.5, prevHigh)));
+  }
+
+  // Draw bass layer (bottom mass) — warm brown-red gradient
+  for (let x = 0; x < COLS; x++) {
+    const bh = lowH[x] * H * 0.48;
+    const top = centerY - bh * 0.4;
+    const bot = centerY + bh * 0.6;
+    const grad = ctx.createLinearGradient(x, top, x, bot);
+    grad.addColorStop(0,   'rgba(107, 45, 10, 0.0)');
+    grad.addColorStop(0.3, 'rgba(90, 42, 8, 0.6)');
+    grad.addColorStop(0.6, 'rgba(58, 26, 8, 0.85)');
+    grad.addColorStop(1,   'rgba(30, 12, 4, 0.9)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, top, 1, bot - top);
+  }
+
+  // Draw mid layer — grey peaks
+  for (let x = 0; x < COLS; x++) {
+    const mh = midH[x] * H * 0.35;
+    const top = centerY - mh * 0.55;
+    const bot = centerY + mh * 0.45;
+    const grad = ctx.createLinearGradient(x, top, x, bot);
+    grad.addColorStop(0,   'rgba(68, 68, 68, 0.0)');
+    grad.addColorStop(0.2, 'rgba(55, 55, 55, 0.7)');
+    grad.addColorStop(1,   'rgba(35, 35, 35, 0.5)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, top, 1, bot - top);
+  }
+
+  // Draw high layer — bright thin spikes
+  for (let x = 0; x < COLS; x++) {
+    const hh = highH[x] * H * 0.28;
+    const top = centerY - hh;
+    const bot = centerY + hh * 0.3;
+    const grad = ctx.createLinearGradient(x, top, x, bot);
+    grad.addColorStop(0,   'rgba(204, 204, 204, 0.0)');
+    grad.addColorStop(0.1, 'rgba(170, 170, 170, 0.85)');
+    grad.addColorStop(0.5, 'rgba(120, 120, 120, 0.5)');
+    grad.addColorStop(1,   'rgba(80, 80, 80, 0.1)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, top, 1, bot - top);
+  }
+
+  // Center line — very faint
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, centerY);
+  ctx.lineTo(W, centerY);
+  ctx.stroke();
+}
+
+// ── inject cards ───────────────────────────────────────────────
+const gallery = document.getElementById('gallery');
+
+tracks.forEach((track, i) => {
+  const card = document.createElement('div');
+  card.className = 'track-card' + (track.active ? ' active' : '');
+
+  const cvs = document.createElement('canvas');
+  cvs.width = 390;
+  cvs.height = 96;
+  card.appendChild(cvs);
+
+  const meta = document.createElement('div');
+  meta.className = 'track-meta';
+
+  const title = document.createElement('span');
+  title.className = 'track-title';
+  title.textContent = track.title;
+
+  const bpm = document.createElement('span');
+  bpm.className = 'track-bpm';
+  bpm.textContent = track.bpm;
+
+  meta.appendChild(title);
+  meta.appendChild(bpm);
+  card.appendChild(meta);
+
+  gallery.appendChild(card);
+
+  // draw waveform after DOM insertion so canvas is sized
+  drawWaveform(cvs, track.type);
+});
+</script>
+</body>
+</html>

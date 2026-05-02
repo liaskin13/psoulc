@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>PSC — THE STAGE — Variant C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --void: #050505;
+    --text-primary: #f0ede8;
+    --text-secondary: #444;
+    --sep: #1a1a1a;
+    --sep-light: #0f0f0f;
+    --sep-top: #111;
+    --row-hover: #0c0c0c;
+    --active-row: #0d0d0d;
+    --tab-inactive: #2a2a2a;
+    --font-ui: 'Chakra Petch', monospace;
+    --font-logo: 'Comfortaa', sans-serif;
+  }
+
+  html, body {
+    width: 390px;
+    height: 844px;
+    overflow: hidden;
+    background: var(--void);
+    font-family: var(--font-ui);
+    color: var(--text-primary);
+  }
+
+  /* ─── ROOT SHELL ─── */
+  #app {
+    width: 390px;
+    height: 844px;
+    display: grid;
+    grid-template-rows: 36px 1fr 1px 8px 1fr 60px;
+    background: var(--void);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ─── TOP BAR ─── */
+  #topbar {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--sep-top);
+    position: relative;
+    z-index: 10;
+    background: var(--void);
+  }
+
+  .wordmark {
+    font-family: var(--font-logo);
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--text-primary);
+    letter-spacing: 0.03em;
+  }
+  .wordmark .soul { font-size: 12px; }
+
+  /* ─── STAGE AREA ─── */
+  #stage {
+    position: relative;
+    overflow: hidden;
+    background: var(--void);
+    height: 380px;
+  }
+
+  /* DP WALLPAPER CANVAS */
+  #dp-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* TRACK INFO */
+  #track-info {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 5;
+  }
+  .track-title {
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+  }
+  .vault-label {
+    font-family: var(--font-ui);
+    font-weight: 500;
+    font-size: 8px;
+    color: var(--text-secondary);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* WAVEFORM HERO */
+  #waveform-container {
+    position: absolute;
+    bottom: 72px;
+    left: 0;
+    right: 0;
+    height: 180px;
+    z-index: 5;
+    overflow: hidden;
+  }
+
+  #waveform-canvas {
+    width: 100%;
+    height: 180px;
+    display: block;
+  }
+
+  /* PLAYHEAD */
+  #playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: var(--text-primary);
+    z-index: 8;
+    transform: translateX(-0.5px);
+    opacity: 0.9;
+  }
+  #playhead::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -3px;
+    width: 7px;
+    height: 6px;
+    background: var(--text-primary);
+    clip-path: polygon(50% 100%, 0 0, 100% 0);
+  }
+
+  /* TRANSPORT CONTROLS */
+  #transport {
+    position: absolute;
+    bottom: 14px;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .transport-btns {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-family: var(--font-ui);
+    font-size: 15px;
+    color: var(--text-primary);
+    letter-spacing: 0.1em;
+  }
+  .transport-btns .play-btn {
+    font-size: 18px;
+  }
+
+  .timeline {
+    display: flex;
+    width: 100%;
+    padding: 0 14px;
+    justify-content: space-between;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+  }
+
+  /* EMPTY STATE */
+  #empty-state {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    gap: 10px;
+  }
+  #empty-state.visible { display: flex; }
+  .ghost-title {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 24px;
+    color: var(--text-primary);
+    opacity: 0.15;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .select-cue {
+    font-family: var(--font-ui);
+    font-size: 8px;
+    color: #333;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+  }
+
+  /* ─── DIVIDERS ─── */
+  #divider-line {
+    background: var(--sep);
+    height: 1px;
+  }
+  #divider-gap {
+    background: var(--void);
+    height: 8px;
+  }
+
+  /* ─── TRACK LIST ─── */
+  #tracklist {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--void);
+  }
+
+  /* VAULT TABS */
+  #vault-tabs {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 18px;
+    height: 32px;
+    border-bottom: 1px solid var(--sep-light);
+    flex-shrink: 0;
+  }
+  .vault-tab {
+    font-family: var(--font-ui);
+    font-size: 8px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--tab-inactive);
+    cursor: pointer;
+    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+  }
+  .vault-tab.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--text-primary);
+  }
+
+  /* TRACK ROWS */
+  #track-rows {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  #track-rows::-webkit-scrollbar { display: none; }
+
+  .track-row {
+    display: flex;
+    align-items: stretch;
+    height: 64px;
+    border-bottom: 1px solid var(--sep-light);
+    cursor: pointer;
+    background: var(--void);
+    position: relative;
+    transition: background 0.15s;
+  }
+  .track-row.playing {
+    background: var(--active-row);
+  }
+  .track-row.playing::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(240, 237, 232, 0.5);
+  }
+
+  .track-meta {
+    width: 55%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 12px;
+    gap: 4px;
+  }
+  .track-num {
+    font-size: 9px;
+    color: var(--tab-inactive);
+    letter-spacing: 0.1em;
+  }
+  .track-name {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .track-details {
+    font-size: 9px;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+  }
+
+  .track-wave {
+    width: 45%;
+    padding: 4px 12px 4px 0;
+    display: flex;
+    align-items: center;
+  }
+  .track-wave canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* ─── BOTTOM NAV ─── */
+  #bottom-nav {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    border-top: 1px solid var(--sep);
+    background: var(--void);
+    padding-bottom: 4px;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .nav-label {
+    font-family: var(--font-ui);
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .nav-item.active .nav-label { color: var(--text-primary); }
+  .nav-dot {
+    width: 3px;
+    height: 3px;
+    background: var(--text-primary);
+    border-radius: 50%;
+    opacity: 0;
+  }
+  .nav-item.active .nav-dot { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <span class="wordmark">pleasant<span class="soul">soul</span>collective</span>
+  </div>
+
+  <!-- STAGE AREA -->
+  <div id="stage">
+    <canvas id="dp-canvas"></canvas>
+
+    <!-- Playing State -->
+    <div id="track-info">
+      <div class="track-title">Pressure (feat. Camille)</div>
+      <div class="vault-label">Soul Pleasant Mixes</div>
+    </div>
+
+    <div id="waveform-container">
+      <canvas id="waveform-canvas" width="390" height="180"></canvas>
+      <div id="playhead"></div>
+    </div>
+
+    <div id="transport">
+      <div class="transport-btns">
+        <span>⏮</span>
+        <span class="play-btn">⏸</span>
+        <span>⏭</span>
+      </div>
+      <div class="timeline">
+        <span>02:14</span>
+        <span>06:48</span>
+      </div>
+    </div>
+
+    <!-- Empty State (hidden by default) -->
+    <div id="empty-state">
+      <div class="ghost-title">Soul Pleasant</div>
+      <div class="select-cue">Select a Track</div>
+    </div>
+  </div>
+
+  <!-- DIVIDERS -->
+  <div id="divider-line"></div>
+  <div id="divider-gap"></div>
+
+  <!-- TRACK LIST -->
+  <div id="tracklist">
+    <div id="vault-tabs">
+      <div class="vault-tab active">Mixes</div>
+      <div class="vault-tab">Original</div>
+      <div class="vault-tab">Live</div>
+    </div>
+    <div id="track-rows"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div id="bottom-nav">
+    <div class="nav-item">
+      <div class="nav-dot"></div>
+      <div class="nav-label">Vaults</div>
+    </div>
+    <div class="nav-item active">
+      <div class="nav-dot"></div>
+      <div class="nav-label">Now</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-dot"></div>
+      <div class="nav-label">Profile</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── DP WALLPAPER ───
+(function() {
+  const canvas = document.getElementById('dp-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 390;
+  canvas.height = 380;
+
+  const glyphs = [];
+  const cols = 7;
+  const rows = 9;
+  const cellW = 390 / cols;
+  const cellH = 380 / rows;
+
+  // Seed glyphs
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const offset = (r % 2 === 0) ? 0 : cellW * 0.5;
+      glyphs.push({
+        x: c * cellW + offset + cellW * 0.5,
+        y: r * cellH + cellH * 0.5,
+        text: c % 2 === 0 ? 'dp' : 'qb',
+        baseAlpha: 0.03,
+        alpha: 0.03,
+        breathPhase: Math.random() * Math.PI * 2,
+        breathSpeed: 0.3 + Math.random() * 0.4,
+        isBreathing: Math.random() < 0.12
+      });
+    }
+  }
+
+  let t = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, 390, 380);
+    ctx.font = '600 13px "Chakra Petch", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    glyphs.forEach(g => {
+      if (g.isBreathing) {
+        g.alpha = g.baseAlpha + 0.04 * (0.5 + 0.5 * Math.sin(t * g.breathSpeed + g.breathPhase));
+      }
+      ctx.globalAlpha = g.alpha;
+      ctx.fillStyle = '#f0ede8';
+      ctx.fillText(g.text, g.x, g.y);
+    });
+
+    ctx.globalAlpha = 1;
+    t += 0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── HERO WAVEFORM ───
+(function() {
+  const canvas = document.getElementById('waveform-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 390;
+  const H = 180;
+  canvas.width = W;
+  canvas.height = H;
+
+  // Simulate a full track waveform: intro, build, drop, breakdown, outro
+  // We'll render ~3.5 minutes worth shown at once, playhead at ~33% (02:14 into 06:48)
+  const totalSamples = 2200;
+  const visibleSamples = 780;  // shown in 390px = 2px per sample approx
+  const playheadPos = Math.floor(visibleSamples * 0.33); // at 195
+  const scrollOffset = Math.floor(totalSamples * (134 / 408)) - playheadPos; // 02:14 = 134s, 06:48=408s
+
+  // Generate waveform energy envelope
+  function trackEnergy(i) {
+    const t = i / totalSamples;
+    // Intro: quiet 0-8%
+    if (t < 0.08) return 0.08 + t * 1.5;
+    // Build: 8-22%
+    if (t < 0.22) return 0.2 + (t - 0.08) * 2.5;
+    // Drop 1: 22-38% — dense full energy
+    if (t < 0.38) return 0.78 + 0.18 * Math.sin(t * 120);
+    // Breakdown: 38-52% — reduced
+    if (t < 0.52) return 0.3 + 0.12 * Math.sin(t * 80);
+    // Build 2: 52-62%
+    if (t < 0.62) return 0.35 + (t - 0.52) * 4;
+    // Drop 2: 62-80% — massive
+    if (t < 0.80) return 0.88 + 0.1 * Math.sin(t * 150);
+    // Outro: 80-100%
+    return 0.88 * (1 - (t - 0.80) * 4.5);
+  }
+
+  function noise(x, scale) {
+    return (Math.sin(x * scale * 7.3 + 1.1) + Math.sin(x * scale * 13.7 + 2.2) + Math.sin(x * scale * 3.1 + 0.8)) / 3;
+  }
+
+  const MID = H / 2;
+  const BASS_HEIGHT = H * 0.38;
+  const MID_HEIGHT = H * 0.22;
+  const HIGH_HEIGHT = H * 0.12;
+
+  ctx.clearRect(0, 0, W, H);
+
+  for (let px = 0; px < W; px++) {
+    const sampleIdx = scrollOffset + Math.floor(px * visibleSamples / W);
+    const energy = Math.max(0, Math.min(1, trackEnergy(sampleIdx)));
+    const isPlayed = sampleIdx < scrollOffset + playheadPos;
+    const dimFactor = isPlayed ? 0.52 : 1.0;
+
+    const bassNoise = 0.65 + 0.35 * Math.abs(noise(sampleIdx, 0.8));
+    const midNoise  = 0.5  + 0.5  * Math.abs(noise(sampleIdx, 2.1));
+    const highNoise = 0.3  + 0.7  * Math.abs(noise(sampleIdx, 5.8));
+
+    const bassH = energy * BASS_HEIGHT * bassNoise;
+    const midH  = energy * MID_HEIGHT  * midNoise  * 0.85;
+    const highH = energy * HIGH_HEIGHT * highNoise * 0.7;
+
+    // BASS — warm brown-red gradient
+    const bassGrad = ctx.createLinearGradient(px, MID - bassH, px, MID + bassH);
+    const bassR1 = Math.floor(90  * energy * dimFactor);
+    const bassG1 = Math.floor(42  * energy * dimFactor);
+    const bassB1 = Math.floor(8   * energy * dimFactor);
+    const bassR2 = Math.floor(138 * energy * dimFactor);
+    const bassG2 = Math.floor(58  * energy * dimFactor);
+    const bassB2 = Math.floor(16  * energy * dimFactor);
+    bassGrad.addColorStop(0,   `rgb(${bassR2},${bassG2},${bassB2})`);
+    bassGrad.addColorStop(0.5, `rgb(${bassR1},${bassG1},${bassB1})`);
+    bassGrad.addColorStop(1,   `rgb(${bassR2},${bassG2},${bassB2})`);
+    ctx.fillStyle = bassGrad;
+    ctx.fillRect(px, MID - bassH, 1, bassH * 2);
+
+    // MID — charcoal
+    const mGrad = ctx.createLinearGradient(px, MID - midH, px, MID + midH);
+    const mg1 = Math.floor(72 * dimFactor);
+    const mg2 = Math.floor(56 * dimFactor);
+    mGrad.addColorStop(0,   `rgb(${mg1},${mg1},${mg1})`);
+    mGrad.addColorStop(0.5, `rgb(${mg2},${mg2},${mg2})`);
+    mGrad.addColorStop(1,   `rgb(${mg1},${mg1},${mg1})`);
+    ctx.fillStyle = mGrad;
+    ctx.fillRect(px, MID - midH, 1, midH * 2);
+
+    // HIGHS — silver-white spikes
+    if (highNoise > 0.55 && energy > 0.3) {
+      const hGrad = ctx.createLinearGradient(px, MID - highH, px, MID + highH);
+      const hv1 = Math.floor(238 * dimFactor);
+      const hv2 = Math.floor(153 * dimFactor);
+      hGrad.addColorStop(0,   `rgb(${hv1},${hv1},${hv1})`);
+      hGrad.addColorStop(0.35,`rgb(${hv1},${hv1},${hv1})`);
+      hGrad.addColorStop(0.5, `rgb(${hv2},${hv2},${hv2})`);
+      hGrad.addColorStop(0.65,`rgb(${hv1},${hv1},${hv1})`);
+      hGrad.addColorStop(1,   `rgb(${hv1},${hv1},${hv1})`);
+      ctx.fillStyle = hGrad;
+      ctx.fillRect(px, MID - highH, 1, highH * 2);
+    }
+  }
+
+  // Center line
+  ctx.fillStyle = 'rgba(30,30,30,0.6)';
+  ctx.fillRect(0, MID - 1, W, 1);
+})();
+
+// ─── MINI WAVEFORMS ───
+function drawMiniWave(canvas, energyProfile, playing) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  const MID = H / 2;
+  ctx.clearRect(0, 0, W, H);
+
+  for (let px = 0; px < W; px++) {
+    const t = px / W;
+    const energy = energyProfile(t) * (0.6 + 0.4 * Math.abs(Math.sin(px * 7.3)));
+    const bassH = energy * MID * 0.7;
+    const midH  = energy * MID * 0.45;
+
+    // Bass
+    const bv = playing ? Math.floor(90 * energy) : Math.floor(60 * energy);
+    const bg = playing ? Math.floor(42 * energy) : Math.floor(42 * energy);
+    const bb = playing ? Math.floor(8  * energy) : Math.floor(8  * energy);
+    ctx.fillStyle = `rgb(${bv},${bg},${bb})`;
+    ctx.fillRect(px, MID - bassH, 1, bassH * 2);
+
+    // Mid
+    const mv = playing ? 58 : 42;
+    ctx.fillStyle = `rgb(${mv},${mv},${mv})`;
+    ctx.fillRect(px, MID - midH, 1, midH * 2);
+
+    // Highs
+    if (Math.abs(Math.sin(px * 13.7)) > 0.7 && energy > 0.4) {
+      const hv = playing ? 200 : 140;
+      ctx.fillStyle = `rgb(${hv},${hv},${hv})`;
+      const highH = energy * MID * 0.28;
+      ctx.fillRect(px, MID - highH, 1, highH * 2);
+    }
+  }
+}
+
+// ─── TRACK DATA ───
+const tracks = [
+  { num: '01', title: 'Pressure (feat. Camille)', duration: '6:48', bpm: '92 BPM', playing: true,
+    energy: t => t < 0.08 ? 0.15 : t < 0.22 ? 0.4 : t < 0.38 ? 0.9 : t < 0.52 ? 0.35 : t < 0.62 ? 0.5 : t < 0.8 ? 0.95 : 0.9*(1-(t-0.8)*4.5) },
+  { num: '02', title: 'Mirror Lake', duration: '5:12', bpm: '110 BPM',
+    energy: t => 0.3 + 0.5 * Math.sin(t * Math.PI * 3) * (t < 0.7 ? 1 : 1-(t-0.7)*3) },
+  { num: '03', title: 'III (Interlude)', duration: '2:04', bpm: '—',
+    energy: t => 0.12 + 0.18 * Math.sin(t * 8) },
+  { num: '04', title: 'Weight of Everything', duration: '7:31', bpm: '88 BPM',
+    energy: t => t < 0.1 ? t*4 : t < 0.45 ? 0.5+0.4*Math.sin(t*20) : t < 0.55 ? 0.25 : 0.85+0.12*Math.sin(t*30) },
+  { num: '05', title: 'Selfish (Remix)', duration: '4:58', bpm: '120 BPM',
+    energy: t => 0.7 + 0.28 * Math.sin(t * Math.PI * 6) },
+];
+
+const rowsEl = document.getElementById('track-rows');
+
+tracks.forEach(track => {
+  const row = document.createElement('div');
+  row.className = 'track-row' + (track.playing ? ' playing' : '');
+
+  const meta = document.createElement('div');
+  meta.className = 'track-meta';
+  meta.innerHTML = `
+    <div class="track-num">${track.num}</div>
+    <div class="track-name">${track.title}</div>
+    <div class="track-details">${track.duration} &nbsp;·&nbsp; ${track.bpm}</div>
+  `;
+
+  const waveWrap = document.createElement('div');
+  waveWrap.className = 'track-wave';
+  const c = document.createElement('canvas');
+  c.width = 160;
+  c.height = 48;
+  c.style.width = '100%';
+  c.style.height = '100%';
+  waveWrap.appendChild(c);
+  drawMiniWave(c, track.energy, track.playing);
+
+  row.appendChild(meta);
+  row.appendChild(waveWrap);
+  rowsEl.appendChild(row);
+});
+</script>
+</body>
+</html>

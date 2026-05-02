@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { LOCKBOX_PREFIX } from '../config';
+import './LockedDoor.css';
 
 const LOCKBOX_COLORS = {
   janet:  '#cc3399',
@@ -9,77 +11,21 @@ const LOCKBOX_COLORS = {
 };
 
 function LockedDoor({ lockboxId, onBack }) {
+
   const key = (lockboxId || '').replace(LOCKBOX_PREFIX, '');
   const name = key.toUpperCase();
-  const color = LOCKBOX_COLORS[key] ?? '#555555';
+  const color = LOCKBOX_COLORS[key] ?? '#ffbf00';
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: '#050505',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '2rem',
-        fontFamily: '"Chakra Petch", monospace',
-        zIndex: 100,
-      }}
+      className="locked-door-overlay"
+      style={{ '--locked-door-color': color }}
     >
-      <div
-        style={{
-          width: '2px',
-          height: '48px',
-          background: color,
-          opacity: 0.7,
-        }}
-      />
-      <div
-        style={{
-          fontSize: '0.65rem',
-          letterSpacing: '0.35em',
-          color: color,
-          opacity: 0.6,
-        }}
-      >
-        {name}
-      </div>
-      <div
-        style={{
-          fontSize: '2rem',
-          letterSpacing: '0.25em',
-          color: '#ffffff',
-          opacity: 0.12,
-          fontWeight: 700,
-        }}
-      >
-        SEALED
-      </div>
-      <div
-        style={{
-          width: '2px',
-          height: '48px',
-          background: color,
-          opacity: 0.7,
-        }}
-      />
-      <button
-        onClick={onBack}
-        style={{
-          marginTop: '1rem',
-          background: 'transparent',
-          border: `1px solid ${color}`,
-          color: color,
-          fontFamily: '"Chakra Petch", monospace',
-          fontSize: '0.6rem',
-          letterSpacing: '0.3em',
-          padding: '0.5rem 1.5rem',
-          cursor: 'pointer',
-          opacity: 0.6,
-        }}
-      >
+      <div className="locked-door-rail" />
+      <div className="locked-door-name">{name}</div>
+      <div className="locked-door-sealed">SEALED</div>
+      <div className="locked-door-rail" />
+      <button className="locked-door-btn" onClick={onBack}>
         RETURN
       </button>
     </div>

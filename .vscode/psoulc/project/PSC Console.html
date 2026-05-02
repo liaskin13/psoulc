@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSC // Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+/* ─── TOKENS ──────────────────────────────────── */
+:root {
+  --void:    #000000;
+  --s1:      #080808;
+  --s2:      #0e0e0e;
+  --s3:      #141414;
+  --b1:      #111111;
+  --b2:      #1a1a1a;
+  --tp:      #e8e4de;
+  --ts:      #444444;
+  --tm:      #222222;
+  --id:      #ffb347;
+  --id-dim:  rgba(255,179,71,0.08);
+  --id-glow: 0 0 28px rgba(255,179,71,0.18);
+  --red:     #cc2200;
+  --fd:      'Syne', sans-serif;
+  --fb:      'Syne', sans-serif;
+  --fm:      'SF Mono','Monaco',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;border-radius:0;-webkit-font-smoothing:antialiased;}
+html,body,#root{width:100vw;height:100vh;overflow:hidden;background:var(--void);color:var(--tp);font-family:var(--fd);}
+body{cursor:none;}
+::-webkit-scrollbar{width:1px;}
+::-webkit-scrollbar-thumb{background:var(--b2);}
+
+/* ─── LAYOUT ──────────────────────────────────── */
+.console{display:flex;flex-direction:column;width:100vw;height:100vh;}
+.rail{height:36px;min-height:36px;display:flex;align-items:center;gap:12px;padding:0 18px;background:var(--void);border-bottom:1px solid var(--b1);flex-shrink:0;position:relative;z-index:20;}
+.main{display:flex;flex:1;min-height:0;overflow:hidden;}
+.transport{height:60px;min-height:60px;display:flex;align-items:center;gap:10px;padding:0 18px;background:var(--void);border-top:1px solid var(--b1);flex-shrink:0;position:relative;z-index:20;}
+
+/* ─── RAIL ────────────────────────────────────── */
+.rail-mark{font-family:'Comfortaa',sans-serif;font-size:13px;font-weight:700;color:var(--id);letter-spacing:-0.01em;}
+.r-sep{width:1px;height:14px;background:var(--b1);flex-shrink:0;}
+.r-lbl{font-family:var(--fd);font-size:10px;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:var(--ts);}
+.r-lbl.id{color:var(--id);opacity:0.75;}
+.live-wrap{display:flex;align-items:center;gap:6px;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:rp 1.6s ease-in-out infinite;flex-shrink:0;}
+@keyframes rp{0%,100%{opacity:.2}50%{opacity:1}}
+.r-bpm{font-family:var(--fm);font-size:14px;font-weight:700;color:var(--id);letter-spacing:0.05em;}
+.r-clock{font-family:var(--fm);font-size:10px;color:var(--ts);}
+.r-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.arch{font-size:9px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--id);color:var(--id);}
+.mic-btn{width:24px;height:24px;border:1px solid var(--b2);background:transparent;color:var(--ts);cursor:none;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all 100ms;}
+.mic-btn:hover{border-color:var(--id);color:var(--id);}
+.mic-btn.on{border-color:var(--id);color:var(--id);background:var(--id-dim);animation:rp .7s ease-in-out infinite;}
+
+/* ─── BINS ────────────────────────────────────── */
+.bins{width:200px;min-width:200px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.bins-accent{position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--id);opacity:.5;}
+.bins-top{padding:14px 14px 10px 18px;display:flex;align-items:baseline;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--b1);}
+.bins-label{font-size:9px;font-weight:600;letter-spacing:0.28em;text-transform:uppercase;color:var(--ts);}
+.bins-count{font-family:var(--fm);font-size:9px;color:var(--tm);}
+.bins-filters{display:flex;gap:0;border-bottom:1px solid var(--b1);flex-shrink:0;}
+.fchip{flex:1;font-size:8px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:6px 0;text-align:center;color:var(--tm);cursor:none;border-right:1px solid var(--b1);transition:color 100ms;}
+.fchip:last-child{border-right:none;}
+.fchip.on{color:var(--id);}
+/* vault rows (L) */
+.vrow{display:flex;align-items:center;gap:10px;padding:10px 14px 10px 18px;border-bottom:1px solid var(--b1);cursor:none;}
+.vrow:hover{background:rgba(255,255,255,.015);}
+.vrow.on{background:rgba(255,255,255,.025);}
+.vdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.vname{font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;}
+.vcnt{font-family:var(--fm);font-size:8px;color:var(--tm);margin-left:auto;}
+.vdivider{padding:8px 14px 5px 18px;border-bottom:1px solid var(--b1);}
+/* track rows */
+.bins-list{flex:1;overflow-y:auto;}
+.trow{display:flex;align-items:center;padding:0 14px 0 18px;height:38px;cursor:none;position:relative;transition:background 80ms;border-bottom:1px solid transparent;}
+.trow:hover{background:rgba(255,255,255,.02);}
+.trow.on{background:var(--id-dim);border-bottom-color:var(--b1);}
+.trow-bar{position:absolute;left:0;top:0;bottom:0;width:1px;background:var(--id);opacity:0;transition:opacity 80ms;}
+.trow.on .trow-bar{opacity:1;}
+.tr-n{font-family:var(--fm);font-size:8px;color:var(--tm);width:18px;flex-shrink:0;}
+.tr-info{flex:1;min-width:0;}
+.tr-title{font-size:12px;font-weight:500;letter-spacing:0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tp);transition:color 80ms;}
+.trow.on .tr-title{color:var(--id);}
+.tr-sub{font-size:9px;color:var(--ts);margin-top:1px;}
+.tr-bpm{font-family:var(--fm);font-size:9px;color:var(--tm);flex-shrink:0;margin-left:8px;}
+/* dp watermark */
+.bins-wm{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-family:'Comfortaa',sans-serif;font-size:60px;font-weight:700;color:var(--tp);opacity:.016;pointer-events:none;user-select:none;letter-spacing:-.02em;}
+
+/* ─── MONITOR ─────────────────────────────────── */
+.monitor{flex:1;background:#000;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+/* dp texture behind monitor */
+.dp-texture{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.dp-texture::before{content:'dp dp dp dp dp dp\A dp dp dp dp dp dp\A dp dp dp dp dp dp\A dp dp dp dp dp dp\A dp dp dp dp dp dp';font-family:'Comfortaa',sans-serif;font-size:48px;font-weight:700;white-space:pre;color:var(--tp);opacity:.014;line-height:1.6;letter-spacing:.3em;position:absolute;top:0;left:0;width:200%;transform:rotate(-15deg) translate(-20%,5%);}
+
+/* AURORA (optional) */
+.aurora{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.ab{position:absolute;border-radius:50%;filter:blur(100px);mix-blend-mode:screen;}
+@keyframes au0{0%{transform:translate(0,0)}100%{transform:translate(60px,40px)}}
+@keyframes au1{0%{transform:translate(0,0)}100%{transform:translate(-40px,55px)}}
+@keyframes au2{0%{transform:translate(0,0)}100%{transform:translate(30px,-45px)}}
+
+/* HERO */
+.hero{padding:28px 32px 18px;position:relative;z-index:2;flex-shrink:0;}
+.hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.hero-counter{font-family:var(--fm);font-size:10px;color:var(--tm);letter-spacing:.08em;}
+.hero-section{font-size:8px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--ts);}
+.hero-title{font-size:clamp(44px,5.5vw,88px);font-weight:700;line-height:.95;letter-spacing:-.01em;background:linear-gradient(95deg,var(--tp) 0%,var(--id) 40%,#d4890a 65%,var(--tp) 100%);background-size:250% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:foil 6s linear infinite;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:14px;}
+@keyframes foil{0%{background-position:0% 50%}100%{background-position:250% 50%}}
+.hero-meta{display:flex;align-items:center;gap:20px;}
+.hero-artist{font-family:var(--fb);font-size:14px;font-weight:400;color:var(--ts);letter-spacing:.01em;}
+.hero-pill{font-family:var(--fm);font-size:9px;color:var(--ts);background:var(--s1);border:1px solid var(--b2);padding:2px 7px;}
+.hero-dur{font-family:var(--fm);font-size:11px;color:var(--id);margin-left:auto;}
+
+/* WAVEFORM */
+.wf-zone{position:relative;z-index:2;flex-shrink:0;}
+.wf-canvas{width:100%;height:72px;display:block;cursor:crosshair;}
+.wf-stamps{display:flex;justify-content:space-between;padding:4px 32px 10px;}
+.wf-t{font-family:var(--fm);font-size:8px;color:var(--tm);}
+
+/* L meta panel (no waveform) */
+.meta-panel{padding:0 32px 16px;position:relative;z-index:2;flex-shrink:0;}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--b1);border:1px solid var(--b1);}
+.mcell{background:#000;padding:10px 12px;}
+.mcell.accent{background:rgba(255,179,71,.04);}
+.mc-lbl{font-size:8px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--tm);margin-bottom:4px;}
+.mc-val{font-family:var(--fm);font-size:20px;font-weight:700;color:var(--ts);line-height:1;}
+.mcell.accent .mc-val{font-size:24px;color:var(--id);}
+
+/* TRACKLIST */
+.tl{flex:1;overflow-y:auto;position:relative;z-index:2;}
+.tl-head{display:grid;grid-template-columns:28px 1fr 80px 40px 44px;gap:0;padding:0 32px;height:28px;align-items:center;border-bottom:1px solid var(--b1);position:sticky;top:0;background:rgba(0,0,0,.95);backdrop-filter:blur(8px);}
+.tl-head span{font-size:8px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--tm);}
+.tl-row{display:grid;grid-template-columns:28px 1fr 80px 40px 44px;gap:0;padding:0 32px;height:40px;align-items:center;cursor:none;transition:background 80ms;border-bottom:1px solid transparent;}
+.tl-row:hover{background:rgba(255,255,255,.02);}
+.tl-row.on{background:var(--id-dim);}
+.tl-n{font-family:var(--fm);font-size:9px;color:var(--tm);}
+.tl-row.on .tl-n{color:var(--id);}
+.tl-tit{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px;}
+.tl-row.on .tl-tit{color:var(--id);}
+.tl-art{font-family:var(--fb);font-size:11px;font-weight:400;color:var(--ts);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tl-bpm{font-family:var(--fm);font-size:10px;color:var(--ts);text-align:right;}
+.tl-dur{font-family:var(--fm);font-size:10px;color:var(--tm);text-align:right;}
+
+/* ─── CHAIN ───────────────────────────────────── */
+.chain{width:196px;min-width:196px;background:var(--s1);border-left:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden;}
+.cb{border-bottom:1px solid var(--b1);padding:12px 14px;flex-shrink:0;}
+.cb.grow{flex:1;overflow-y:auto;}
+.cbl{font-size:8px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--tm);margin-bottom:10px;}
+
+/* BIG BPM readout */
+.bpm-hero{text-align:center;padding:4px 0 8px;}
+.bpm-val{font-family:var(--fm);font-size:52px;font-weight:700;color:var(--id);line-height:1;letter-spacing:-.02em;}
+.bpm-lbl{font-size:8px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--ts);margin-top:2px;}
+.key-val{font-family:var(--fd);font-size:18px;font-weight:600;color:var(--ts);margin-top:6px;}
+
+/* readout pair */
+.rdpair{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1);border:1px solid var(--b1);margin-bottom:10px;}
+.rdcell{background:var(--void);padding:7px 8px;}
+.rd-l{font-size:7px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--tm);margin-bottom:3px;}
+.rd-v{font-family:var(--fm);font-size:14px;font-weight:700;color:var(--ts);line-height:1;}
+
+/* pads */
+.padgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1);border:1px solid var(--b1);}
+.pad{aspect-ratio:1;background:var(--void);display:flex;align-items:flex-end;padding:6px;font-size:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tm);cursor:none;transition:all 60ms;position:relative;overflow:hidden;}
+.pad:hover{color:var(--ts);}
+.pad.on{color:var(--id);}
+.pad-line{position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--id);transform:scaleX(0);transform-origin:left;transition:transform 60ms;}
+.pad.on .pad-line{transform:scaleX(1);}
+
+/* toggles */
+.trow2{display:flex;align-items:center;justify-content:space-between;padding:5px 0;cursor:none;}
+.trow2-lbl{font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ts);}
+.pill{width:28px;height:14px;background:var(--b1);border:1px solid var(--b2);border-radius:9999px !important;position:relative;cursor:none;transition:all 180ms;flex-shrink:0;}
+.pill.on{background:var(--id);border-color:var(--id);}
+.pill-knob{position:absolute;width:10px;height:10px;background:#fff;top:1px;left:1px;border-radius:50% !important;transition:transform 180ms;}
+.pill.on .pill-knob{transform:translateX(14px);}
+
+/* m3 */
+.m3g{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1);border:1px solid var(--b1);}
+.m3c{background:var(--void);padding:7px 8px;font-size:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tm);cursor:none;transition:color 100ms;}
+.m3c:hover{color:var(--ts);}
+.m3c.on{color:var(--id);}
+
+/* L edit fields */
+.ef-lbl{font-size:8px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--tm);margin-bottom:3px;margin-top:8px;}
+.ef-lbl:first-child{margin-top:0;}
+.ef{background:var(--void);border:1px solid var(--b2);border-bottom:1px solid var(--b1);padding:6px 8px;font-family:var(--fd);font-size:11px;color:var(--tp);width:100%;outline:none;transition:border-color 100ms;}
+.ef:focus{border-color:var(--id);}
+.ef::placeholder{color:var(--tm);}
+.ebtns{display:flex;gap:1px;margin-top:8px;background:var(--b1);}
+.ebtn{flex:1;background:var(--void);border:none;padding:7px 0;font-family:var(--fd);font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ts);cursor:none;transition:color 100ms;}
+.ebtn:hover{color:var(--tp);}
+.ebtn.primary{color:var(--id);}
+
+/* telemetry */
+.tele-row{display:flex;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03);font-family:var(--fm);font-size:8px;color:var(--tm);}
+.tele-row .ts{color:var(--b2);flex-shrink:0;}
+.tele-row.ok{color:#2a5a3a;}
+
+/* ─── TRANSPORT ───────────────────────────────── */
+.tbtn{width:36px;height:36px;border:1px solid var(--b2);background:transparent;color:var(--ts);cursor:none;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all 100ms;font-family:var(--fd);font-weight:500;}
+.tbtn:hover{border-color:var(--ts);color:var(--tp);}
+.tbtn.play{width:44px;height:44px;font-size:16px;border-color:var(--id);color:var(--id);}
+.tbtn.play.on{background:var(--id-dim);}
+.tbtn.active{border-color:var(--id);color:var(--id);background:var(--id-dim);}
+.tbtn.sm{width:auto;padding:0 10px;font-size:9px;letter-spacing:.16em;}
+
+.prog{flex:1;height:1px;background:var(--b2);position:relative;cursor:crosshair;margin:0 8px;}
+.prog-fill{position:absolute;left:0;top:0;height:100%;background:var(--id);transition:width 250ms linear;}
+.prog-head{position:absolute;top:50%;width:6px;height:6px;background:var(--id);transform:translate(-50%,-50%);pointer-events:none;}
+.t-time{font-family:var(--fm);font-size:12px;color:var(--id);letter-spacing:.06em;flex-shrink:0;}
+.t-tot{font-family:var(--fm);font-size:10px;color:var(--ts);flex-shrink:0;}
+.gain-block{display:flex;flex-direction:column;align-items:center;gap:2px;margin-left:8px;}
+.gain-lbl{font-size:7px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--tm);}
+input[type=range].gain-sl{-webkit-appearance:none;width:68px;height:1px;background:var(--b2);outline:none;cursor:none;}
+input[type=range].gain-sl::-webkit-slider-thumb{-webkit-appearance:none;width:6px;height:10px;background:var(--id);cursor:none;}
+
+/* ─── VOICE ───────────────────────────────────── */
+.vtranscript{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.97);border:1px solid var(--id);padding:8px 20px;font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--id);z-index:200;pointer-events:none;}
+
+/* ─── CURSOR ──────────────────────────────────── */
+.cur-ball{position:fixed;pointer-events:none;z-index:9999;width:10px;height:10px;border-radius:50% !important;background:var(--id);transform:translate(-50%,-50%);transition:width 60ms,height 60ms;}
+.cur-ball.click{width:6px;height:6px;}
+.cur-spot{position:fixed;pointer-events:none;z-index:1;width:480px;height:480px;border-radius:50% !important;transform:translate(-50%,-50%);background:radial-gradient(circle,var(--id-dim) 0%,transparent 70%);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ── DATA ───────────────────────────────────── */
+const TRACKS = [
+  {id:1,title:"eightysixty",           artist:"D8P",   bpm:80, key:"F min",dur:"4:22",section:"unreleased"},
+  {id:2,title:"fucked dis house 124",  artist:"D8P",   bpm:124,key:"A min",dur:"5:44",section:"unreleased"},
+  {id:3,title:"That's What U R",       artist:"Amerie",bpm:96, key:"D min",dur:"3:58",section:"archive"},
+  {id:4,title:"96tagetemvvv",          artist:"D8P",   bpm:96, key:"G min",dur:"6:12",section:"unreleased"},
+  {id:5,title:"120'em Pt.2",           artist:"D8P",   bpm:120,key:"C min",dur:"7:03",section:"unreleased"},
+  {id:6,title:"onetwentyfaackin3mmmm", artist:"D8P",   bpm:120,key:"F min",dur:"5:31",section:"unreleased"},
+  {id:7,title:"91enounting",           artist:"D8P",   bpm:91, key:"B♭",   dur:"4:47",section:"unreleased"},
+  {id:8,title:"93'was infinity",       artist:"D8P",   bpm:93, key:"E min",dur:"8:15",section:"unreleased"},
+  {id:9,title:"sumtimg wright rongbbb",artist:"D8P",   bpm:88, key:"D min",dur:"5:22",section:"unreleased"},
+];
+const VAULTS=[
+  {id:"d8p",  name:"D8P",  color:"#ffb347",count:9},
+  {id:"larry",name:"LARRY",color:"#7aaa5a",count:4},
+  {id:"janet",name:"JANET",color:"#cc3399",count:6},
+  {id:"erikah",name:"ERIKAH",color:"#cc6633",count:3},
+  {id:"drake",name:"DRAKE",color:"#c4a428",count:7},
+];
+function mkTheme(id,r,g,b,pitch,rate,label,blobs){
+  return{id,idDim:`rgba(${r},${g},${b},0.08)`,idGlow:`0 0 28px rgba(${r},${g},${b},0.18)`,idR:r,idG:g,idB:b,voicePitch:pitch,voiceRate:rate,label,blobs};
+}
+const THEMES={
+  d:   mkTheme("#ffb347",255,179, 71,.8,.85,"D8P CONSOLE",     [{w:500,h:360,c:"rgba(230,100,10,0.09)",t:"-10%",l:"-5%",d:20},{w:360,h:440,c:"rgba(160,70,0,0.08)",t:"25%",l:"35%",d:26},{w:300,h:300,c:"rgba(190,120,0,0.07)",t:"58%",l:"65%",d:18}]),
+  d8p: mkTheme("#ffb347",255,179, 71,.8,.85,"D8P VAULT",        [{w:500,h:360,c:"rgba(230,100,10,0.09)",t:"-10%",l:"-5%",d:20},{w:360,h:440,c:"rgba(160,70,0,0.08)",t:"25%",l:"35%",d:26},{w:300,h:300,c:"rgba(190,120,0,0.07)",t:"58%",l:"65%",d:18}]),
+  larry:mkTheme("#7aaa5a",122,170, 90,1.0,.9,"LARRY VAULT",    [{w:480,h:340,c:"rgba(60,120,20,0.09)",t:"-8%",l:"5%",d:22},{w:340,h:420,c:"rgba(40,100,10,0.08)",t:"28%",l:"40%",d:27},{w:280,h:280,c:"rgba(80,130,30,0.07)",t:"60%",l:"60%",d:19}]),
+  janet:mkTheme("#cc3399",204, 51,153,1.1,.95,"JANET VAULT",   [{w:460,h:320,c:"rgba(180,20,120,0.10)",t:"-6%",l:"8%",d:21},{w:320,h:400,c:"rgba(140,10,100,0.08)",t:"30%",l:"45%",d:25},{w:260,h:260,c:"rgba(200,30,130,0.07)",t:"62%",l:"62%",d:18}]),
+  erikah:mkTheme("#cc6633",204,102, 51,.9,.9,"ERIKAH VAULT",   [{w:470,h:350,c:"rgba(180,80,10,0.09)",t:"-9%",l:"-3%",d:23},{w:350,h:430,c:"rgba(150,60,0,0.08)",t:"26%",l:"38%",d:28},{w:290,h:290,c:"rgba(200,90,20,0.07)",t:"59%",l:"64%",d:20}]),
+  drake:mkTheme("#c4a428",196,164, 40,.85,.88,"DRAKE VAULT",   [{w:490,h:355,c:"rgba(170,140,0,0.09)",t:"-7%",l:"6%",d:22},{w:345,h:415,c:"rgba(140,110,0,0.08)",t:"27%",l:"42%",d:26},{w:275,h:275,c:"rgba(190,150,10,0.07)",t:"61%",l:"63%",d:19}]),
+  l:   mkTheme("#00e5ff",  0,229,255,1.1,1.0,"ARCHITECT",      [{w:440,h:320,c:"rgba(0,130,200,0.09)",t:"-8%",l:"10%",d:24},{w:300,h:400,c:"rgba(0,190,230,0.07)",t:"30%",l:"50%",d:30},{w:260,h:260,c:"rgba(0,70,150,0.08)",t:"60%",l:"5%",d:19}]),
+};
+
+// Read vault from URL param
+const urlVault = new URLSearchParams(window.location.search).get('vault');
+const urlOwner = urlVault==='l' ? 'l' : (urlVault && THEMES[urlVault] ? urlVault : null);
+
+/* ── UTILS ──────────────────────────────────── */
+const ds=d=>{const[m,s]=d.split(":").map(Number);return m*60+s;};
+const sd=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+const sr=n=>{let s=n;return()=>{s=(s*1664525+1013904223)&0xffffffff;return Math.abs(s)/2147483648;};};
+
+/* ── CURSOR ─────────────────────────────────── */
+function Cursor({id}){
+  const b=useRef(),sp=useRef();
+  const[click,setClick]=useState(false);
+  useEffect(()=>{
+    const mv=e=>{if(b.current){b.current.style.left=e.clientX+"px";b.current.style.top=e.clientY+"px";}if(sp.current){sp.current.style.left=e.clientX+"px";sp.current.style.top=e.clientY+"px";}};
+    const dn=()=>setClick(true),up=()=>setClick(false);
+    window.addEventListener("mousemove",mv);window.addEventListener("mousedown",dn);window.addEventListener("mouseup",up);
+    return()=>{window.removeEventListener("mousemove",mv);window.removeEventListener("mousedown",dn);window.removeEventListener("mouseup",up);};
+  },[]);
+  return<>{/*spot*/}<div ref={sp} className="cur-spot" style={{background:`radial-gradient(circle,${id.replace("rgb","rgba").replace(")",",0.07)")} 0%,transparent 70%)`}}/><div ref={b} className={`cur-ball${click?" click":""}`} style={{background:id,boxShadow:`0 0 10px ${id},0 0 22px ${id}`}}/></>;
+}
+
+/* ── WAVEFORM ───────────────────────────────── */
+function Waveform({track,progress,theme,onSeek}){
+  const cv=useRef();
+  const bars=useMemo(()=>{const r=sr(track.id*7331);return Array.from({length:240},()=>0.1+r()*.9);},[track.id]);
+  useEffect(()=>{
+    const c=cv.current;if(!c)return;
+    const ctx=c.getContext("2d"),W=c.width,H=c.height,bw=W/bars.length,px=W*progress;
+    ctx.clearRect(0,0,W,H);
+    bars.forEach((h,i)=>{
+      const x=i*bw,bh=h*H*.9,y=(H-bh)/2;
+      if(x<px){const t=i/bars.length;ctx.fillStyle=`rgba(${Math.round(theme.idR*(.65+t*.35))},${Math.round(theme.idG*(.2+t*.6))},${theme.idB},.88)`;}
+      else ctx.fillStyle="rgba(255,255,255,.045)";
+      ctx.fillRect(x+.5,y,bw-.8,bh);
+    });
+    ctx.fillStyle=theme.id;ctx.shadowColor=theme.id;ctx.shadowBlur=12;ctx.fillRect(px-1,0,2,H);ctx.shadowBlur=0;
+    for(let y=0;y<H;y+=2){ctx.fillStyle="rgba(0,0,0,.22)";ctx.fillRect(0,y,W,1);}
+  },[bars,progress,theme]);
+  return<canvas ref={cv} width={1000} height={72} className="wf-canvas" onClick={e=>{const r=e.currentTarget.getBoundingClientRect();onSeek((e.clientX-r.left)/r.width);}}/>;
+}
+
+/* ── RAIL ───────────────────────────────────── */
+function Rail({theme,owner,track,sess,listening,onVoice}){
+  const[clk,setClk]=useState(()=>new Date().toLocaleTimeString("en-US",{hour12:false}));
+  useEffect(()=>{const t=setInterval(()=>setClk(new Date().toLocaleTimeString("en-US",{hour12:false})),1000);return()=>clearInterval(t);},[]);
+  return(
+    <div className="rail">
+      <span className="rail-mark">dp</span>
+      <div className="r-sep"/>
+      <span className="r-lbl id">{theme.label}</span>
+      {owner==="l"&&<span className="arch" style={{marginLeft:4}}>ARCH</span>}
+      <div className="r-sep"/>
+      <div className="live-wrap"><div className="live-dot"/><span className="r-lbl">LIVE</span></div>
+      <div className="r-sep"/>
+      <span className="r-lbl">SESSION {sess}</span>
+      <div className="r-right">
+        <span className="r-bpm" style={{color:theme.id}}>{track.bpm} BPM</span>
+        <div className="r-sep"/>
+        <span className="r-clock">{clk}</span>
+        <div className="r-sep"/>
+        <button className={`mic-btn${listening?" on":""}`} onClick={onVoice}>◎</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── BINS ───────────────────────────────────── */
+function Bins({owner,theme,activeId,onSelect,activeVault,onVault}){
+  const[filter,setFilter]=useState("all");
+  const list=TRACKS.filter(t=>filter==="all"||t.section===filter);
+  return(
+    <div className="bins" style={{background:"var(--s1)"}}>
+      <div className="bins-accent" style={{background:theme.id}}/>
+      <div className="bins-top">
+        <span className="bins-label" style={{color:theme.id,opacity:.65}}>{owner==="l"?"ALL VAULTS":"VAULT"}</span>
+        <span className="bins-count">{list.length}</span>
+      </div>
+      {owner==="l"&&<>
+        {VAULTS.map(v=>(
+          <div key={v.id} className={`vrow${activeVault===v.id?" on":""}`} onClick={()=>onVault(v.id)}>
+            <div className="vdot" style={{background:v.color,boxShadow:`0 0 5px ${v.color}`}}/>
+            <span className="vname" style={{color:activeVault===v.id?v.color:undefined}}>{v.name}</span>
+            <span className="vcnt">{v.count}</span>
+          </div>
+        ))}
+        <div className="vdivider"><span className="bins-label">TRACKS — D8P</span></div>
+      </>}
+      {owner==="d"&&(
+        <div className="bins-filters">
+          {["all","unreleased","archive"].map(f=>(
+            <div key={f} className={`fchip${filter===f?" on":""}`}
+              style={filter===f?{color:theme.id}:{}}
+              onClick={()=>setFilter(f)}>
+              {f==="all"?"ALL":f==="unreleased"?"UNRL":"ARCH"}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="bins-list">
+        {list.map((t,i)=>(
+          <div key={t.id} className={`trow${activeId===t.id?" on":""}`} onClick={()=>onSelect(t)}>
+            <div className="trow-bar" style={{background:theme.id}}/>
+            <span className="tr-n">{String(i+1).padStart(2,"0")}</span>
+            <div className="tr-info">
+              <div className="tr-title">{t.title}</div>
+              <div className="tr-sub">{t.artist}</div>
+            </div>
+            <span className="tr-bpm">{t.bpm}</span>
+          </div>
+        ))}
+      </div>
+      <div className="bins-wm">dp</div>
+    </div>
+  );
+}
+
+/* ── MONITOR ─────────────────────────────────── */
+function Monitor({owner,track,progress,theme,onSeek,aurora}){
+  const idx=TRACKS.findIndex(t=>t.id===track.id)+1;
+  const el=Math.floor(ds(track.dur)*progress);
+  return(
+    <div className="monitor">
+      <div className="dp-texture"/>
+      {aurora&&(
+        <div className="aurora">
+          {theme.blobs.map((b,i)=>(
+            <div key={i} className="ab" style={{width:b.w,height:b.h,background:b.c,top:b.t,left:b.l,animation:`au${i} ${b.d}s ease-in-out infinite alternate`}}/>
+          ))}
+        </div>
+      )}
+      <div className="hero">
+        <div className="hero-top">
+          <span className="hero-section">{track.section.toUpperCase()}{owner==="l"&&" — EDIT ACCESS"}</span>
+          <span className="hero-counter" style={{fontFamily:"var(--fm)"}}>{String(idx).padStart(2,"0")} / {String(TRACKS.length).padStart(2,"0")}</span>
+        </div>
+        <div className="hero-title" style={{background:`linear-gradient(95deg,var(--tp) 0%,${theme.id} 40%,${theme.gold||"#d4890a"} 65%,var(--tp) 100%)`,backgroundSize:"250% 100%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}>
+          {track.title}
+        </div>
+        <div className="hero-meta">
+          <span className="hero-artist">{track.artist}</span>
+          <span className="hero-pill">{track.key}</span>
+          <span className="hero-dur" style={{color:theme.id}}>{sd(el)} / {track.dur}</span>
+        </div>
+      </div>
+
+      {owner==="d"?(
+        <div className="wf-zone">
+          <Waveform track={track} progress={progress} theme={theme} onSeek={onSeek}/>
+          <div className="wf-stamps">
+            <span className="wf-t">00:00</span>
+            <span className="wf-t">{track.dur}</span>
+          </div>
+        </div>
+      ):(
+        <div className="meta-panel">
+          <div className="mgrid">
+            {[{l:"BPM",v:track.bpm,a:true},{l:"KEY",v:track.key,a:true},{l:"DUR",v:track.dur},{l:"kbps",v:"320"}].map(c=>(
+              <div key={c.l} className={`mcell${c.a?" accent":""}`}>
+                <div className="mc-lbl">{c.l}</div>
+                <div className="mc-val" style={c.a?{color:theme.id}:{}}>{c.v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="tl">
+        <div className="tl-head">
+          <span></span><span>TITLE</span><span>ARTIST</span>
+          <span style={{textAlign:"right"}}>BPM</span><span style={{textAlign:"right"}}>DUR</span>
+        </div>
+        {TRACKS.map((t,i)=>(
+          <div key={t.id} className={`tl-row${track.id===t.id?" on":""}`}>
+            <span className="tl-n">{track.id===t.id?"▶":String(i+1).padStart(2,"0")}</span>
+            <span className="tl-tit">{t.title}</span>
+            <span className="tl-art">{t.artist}</span>
+            <span className="tl-bpm">{t.bpm}</span>
+            <span className="tl-dur">{t.dur}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── CHAIN ───────────────────────────────────── */
+function Chain({owner,theme,track}){
+  const[pads,setPads]=useState({1:false,2:false,3:false,4:false});
+  const[togs,setTogs]=useState({EQ:true,EFX:false,REC:false});
+  const[eTitle,setETitle]=useState(track.title);
+  const[eBpm,setEBpm]=useState(String(track.bpm));
+  useEffect(()=>{setETitle(track.title);setEBpm(String(track.bpm));},[track]);
+  const tele=[{ts:"01:22",msg:"UPLOAD saturn",ok:true},{ts:"00:58",msg:"SESSION_START D8P",ok:true},{ts:"00:12",msg:"AUTH D8P",ok:true},{ts:"00:01",msg:"VAULT_LOAD",ok:true}];
+  return(
+    <div className="chain">
+      {/* BPM hero */}
+      <div className="cb" style={{textAlign:"center"}}>
+        <div className="cbl">SIGNAL</div>
+        <div className="bpm-hero">
+          <div className="bpm-val" style={{color:theme.id}}>{track.bpm}</div>
+          <div className="bpm-lbl">BPM</div>
+          <div className="key-val" style={{color:theme.id,opacity:.55}}>{track.key}</div>
+        </div>
+        <div className="rdpair" style={{marginBottom:0}}>
+          <div className="rdcell"><div className="rd-l">kbps</div><div className="rd-v">320</div></div>
+          <div className="rdcell"><div className="rd-l">kHz</div><div className="rd-v">44.1</div></div>
+        </div>
+      </div>
+
+      {/* Hot cues */}
+      <div className="cb">
+        <div className="cbl">HOT CUES</div>
+        <div className="padgrid">
+          {[1,2,3,4].map(n=>(
+            <div key={n} className={`pad${pads[n]?" on":""}`} style={pads[n]?{color:theme.id}:{}}
+              onClick={()=>setPads(p=>({...p,[n]:!p[n]}))}>
+              <div className="pad-line" style={{background:theme.id}}/>
+              CUE {n}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Toggles */}
+      <div className="cb">
+        <div className="cbl">SYSTEM</div>
+        {Object.keys(togs).map(k=>(
+          <div key={k} className="trow2" onClick={()=>setTogs(t=>({...t,[k]:!t[k]}))}>
+            <span className="trow2-lbl">{k}</span>
+            <div className={`pill${togs[k]?" on":""}`} style={togs[k]?{background:theme.id,borderColor:theme.id}:{}}>
+              <div className="pill-knob"/>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* M³ */}
+      <div className="cb">
+        <div className="cbl">M³</div>
+        <div className="m3g">
+          {[{l:`MASTERS (${TRACKS.filter(t=>t.section==="unreleased").length})`,on:true},{l:"MIXES (30)"},{l:"STEMS (12)"},{l:"EDITS (4)"}].map((c,i)=>(
+            <div key={i} className={`m3c${c.on?" on":""}`} style={c.on?{color:theme.id}:{}}>{c.l}</div>
+          ))}
+        </div>
+      </div>
+
+      {/* L: edit */}
+      {owner==="l"&&(
+        <div className="cb">
+          <div className="cbl" style={{color:theme.id}}>EDIT — D8P</div>
+          <div className="ef-lbl">TITLE</div>
+          <input className="ef" value={eTitle} onChange={e=>setETitle(e.target.value)}/>
+          <div className="ef-lbl">BPM</div>
+          <input className="ef" value={eBpm} onChange={e=>setEBpm(e.target.value)}/>
+          <div className="ebtns">
+            <button className="ebtn primary" style={{color:theme.id}}>SAVE</button>
+            <button className="ebtn">RESET</button>
+          </div>
+        </div>
+      )}
+
+      {/* Telemetry */}
+      <div className="cb grow">
+        <div className="cbl">TELEMETRY</div>
+        {tele.map((e,i)=>(
+          <div key={i} className={`tele-row${e.ok?" ok":""}`}>
+            <span className="ts">[{e.ts}]</span><span>{e.msg}</span>
+            <span style={{marginLeft:"auto"}}>{e.ok?"OK":"ERR"}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── TRANSPORT ───────────────────────────────── */
+function Transport({theme,track,playing,onPlay,progress,onSeek,onPrev,onNext}){
+  const[loop,setLoop]=useState(false);
+  const[gain,setGain]=useState(80);
+  const el=Math.floor(ds(track.dur)*progress);
+  return(
+    <div className="transport">
+      <button className="tbtn" onClick={onPrev}>⏮</button>
+      <button className={`tbtn play${playing?" on":""}`} onClick={onPlay}
+        style={{borderColor:theme.id,color:theme.id,background:playing?theme.idDim:"transparent"}}>
+        {playing?"⏸":"▶"}
+      </button>
+      <button className="tbtn" onClick={onNext}>⏭</button>
+      <button className="tbtn sm">CUE</button>
+      <button className={`tbtn sm${loop?" active":""}`} onClick={()=>setLoop(l=>!l)}
+        style={loop?{borderColor:theme.id,color:theme.id,background:theme.idDim}:{}}>
+        ⟳ LOOP
+      </button>
+      <span className="t-time" style={{color:theme.id,marginLeft:8}}>{sd(el)}</span>
+      <div className="prog" onClick={e=>{const r=e.currentTarget.getBoundingClientRect();onSeek((e.clientX-r.left)/r.width);}}>
+        <div className="prog-fill" style={{width:`${progress*100}%`,background:theme.id}}/>
+        <div className="prog-head" style={{left:`${progress*100}%`,background:theme.id,boxShadow:`0 0 6px ${theme.id}`}}/>
+      </div>
+      <span className="t-tot">{track.dur}</span>
+      <div className="gain-block" style={{marginLeft:12}}>
+        <span className="gain-lbl">GAIN</span>
+        <input type="range" className="gain-sl" min={0} max={100} value={gain} onChange={e=>setGain(+e.target.value)}/>
+      </div>
+    </div>
+  );
+}
+
+/* ── VOICE ───────────────────────────────────── */
+function useVoice(theme,onCmd){
+  const[listening,setListening]=useState(false);
+  const[transcript,setTranscript]=useState("");
+  const sy=useRef(window.speechSynthesis);
+  const speak=useCallback(text=>{
+    if(!sy.current)return;sy.current.cancel();
+    const u=new SpeechSynthesisUtterance(text);u.pitch=theme.voicePitch;u.rate=theme.voiceRate;u.volume=.9;sy.current.speak(u);
+  },[theme]);
+  const listen=useCallback(()=>{
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){speak("Speech recognition not available.");return;}
+    const rec=new SR();rec.lang="en-US";rec.interimResults=false;
+    rec.onstart=()=>setListening(true);
+    rec.onresult=e=>{const t=e.results[0][0].transcript.toLowerCase().trim();setTranscript(t);onCmd(t,speak);setTimeout(()=>setTranscript(""),3000);};
+    rec.onerror=rec.onend=()=>setListening(false);
+    rec.start();
+  },[onCmd,speak]);
+  return{listening,transcript,speak,listen};
+}
+
+/* ── APP ─────────────────────────────────────── */
+const _initVault = urlVault && THEMES[urlVault] ? urlVault : (urlOwner||'d');
+const TWEAK_DEFAULTS=/*EDITMODE-BEGIN*/{
+  "console": "l",
+  "aurora": false,
+  "cursor": true
+}/*EDITMODE-END*/;
+
+function App(){
+  const[tweaks,setTweak]=useTweaks({...TWEAK_DEFAULTS, console: _initVault});
+  const owner=tweaks.console;
+  const theme=THEMES[owner];
+
+  const[track,setTrack]=useState(TRACKS[0]);
+  const[playing,setPlaying]=useState(false);
+  const[progress,setProgress]=useState(0);
+  const[sessec,setSessec]=useState(0);
+  const[activeVault,setActiveVault]=useState("d8p");
+
+  useEffect(()=>{
+    const r=document.documentElement.style;
+    r.setProperty("--id",theme.id);r.setProperty("--id-dim",theme.idDim);r.setProperty("--id-glow",theme.idGlow);
+  },[theme]);
+
+  useEffect(()=>{
+    if(!playing)return;
+    const tot=ds(track.dur);
+    const t=setInterval(()=>setProgress(p=>{if(p>=1){setPlaying(false);return 0;}return p+1/tot;}),1000);
+    return()=>clearInterval(t);
+  },[playing,track]);
+
+  useEffect(()=>{const t=setInterval(()=>setSessec(s=>s+1),1000);return()=>clearInterval(t);},[]);
+
+  const handleCmd=useCallback((text,speak)=>{
+    if(text.includes("play")){setPlaying(true);speak(`Playing ${track.title}.`);}
+    else if(text.includes("pause")||text.includes("stop")){setPlaying(false);speak("Paused.");}
+    else if(text.includes("next")){const i=TRACKS.findIndex(t=>t.id===track.id);const n=TRACKS[(i+1)%TRACKS.length];setTrack(n);setProgress(0);speak(`Loading ${n.title}. ${n.bpm} BPM.`);}
+    else if(text.includes("previous")||text.includes("back")){const i=TRACKS.findIndex(t=>t.id===track.id);const n=TRACKS[(i-1+TRACKS.length)%TRACKS.length];setTrack(n);setProgress(0);speak(`Loading ${n.title}.`);}
+    else if(text.includes("what")&&text.includes("playing")){speak(`Now playing ${track.title} by ${track.artist}. ${track.bpm} beats per minute.`);}
+    else{const m=TRACKS.find(t=>text.includes(t.title.toLowerCase().split(" ")[0]));if(m){setTrack(m);setProgress(0);speak(`Loading ${m.title}. ${m.bpm} BPM.`);}else speak("Command not recognized.");}
+  },[track]);
+
+  const{listening,transcript,speak,listen}=useVoice(theme,handleCmd);
+
+  const load=useCallback(t=>{setTrack(t);setProgress(0);speak(`Loading ${t.title}. ${t.bpm} BPM.`);},[speak]);
+  const sessTime=`${String(Math.floor(sessec/3600)).padStart(2,"0")}:${String(Math.floor((sessec%3600)/60)).padStart(2,"0")}:${String(sessec%60).padStart(2,"0")}`;
+
+  useEffect(()=>{
+    const h=e=>{if(e.target.tagName==="INPUT")return;if(e.code==="Space"){e.preventDefault();setPlaying(p=>!p);}if(e.code==="KeyV")listen();};
+    window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);
+  });
+
+  return(
+    <div className="console">
+      {tweaks.cursor&&<Cursor id={theme.id}/>}
+      <Rail theme={theme} owner={owner} track={track} sess={sessTime} listening={listening} onVoice={listen}/>
+      <div className="main">
+        <Bins owner={owner} theme={theme} activeId={track.id} onSelect={load} activeVault={activeVault} onVault={setActiveVault}/>
+        <Monitor owner={owner} track={track} progress={progress} theme={theme} onSeek={p=>setProgress(p)} aurora={tweaks.aurora}/>
+        <Chain owner={owner} theme={theme} track={track}/>
+      </div>
+      <Transport theme={theme} track={track} playing={playing}
+        onPlay={()=>setPlaying(p=>{if(!p)speak(`Playing ${track.title}`);return!p;})}
+        progress={progress} onSeek={p=>setProgress(p)}
+        onPrev={()=>{const i=TRACKS.findIndex(t=>t.id===track.id);load(TRACKS[(i-1+TRACKS.length)%TRACKS.length]);}}
+        onNext={()=>{const i=TRACKS.findIndex(t=>t.id===track.id);load(TRACKS[(i+1)%TRACKS.length]);}}/>
+      {transcript&&<div className="vtranscript" style={{borderColor:theme.id,color:theme.id}}>◎ {transcript}</div>}
+      <TweaksPanel>
+        <TweakSection label="CONSOLE"/>
+        <TweakRadio label="Artist" value={tweaks.console} options={["d","l"]} onChange={v=>setTweak("console",v)}/>
+        <TweakSection label="DISPLAY"/>
+        <TweakToggle label="Aurora" value={tweaks.aurora} onChange={v=>setTweak("aurora",v)}/>
+        <TweakToggle label="Cursor" value={tweaks.cursor} onChange={v=>setTweak("cursor",v)}/>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import './TuneModal.css';
+
 // ── TUNE MODAL — Nixie Tube Metadata Editor ────────────────────────────────
 // Opened by the < TUNE > command inside any vault.
 // Renders Nixie-tube styled sliders for BPM, frequency, and label editing.

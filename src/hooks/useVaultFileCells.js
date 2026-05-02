@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 
 function normalizeCells(items) {
   return (items || []).map((item) => ({
@@ -8,13 +8,22 @@ function normalizeCells(items) {
   }));
 }
 
-export function useVaultFileCells(initialItems) {
+export function useVaultFileCells(initialItems, resetToken = null) {
   const [cells, setCells] = useState(() => normalizeCells(initialItems));
   const [activeId, setActiveId] = useState(() => {
     const selected = (initialItems || []).find((item) => item.selected);
     return selected?.id || null;
   });
   const [transportState, setTransportState] = useState('stop');
+
+  useEffect(() => {
+    if (resetToken === null || resetToken === undefined) return;
+    const nextCells = normalizeCells(initialItems);
+    const selected = (initialItems || []).find((item) => item.selected);
+    setCells(nextCells);
+    setActiveId(selected?.id || null);
+    setTransportState('stop');
+  }, [initialItems, resetToken]);
 
   const selectCell = useCallback((itemOrId) => {
     const id = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id;

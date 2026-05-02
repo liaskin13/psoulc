@@ -163,7 +163,7 @@ Key routing rules:
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **psoulc** (16823 symbols, 22083 relationships, 275 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **psoulc** (16823 symbols, 22088 relationships, 275 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -201,25 +201,5 @@ This project is indexed by GitNexus as **psoulc** (16823 symbols, 22083 relation
 | Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
 | Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-| Work in the Test area (154 symbols) | `.claude/skills/generated/test/SKILL.md` |
-| Work in the Extension area (103 symbols) | `.claude/skills/generated/extension/SKILL.md` |
-| Work in the Scripts area (68 symbols) | `.claude/skills/generated/scripts/SKILL.md` |
-| Work in the Daemon area (45 symbols) | `.claude/skills/generated/daemon/SKILL.md` |
-| Work in the Commands area (45 symbols) | `.claude/skills/generated/commands/SKILL.md` |
-| Work in the Blender area (44 symbols) | `.claude/skills/generated/blender/SKILL.md` |
-| Work in the Console area (41 symbols) | `.claude/skills/generated/console/SKILL.md` |
-| Work in the Addon area (36 symbols) | `.claude/skills/generated/addon/SKILL.md` |
-| Work in the State area (29 symbols) | `.claude/skills/generated/state/SKILL.md` |
-| Work in the Cluster_306 area (25 symbols) | `.claude/skills/generated/cluster-306/SKILL.md` |
-| Work in the Preamble area (24 symbols) | `.claude/skills/generated/preamble/SKILL.md` |
-| Work in the Cluster_317 area (23 symbols) | `.claude/skills/generated/cluster-317/SKILL.md` |
-| Work in the Cluster_308 area (22 symbols) | `.claude/skills/generated/cluster-308/SKILL.md` |
-| Work in the Components area (22 symbols) | `.claude/skills/generated/components/SKILL.md` |
-| Work in the Resolvers area (22 symbols) | `.claude/skills/generated/resolvers/SKILL.md` |
-| Work in the Mercury area (20 symbols) | `.claude/skills/generated/mercury/SKILL.md` |
-| Work in the Entry area (20 symbols) | `.claude/skills/generated/entry/SKILL.md` |
-| Work in the Cluster_239 area (17 symbols) | `.claude/skills/generated/cluster-239/SKILL.md` |
-| Work in the Cluster_311 area (17 symbols) | `.claude/skills/generated/cluster-311/SKILL.md` |
-| Work in the Providers area (17 symbols) | `.claude/skills/generated/providers/SKILL.md` |
 
 <!-- gitnexus:end -->

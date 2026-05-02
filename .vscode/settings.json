@@ -1,12 +1,14 @@
 {
-    "chat.tools.terminal.autoApprove": {
-        "npm install": true,
-        "/^node -e \"require\\('@supabase/supabase-js'\\); console\\.log\\('OK'\\)\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
+  "chat.tools.terminal.autoApprove": {
+    "npm install": true,
+    "/^node -e \"require\\('@supabase/supabase-js'\\); console\\.log\\('OK'\\)\"$/": {
+      "approve": true,
+      "matchCommandLine": true
     },
-    "github.copilot.chat.rateLimitAutoSwitchToAuto": true,
-    "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true,
-    "github.copilot.chat.agent.autoFix": true
+    "git rev-parse": true,
+    "lsof": true
+  },
+  "github.copilot.chat.rateLimitAutoSwitchToAuto": true,
+  "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true,
+  "github.copilot.chat.agent.autoFix": true
 }

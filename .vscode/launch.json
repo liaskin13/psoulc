@@ -1,0 +1,13 @@
+{
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch gitnexus analyze",
+      "runtimeExecutable": "npx",
+      "args": ["gitnexus", "analyze"],
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}

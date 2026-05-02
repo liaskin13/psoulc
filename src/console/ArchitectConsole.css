@@ -1,0 +1,1750 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   ArchitectConsole.css — L's console. GOD MODE PLUS.
+   Serato-shaped layout. Cyan var(--arch-accent) only. Zero amber. Ever.
+   Chakra Petch (UI) · JetBrains Mono (data) · #070a0d (void)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Layout root ────────────────────────────────────────────────────────── */
+.architect-console {
+  --arch-accent-rgb: 0, 229, 255;
+  --arch-accent: #00e5ff;
+  position: fixed;
+  inset: 0;
+  background: #070a0d;
+  display: grid;
+  grid-template-rows: 40px 1fr auto auto;
+  /* top-rail | deck | transport | lower-zone */
+  font-family: 'Chakra Petch', sans-serif;
+  color: rgba(210, 225, 235, 0.75);
+  overflow: hidden;
+  z-index: 10;
+  /* Entry-matched reveal — handled by framer motion in JSX */
+}
+
+.architect-console.architect-console--amber {
+  --arch-accent-rgb: 255, 191, 0;
+  --arch-accent: #ffbf00;
+}
+
+.architect-console.architect-console--amber {
+  background:
+    radial-gradient(circle at 50% -15%, rgba(255, 191, 0, 0.14) 0%, rgba(255, 191, 0, 0.03) 34%, transparent 66%),
+    linear-gradient(180deg, #090705 0%, #060402 58%, #050402 100%);
+}
+
+.architect-console.architect-console--amber .arch-grain-layer {
+  background-image:
+    radial-gradient(ellipse 90% 45% at 50% -5%, rgba(255, 191, 0, 0.08) 0%, transparent 68%),
+    radial-gradient(ellipse 70% 25% at 52% 104%, rgba(255, 191, 0, 0.07) 0%, transparent 72%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");
+  background-size: cover, cover, 240px 240px;
+}
+
+.architect-console.architect-console--amber .arch-bg-mark {
+  color: rgba(255, 191, 0, 0.032);
+  text-shadow: 0 0 56px rgba(255, 191, 0, 0.08);
+}
+
+.architect-console.architect-console--amber .arch-top-rail {
+  background: linear-gradient(180deg, rgba(26, 16, 3, 0.9) 0%, rgba(10, 7, 2, 0.74) 100%);
+  border-bottom-color: rgba(255, 191, 0, 0.2);
+  box-shadow: inset 0 -1px 0 rgba(255, 191, 0, 0.08);
+}
+
+.architect-console.architect-console--amber .arch-rail-btn {
+  border-color: rgba(255, 191, 0, 0.26);
+  color: rgba(255, 213, 128, 0.78);
+}
+
+.architect-console.architect-console--amber .arch-rail-btn:hover {
+  border-color: rgba(255, 191, 0, 0.62);
+  color: #ffd470;
+  background: rgba(255, 191, 0, 0.12);
+}
+
+.architect-console.architect-console--amber .arch-rail-btn.active {
+  box-shadow: 0 0 10px rgba(255, 191, 0, 0.24);
+}
+
+.architect-console.architect-console--amber .arch-tab-glider {
+  box-shadow: 0 0 12px rgba(255, 191, 0, 0.44);
+}
+
+.architect-console.architect-console--amber .arch-track-row.selected {
+  background: linear-gradient(90deg, rgba(255, 191, 0, 0.12) 0%, rgba(255, 191, 0, 0.02) 65%, transparent 100%);
+}
+
+.architect-console.architect-console--amber .arch-wave-bar {
+  filter: drop-shadow(0 0 5px rgba(255, 191, 0, 0.34));
+}
+
+.architect-console.architect-console--amber .arch-state-dot {
+  box-shadow: 0 0 7px rgba(255, 191, 0, 0.72);
+}
+
+/* ── Cursor ball ────────────────────────────────────────────────────────── */
+.arch-cursor-ball {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, rgba(var(--arch-accent-rgb), 0.92) 0%, rgba(var(--arch-accent-rgb), 0.18) 60%, transparent 100%);
+  box-shadow: 0 0 18px 6px rgba(var(--arch-accent-rgb), 0.35), 0 0 48px 16px rgba(var(--arch-accent-rgb), 0.12);
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+  transform: translate(-200px, -200px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arch-cursor-ball { display: none; }
+}
+
+/* ── Background ─────────────────────────────────────────────────────────── */
+.arch-grain-layer {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 90% 45% at 50% -5%, rgba(var(--arch-accent-rgb), 0.055) 0%, transparent 65%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");
+  background-size: cover, 240px 240px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.arch-bg-mark {
+  position: absolute;
+  bottom: -0.08em;
+  right: 0.04em;
+  font-size: clamp(16rem, 26vw, 32rem);
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 700;
+  color: rgba(var(--arch-accent-rgb), 0.018);
+  letter-spacing: -0.06em;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── TOP RAIL ───────────────────────────────────────────────────────────── */
+.arch-top-rail {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  background: rgba(0, 0, 0, 0.5);
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.arch-top-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.arch-top-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--arch-accent);
+  box-shadow: 0 0 8px rgba(var(--arch-accent-rgb), 0.9);
+  flex-shrink: 0;
+}
+
+.arch-top-name {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  color: rgba(var(--arch-accent-rgb), 0.65);
+  text-transform: uppercase;
+}
+
+.arch-top-tier {
+  font-size: 0.55rem;
+  letter-spacing: 0.22em;
+  color: rgba(var(--arch-accent-rgb), 0.28);
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.15);
+  border-radius: 2px;
+}
+
+.arch-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arch-top-system {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.arch-mode-tag {
+  font-size: 0.54rem;
+  letter-spacing: 0.16em;
+  color: rgba(var(--arch-accent-rgb), 0.4);
+}
+
+.arch-vu-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arch-vu-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.54rem;
+  color: rgba(180, 200, 210, 0.35);
+  letter-spacing: 0.08em;
+}
+
+.arch-vu-meter {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.arch-vu-seg {
+  width: 5px;
+  height: 10px;
+  background: rgba(180, 200, 210, 0.15);
+  border-radius: 1px;
+}
+
+.arch-vu-seg.on {
+  background: rgba(var(--arch-accent-rgb), 0.78);
+}
+
+.arch-status-pill {
+  font-size: 0.52rem;
+  color: rgba(var(--arch-accent-rgb), 0.5);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
+  padding: 2px 6px;
+  letter-spacing: 0.12em;
+}
+
+.arch-rail-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.18);
+  color: rgba(var(--arch-accent-rgb), 0.6);
+  padding: 5px 12px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.arch-rail-btn:hover {
+  border-color: rgba(var(--arch-accent-rgb), 0.55);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.06);
+}
+
+.arch-rail-btn.active {
+  border-color: rgba(var(--arch-accent-rgb), 0.65);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.1);
+}
+
+.arch-intake-btn {
+  border-color: rgba(var(--arch-accent-rgb), 0.4);
+  color: rgba(var(--arch-accent-rgb), 0.85);
+}
+
+.arch-exit-btn {
+  border-color: rgba(180, 200, 210, 0.12);
+  color: rgba(180, 200, 210, 0.35);
+}
+
+.arch-exit-btn:hover {
+  border-color: rgba(180, 200, 210, 0.3);
+  color: rgba(180, 200, 210, 0.65);
+  background: transparent;
+}
+
+.arch-badge-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arch-badge {
+  background: rgba(var(--arch-accent-rgb), 0.15);
+  color: var(--arch-accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+}
+
+/* ── DECK ZONE ──────────────────────────────────────────────────────────── */
+.arch-deck-zone {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 20px 8px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  background: rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+.arch-deck-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.arch-deck-title {
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: rgba(220, 230, 240, 0.85);
+  font-weight: 500;
+}
+
+.arch-deck-artist {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: rgba(var(--arch-accent-rgb), 0.45);
+}
+
+.arch-deck-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.arch-deck-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.arch-deck-tool-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
+  color: rgba(180, 200, 210, 0.45);
+  padding: 4px 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.arch-deck-tool-btn.active {
+  border-color: rgba(var(--arch-accent-rgb), 0.45);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.08);
+}
+
+.arch-stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: rgba(180, 200, 210, 0.4);
+  letter-spacing: 0.08em;
+}
+
+.arch-stat strong {
+  color: rgba(var(--arch-accent-rgb), 0.6);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.arch-stat-sep {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  color: rgba(180, 200, 210, 0.2);
+}
+
+/* ── WAVEFORM — Animation 2: Standing Wave ──────────────────────────────── */
+/*
+   Each bar oscillates with a phase offset derived from --bar-i.
+   The wave propagates left-to-right continuously.
+   The bar's own height (--bar-h) acts as amplitude envelope.
+   No streaming service or music player does this.
+*/
+@keyframes arch-standing-wave {
+  0%   { transform: scaleY(1); }
+  50%  { transform: scaleY(calc(1 + var(--bar-amp, 0.5) * 0.22)); }
+  100% { transform: scaleY(1); }
+}
+
+.arch-waveform-main {
+  display: flex;
+  align-items: center;
+  gap: 1.5px;
+  height: 64px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.arch-wave-bar {
+  display: block;
+  width: 3px;
+  height: var(--bar-h, 40%);
+  min-height: 2px;
+  background: linear-gradient(
+    to top,
+    rgba(var(--arch-accent-rgb), 0.55),
+    rgba(var(--arch-accent-rgb), 0.18)
+  );
+  border-radius: 1px;
+  flex-shrink: 0;
+  transform-origin: center;
+  animation: arch-standing-wave 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--bar-i, 0) * -0.035s);
+}
+
+.arch-wave-bar:nth-child(4n) {
+  background: linear-gradient(
+    to top,
+    rgba(var(--arch-accent-rgb), 0.7),
+    rgba(var(--arch-accent-rgb), 0.25)
+  );
+}
+
+/* Overview strip */
+.arch-waveform-overview {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 20px;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  border-radius: 1px;
+  padding: 2px 2px 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.arch-overview-bar {
+  display: block;
+  width: 2px;
+  height: var(--bar-h, 40%);
+  min-height: 1px;
+  background: rgba(var(--arch-accent-rgb), 0.22);
+  flex-shrink: 0;
+}
+
+.arch-playhead {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--arch-accent);
+  box-shadow: 0 0 6px rgba(var(--arch-accent-rgb), 0.8);
+}
+
+.arch-deck-edit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(var(--arch-accent-rgb), 0.06);
+}
+
+.arch-cue-markers,
+.arch-loop-region,
+.arch-needle-zoom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.arch-cue-tag {
+  font-size: 0.52rem;
+  color: rgba(var(--arch-accent-rgb), 0.35);
+  letter-spacing: 0.14em;
+}
+
+.arch-deck-mini-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
+  color: rgba(180, 200, 210, 0.4);
+  padding: 3px 6px;
+  font-size: 0.52rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.arch-deck-mini-btn:hover {
+  border-color: rgba(var(--arch-accent-rgb), 0.38);
+  color: rgba(var(--arch-accent-rgb), 0.8);
+}
+
+/* ── TRANSPORT BAR ──────────────────────────────────────────────────────── */
+.arch-transport {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  background: rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+
+.arch-transport-cluster {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.arch-transport-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
+  color: rgba(var(--arch-accent-rgb), 0.6);
+  padding: 7px 18px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arch-play-btn {
+  border-color: rgba(var(--arch-accent-rgb), 0.4);
+  color: rgba(var(--arch-accent-rgb), 0.85);
+}
+
+.arch-play-icon {
+  font-size: 0.7rem;
+}
+
+.arch-transport-btn:hover {
+  border-color: rgba(var(--arch-accent-rgb), 0.7);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.06);
+}
+
+.arch-hotcues {
+  display: flex;
+  gap: 4px;
+  margin-left: 12px;
+}
+
+.arch-hotcue {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
+  color: rgba(var(--arch-accent-rgb), 0.4);
+  width: 26px;
+  height: 28px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.arch-hotcue:hover {
+  border-color: rgba(var(--arch-accent-rgb), 0.5);
+  color: var(--arch-accent);
+}
+
+.arch-transport-spacer { flex: 1; }
+
+.arch-loop-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.arch-loop-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  color: rgba(180, 200, 210, 0.35);
+  padding: 6px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.arch-loop-btn:hover {
+  border-color: rgba(var(--arch-accent-rgb), 0.35);
+  color: rgba(var(--arch-accent-rgb), 0.7);
+}
+
+.arch-mode-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  color: rgba(180, 200, 210, 0.35);
+  padding: 6px 10px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.arch-mode-btn.active {
+  border-color: rgba(var(--arch-accent-rgb), 0.45);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.06);
+}
+
+.arch-monitor-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 20px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.arch-monitor-vu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arch-monitor-label {
+  font-size: 0.54rem;
+  color: rgba(var(--arch-accent-rgb), 0.35);
+  letter-spacing: 0.12em;
+}
+
+.arch-monitor-meter {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.arch-monitor-eq {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.arch-monitor-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  color: rgba(180, 200, 210, 0.38);
+  padding: 4px 7px;
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+}
+
+.arch-monitor-btn:hover {
+  border-color: rgba(var(--arch-accent-rgb), 0.35);
+  color: rgba(var(--arch-accent-rgb), 0.75);
+}
+
+/* ── LOWER ZONE ─────────────────────────────────────────────────────────── */
+.arch-lower-zone {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── ARCHITECT RAIL (left sidebar) ─────────────────────────────────────── */
+.arch-rail {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0;
+  border-right: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  background: rgba(0, 0, 0, 0.35);
+  overflow-y: auto;
+}
+
+.arch-rail-section-label {
+  font-size: 0.52rem;
+  letter-spacing: 0.24em;
+  color: rgba(var(--arch-accent-rgb), 0.22);
+  text-transform: uppercase;
+  padding: 6px 16px 4px;
+}
+
+.arch-rail-divider {
+  height: 1px;
+  background: rgba(var(--arch-accent-rgb), 0.06);
+  margin: 8px 0;
+}
+
+.arch-rail-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  color: rgba(180, 200, 210, 0.45);
+  padding: 8px 14px 8px 14px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.arch-rail-toggle:hover {
+  color: rgba(var(--arch-accent-rgb), 0.75);
+  background: rgba(var(--arch-accent-rgb), 0.04);
+}
+
+.arch-rail-toggle.active {
+  border-left-color: var(--arch-accent);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.06);
+}
+
+.arch-rail-toggle.arch-armed {
+  border-left-color: rgba(220, 80, 80, 0.7);
+  color: rgba(220, 100, 100, 0.8);
+}
+
+.arch-rail-icon {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.arch-rail-cmd {
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  color: rgba(180, 200, 210, 0.35);
+  padding: 7px 14px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arch-rail-cmd:hover:not(:disabled) {
+  color: rgba(var(--arch-accent-rgb), 0.7);
+}
+
+.arch-rail-cmd:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.arch-rail-void {
+  color: rgba(200, 80, 80, 0.35);
+}
+
+.arch-rail-void:hover:not(:disabled) {
+  color: rgba(220, 80, 80, 0.8);
+}
+
+/* ── LIBRARY PANEL ──────────────────────────────────────────────────────── */
+.arch-library {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Vault Tabs — Animation 3: Magnetic Glider ──────────────────────────── */
+/*
+   .arch-tab-glider is a physical element that moves between tabs.
+   JS drives its position via getBoundingClientRect().
+   On hover, it pulls 40% toward the hovered tab (magnetic pull).
+   On click, it commits with a spring-like transition.
+   No music platform or streaming service does this.
+*/
+.arch-vault-tabs {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.arch-tab-glider {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--arch-accent);
+  box-shadow: 0 0 8px rgba(var(--arch-accent-rgb), 0.7);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.arch-vault-tab {
+  background: transparent;
+  border: none;
+  color: rgba(180, 200, 210, 0.38);
+  padding: 10px 18px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.18s;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.arch-browser-utility {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.arch-browser-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.arch-browser-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  color: rgba(180, 200, 210, 0.36);
+  padding: 5px 8px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.54rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.arch-browser-btn.active {
+  border-color: rgba(var(--arch-accent-rgb), 0.4);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.06);
+}
+
+.arch-vault-tab:hover {
+  color: rgba(var(--arch-accent-rgb), 0.7);
+}
+
+.arch-vault-tab.active {
+  color: var(--arch-accent);
+}
+
+/* Library search */
+.arch-lib-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  flex-shrink: 0;
+}
+
+.arch-lib-search {
+  background: transparent;
+  border: none;
+  color: rgba(210, 225, 235, 0.75);
+  padding: 9px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  outline: none;
+  flex: 1;
+}
+
+.arch-lib-search::placeholder {
+  color: rgba(var(--arch-accent-rgb), 0.18);
+  letter-spacing: 0.14em;
+}
+
+.arch-lib-clear {
+  background: transparent;
+  border: none;
+  color: rgba(var(--arch-accent-rgb), 0.4);
+  padding: 9px 14px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.arch-lib-empty {
+  text-align: center;
+  color: rgba(180, 200, 210, 0.22);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  padding: 40px 20px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Track List — Animation 1: Phosphor Radar Scan ──────────────────────── */
+/*
+   .arch-track-list-body has a ::before pseudo-element:
+   a cyan gradient scan line that sweeps top-to-bottom on mount.
+   Each .arch-track-row ignites as the scan passes it:
+   opacity 0→1, translateY 4px→0, triggered by --row-i delay.
+   Not a fade. Not a slide. A radar sweep activating data.
+   No streaming service does this.
+*/
+@keyframes arch-scan-line {
+  0%   { top: -2px; opacity: 1; }
+  95%  { opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes arch-row-ignite {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.arch-track-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.arch-track-list-head {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.8fr 0.7fr;
+  padding: 6px 16px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  border-left: 2px solid rgba(var(--arch-accent-rgb), 0.035);
+}
+
+.arch-track-list-head span {
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  color: rgba(var(--arch-accent-rgb), 0.28);
+
+.arch-track-row-venus { border-left-color: rgba(var(--arch-accent-rgb), 0.62); }
+.arch-track-row-saturn { border-left-color: rgba(var(--arch-accent-rgb), 0.48); }
+.arch-track-row-mercury { border-left-color: rgba(var(--arch-accent-rgb), 0.34); }
+.arch-track-row-earth { border-left-color: rgba(var(--arch-accent-rgb), 0.24); }
+  text-transform: uppercase;
+}
+
+.arch-track-list-body {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.arch-track-list-body::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(var(--arch-accent-rgb), 0.6) 30%,
+    rgba(var(--arch-accent-rgb), 0.9) 50%,
+    rgba(var(--arch-accent-rgb), 0.6) 70%,
+    transparent 100%
+  );
+  box-shadow: 0 0 12px rgba(var(--arch-accent-rgb), 0.5);
+  animation: arch-scan-line 1.2s ease-out forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.arch-track-row {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.8fr 0.7fr;
+  padding: 9px 16px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.035);
+  cursor: pointer;
+  opacity: 0;
+  animation: arch-row-ignite 0.3s ease-out forwards;
+  animation-delay: calc(0.04s + var(--row-i, 0) * 0.03s);
+  transition: background 0.12s;
+}
+
+.arch-track-row:hover {
+  background: rgba(var(--arch-accent-rgb), 0.04);
+}
+
+.arch-track-row.selected {
+  background: rgba(var(--arch-accent-rgb), 0.08);
+}
+
+.arch-track-title {
+  font-size: 0.7rem;
+  color: rgba(220, 230, 240, 0.8);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arch-track-artist {
+  font-size: 0.65rem;
+  color: rgba(var(--arch-accent-rgb), 0.45);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arch-track-bpm,
+.arch-track-key,
+.arch-track-len,
+.arch-track-date,
+.arch-track-plays,
+.arch-track-preview {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: rgba(160, 180, 190, 0.35);
+  letter-spacing: 0.04em;
+}
+
+.arch-track-state {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.56rem;
+  color: rgba(var(--arch-accent-rgb), 0.58);
+  letter-spacing: 0.08em;
+}
+
+.arch-state-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--arch-accent);
+}
+
+.arch-track-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.arch-track-wave-mini {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 100%;
+  height: 16px;
+  max-width: 62px;
+}
+
+.arch-track-wave-mini i {
+  display: block;
+  width: 3px;
+  border-radius: 1px;
+  background: rgba(var(--arch-accent-rgb), 0.65);
+  box-shadow: 0 0 4px rgba(var(--arch-accent-rgb), 0.3);
+}
+
+.arch-track-action-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  color: rgba(180, 200, 210, 0.35);
+  padding: 2px 8px;
+  font-size: 0.64rem;
+  cursor: pointer;
+}
+
+.arch-track-action-btn:hover {
+  border-color: rgba(var(--arch-accent-rgb), 0.35);
+  color: rgba(var(--arch-accent-rgb), 0.75);
+}
+
+.arch-settings-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.arch-settings-section {
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.arch-settings-title {
+  margin: 0 0 10px;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  color: rgba(var(--arch-accent-rgb), 0.55);
+}
+
+.arch-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  color: rgba(180, 200, 210, 0.5);
+  font-size: 0.62rem;
+}
+
+.arch-settings-toggle {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
+  color: rgba(180, 200, 210, 0.42);
+  padding: 3px 10px;
+  font-size: 0.54rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.arch-settings-toggle.active {
+  border-color: rgba(var(--arch-accent-rgb), 0.45);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.06);
+}
+
+/* ── PANELS (slide in from right) ───────────────────────────────────────── */
+.arch-panel-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(620px, 90vw);
+  background: #050b10;
+  border-left: 1px solid rgba(var(--arch-accent-rgb), 0.18);
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  overflow: hidden;
+}
+
+.arch-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 20;
+}
+
+.arch-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  flex-shrink: 0;
+}
+
+.arch-panel-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--arch-accent);
+  box-shadow: 0 0 6px rgba(var(--arch-accent-rgb), 0.8);
+  flex-shrink: 0;
+}
+
+.arch-panel-title {
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  color: rgba(var(--arch-accent-rgb), 0.7);
+  text-transform: uppercase;
+}
+
+.arch-panel-sub {
+  font-size: 0.58rem;
+  color: rgba(180, 200, 210, 0.28);
+  letter-spacing: 0.1em;
+  flex: 1;
+}
+
+.arch-panel-close {
+  background: transparent;
+  border: none;
+  color: rgba(180, 200, 210, 0.3);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin-left: auto;
+  transition: color 0.15s;
+}
+
+.arch-panel-close:hover {
+  color: rgba(var(--arch-accent-rgb), 0.7);
+}
+
+.arch-panel-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.arch-panel-footer-actions {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  flex-shrink: 0;
+}
+
+/* ── Data tables (shared: roster, matrix, track registry) ───────────────── */
+.arch-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+}
+
+.arch-data-table thead {
+  position: sticky;
+  top: 0;
+  background: #050b10;
+  z-index: 1;
+}
+
+.arch-data-table th {
+  padding: 10px 14px;
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  color: rgba(var(--arch-accent-rgb), 0.28);
+  text-transform: uppercase;
+  text-align: left;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  font-family: 'Chakra Petch', sans-serif;
+  white-space: nowrap;
+}
+
+.arch-data-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.04);
+  vertical-align: middle;
+}
+
+.arch-data-table tr:hover td {
+  background: rgba(var(--arch-accent-rgb), 0.025);
+}
+
+.arch-table-empty {
+  text-align: center;
+  color: rgba(180, 200, 210, 0.22);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  padding: 36px;
+}
+
+.arch-cell-tier {
+  color: rgba(var(--arch-accent-rgb), 0.5);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.arch-cell-handle {
+  color: rgba(220, 230, 240, 0.8);
+  font-size: 0.7rem;
+}
+
+.arch-cell-domain {
+  color: rgba(180, 200, 210, 0.45);
+  font-size: 0.65rem;
+}
+
+.arch-cell-code {
+  color: rgba(var(--arch-accent-rgb), 0.45);
+  font-size: 0.65rem;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: 0.1em;
+  transition: color 0.15s;
+}
+
+.arch-cell-code:hover,
+.arch-cell-code:focus {
+  color: var(--arch-accent);
+}
+
+.arch-cell-date {
+  color: rgba(160, 180, 190, 0.3);
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+
+.arch-row-pending td {
+  background: rgba(200, 200, 60, 0.025) !important;
+}
+
+/* ── Matrix cells ───────────────────────────────────────────────────────── */
+.arch-matrix-interlocks {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.arch-matrix-arm {
+  background: transparent;
+  border: 1px solid rgba(220, 80, 80, 0.3);
+  color: rgba(220, 80, 80, 0.6);
+  padding: 5px 12px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.arch-matrix-commit {
+  background: rgba(var(--arch-accent-rgb), 0.06);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.4);
+  color: var(--arch-accent);
+  padding: 5px 12px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.arch-matrix-commit:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.arch-matrix-cancel,
+.arch-matrix-rollback {
+  background: transparent;
+  border: 1px solid rgba(180, 200, 210, 0.12);
+  color: rgba(180, 200, 210, 0.35);
+  padding: 5px 10px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.arch-matrix-rollback:disabled { opacity: 0.2; cursor: not-allowed; }
+
+.arch-matrix-cell {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  color: rgba(180, 200, 210, 0.3);
+  width: 28px;
+  height: 28px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.arch-cell-on {
+  border-color: rgba(var(--arch-accent-rgb), 0.45);
+  color: rgba(var(--arch-accent-rgb), 0.85);
+  background: rgba(var(--arch-accent-rgb), 0.07);
+}
+
+.arch-cell-off {
+  border-color: rgba(var(--arch-accent-rgb), 0.06);
+  color: rgba(180, 200, 210, 0.22);
+}
+
+.arch-cell-pending {
+  border-color: rgba(200, 200, 60, 0.45) !important;
+  color: rgba(220, 220, 60, 0.75) !important;
+}
+
+.arch-cell-locked { cursor: not-allowed; opacity: 0.45; }
+
+/* ── Roster flash / add form ────────────────────────────────────────────── */
+.arch-roster-flash {
+  margin: 0 24px 16px;
+  padding: 14px 18px;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.3);
+  background: rgba(var(--arch-accent-rgb), 0.04);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.arch-roster-flash-name {
+  font-size: 0.72rem;
+  color: rgba(var(--arch-accent-rgb), 0.85);
+  letter-spacing: 0.1em;
+  font-family: 'Chakra Petch', sans-serif;
+}
+
+.arch-roster-flash-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  color: var(--arch-accent);
+  letter-spacing: 0.2em;
+}
+
+.arch-roster-flash-sub {
+  font-size: 0.56rem;
+  color: rgba(180, 200, 210, 0.35);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: 'Chakra Petch', sans-serif;
+}
+
+.arch-roster-flash-dismiss {
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.18);
+  color: rgba(var(--arch-accent-rgb), 0.5);
+  padding: 5px 12px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  align-self: flex-start;
+}
+
+.arch-panel-action-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
+  color: rgba(var(--arch-accent-rgb), 0.55);
+  padding: 8px 18px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.arch-panel-action-btn:hover {
+  border-color: var(--arch-accent);
+  color: var(--arch-accent);
+}
+
+.arch-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.arch-form-input {
+  background: rgba(var(--arch-accent-rgb), 0.03);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.14);
+  color: rgba(220, 230, 240, 0.8);
+  padding: 9px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  border-radius: 2px;
+  outline: none;
+  transition: border-color 0.15s;
+  letter-spacing: 0.06em;
+}
+
+.arch-form-input::placeholder { color: rgba(var(--arch-accent-rgb), 0.18); letter-spacing: 0.12em; }
+.arch-form-input:focus { border-color: rgba(var(--arch-accent-rgb), 0.4); }
+
+.arch-form-select {
+  background: rgba(var(--arch-accent-rgb), 0.03);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.14);
+  color: rgba(220, 230, 240, 0.7);
+  padding: 9px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  border-radius: 2px;
+  outline: none;
+}
+
+.arch-tier-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.arch-tier-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
+  color: rgba(180, 200, 210, 0.4);
+  padding: 7px 14px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.arch-tier-btn.active {
+  border-color: rgba(var(--arch-accent-rgb), 0.5);
+  color: var(--arch-accent);
+}
+
+.arch-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.arch-form-commit {
+  background: rgba(var(--arch-accent-rgb), 0.07);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.4);
+  color: var(--arch-accent);
+  padding: 9px 20px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.arch-form-commit:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.arch-form-cancel {
+  background: transparent;
+  border: 1px solid rgba(180, 200, 210, 0.1);
+  color: rgba(180, 200, 210, 0.35);
+  padding: 9px 20px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+/* ── Archive panel ──────────────────────────────────────────────────────── */
+.arch-event-horizon-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(520px, 90vw);
+  background: #050b10;
+  border-left: 1px solid rgba(var(--arch-accent-rgb), 0.18);
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  overflow: hidden;
+}
+
+.arch-horizon-entries {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.arch-horizon-empty {
+  text-align: center;
+  color: rgba(180, 200, 210, 0.22);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  padding: 48px 24px;
+}
+
+.arch-horizon-entry {
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.arch-horizon-entry:hover { background: rgba(var(--arch-accent-rgb), 0.02); }
+.arch-horizon-entry.restored { opacity: 0.45; }
+
+.arch-entry-name {
+  font-size: 0.7rem;
+  color: rgba(220, 230, 240, 0.75);
+  letter-spacing: 0.06em;
+}
+
+.arch-entry-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.arch-entry-origin {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  color: rgba(var(--arch-accent-rgb), 0.4);
+  letter-spacing: 0.06em;
+}
+
+.arch-entry-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.56rem;
+  color: rgba(160, 180, 190, 0.3);
+}
+
+.arch-restore-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
+  color: rgba(var(--arch-accent-rgb), 0.5);
+  padding: 4px 10px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.arch-restore-btn:hover { border-color: var(--arch-accent); color: var(--arch-accent); }
+.arch-restored-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.56rem; color: rgba(var(--arch-accent-rgb), 0.28); letter-spacing: 0.12em; }
+
+.arch-panel-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-top: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  flex-shrink: 0;
+}
+
+.arch-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  color: rgba(180, 200, 210, 0.28);
+  letter-spacing: 0.1em;
+}
+
+/* ── Broadcast pulse ────────────────────────────────────────────────────── */
+.arch-broadcast-pulse {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(var(--arch-accent-rgb), 0.07);
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.28);
+  text-align: center;
+  padding: 8px;
+  font-size: 0.6rem;
+  letter-spacing: 0.26em;
+  color: var(--arch-accent);
+  text-transform: uppercase;
+  font-family: 'Chakra Petch', sans-serif;
+}
+
+/* ── Confirm overlays ───────────────────────────────────────────────────── */
+.arch-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arch-confirm-dialog {
+  background: #050b10;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.22);
+  padding: 40px 48px;
+  min-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.arch-confirm-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: rgba(var(--arch-accent-rgb), 0.8);
+  text-transform: uppercase;
+}
+
+.arch-confirm-msg {
+  font-size: 0.68rem;
+  color: rgba(180, 200, 210, 0.45);
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+}
+
+.arch-confirm-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.arch-confirm-yes {
+  background: rgba(220, 60, 60, 0.08);
+  border: 1px solid rgba(220, 60, 60, 0.38);
+  color: rgba(220, 80, 80, 0.8);
+  padding: 10px 22px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.arch-confirm-yes:hover { background: rgba(220, 60, 60, 0.16); border-color: rgba(220, 60, 60, 0.65); color: rgba(220, 80, 80, 1); }
+
+.arch-confirm-no {
+  background: transparent;
+  border: 1px solid rgba(180, 200, 210, 0.12);
+  color: rgba(180, 200, 210, 0.4);
+  padding: 10px 22px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+/* ── Focus ring ─────────────────────────────────────────────────────────── */
+.architect-console :focus-visible {
+  outline: 1px solid var(--arch-accent);
+  outline-offset: 2px;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .arch-wave-bar { animation: none !important; }
+  .arch-track-list-body::before { animation: none !important; display: none; }
+  .arch-track-row { opacity: 1 !important; animation: none !important; }
+  .arch-tab-glider { transition: none !important; }
+  .arch-top-dot, .arch-panel-dot { box-shadow: none; }
+}

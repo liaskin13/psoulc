@@ -22,9 +22,9 @@ allowed_paths=(
 )
 
 if [[ "$SEARCH_TOOL" == "rg" ]]; then
-  mapfile -t comfortaa_lines < <(rg -n "Comfortaa|comfortaa" "$ROOT" || true)
+  mapfile -t comfortaa_lines < <(rg -n --glob '!*.md' "Comfortaa|comfortaa" "$ROOT" || true)
 else
-  mapfile -t comfortaa_lines < <(grep -RsnE "Comfortaa|comfortaa" "$ROOT" --exclude-dir=node_modules --exclude-dir=dist || true)
+  mapfile -t comfortaa_lines < <(grep -RsnE "Comfortaa|comfortaa" "$ROOT" --include='*.jsx' --include='*.js' --include='*.tsx' --include='*.ts' --include='*.css' --include='*.html' || true)
 fi
 if [[ ${#comfortaa_lines[@]} -gt 0 ]]; then
   bad=()

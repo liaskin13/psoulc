@@ -148,12 +148,37 @@ DPWallpaper canvas:  position: fixed, z-index: 0   (page level — paints first)
 .aperture-controls:  position: relative, z-index: 20 (above gates)
 ```
 
-### Aperture Controls
+### Aperture Controls — Masters Mode (current implementation)
 - Label "ENTER MASTER KEY": Chakra Petch 500, 10px, tracking 0.4em, `--studer-copper` at 0.6 opacity
 - Code cells: Chakra Petch 600, 22px, `--studer-copper` with glow
 - Extending lines: 1px gradient from `--studer-copper` to transparent
 - "dp" seal: Comfortaa 700, 14px, `--studer-copper` at 0.25 opacity — this is the logo
 - Cursor indicator on active cell: `dp` in Comfortaa 7px (logo quarantine — this is a logo appearance)
+
+### Unified Entry Screen (redesign — not yet built, post-P10-7)
+One screen. Three elements. The dp monogram wallpaper is the full-screen background.
+
+- **Top-left:** `pleasantsoulcollective` wordmark — fixed, always present (see Global Wordmark spec)
+- **Center:** Request access form — email or phone input. "REQUEST ACCESS" in Chakra Petch 500, 10px, near-white, tracking 0.3em. This is what everyone sees first. No color until post-auth.
+- **Bottom-right:** Master key code input — small, near-white at low opacity, discreet. Like a lamp in the corner. Masters know it's there. Everyone else doesn't need to.
+
+No toggling. No modes. One door. Two ways through it.
+
+---
+
+## Global — `pleasantsoulcollective` Wordmark
+
+Persistent across **all screens, all surfaces, post-auth.** Top-left corner. Always.
+
+- **Font:** Comfortaa 700 — brand wordmark, Comfortaa quarantine applies correctly here
+- **Treatment:** all lowercase, no spaces — one continuous compound word
+  - `pleasant` + `soul` + `collective` rendered as `pleasantsoulcollective`
+  - `soul` is set at **1.2× the size** of `pleasant` and `collective` — emphasis through scale, not capitalization
+  - Example: `pleasant` at 11px · `soul` at 13px · `collective` at 11px — reads as one word, `soul` carries the weight
+- **Color:** `--text-primary` at 0.65 opacity
+- **Pre-auth (entry screen):** present at 0.12 opacity — the brand exists before it reveals itself
+- **Position:** `position: fixed`, `top: 16px`, `left: 20px`, `z-index: 100`
+- The wordmark does not change per theme. It is the platform's one constant voice.
 
 ---
 
@@ -251,75 +276,157 @@ These are not "deprecated ideas." They were built, caused regressions, and were 
 
 ## D Console — Analog Console Design Direction (locked 2026-04-26)
 
-### Visual Style
-Combination of three design languages:
-- **Dark OLED Luxury (#10)** — absolute black base, gold foil gradients, spotlight effects. Primary foundation.
-- **Aurora / Mesh Gradient (#06)** — slow-drifting amber/gold light blobs behind the UI. Atmospheric depth layer.
-- **Retro-Futurism (#07, subtle)** — CRT scanline texture on waveform and signal readout blocks only. Keeps the "pro hardware" feel.
+### Core Design Principle — The Flow State
 
-### Layout — 5-Zone Serato Model
+D mixes entirely without headphones. He reads the waveform and operates from intuitive flow. This is not a technical monitoring console — it is **an instrument for intuition.**
+
+Design consequences:
+- **The waveform is sacred.** It is D's primary sensory connection to the music. It must be the dominant visual element — large, luminous, readable at a glance. Everything else is subordinate to it.
+- **The aurora is not decoration.** D reads energy in the room, not levels in his ears. The slow amber drift is the music having physical presence in the space. It is intentional and meaningful.
+- **Trust the artist.** No headphone cue controls. No pre-fader listen buttons. No technical scaffolding he doesn't use. The luxury is in what is *not* there.
+- **VU meters belong — but as atmosphere.** Not for headphone monitoring, but as the visual heartbeat of the room. They reflect the music's energy to the eye, not the ear.
+- The console should feel like a space where flow is possible, not a cockpit demanding attention.
+
+### Visual Style — Fashion Luxury Recalibration
+
+The console is D's private archive. Not a cockpit. Not a mixing surface. Not a club. A room where a life's work lives, and from which it is shared on his terms.
+
+Three laws govern every element:
+- **Negative space is load-bearing.** Wide margins. Generous row heights. Nothing crowds the waveform. What is absent is as deliberate as what is present.
+- **Amber in three places only:** THE SIGNAL button · the active track accent line · BPM/Key in the detail panel. Nowhere else. Amber is rare here — that is why it means something.
+- **Nothing performs.** No animated title gradients. No aurora light show. The one thing that moves is the waveform, because the waveform is alive with music.
+
+Atmospheric depth: A single barely-visible warm vignette — `radial-gradient(ellipse 60% 40% at 0% 100%, rgba(255,179,71,0.06) 0%, transparent 100%)` — bottom-left corner of the canvas. Warmth you feel, not warmth you see.
+
+### Layout — Vault Archive Console
 ```
-┌─────────────────────────────────────────────┐
-│  RAIL  — 30px top bar: live · session · BPM │
-├──────────┬──────────────────────┬────────────┤
-│  BINS    │  MONITOR             │  CHAIN     │
-│  214px   │  flex 1              │  188px     │
-│  warm    │  absolute black      │  cool dark │
-│  black   │  (hero + waveform    │  (signal · │
-│  #0b0806 │   + tracklist)       │   pads ·   │
-│          │                      │   M³)      │
-├──────────┴──────────────────────┴────────────┤
-│  TRANSPORT — 52px bottom bar                 │
-└─────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│  pleasantsoulcollective [global wordmark — fixed TL]   │
+├────────────────────────────────────────────────────────┤
+│  RAIL: ALL · UNRELEASED · RELEASED · ARCHIVE  ● SIGNAL │
+│  36px · 1px --border below                            │
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│  VAULT TRACK WALL  (fills all remaining height)        │
+│  repeat(auto-fill, minmax(118px, 1fr))                 │
+│                                                        │
+│  each cell: waveform thumb · # · title · BPM · tag    │
+│  dp living monogram canvas behind at ~2% opacity       │
+│  amber 1px left-edge accent on selected cell only      │
+│                                                        │
+│  ─────────────────────────────────────────────────     │
+│  UPLOAD ZONE — pinned bottom, 80px, dashed 1px border  │
+└────────────────────────────────────────────────────────┘
+
+When a track is selected → TRACK DETAIL PANEL slides in
+from the right edge (300px wide). Track wall reflows.
+Panel dismisses on outside click or × control.
 ```
 
-### Surface Colors (3 distinct zones)
-- Bins column: `#0b0806` — warm black
-- Monitor center: `#000000` — absolute black (OLED)
-- Signal chain: `#060608` — cool dark
+### RAIL
+- **Left:** Section filters — `ALL` · `UNRELEASED` · `RELEASED` · `ARCHIVE` in Chakra Petch 500, 9px, uppercase, tracking 0.12em. Active filter at full opacity; inactive at 0.35. No button chrome — text is the control.
+- **Center:** Track count — e.g. `47 TRACKS` in Chakra Petch 400, 9px, `--text-muted`
+- **Right:** `● SIGNAL` — Chakra Petch 600, 11px, `--amber`. The dot pulses 2.4s ease-in-out infinite when live. This is the only amber in the RAIL.
+- Height: 36px. `1px --border` below.
 
-### Identity Color Application
+### Vault Track Wall
+- Primary surface. Fills full available height. Scrollable.
+- CSS grid: `repeat(auto-fill, minmax(118px, 1fr))`
+- **Each cell:** waveform thumbnail (30px height) · track number (9px, Chakra Petch 500, `--text-muted`) · title (11px, Chakra Petch 400, near-white) · BPM (9px, muted) · section tag (8px)
+- **Selected cell:** 1px amber left-edge accent line. Nothing else changes.
+- **Hover:** waveform thumbnail gains 15% brightness only. No other motion.
+- **Orphan last-row:** spans full width, max-width 180px (existing spec unchanged)
+- **Upload zone:** pinned to bottom of the wall. 80px. Dashed 1px `--identity` border. On drag-enter: border goes solid, `--identity-glow` appears. Feels like a tape loading bay. (Existing spec applies.)
+
+### Living Monogram — dp Instances
+The dp tessellation stays black on black — same as entry. No amber tint. Instead:
+- One random `dp` instance pulses softly at a time: `opacity: 0 → 0.07 → 0` over 2.5s `ease-in-out`
+- After fade completes, a different random instance is chosen. Never two at once.
+- The canvas breathes. The room is alive. Quietly.
+- **Implementation:** `DPWallpaper.jsx` — add `mode="living"` prop. In living mode, canvas selects random glyph positions and animates them sequentially instead of rendering all at static opacity.
+
+### Track Detail Panel
+Slides in from right edge on track selection. 300px wide. `background: #0b0806`. `1px --border` left edge.
+
+- **Waveform preview:** 80px tall, full panel width. Amber playhead. CRT scanlines at 5% opacity.
+- **Track title:** Chakra Petch 700, 28px, near-white. Static. No animation. It knows what it is.
+- **BPM + Key:** Chakra Petch 600, 14px, `--amber`. The only amber text in the panel.
+- **Section selector:** `UNRELEASED` · `RELEASED` · `ARCHIVE` chips. Chakra Petch 500, 9px, uppercase. Active chip: 1px amber border.
+- **Descriptors:** editable tag list. Chakra Petch 400, 11px. `+` to add. Near-white on `--surface`.
+- **Voice comment list:** existing spec applies here.
+- **Dismiss:** `×` top-right corner, Chakra Petch 500, 10px, `--text-muted`.
+
+### Identity Color Application (sparse)
 - `--amber: #ffb347` — primary identity
-- `--gold: #d4890a` — deep gold
-- `--pale: #ffe4a0` — pale amber highlight
-- Amber left accent line on bins column
-- Gold foil animated gradient on hero track title
-- Amber glow on active elements, playhead, BPM readout, transport clock
-
-### Hero Section (Now Playing)
-- Track title: 54px Chakra Petch 700, animated gold foil gradient (background-size 300%, animates left↔right over 5s)
-- Radial amber glow from left edge behind hero
-- Badges: Unreleased (amber border), vault name (dim)
-
-### Waveform
-- CRT scanline overlay (repeating 2px transparent / 2px rgba(0,0,0,0.18))
-- Played portion: warm amber/orange color variation per bar
-- Playhead: amber with glow box-shadow
-- Height: 56px
+- `--gold: #d4890a` — BPM/Key in detail panel only
+- `--pale: #ffe4a0` — THE SIGNAL live glow only
+- Applied in exactly three places: **THE SIGNAL button · active track accent line · BPM/Key in detail panel**
+- The warm vignette (bottom-left atmospheric warmth) is not amber — it is felt, not named.
 
 ### Cursor
-- Custom glowing amber ball (12px, `box-shadow: 0 0 8px amber, 0 0 20px amber, 0 0 50px amber`)
+- Custom glowing amber ball (12px, `box-shadow: 0 0 8px #ffb347, 0 0 20px #ffb347, 0 0 50px #ffb347`)
 - Shrinks to 7px on click
 - Spotlight: 500px radial gradient follows cursor
 - `cursor: none` on body
 
-### Aurora Background
-- 3 blobs: `filter: blur(80px)`, `mix-blend-mode: screen`
-- Blob 1: 600×400px, amber/orange, top-left, 18s drift cycle
-- Blob 2: 400×500px, deep amber, center, 24s drift cycle
-- Blob 3: 350×350px, gold, bottom-right, 20s drift cycle
-- All at ~0.10–0.18 opacity
 
-### Signal Chain Right Column
-- BPM + Key: 2×2 grid, accent blocks (amber bg + border + glowing value)
-- kbps + kHz: standard blocks
-- CRT scanlines on all readout blocks
-- Vault pads: 2×2 grid, bottom amber line on active pad
-- System toggles: pill switches, amber when on
-- M³: 2×2 grid, Masters block in amber
+---
 
-### ⚠️ HELIX — MISSING, MUST RESTORE
-The helix was a design element present before the Phase 10 preview iterations. It disappeared during the redesign sessions. **Do not ship the console without it.** Ask Lisa to describe the helix at the start of the next session and restore it immediately before continuing.
+## Listener Experience — The Living Archive
+
+### Concept
+When a Master or Member authenticates, they do not arrive at a music app. They arrive at D's world. The platform is the frame. D is everything inside it.
+
+This is a private archive — a room built for the music, and for the person D chose to let in. No recommendations. No social metrics. No platform voice. Just the work, laid out with dignity.
+
+### The Vault — Listener Hero Layout
+
+The full screen is the vault. Two states: browsing and playing.
+
+**Browsing state:**
+- The living dp monogram canvas is the background — black on black, one `dp` instance pulsing quietly at a time (see Living Monogram spec)
+- Atmospheric warmth: single amber vignette at bottom-left, 0.06 opacity. The room is warm. It does not announce it.
+- **Featured track** (top of vault — D's designated piece): full-width waveform at 180px, track title at 64px Chakra Petch 700 near-white, track number + BPM at 11px muted below. Generous space above and below. The track has presence.
+- **Archive below:** the track wall grid — same structure as D's console view. The listener sees exactly what D organized, in the order D chose.
+- Section labels (`UNRELEASED` · `RELEASED` · `ARCHIVE`) in Chakra Petch 500, 9px, uppercase, amber — the only persistent amber in browsing state.
+- No sidebar. No navigation chrome. No recommendations. No metrics of any kind.
+
+**Playing state:**
+When the listener activates a track:
+- The featured waveform is now the active track. Playhead moves. Waveform bars carry amber intensity.
+- Background deepens slightly: surface transitions from near-black → true black over 400ms.
+- The dp monogram pulse rate slows — one pulse every ~6s instead of ~3s. The room settles.
+- The track title holds. Nothing else changes. The archive below remains scrollable.
+- D's world does not collapse to a player view. You are in the archive, and the music is playing.
+
+### Track Cells as Objects
+Each track in the listener grid is an object, not a row:
+- **Waveform thumbnail** (full cell width, 30px height): on hover, brightens 20% and plays a 3s animation — bars subtly shift as if the track is alive
+- **Track number:** 9px, Chakra Petch 500, `--text-muted`
+- **Title:** 11px, Chakra Petch 400, near-white
+- **BPM:** 9px, muted
+- **Section tag:** 8px — amber for UNRELEASED, dim green for RELEASED, stone for ARCHIVE
+- No play button at rest. Hover reveals a bare `▶` centered — Chakra Petch, no chrome, no circle, no fill. Click anywhere in the cell plays the track.
+
+### THE SIGNAL — The Live Event
+When D is broadcasting, the experience transforms. This is not a notification. It is an event.
+
+- **Event banner** appears at vault top: `● D IS LIVE` — Chakra Petch 600, 11px, amber, slow pulse. 1px amber border below.
+- **Entering SIGNAL:** vault recedes (opacity → 0.15 over 600ms). The live feed takes the screen. Full-width live waveform at 200px. Amber playhead pulses with the signal. The living dp monogram canvas active behind it.
+- THE SIGNAL is not a broadcast interface. It is a room you enter.
+- **Masters-tier chat:** right edge, 240px wide, Chakra Petch 400, 11px. Messages appear as minimal strips. No usernames by default — just the message, the code if enabled. No reactions, no threads.
+- **Exit:** `× LEAVE` top-right corner. Chakra Petch 500, 10px, near-white. No icon. The vault returns.
+
+### Muse Sections
+When the vault contains a Muse artist's content:
+- Their section carries a faint identity color ambient — the single vignette treatment in their locked color at 0.05 opacity
+- Their section label carries their identity color at 0.6 opacity
+- Moving between sections shifts the room's tone — subtle, like walking through a building where each room has its own light
+
+### What Is Never Here
+No follower counts. No play counts. No like buttons. No share buttons. No recommendations. No "listeners this week." No platform branding or editorial voice. No algorithmic ordering. No ads. No upsells.
+
+The listener is here because D wanted them here. The design reflects that their presence is already the privilege.
 
 ---
 
@@ -337,3 +444,10 @@ The helix was a design element present before the Phase 10 preview iterations. I
 | 2026-04-25 | Vault dp wallpaper via CSS ::before at 2.2% white opacity | CSS vars can't go in SVG data URIs. White at near-zero opacity reads as luxury texture against dark identity backgrounds. |
 | 2026-04-25 | Orphan track row fix: span full-width via rAF + getBoundingClientRect | Detects lone last-row cells after grid render, applies grid-column: 1 / -1. |
 | 2026-04-26 | entry-aperture background: transparent | DPWallpaper canvas provides the background. Aperture must be transparent or canvas is hidden behind it. |
+| 2026-04-30 | Helix removed — waveform confirmed as D's instrument | D and all DJs live in waveforms (Serato, Pioneer). Waveform is the native language. Helix was decorative; waveform is functional. |
+| 2026-04-30 | D console purpose clarified — archive management, not mixing surface | D uses the console to upload, tag, organize, and launch THE SIGNAL. No transport bar, no cue points, no pitch fader. |
+| 2026-04-30 | Fashion luxury recalibration — negative space carries weight | Inspired by fashion luxury branding (not hotel luxury). Amber in 3 places only. Nothing animated except the waveform. Atmospheric warmth through a single vignette, not aurora blobs. |
+| 2026-04-30 | Living Monogram — dp pulses one instance at a time | Vault wallpaper stays black on black. Individual dp instances pulse sequentially, never two at once. The room breathes quietly. |
+| 2026-04-30 | pleasantsoulcollective wordmark — global, persistent, top-left | All lowercase, soul at 1.2× scale (no spaces). Comfortaa 700. Present on every screen post-auth. Pre-auth at 0.12 opacity. |
+| 2026-04-30 | Listener experience — The Living Archive | Cinematic vault: featured track hero, living monogram, no social mechanics, no platform voice. THE SIGNAL as an event you enter, not a stream you watch. |
+| 2026-04-30 | Entry screen two-mode design — Masters vs Seekers | Masters: master key center. Seekers: dp monogram center, request-access form, master code bottom-right corner like a lamp. |

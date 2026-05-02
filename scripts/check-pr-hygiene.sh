@@ -9,20 +9,23 @@ if ! git rev-parse --verify "$BASE_REF" >/dev/null 2>&1; then
   exit 2
 fi
 
-CHANGED_FILES="$(git diff --name-only "$BASE_REF"...HEAD || true)"
+# Only flag additions/modifications — deletions of generated files are intentional cleanup.
+# dist/index.html is manually maintained (font links, meta tags) — allowed.
+# dist/assets/ contains hashed build chunks — never commit these.
+CHANGED_FILES="$(git diff --name-only --diff-filter=AM "$BASE_REF"...HEAD || true)"
 if [[ -z "$CHANGED_FILES" ]]; then
   echo "No changed files detected against $BASE_REF."
   exit 0
 fi
 
-BAD_FILES="$(printf '%s\n' "$CHANGED_FILES" | grep -E '^(\.venv/|dist/|node_modules/)' || true)"
+BAD_FILES="$(printf '%s\n' "$CHANGED_FILES" | grep -E '^(\.venv/|dist/assets/|node_modules/)' || true)"
 
 if [[ -n "$BAD_FILES" ]]; then
-  echo "PR hygiene check failed. Generated paths changed against $BASE_REF:"
+  echo "PR hygiene check failed. Generated paths added/modified against $BASE_REF:"
   printf '%s\n' "$BAD_FILES"
   echo ""
   echo "Remove generated-file diffs before merge."
-  echo "Allowed source changes should avoid: .venv/, dist/, node_modules/"
+  echo "Never commit: .venv/, dist/assets/, node_modules/"
   exit 1
 fi
 

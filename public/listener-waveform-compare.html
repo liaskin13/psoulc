@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PSC — Listener View Waveform Variants</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #030303;
+  font-family: 'Chakra Petch', monospace;
+  color: #f0ede8;
+  min-height: 100vh;
+  padding: 40px 24px 60px;
+}
+h1 {
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.55em;
+  text-transform: uppercase;
+  color: #3a3a3a;
+  margin-bottom: 48px;
+}
+.grid {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.variant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.variant img {
+  width: 320px;
+  height: auto;
+  display: block;
+  border: 1px solid #111;
+}
+.variant-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #f0ede8;
+  text-align: center;
+}
+.variant-label {
+  font-size: 8px;
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: #2a2a2a;
+  text-align: center;
+}
+.variant-desc {
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: #2e2e2e;
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.7;
+}
+</style>
+</head>
+<body>
+<h1>Pleasant Soul Collective · Listener View · Waveform Variants</h1>
+<div class="grid">
+  <div class="variant">
+    <div class="variant-name">A — THE VOID</div>
+    <div class="variant-label">Variant A</div>
+    <img src="wv-variant-A.png" alt="THE VOID">
+    <div class="variant-desc">Waveform IS the world.<br>Full-bleed canvas. You're inside it.</div>
+  </div>
+  <div class="variant">
+    <div class="variant-name">B — THE INCISION</div>
+    <div class="variant-label">Variant B</div>
+    <img src="wv-variant-B.png" alt="THE INCISION">
+    <div class="variant-desc">Surgical 90px band across center.<br>dp wallpaper in upper void. Clean.</div>
+  </div>
+  <div class="variant">
+    <div class="variant-name">C — THE MONUMENT</div>
+    <div class="variant-label">Variant C</div>
+    <img src="wv-variant-C.png" alt="THE MONUMENT">
+    <div class="variant-desc">Vertical waveform column left third.<br>dp wallpaper too loud — fixable.</div>
+  </div>
+</div>
+</body>
+</html>

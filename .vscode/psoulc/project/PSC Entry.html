@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSC</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html,body{width:100vw;height:100vh;overflow:hidden;background:#000;cursor:none;}
+
+/* wallpaper canvas */
+#dp-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;}
+
+/* aperture overlay */
+.aperture{
+  position:fixed;inset:0;z-index:10;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:transparent;
+}
+
+/* gate panels — slide apart on unlock */
+.gate{
+  position:fixed;top:0;bottom:0;width:50%;
+  background:rgba(0,0,0,.55);
+  transition:transform 1.1s cubic-bezier(.76,0,.24,1), opacity .8s ease;
+  z-index:8;
+}
+.gate-l{left:0;}
+.gate-r{right:0;}
+.gate-l.open{transform:translateX(-100%);}
+.gate-r.open{transform:translateX(100%);}
+
+/* center controls */
+.controls{
+  display:flex;flex-direction:column;align-items:center;
+  gap:32px;position:relative;z-index:20;
+  opacity:0;animation:fadeIn .6s ease .4s forwards;
+}
+@keyframes fadeIn{to{opacity:1}}
+
+/* dp seal */
+.seal{
+  font-family:'Comfortaa',sans-serif;font-size:44px;font-weight:700;
+  color:rgba(232,228,222,.06);letter-spacing:-.02em;
+  margin-bottom:4px;user-select:none;
+}
+
+/* label */
+.entry-label{
+  font-family:'Syne',sans-serif;font-size:9px;font-weight:600;
+  letter-spacing:.4em;text-transform:uppercase;
+  color:rgba(255,255,255,.22);margin-bottom:4px;
+}
+
+/* code cells */
+.cells{display:flex;gap:10px;align-items:center;flex-wrap:nowrap;}
+.cell{
+  width:44px;height:56px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.02);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:22px;font-weight:700;
+  color:rgba(255,255,255,.9);
+  position:relative;overflow:hidden;
+  transition:border-color 200ms, background 200ms;
+}
+.cell.active{
+  border-color:rgba(255,255,255,.25);
+  background:rgba(255,255,255,.04);
+}
+.cell.active::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:rgba(255,255,255,.35);
+}
+.cell.correct{border-color:rgba(255,179,71,.45);background:rgba(255,179,71,.04);}
+.cell.correct::after{background:rgba(255,179,71,.6);}
+.cell.wrong{border-color:rgba(200,34,0,.45);background:rgba(200,34,0,.04);}
+.cell.active::before{
+  content:'';
+  position:absolute;bottom:0;left:20%;right:20%;height:1px;
+  background:rgba(255,255,255,.3);
+  animation:blink 1.2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* extend lines */
+.extend-line{
+  width:1px;height:32px;
+  background:linear-gradient(to bottom,rgba(255,255,255,.12),transparent);
+}
+
+/* error message */
+.err-msg{
+  font-family:'Syne',sans-serif;font-size:9px;font-weight:500;
+  letter-spacing:.22em;text-transform:uppercase;color:rgba(200,40,0,.7);
+  height:16px;
+}
+
+/* PSC wordmark bottom */
+.wordmark{
+  position:fixed;bottom:32px;left:0;right:0;text-align:center;
+  font-family:'Comfortaa',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:.18em;
+  color:rgba(255,255,255,.12);z-index:20;
+}
+
+/* cursor */
+.cur-ball{
+  position:fixed;pointer-events:none;z-index:9999;
+  width:8px;height:8px;border-radius:50%;background:rgba(232,228,222,.7);
+  transform:translate(-50%,-50%);transition:width 60ms,height 60ms,background 300ms;
+}
+.cur-ring{
+  position:fixed;pointer-events:none;z-index:9998;
+  width:26px;height:26px;border-radius:50%;border:1px solid rgba(232,228,222,.14);
+  transform:translate(-50%,-50%);transition:width 150ms,height 150ms;
+}
+
+/* unlock transition */
+.controls.unlocking .cell{animation:pulseUnlock .4s ease forwards;}
+@keyframes pulseUnlock{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+/* fade out on navigate */
+.aperture.leaving{animation:leaveOut .8s ease forwards;}
+@keyframes leaveOut{to{opacity:0;transform:scale(.98)}}
+</style>
+</head>
+<body>
+
+<canvas id="dp-canvas"></canvas>
+
+<div class="aperture" id="aperture">
+  <div class="gate gate-l" id="gate-l"></div>
+  <div class="gate gate-r" id="gate-r"></div>
+
+  <div class="controls" id="controls">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div class="entry-label">Enter Master Key</div>
+      <div class="cells" id="cells"></div>
+    </div>
+    <div class="err-msg" id="err-msg"></div>
+  </div>
+</div>
+
+<div class="wordmark">pleasant<span style="font-size:18px;letter-spacing:.16em;">soul</span>collective</div>
+
+<!-- cursor -->
+<div class="cur-ring" id="cur-ring"></div>
+<div class="cur-ball" id="cur-ball"></div>
+
+<script>
+/* ── WALLPAPER ─────────────────────────────── */
+(async function(){
+  const canvas = document.getElementById('dp-canvas');
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  resize();
+  window.addEventListener('resize',()=>{ resize(); draw(); });
+
+  async function draw(){
+    try{ await document.fonts.load('700 40px Comfortaa'); }catch(e){}
+    const ctx = canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+
+    const FS=40, CW=110, CH=80;
+    const COLS=Math.ceil(W/CW)+3, ROWS=Math.ceil(H/CH)+3;
+
+    ctx.font=`700 ${FS}px Comfortaa`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+
+    const passes=[
+      {ox:1.5, oy:1.5, fill:'rgba(0,0,0,0.97)'},
+      {ox:0,   oy:0,   fill:'rgba(14,12,10,0.91)'},
+      {ox:-.8, oy:-.8, fill:'rgba(24,21,17,0.75)'},
+    ];
+
+    for(let row=-1;row<ROWS;row++){
+      const odd=row%2!==0;
+      for(let col=-1;col<COLS;col++){
+        const cx=col*CW+(odd?CW/2:0)+CW/2;
+        const cy=row*CH+CH/2;
+        const mir=(row+col)%2!==0;
+        passes.forEach(p=>{
+          ctx.save();
+          ctx.translate(cx+p.ox, cy+p.oy);
+          if(mir) ctx.scale(-1,1);
+          ctx.fillStyle=p.fill;
+          ctx.fillText('dp',0,0);
+          ctx.restore();
+        });
+      }
+    }
+  }
+  draw();
+})();
+
+/* ── CURSOR ─────────────────────────────────── */
+(function(){
+  const ball=document.getElementById('cur-ball');
+  const ring=document.getElementById('cur-ring');
+  document.addEventListener('mousemove',e=>{
+    ball.style.left=e.clientX+'px'; ball.style.top=e.clientY+'px';
+    ring.style.left=e.clientX+'px'; ring.style.top=e.clientY+'px';
+  });
+})();
+
+/* ── KEY ENTRY ──────────────────────────────── */
+(function(){
+  const CODES = {
+    '0528': 'PSC Shell.html?vault=d8p',
+    '7677': 'PSC Shell.html?vault=l',
+  };
+  const LEN = 4;
+  let input = '';
+  let unlocked = false;
+
+  const cellsEl = document.getElementById('cells');
+  const errEl   = document.getElementById('err-msg');
+
+  // Build cells
+  const cells = Array.from({length:LEN}, (_,i)=>{
+    const d = document.createElement('div');
+    d.className = 'cell' + (i===0?' active':'');
+  
+    cellsEl.appendChild(d);
+    return d;
+  });
+
+  function render(){
+    cells.forEach((c,i)=>{
+      const ch = input[i] || '';
+      // Remove old text node if present
+      Array.from(c.childNodes).forEach(n=>{ if(n.nodeType===3) c.removeChild(n); });
+      if(ch) c.prepend(document.createTextNode(ch));
+      c.classList.toggle('active', i===input.length && !unlocked);
+      c.classList.remove('correct','wrong');
+    });
+    errEl.textContent='';
+  }
+
+  function attempt(){
+    const dest = CODES[input];
+    if(dest){ unlock(dest); } else {
+      cells.forEach(c=>c.classList.add('wrong'));
+      errEl.textContent='ACCESS DENIED';
+      setTimeout(()=>{ input=''; render(); },900);
+    }
+  }
+
+  function unlock(dest){
+    unlocked=true;
+    cells.forEach(c=>{ c.classList.remove('wrong'); c.classList.add('correct'); });
+    errEl.textContent='';
+    document.getElementById('controls').classList.add('unlocking');
+    setTimeout(()=>{
+      document.getElementById('gate-l').classList.add('open');
+      document.getElementById('gate-r').classList.add('open');
+    },300);
+    setTimeout(()=>{
+      document.getElementById('aperture').classList.add('leaving');
+    },900);
+    setTimeout(()=>{
+      window.location.href=dest;
+    },1600);
+  }
+
+  document.addEventListener('keydown',e=>{
+    if(unlocked) return;
+    if(e.key==='Backspace'){
+      input=input.slice(0,-1); render();
+    } else if(e.key==='Enter' && input.length===LEN){
+      attempt();
+    } else if(input.length<LEN && /[0-9]/.test(e.key)){
+      input+=e.key; render();
+      if(input.length===LEN) setTimeout(attempt,120);
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -28,35 +28,14 @@ A cinematic music streaming and sharing platform where the **independent artist 
 | **The Sun** | D (God Mode) | 0528 | 70s Soul / Honey Amber / Studio warmth |
 | **The Black Star** | L (God Mode Plus) | 7677 | Cold graphite / cyan |
 
-### The Vault Planets & Chakra Colors
 
-| Planet | Chakra | Color | Contents |
-|---|---|---|---|
-| Saturn | Crown | Violet | Original Music — Master Tracks |
-| Venus | Sacral | Orange | Curated Mixes |
-| Mercury | Root | Scarlet | Live Sets + Streaming |
-| Earth | Heart | Green | Sonic Architecture Docs |
-| Mars | Solar Plexus | Iron Red | Jess B Vault |
-| Amethyst | Third Eye | Indigo | Angi's Crystal Vault |
 
-### Tier Access
 
-| Tier | Name | Access |
-|---|---|---|
-| A | Founders (D + L) | God Mode |
-| B | Collective Members | Planet admin + explore all |
-| C | Featured Artists | Moon + explore |
-| D | The Destined | Browse-only |
-| G | Listeners | Browse-only |
-
-### Key Visual Rules
 
 - Entry: `dp` wallpaper + Comfortaa font access code input
 - Vault layout: 30% Binary Core porthole / 70% file-cell library wall
-- File cells: warm wood-tone frame, Honey Amber lighting, chakra-colored ownership rail
+- File cells: warm wood-tone frame, Honey Amber lighting, ownership rail
 - Studer transport bar: brushed chrome, bottom center, 528Hz glow on hover
-- Orbital physics: 23° tilted elliptical plane, Keplerian speeds
-- The Void: asset spaghettification → Black Star transfer (irreversible except by L)
 
 ### CMD Registry
 
@@ -69,7 +48,7 @@ A cinematic music streaming and sharing platform where the **independent artist 
 - React + TypeScript + Vite
 - Animations are cinematic and intentional — not decorative filler
 - Audio: Web Audio API, MediaRecorder (voice transmissions)
-- Orbital mechanics via Keplerian calculations (`kepler` module)
+
 
 ---
 

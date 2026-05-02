@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VaultSkeleton from '../components/VaultSkeleton';
 import { getWaveformBars } from '../utils/waveform';
@@ -32,10 +32,7 @@ function ListenerWatermark() {
   );
 }
 
-const SaturnVault    = lazy(() => import('../saturn/SaturnVault'));
-const VenusArchive   = lazy(() => import('../venus/VenusArchive'));
-const EarthSafe      = lazy(() => import('../earth/EarthSafe'));
-const MercuryStream  = lazy(() => import('../mercury/MercuryStream'));
+const TheVault = lazy(() => import('../components/TheVault'));
 
 // Active vaults only — in launch priority order.
 // Crystal (Amethyst) and Mars excluded: no content to upload yet.
@@ -47,13 +44,8 @@ const LISTENER_VAULTS = [
 ];
 
 function renderVault(id, onBack) {
-  switch (id) {
-    case 'saturn':   return <SaturnVault   readOnly onBack={onBack} />;
-    case 'venus':    return <VenusArchive  readOnly onBack={onBack} />;
-    case 'earth':    return <EarthSafe     readOnly onBack={onBack} />;
-    case 'mercury':  return <MercuryStream readOnly onBack={onBack} />;
-    default:         return null;
-  }
+  if (!id) return null;
+  return <TheVault vault={id} readOnly onBack={onBack} />;
 }
 
 function ListenerShell({ onPowerDown }) {
@@ -65,22 +57,17 @@ function ListenerShell({ onPowerDown }) {
     setPendingPlanet(id);
   };
 
-  const handleApproachComplete = () => {
-    setActiveVault(pendingPlanet);
-    setPendingPlanet(null);
-  };
-
   const handleVaultBack = () => {
     setLastPlayed(activeVault);
     setActiveVault(null);
   };
 
-  // ── VAULT TRANSITION ─────────────────────────────────────────────
-  if (pendingPlanet) {
-    // Skip approach animation (three.js removed) — go straight to vault
-    handleApproachComplete();
-    return <VaultSkeleton />;
-  }
+  // Skip approach animation (three.js removed) — resolve to vault in effect, not render
+  useEffect(() => {
+    if (!pendingPlanet) return;
+    setActiveVault(pendingPlanet);
+    setPendingPlanet(null);
+  }, [pendingPlanet]);
 
   // ── VAULT VIEW ───────────────────────────────────────────────────
   if (activeVault) {

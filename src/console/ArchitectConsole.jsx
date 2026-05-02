@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
+import './ArchitectConsole.css';
 import ConduitSlider from './ConduitSlider';
 import InboxPanel from './InboxPanel';
 import CommentPanel from './CommentPanel';
-import { VOID_CHAKRA_COLORS, LOCKBOX_PREFIX, VAULT_DISPLAY_NAMES } from '../config';
+import DirectLinePanel from './DirectLinePanel';
+import { LOCKBOX_PREFIX, VAULT_DISPLAY_NAMES } from '../config';
 import {
   tierDefaultsForMember,
   resolveMatrixPerm,
@@ -12,13 +14,21 @@ import {
   commitMatrixState,
   rollbackMatrixState,
 } from './matrixState';
+import { fetchAllTracks } from '../lib/tracks';
+import { getWaveformBars } from '../utils/waveform';
 
 const VAULT_ROUTES = [
-  { id: 'saturn',  label: VAULT_DISPLAY_NAMES.saturn },
-  { id: 'venus',   label: VAULT_DISPLAY_NAMES.venus },
-  { id: 'earth',   label: VAULT_DISPLAY_NAMES.earth },
+  { id: 'venus',   label: VAULT_DISPLAY_NAMES.venus   },
+  { id: 'saturn',  label: VAULT_DISPLAY_NAMES.saturn  },
   { id: 'mercury', label: VAULT_DISPLAY_NAMES.mercury },
+  { id: 'earth',   label: VAULT_DISPLAY_NAMES.earth   },
 ];
+
+function vaultLabel(id) {
+  if (!id) return '—';
+  if (id.startsWith(LOCKBOX_PREFIX)) return `FEATURED · ${id.replace(LOCKBOX_PREFIX, '').toUpperCase()}`;
+  return VAULT_DISPLAY_NAMES[id] || '—';
+}
 
 const SR_ONLY_STYLE = {
   position: 'absolute',
@@ -66,12 +76,7 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
             >
               <div className="arch-entry-name">{item.label || item.name || item.id}</div>
               <div className="arch-entry-meta">
-                <span
-                  className="arch-entry-origin"
-                  style={{ color: VOID_CHAKRA_COLORS[item.originPlanet] || '#00b4d8' }}
-                >
-                  {item.originPlanet?.toUpperCase()}
-                </span>
+                <span className="arch-entry-origin">{vaultLabel(item.originPlanet)}</span>
                 <span className="arch-entry-time">
                   {new Date(item.voidedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
@@ -104,35 +109,71 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
   );
 }
 
-function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
+function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast, onIntake, viewer = 'L', accent = 'cyan' }) {
   const { architectArchive, restoreItem, unreadCountL, members, unreadCommentCount, voidItem, addMember } = useSystem();
   const MATRIX_COMMITTED_KEY = 'psc_matrix_committed';
   const MATRIX_HISTORY_KEY = 'psc_matrix_history';
+  const ARCH_PREFS_KEY = 'psc_architect_prefs';
+  const ARCH_RUNTIME_KEY = 'psc_architect_runtime';
   const [showArchive,      setShowArchive]      = useState(false);
   const [showInbox,        setShowInbox]        = useState(false);
   const [showRoster,       setShowRoster]       = useState(false);
   const [showComments,     setShowComments]     = useState(false);
-  const [activePlanet,     setActivePlanet]     = useState(null);
+  const [activeVault,      setActiveVault]      = useState(null);
+  const [activeLibVault,   setActiveLibVault]   = useState(VAULT_ROUTES[0].id);
   const [isBroadcasting,   setIsBroadcasting]   = useState(false);
   const [showPowerConfirm, setShowPowerConfirm] = useState(false);
   const [showVoidConfirm,  setShowVoidConfirm]  = useState(false);
-  // ROSTER add-member form state
-  const [rosterShowAdd,  setRosterShowAdd]  = useState(false);
-  const [rosterName,     setRosterName]     = useState('');
-  const [rosterPlanet,   setRosterPlanet]   = useState('');
-  const [rosterTier,     setRosterTier]     = useState('B');
-  const [rosterMoon,     setRosterMoon]     = useState('');
-  const [rosterCode,     setRosterCode]     = useState('');
-  const [rosterFlash,    setRosterFlash]    = useState(null);
-  const [rosterReveal,   setRosterReveal]   = useState(null);
-  // CMD MATRIX state
-  const [showMatrix,     setShowMatrix]     = useState(false);
-  const [matrixArmed,    setMatrixArmed]    = useState(false);
-  const [matrixPending,  setMatrixPending]  = useState({}); // { [memberId]: { void, tune, comment } }
-  const [matrixCommitted, setMatrixCommitted] = useState({});
-  const [matrixHistory, setMatrixHistory] = useState([]);
+  const [showTrackList,    setShowTrackList]    = useState(false);
+  const [showSettings,     setShowSettings]     = useState(false);
+  const [trackListData,    setTrackListData]    = useState([]);
+  const [trackListLoading, setTrackListLoading] = useState(false);
+  const [isRecording,      setIsRecording]      = useState(false);
+  const [quantizeEnabled,  setQuantizeEnabled]  = useState(true);
+  const [activePerfMode,   setActivePerfMode]   = useState('hotcue');
+  const [sortMode,         setSortMode]         = useState('bpm');
+  const [smartCrates,      setSmartCrates]      = useState(false);
+  const [historyEnabled,   setHistoryEnabled]   = useState(true);
+  const [prepareQueue,     setPrepareQueue]     = useState([]);
+  const [selectedTrackId,  setSelectedTrackId]  = useState(null);
+  const [loadedDeckId,     setLoadedDeckId]     = useState(null);
+  const [trackPlayCounts,  setTrackPlayCounts]  = useState({});
+  const [trackHistory,     setTrackHistory]     = useState([]);
+  const [waveformDetail,   setWaveformDetail]   = useState('high');
+  const [trackColorRows,   setTrackColorRows]   = useState(true);
+  const [autoLoopDefault,  setAutoLoopDefault]  = useState(false);
+  const [rosterShowAdd,    setRosterShowAdd]    = useState(false);
+  const [rosterName,       setRosterName]       = useState('');
+  const [rosterPlanet,     setRosterPlanet]     = useState('');
+  const [rosterTier,       setRosterTier]       = useState('B');
+  const [rosterMoon,       setRosterMoon]       = useState('');
+  const [rosterCode,       setRosterCode]       = useState('');
+  const [rosterFlash,      setRosterFlash]      = useState(null);
+  const [rosterReveal,     setRosterReveal]     = useState(null);
+  const [showMatrix,       setShowMatrix]       = useState(false);
+  const [matrixArmed,      setMatrixArmed]      = useState(false);
+  const [matrixPending,    setMatrixPending]    = useState({});
+  const [matrixCommitted,  setMatrixCommitted]  = useState({});
+  const [matrixHistory,    setMatrixHistory]    = useState([]);
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const [libSearch,        setLibSearch]        = useState('');
   const announceTimerRef = useRef(null);
+  const tabRefs          = useRef([]);
+  const gliderRef        = useRef(null);
+  const waveformBars     = getWaveformBars('l-console-ambient', 80);
+  const cursorRef        = useRef(null);
+  const cursorPos        = useRef({ x: -200, y: -200 });
+
+  useEffect(() => {
+    const move = (e) => {
+      cursorPos.current = { x: e.clientX, y: e.clientY };
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      }
+    };
+    window.addEventListener('pointermove', move, { passive: true });
+    return () => window.removeEventListener('pointermove', move);
+  }, []);
 
   const announce = (message) => {
     if (!message) return;
@@ -142,6 +183,37 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       setLiveAnnouncement(message);
     }, 20);
   };
+
+  // Magnetic glider — moves toward active tab
+  const moveGlider = useCallback((idx) => {
+    const tab = tabRefs.current[idx];
+    const glider = gliderRef.current;
+    if (!tab || !glider) return;
+    const { offsetLeft, offsetWidth } = tab;
+    glider.style.transform = `translateX(${offsetLeft}px)`;
+    glider.style.width = `${offsetWidth}px`;
+  }, []);
+
+  const hoverGlider = useCallback((idx) => {
+    const activeIdx = VAULT_ROUTES.findIndex(v => v.id === activeLibVault);
+    const activTab = tabRefs.current[activeIdx];
+    const hoverTab = tabRefs.current[idx];
+    const glider = gliderRef.current;
+    if (!activTab || !hoverTab || !glider) return;
+    const from = activTab.offsetLeft;
+    const to = hoverTab.offsetLeft;
+    const pulled = from + (to - from) * 0.4;
+    const fromW = activTab.offsetWidth;
+    const toW = hoverTab.offsetWidth;
+    const pulledW = fromW + (toW - fromW) * 0.4;
+    glider.style.transform = `translateX(${pulled}px)`;
+    glider.style.width = `${pulledW}px`;
+  }, [activeLibVault]);
+
+  useEffect(() => {
+    const idx = VAULT_ROUTES.findIndex(v => v.id === activeLibVault);
+    moveGlider(idx);
+  }, [activeLibVault, moveGlider]);
 
   useEffect(() => {
     try {
@@ -157,6 +229,26 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
 
   useEffect(() => {
     try {
+      const prefs = JSON.parse(localStorage.getItem(ARCH_PREFS_KEY) || '{}');
+      const runtime = JSON.parse(localStorage.getItem(ARCH_RUNTIME_KEY) || '{}');
+      if (prefs && typeof prefs === 'object') {
+        if (prefs.waveformDetail) setWaveformDetail(prefs.waveformDetail);
+        if (typeof prefs.trackColorRows === 'boolean') setTrackColorRows(prefs.trackColorRows);
+        if (typeof prefs.quantizeEnabled === 'boolean') setQuantizeEnabled(prefs.quantizeEnabled);
+        if (typeof prefs.autoLoopDefault === 'boolean') setAutoLoopDefault(prefs.autoLoopDefault);
+        if (typeof prefs.smartCrates === 'boolean') setSmartCrates(prefs.smartCrates);
+        if (typeof prefs.historyEnabled === 'boolean') setHistoryEnabled(prefs.historyEnabled);
+      }
+      if (runtime && typeof runtime === 'object') {
+        if (runtime.trackPlayCounts && typeof runtime.trackPlayCounts === 'object') setTrackPlayCounts(runtime.trackPlayCounts);
+        if (Array.isArray(runtime.trackHistory)) setTrackHistory(runtime.trackHistory);
+        if (Array.isArray(runtime.prepareQueue)) setPrepareQueue(runtime.prepareQueue);
+      }
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    try {
       localStorage.setItem(MATRIX_COMMITTED_KEY, JSON.stringify(matrixCommitted));
     } catch (_) {}
   }, [matrixCommitted]);
@@ -167,14 +259,37 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     } catch (_) {}
   }, [matrixHistory]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(ARCH_PREFS_KEY, JSON.stringify({
+        waveformDetail,
+        trackColorRows,
+        quantizeEnabled,
+        autoLoopDefault,
+        smartCrates,
+        historyEnabled,
+      }));
+    } catch (_) {}
+  }, [autoLoopDefault, historyEnabled, quantizeEnabled, smartCrates, trackColorRows, waveformDetail]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ARCH_RUNTIME_KEY, JSON.stringify({
+        trackPlayCounts,
+        trackHistory,
+        prepareQueue,
+      }));
+    } catch (_) {}
+  }, [prepareQueue, trackHistory, trackPlayCounts]);
+
   useEffect(() => () => {
     if (announceTimerRef.current) clearTimeout(announceTimerRef.current);
   }, []);
 
-  const handlePlanetSelect = (planetId) => {
-    const nextPlanet = planetId === activePlanet ? null : planetId;
-    setActivePlanet(nextPlanet);
-    announce(nextPlanet ? `${nextPlanet.toUpperCase()} selected.` : 'Planet selection cleared.');
+  const handleVaultSelect = (vaultId) => {
+    const next = vaultId === activeVault ? null : vaultId;
+    setActiveVault(next);
+    announce(next ? `${vaultLabel(next)} selected.` : 'Vault selection cleared.');
   };
 
   const toggleArchive = () => {
@@ -217,6 +332,26 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     });
   };
 
+  const toggleTrackList = async () => {
+    const next = !showTrackList;
+    setShowTrackList(next);
+    announce(`Track registry ${next ? 'opened' : 'closed'}.`);
+    if (next) {
+      setTrackListLoading(true);
+      const tracks = await fetchAllTracks();
+      setTrackListData(tracks);
+      setTrackListLoading(false);
+    }
+  };
+
+  const toggleSettings = () => {
+    setShowSettings(prev => {
+      const next = !prev;
+      announce(`Settings ${next ? 'opened' : 'closed'}.`);
+      return next;
+    });
+  };
+
   const handleBroadcast = () => {
     setIsBroadcasting(true);
     onBroadcast?.();
@@ -224,16 +359,95 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     setTimeout(() => setIsBroadcasting(false), 5000);
   };
 
+  const handleRecordToggle = () => {
+    setIsRecording(prev => {
+      const next = !prev;
+      announce(`Record ${next ? 'armed' : 'stopped'}.`);
+      return next;
+    });
+  };
+
+  const handleQuantizeToggle = () => {
+    setQuantizeEnabled(prev => {
+      const next = !prev;
+      announce(`Quantize ${next ? 'enabled' : 'disabled'}.`);
+      return next;
+    });
+  };
+
+  const handleTrackSelect = (track) => {
+    setSelectedTrackId(track.id);
+    setActiveVault(track.vault || null);
+    announce(`${track.title || 'Track'} selected.`);
+  };
+
+  const pushTrackHistory = (track) => {
+    if (!historyEnabled) return;
+    setTrackHistory(prev => {
+      const next = [track.id, ...prev.filter(id => id !== track.id)].slice(0, 50);
+      return next;
+    });
+  };
+
+  const handlePreviewTrack = (track) => {
+    setTrackPlayCounts(prev => ({ ...prev, [track.id]: (prev[track.id] || 0) + 1 }));
+    pushTrackHistory(track);
+    announce(`Previewing ${track.title || 'track'}.`);
+  };
+
+  const handlePrepareSelected = () => {
+    if (!selectedTrackId) {
+      announce('Select a track before adding to prepare queue.');
+      return;
+    }
+    setPrepareQueue(prev => (prev.includes(selectedTrackId) ? prev : [...prev, selectedTrackId]));
+    announce('Track added to prepare queue.');
+  };
+
+  const handleLoadDeck = () => {
+    if (!selectedTrackId) {
+      announce('Select a track before loading deck.');
+      return;
+    }
+    setLoadedDeckId(selectedTrackId);
+    const track = trackListData.find(t => t.id === selectedTrackId);
+    if (track) pushTrackHistory(track);
+    announce('Track loaded to deck.');
+  };
+
+  const handleTrackAction = (track) => {
+    const inPrepare = prepareQueue.includes(track.id);
+    if (inPrepare) {
+      setPrepareQueue(prev => prev.filter(id => id !== track.id));
+      announce(`${track.title || 'Track'} removed from prepare queue.`);
+    } else {
+      setPrepareQueue(prev => [...prev, track.id]);
+      announce(`${track.title || 'Track'} added to prepare queue.`);
+    }
+  };
+
+  const filteredTracks = trackListData
+    .filter(t => t.vault === activeLibVault)
+    .filter(t => !libSearch || t.title?.toLowerCase().includes(libSearch.toLowerCase()) || t.artist?.toLowerCase().includes(libSearch.toLowerCase()))
+    .filter(t => !smartCrates || (Number(t.bpm) || 0) >= 120);
+
+  const visibleTracks = [...filteredTracks].sort((a, b) => {
+    if (sortMode === 'recent') {
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    }
+    return (Number(b.bpm) || 0) - (Number(a.bpm) || 0);
+  });
+
   const handleExplore = () => {
-    if (!activePlanet) return;
-    onExplorePlanet?.(activePlanet);
-    announce(`Opening ${activePlanet.toUpperCase()} vault.`);
+    if (!activeVault) return;
+    onExplorePlanet?.(activeVault);
+    announce(`Opening ${vaultLabel(activeVault)}.`);
   };
 
   const handleVoidProtocol = () => {
-    if (!activePlanet) return;
+    if (!activeVault) return;
     setShowVoidConfirm(true);
-    announce(`Void protocol confirmation opened for ${activePlanet.toUpperCase()}.`);
+    announce(`Void protocol confirmation opened for ${vaultLabel(activeVault)}.`);
   };
 
   const handleRosterAdd = (e) => {
@@ -248,7 +462,6 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
     setRosterCode(''); setRosterTier('B'); setRosterShowAdd(false);
     announce(`${rosterName.trim()} added to roster with tier ${rosterTier}.`);
   };
-
   const handleMatrixToggle = (memberId, perm) => {
     if (!matrixArmed) return;
     const member = members.find(m => m.id === memberId);
@@ -322,17 +535,17 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
   };
 
   const confirmVoidProtocol = () => {
-    if (!activePlanet) return;
+    if (!activeVault) return;
     const record = {
       id: `protocol-${Date.now()}`,
-      label: `${activePlanet.toUpperCase()} PROTOCOL`,
-      name: `${activePlanet.toUpperCase()} PROTOCOL`,
+      label: `${vaultLabel(activeVault)} PROTOCOL`,
+      name: `${vaultLabel(activeVault)} PROTOCOL`,
       metadata: { type: 'void-protocol' },
     };
-    voidItem(record, activePlanet);
+    voidItem(record, activeVault);
     setShowArchive(true);
     setShowVoidConfirm(false);
-    announce(`${activePlanet.toUpperCase()} protocol moved to archive log.`);
+    announce(`${vaultLabel(activeVault)} protocol moved to archive log.`);
   };
 
   const handlePowerDown = () => {
@@ -381,161 +594,424 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
       if (showRoster) {
         setShowRoster(false);
         announce('Roster closed.');
+        return;
+      }
+      if (showTrackList) {
+        setShowTrackList(false);
+        announce('Track registry closed.');
+        return;
+      }
+      if (showSettings) {
+        setShowSettings(false);
+        announce('Settings closed.');
       }
     };
 
     window.addEventListener('keydown', onEscape);
     return () => window.removeEventListener('keydown', onEscape);
-  }, [showArchive, showComments, showInbox, showMatrix, showPowerConfirm, showRoster, showVoidConfirm]);
+  }, [showArchive, showComments, showInbox, showMatrix, showPowerConfirm, showRoster, showSettings, showTrackList, showVoidConfirm]);
 
   return (
     <motion.div
-      className="architect-console"
+      className={`architect-console ${accent === 'amber' ? 'architect-console--amber' : ''}`}
       initial={{ opacity: 0, filter: 'brightness(0) blur(8px)' }}
       animate={{ opacity: 1, filter: 'brightness(1) blur(0px)' }}
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}
     >
       <div className="arch-grain-layer" />
+      <div className="arch-bg-mark">{viewer}</div>
+      <div className="arch-cursor-ball" ref={cursorRef} aria-hidden="true" />
+      <div style={SR_ONLY_STYLE} role="status" aria-live="polite" aria-atomic="true">{liveAnnouncement}</div>
 
-      <div className="arch-bg-mark">L</div>
-
-      <div className="arch-console-strip">
-
-        <div className="arch-strip-left">
-          <button className="god-btn power-btn" onClick={handlePowerDown}>EXIT SYSTEM</button>
-          <div className="arch-identity-block">
-            <div className="arch-identity-label">L · ARCHITECT</div>
-            <div className="arch-identity-status">
-              <span className="arch-status-dot" />
-              ARCHIVE LINK ONLINE
-            </div>
-            <div className="arch-identity-tier">SOVEREIGN ACCESS</div>
-          </div>
+      {/* ── TOP RAIL ─────────────────────────────────────────────────── */}
+      <header className="arch-top-rail">
+        <div className="arch-top-identity">
+          <span className="arch-top-dot" />
+          <span className="arch-top-name">{viewer} · {viewer === 'D' ? 'SOVEREIGN' : 'ARCHITECT'}</span>
+          <span className="arch-top-tier">GOD MODE PLUS</span>
         </div>
 
-        <div className="arch-strip-center">
-          <div className="arch-route-header">VAULT ROUTING</div>
-          <div className="arch-map-pit">
-            <div className="arch-route-grid" role="group" aria-label="Vault routing controls">
-              {VAULT_ROUTES.map((route) => (
-                <button
-                  key={route.id}
-                  className={`arch-route-btn ${activePlanet === route.id ? 'active' : ''}`}
-                  onClick={() => handlePlanetSelect(route.id)}
-                  aria-pressed={activePlanet === route.id}
-                  aria-label={`Route to ${route.label}`}
-                >
-                  {route.label}
-                </button>
-              ))}
-            </div>
+        <div className="arch-top-system" aria-label="System status">
+          <span className="arch-mode-tag">PERFORMANCE MODE</span>
+          <div className="arch-vu-block" aria-label="Master meter">
+            <span className="arch-vu-label">MASTER</span>
+            <span className="arch-vu-meter">
+              <i className="arch-vu-seg on" />
+              <i className="arch-vu-seg on" />
+              <i className="arch-vu-seg on" />
+              <i className="arch-vu-seg" />
+              <i className="arch-vu-seg" />
+              <i className="arch-vu-seg" />
+            </span>
           </div>
+          <span className="arch-status-pill">SYSTEM LOCK: SECURE</span>
         </div>
 
-        <div className="arch-strip-right">
-          <button
-            className={`arch-archive-toggle ${showArchive ? 'active' : ''}`}
-            onClick={toggleArchive}
-            aria-expanded={showArchive}
-            aria-controls="arch-event-horizon-panel"
-            aria-haspopup="dialog"
-          >
-            <span className="arch-archive-icon">◉</span>
-            <span className="arch-archive-btn-label">
-              ARCHIVE LOG
-              {architectArchive.length > 0 && (
-                <span className="arch-archive-badge">
-                  {architectArchive.filter(i => !i.restored).length}
-                </span>
-              )}
-            </span>
+        <nav className="arch-top-actions" aria-label="Architect controls">
+          <button className={`arch-rail-btn ${isRecording ? 'active' : ''}`} aria-label="Record" onClick={handleRecordToggle}>
+            REC
           </button>
-
-          <button
-            className={`arch-archive-toggle ${showInbox ? 'active' : ''}`}
-            onClick={toggleInbox}
-            aria-expanded={showInbox}
-            aria-controls="arch-inbox-panel"
-            aria-haspopup="dialog"
-          >
-            <span className="arch-archive-icon">◈</span>
-            <span className="arch-archive-btn-label">
-              VETTING QUEUE
-              {unreadCountL > 0 && (
-                <span className="arch-archive-badge">{unreadCountL}</span>
-              )}
-            </span>
+          <DirectLinePanel viewer={viewer} variant={viewer === 'D' ? 'analog' : 'architect'} />
+          <button className="arch-rail-btn arch-intake-btn" onClick={onIntake}>
+            INTAKE
           </button>
-
-          <button
-            className={`arch-archive-toggle ${showRoster ? 'active' : ''}`}
-            onClick={toggleRoster}
-            aria-expanded={showRoster}
-            aria-controls="arch-roster-zone"
-          >
-            <span className="arch-archive-icon">◎</span>
-            <span className="arch-archive-btn-label">
-              ROSTER
-              <span className="arch-archive-badge">{members.length}</span>
-            </span>
-          </button>
-
-          <button
-            className={`arch-archive-toggle ${showMatrix ? 'active' : ''} ${matrixArmed ? 'arch-toggle-armed' : ''}`}
-            onClick={toggleMatrix}
-            aria-expanded={showMatrix}
-            aria-controls="arch-matrix-zone"
-          >
-            <span className="arch-archive-icon">⊞</span>
-            <span className="arch-archive-btn-label">CMD MATRIX</span>
-          </button>
-
-          {unreadCommentCount > 0 && (
-            <button
-              className={`arch-archive-toggle ${showComments ? 'active' : ''}`}
-              onClick={toggleComments}
-              aria-expanded={showComments}
-              aria-controls="arch-comments-panel"
-              aria-haspopup="dialog"
-            >
-              <span className="arch-archive-icon">◌</span>
-              <span className="arch-archive-btn-label">
-                TRANSMISSIONS
-                <span className="arch-archive-badge">{unreadCommentCount}</span>
-              </span>
-            </button>
-          )}
 
           <ConduitSlider onBroadcast={handleBroadcast} isBroadcasting={isBroadcasting} />
 
-          <div className="arch-command-block">
-            <div className="arch-cmd-label">COMMANDS</div>
-            <button className="arch-cmd-btn" disabled={!activePlanet} onClick={handleExplore}>
-              OPEN VAULT {activePlanet ? `→ ${activePlanet.toUpperCase()}` : ''}
+          {unreadCountL > 0 && (
+            <button className="arch-rail-btn arch-badge-btn" onClick={toggleInbox} aria-expanded={showInbox}>
+              QUEUE <span className="arch-badge">{unreadCountL}</span>
             </button>
-            <button className="arch-cmd-btn arch-cmd-void" disabled={!activePlanet} onClick={handleVoidProtocol}>
-              VOID PROTOCOL
+          )}
+
+          {unreadCommentCount > 0 && (
+            <button className="arch-rail-btn arch-badge-btn" onClick={toggleComments} aria-expanded={showComments}>
+              TRANSMISSIONS <span className="arch-badge">{unreadCommentCount}</span>
             </button>
+          )}
+
+          <button className="arch-rail-btn arch-exit-btn" onClick={handlePowerDown}>
+            EXIT SYSTEM
+          </button>
+          <button className="arch-rail-btn" onClick={toggleSettings} aria-expanded={showSettings}>
+            SETUP
+          </button>
+        </nav>
+      </header>
+
+      {/* ── DECK ZONE ────────────────────────────────────────────────── */}
+      <section className="arch-deck-zone" aria-label="Deck">
+        <div className="arch-deck-meta">
+          <div className="arch-deck-title">—</div>
+          <div className="arch-deck-artist">—</div>
+          <div className="arch-deck-stats">
+            <span className="arch-stat">BPM <strong>—</strong></span>
+            <span className="arch-stat">KEY <strong>—</strong></span>
+            <span className="arch-stat arch-elapsed">0:00</span>
+            <span className="arch-stat-sep">/</span>
+            <span className="arch-stat arch-remaining">—:——</span>
           </div>
+        </div>
+
+        <div className="arch-deck-tools" role="group" aria-label="Deck state controls">
+          <button className={`arch-deck-tool-btn ${quantizeEnabled ? 'active' : ''}`} onClick={handleQuantizeToggle}>QUANTIZE</button>
+          <button className="arch-deck-tool-btn">RELOAD</button>
+        </div>
+
+        {/* Main waveform — standing wave animation (Animation 2) */}
+        <div className="arch-waveform-main" aria-hidden="true">
+          {waveformBars.map((h, i) => (
+            <span
+              key={i}
+              className="arch-wave-bar"
+              style={{
+                '--bar-h': `${h}%`,
+                '--bar-i': i,
+                '--bar-amp': (h / 100).toFixed(3),
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Overview strip */}
+        <div className="arch-waveform-overview" aria-hidden="true">
+          {waveformBars.map((h, i) => (
+            <span key={i} className="arch-overview-bar" style={{ '--bar-h': `${h}%` }} />
+          ))}
+          <div className="arch-playhead" />
+        </div>
+
+        <div className="arch-deck-edit" role="group" aria-label="Waveform edit controls">
+          <div className="arch-cue-markers">
+            <span className="arch-cue-tag">CUE</span>
+            <button className="arch-deck-mini-btn">A</button>
+            <button className="arch-deck-mini-btn">B</button>
+            <button className="arch-deck-mini-btn">C</button>
+            <button className="arch-deck-mini-btn">D</button>
+          </div>
+          <div className="arch-loop-region">
+            <span className="arch-cue-tag">LOOP REGION</span>
+            <button className="arch-deck-mini-btn">SET START</button>
+            <button className="arch-deck-mini-btn">SET END</button>
+            <button className="arch-deck-mini-btn">CLEAR</button>
+          </div>
+          <div className="arch-needle-zoom">
+            <button className="arch-deck-mini-btn">NEEDLE DROP</button>
+            <button className="arch-deck-mini-btn">ZOOM -</button>
+            <button className="arch-deck-mini-btn">ZOOM +</button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TRANSPORT BAR ───────────────────────────────────────────── */}
+      <div className="arch-transport" role="toolbar" aria-label="Transport controls">
+        <div className="arch-transport-cluster" role="group" aria-label="Playback">
+          <button className="arch-transport-btn arch-play-btn" aria-label="Play">
+            <span className="arch-play-icon">▶</span> PLAY
+          </button>
+          <button className="arch-transport-btn arch-cue-btn" aria-label="Cue">
+            ■ CUE
+          </button>
+        </div>
+
+        <div className="arch-hotcues" role="group" aria-label="Hot cues">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
+            <button key={n} className="arch-hotcue" aria-label={`Hot cue ${n}`}>{n}</button>
+          ))}
+        </div>
+
+        <div className="arch-loop-controls" role="group" aria-label="Loop controls">
+          <button className="arch-loop-btn">AUTO 8</button>
+          <button className="arch-loop-btn">½</button>
+          <button className="arch-loop-btn arch-loop-in">IN</button>
+          <button className="arch-loop-btn arch-loop-out">OUT</button>
+          <button className="arch-loop-btn">×2</button>
+          <button className="arch-loop-btn">RELOOP</button>
+        </div>
+
+        <div className="arch-transport-spacer" />
+
+        <div className="arch-transport-cluster" role="group" aria-label="Performance modes">
+          <button className={`arch-mode-btn ${activePerfMode === 'hotcue' ? 'active' : ''}`} onClick={() => setActivePerfMode('hotcue')}>HOT CUE</button>
+          <button className={`arch-mode-btn ${activePerfMode === 'loop' ? 'active' : ''}`} onClick={() => setActivePerfMode('loop')}>LOOP</button>
         </div>
       </div>
 
-      {isBroadcasting && <div className="arch-broadcast-pulse">ARCHITECT BROADCAST ACTIVE</div>}
-      <div style={SR_ONLY_STYLE} role="status" aria-live="polite" aria-atomic="true">{liveAnnouncement}</div>
+      <div className="arch-monitor-strip" role="group" aria-label="Monitoring">
+        <div className="arch-monitor-vu">
+          <span className="arch-monitor-label">VU</span>
+          <span className="arch-monitor-meter">
+            <i className="arch-vu-seg on" />
+            <i className="arch-vu-seg on" />
+            <i className="arch-vu-seg on" />
+            <i className="arch-vu-seg on" />
+            <i className="arch-vu-seg" />
+            <i className="arch-vu-seg" />
+          </span>
+        </div>
+        <div className="arch-monitor-eq">
+          <button className="arch-monitor-btn">EQ HI</button>
+          <button className="arch-monitor-btn">EQ MID</button>
+          <button className="arch-monitor-btn">EQ LOW</button>
+          <button className="arch-monitor-btn">FILTER</button>
+          <button className="arch-monitor-btn">GAIN</button>
+          <button className="arch-monitor-btn">MASTER</button>
+          <button className="arch-monitor-btn">HEADPHONE</button>
+        </div>
+      </div>
 
+      {/* ── LOWER ZONE ──────────────────────────────────────────────── */}
+      <div className="arch-lower-zone">
+
+        {/* ARCHITECT RAIL — sovereign controls */}
+        <aside className="arch-rail" aria-label="Architect controls">
+          <div className="arch-rail-section-label">SOVEREIGN</div>
+
+          <button
+            className={`arch-rail-toggle ${showArchive ? 'active' : ''}`}
+            onClick={toggleArchive}
+            aria-expanded={showArchive}
+          >
+            <span className="arch-rail-icon">◉</span>
+            ARCHIVE LOG
+            {architectArchive.filter(i => !i.restored).length > 0 && (
+              <span className="arch-badge">{architectArchive.filter(i => !i.restored).length}</span>
+            )}
+          </button>
+
+          <button
+            className={`arch-rail-toggle ${showRoster ? 'active' : ''}`}
+            onClick={toggleRoster}
+            aria-expanded={showRoster}
+          >
+            <span className="arch-rail-icon">◎</span>
+            ROSTER
+            <span className="arch-badge">{members.length}</span>
+          </button>
+
+          <button
+            className={`arch-rail-toggle ${showMatrix ? 'active' : ''} ${matrixArmed ? 'arch-armed' : ''}`}
+            onClick={toggleMatrix}
+            aria-expanded={showMatrix}
+          >
+            <span className="arch-rail-icon">⊞</span>
+            CMD MATRIX
+          </button>
+
+          <button
+            className={`arch-rail-toggle ${showInbox ? 'active' : ''}`}
+            onClick={toggleInbox}
+            aria-expanded={showInbox}
+          >
+            <span className="arch-rail-icon">◈</span>
+            VETTING QUEUE
+            {unreadCountL > 0 && <span className="arch-badge">{unreadCountL}</span>}
+          </button>
+
+          <div className="arch-rail-divider" />
+          <div className="arch-rail-section-label">VAULT</div>
+
+          <button
+            className={`arch-rail-toggle ${showTrackList ? 'active' : ''}`}
+            onClick={toggleTrackList}
+            aria-expanded={showTrackList}
+          >
+            <span className="arch-rail-icon">▤</span>
+            TRACK REGISTRY
+            {trackListData.length > 0 && <span className="arch-badge">{trackListData.length}</span>}
+          </button>
+
+          <div className="arch-rail-divider" />
+          <div className="arch-rail-section-label">COMMAND</div>
+
+          <button
+            className="arch-rail-cmd"
+            disabled={!activeVault}
+            onClick={handleExplore}
+          >
+            OPEN {activeVault ? `→ ${vaultLabel(activeVault)}` : 'VAULT'}
+          </button>
+          <button
+            className="arch-rail-cmd arch-rail-void"
+            disabled={!activeVault}
+            onClick={handleVoidProtocol}
+          >
+            VOID PROTOCOL
+          </button>
+        </aside>
+
+        {/* LIBRARY PANEL */}
+        <main className="arch-library" aria-label="Vault library">
+          {/* Vault tab selector — magnetic glider (Animation 3) */}
+          <div className="arch-vault-tabs" role="tablist" aria-label="Vault selector">
+            <span className="arch-tab-glider" ref={gliderRef} aria-hidden="true" />
+            {VAULT_ROUTES.map((v, i) => (
+              <button
+                key={v.id}
+                ref={el => tabRefs.current[i] = el}
+                role="tab"
+                className={`arch-vault-tab ${activeLibVault === v.id ? 'active' : ''}`}
+                aria-selected={activeLibVault === v.id}
+                onClick={() => setActiveLibVault(v.id)}
+                onMouseEnter={() => hoverGlider(i)}
+                onMouseLeave={() => moveGlider(VAULT_ROUTES.findIndex(r => r.id === activeLibVault))}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="arch-browser-utility" role="toolbar" aria-label="Library controls">
+            <div className="arch-browser-group">
+              <button className="arch-browser-btn">BACK</button>
+              <button className="arch-browser-btn">FWD</button>
+              <button className="arch-browser-btn">FILES</button>
+              <button className="arch-browser-btn active">CRATES</button>
+            </div>
+            <div className="arch-browser-group">
+              <button className={`arch-browser-btn ${sortMode === 'bpm' ? 'active' : ''}`} onClick={() => setSortMode('bpm')}>SORT: BPM</button>
+              <button className={`arch-browser-btn ${smartCrates ? 'active' : ''}`} onClick={() => setSmartCrates(prev => !prev)}>SMART CRATES</button>
+              <button className={`arch-browser-btn ${historyEnabled ? 'active' : ''}`} onClick={() => setHistoryEnabled(prev => !prev)}>HISTORY</button>
+              <button className="arch-browser-btn" onClick={handlePrepareSelected}>PREPARE {prepareQueue.length > 0 ? `(${prepareQueue.length})` : ''}</button>
+              <button className={`arch-browser-btn ${loadedDeckId && selectedTrackId === loadedDeckId ? 'active' : ''}`} onClick={handleLoadDeck}>LOAD DECK</button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="arch-lib-search-row">
+            <input
+              className="arch-lib-search"
+              placeholder="SEARCH VAULT"
+              value={libSearch}
+              onChange={e => setLibSearch(e.target.value)}
+              aria-label="Search tracks"
+            />
+            {libSearch && (
+              <button className="arch-lib-clear" onClick={() => setLibSearch('')} aria-label="Clear search">✕</button>
+            )}
+          </div>
+
+          {/* Track list — phosphor scan animation (Animation 1) */}
+          <div className="arch-track-list" role="table" aria-label="Track list">
+            <div className="arch-track-list-head" role="row">
+              <span role="columnheader">TITLE</span>
+              <span role="columnheader">ARTIST</span>
+              <span role="columnheader">BPM</span>
+              <span role="columnheader">KEY</span>
+              <span role="columnheader">LENGTH</span>
+              <span role="columnheader">ADDED</span>
+              <span role="columnheader">PLAYS</span>
+              <span role="columnheader">STATE</span>
+              <span role="columnheader">PREVIEW</span>
+              <span role="columnheader">ACTIONS</span>
+            </div>
+            <div className="arch-track-list-body">
+              {trackListLoading ? (
+                <div className="arch-lib-empty">QUERYING VAULT…</div>
+              ) : visibleTracks.length === 0 ? (
+                <div className="arch-lib-empty">— NO TRACKS IN {vaultLabel(activeLibVault)} —</div>
+              ) : (
+                visibleTracks
+                  .map((t, i) => (
+                    (() => {
+                      const previewBars = getWaveformBars(String(t.id || t.title || i), 8);
+                      return (
+                    <div
+                      key={t.id}
+                      className={`arch-track-row arch-track-row-${trackColorRows ? (t.vault || 'generic') : 'generic'} ${selectedTrackId === t.id ? 'selected' : ''}`}
+                      role="row"
+                      style={{ '--row-i': i }}
+                      onClick={() => handleTrackSelect(t)}
+                    >
+                      <span className="arch-track-title" role="cell">{t.title || '—'}</span>
+                      <span className="arch-track-artist" role="cell">{t.artist || '—'}</span>
+                      <span className="arch-track-bpm" role="cell">{t.bpm || '—'}</span>
+                      <span className="arch-track-key" role="cell">—</span>
+                      <span className="arch-track-len" role="cell">—:——</span>
+                      <span className="arch-track-date" role="cell">
+                        {t.created_at ? new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—'}
+                      </span>
+                      <span className="arch-track-plays" role="cell">{trackPlayCounts[t.id] || 0}</span>
+                      <span className="arch-track-state" role="cell"><i className="arch-state-dot" />{(trackPlayCounts[t.id] || 0) > 0 ? 'PLAYED' : 'UNPLAYED'}</span>
+                      <span className="arch-track-preview" role="cell">
+                        <span className="arch-track-wave-mini" aria-hidden="true">
+                          {previewBars.map((h, pi) => (
+                            <i key={`${t.id}-${pi}`} style={{ height: `${Math.max(12, h)}%` }} />
+                          ))}
+                        </span>
+                      </span>
+                      <span className="arch-track-actions" role="cell">
+                        <button className="arch-track-action-btn" onClick={(e) => { e.stopPropagation(); handlePreviewTrack(t); }}>▶</button>
+                        <button className="arch-track-action-btn" onClick={(e) => { e.stopPropagation(); handleTrackAction(t); }}>{prepareQueue.includes(t.id) ? '−Q' : '+Q'}</button>
+                      </span>
+                    </div>
+                      );
+                    })()
+                  ))
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* ── PANELS (overlays from right) ──────────────────────────────── */}
       <AnimatePresence>
         {showRoster && (
           <motion.div
             id="arch-roster-zone"
-            className="arch-roster-zone"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
+            className="arch-panel-overlay"
+            role="dialog"
+            aria-label="Roster"
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 22 }}
           >
-            <div className="arch-roster-header">
-              <span className="arch-roster-title">ROSTER</span>
-              <span className="arch-roster-count">{members.length} MEMBERS</span>
+            <div className="arch-panel-header">
+              <span className="arch-panel-dot" />
+              <span className="arch-panel-title">ROSTER</span>
+              <span className="arch-panel-sub">{members.length} MEMBERS</span>
+              <button className="arch-panel-close" onClick={toggleRoster} aria-label="Close roster">✕</button>
             </div>
 
             {rosterFlash && (
@@ -547,88 +1023,73 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
               </div>
             )}
 
-            <table className="arch-roster-table">
-              <thead>
-                <tr>
-                  <th>TIER</th>
-                  <th>HANDLE</th>
-                  <th>DOMAIN</th>
-                  <th>CODE</th>
-                  <th>REGISTERED</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.length === 0 ? (
-                  <tr><td colSpan={5} className="arch-roster-empty">— NO MEMBERS REGISTERED —</td></tr>
-                ) : members.map(m => (
-                  <tr key={m.id}>
-                    <td className="arch-roster-tier">{m.tier}</td>
-                    <td className="arch-roster-handle">{m.name}</td>
-                    <td className="arch-roster-planet">
-                      {m.planet?.startsWith(LOCKBOX_PREFIX)
-                        ? `FEATURED · ${m.planet.replace(LOCKBOX_PREFIX, '').toUpperCase()}`
-                        : (m.planet?.toUpperCase() || '—')}
-                    </td>
-                    <td
-                      className="arch-roster-code"
-                      onMouseEnter={() => setRosterReveal(m.id)}
-                      onMouseLeave={() => setRosterReveal(null)}
-                      onFocus={() => setRosterReveal(m.id)}
-                      onBlur={() => setRosterReveal(null)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setRosterReveal(prev => (prev === m.id ? null : m.id));
-                        }
-                        if (e.key === 'Escape') {
-                          setRosterReveal(null);
-                        }
-                      }}
-                      tabIndex={0}
-                      role="button"
-                      aria-pressed={rosterReveal === m.id}
-                      aria-label={`Member ${m.name} access code`}
-                    >
-                      {rosterReveal === m.id ? m.code : '••••'}
-                    </td>
-                    <td className="arch-roster-date">
-                      {new Date(m.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
-                    </td>
+            <div className="arch-panel-body">
+              <table className="arch-data-table">
+                <thead>
+                  <tr>
+                    <th>TIER</th><th>HANDLE</th><th>DOMAIN</th><th>CODE</th><th>REGISTERED</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {members.length === 0 ? (
+                    <tr><td colSpan={5} className="arch-table-empty">— NO MEMBERS REGISTERED —</td></tr>
+                  ) : members.map(m => (
+                    <tr key={m.id}>
+                      <td className="arch-cell-tier">{m.tier}</td>
+                      <td className="arch-cell-handle">{m.name}</td>
+                      <td className="arch-cell-domain">{vaultLabel(m.planet)}</td>
+                      <td
+                        className="arch-cell-code"
+                        onMouseEnter={() => setRosterReveal(m.id)}
+                        onMouseLeave={() => setRosterReveal(null)}
+                        onFocus={() => setRosterReveal(m.id)}
+                        onBlur={() => setRosterReveal(null)}
+                        tabIndex={0}
+                        role="button"
+                        aria-pressed={rosterReveal === m.id}
+                        aria-label={`Member ${m.name} access code`}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setRosterReveal(p => p === m.id ? null : m.id); }
+                          if (e.key === 'Escape') setRosterReveal(null);
+                        }}
+                      >
+                        {rosterReveal === m.id ? m.code : '••••'}
+                      </td>
+                      <td className="arch-cell-date">
+                        {new Date(m.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            {!rosterShowAdd ? (
-              <button className="arch-roster-add-btn" onClick={() => setRosterShowAdd(true)}>+ ADD MEMBER</button>
-            ) : (
-              <form className="arch-roster-add-form" onSubmit={handleRosterAdd}>
-                <input className="arch-roster-input" placeholder="HANDLE" value={rosterName}
-                  onChange={e => setRosterName(e.target.value)} maxLength={64} autoFocus required />
-                <div className="arch-roster-tier-toggle">
-                  <button type="button" className={`arch-roster-tier-btn ${rosterTier === 'B' ? 'active' : ''}`}
-                    onClick={() => setRosterTier('B')}>COLLECTIVE</button>
-                  <button type="button" className={`arch-roster-tier-btn ${rosterTier === 'C' ? 'active' : ''}`}
-                    onClick={() => setRosterTier('C')}>FEATURED ARTIST</button>
-                </div>
-                {rosterTier === 'B' ? (
-                  <select className="arch-roster-select" value={rosterPlanet} onChange={e => setRosterPlanet(e.target.value)}>
-                    <option value="">— NO DOMAIN —</option>
-                    {VAULT_ROUTES.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
-                  </select>
-                ) : (
-                  <input className="arch-roster-input" placeholder="FEATURED TAG" value={rosterMoon}
-                    onChange={e => setRosterMoon(e.target.value.toUpperCase())} maxLength={32} required />
-                )}
-                <input className="arch-roster-input" placeholder="SET CODE (e.g. 2112)" value={rosterCode}
-                  onChange={e => setRosterCode(e.target.value.replace(/\D/g, '').slice(0, 8))} maxLength={8} />
-                <div className="arch-roster-form-actions">
-                  <button type="submit" className="arch-roster-commit"
-                    disabled={!rosterName.trim() || (rosterTier === 'C' && !rosterMoon.trim())}>COMMIT</button>
-                  <button type="button" className="arch-roster-cancel" onClick={() => setRosterShowAdd(false)}>CANCEL</button>
-                </div>
-              </form>
-            )}
+            <div className="arch-panel-footer-actions">
+              {!rosterShowAdd ? (
+                <button className="arch-panel-action-btn" onClick={() => setRosterShowAdd(true)}>+ ADD MEMBER</button>
+              ) : (
+                <form className="arch-add-form" onSubmit={handleRosterAdd}>
+                  <input className="arch-form-input" placeholder="HANDLE" value={rosterName} onChange={e => setRosterName(e.target.value)} maxLength={64} autoFocus required />
+                  <div className="arch-tier-toggle">
+                    <button type="button" className={`arch-tier-btn ${rosterTier === 'B' ? 'active' : ''}`} onClick={() => setRosterTier('B')}>COLLECTIVE</button>
+                    <button type="button" className={`arch-tier-btn ${rosterTier === 'C' ? 'active' : ''}`} onClick={() => setRosterTier('C')}>FEATURED ARTIST</button>
+                  </div>
+                  {rosterTier === 'B' ? (
+                    <select className="arch-form-select" value={rosterPlanet} onChange={e => setRosterPlanet(e.target.value)}>
+                      <option value="">— NO DOMAIN —</option>
+                      {VAULT_ROUTES.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
+                    </select>
+                  ) : (
+                    <input className="arch-form-input" placeholder="FEATURED TAG" value={rosterMoon} onChange={e => setRosterMoon(e.target.value.toUpperCase())} maxLength={32} required />
+                  )}
+                  <input className="arch-form-input" placeholder="SET CODE (e.g. 2112)" value={rosterCode} onChange={e => setRosterCode(e.target.value.replace(/\D/g, '').slice(0, 8))} maxLength={8} />
+                  <div className="arch-form-actions">
+                    <button type="submit" className="arch-form-commit" disabled={!rosterName.trim() || (rosterTier === 'C' && !rosterMoon.trim())}>COMMIT</button>
+                    <button type="button" className="arch-form-cancel" onClick={() => setRosterShowAdd(false)}>CANCEL</button>
+                  </div>
+                </form>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -637,127 +1098,183 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
         {showMatrix && (
           <motion.div
             id="arch-matrix-zone"
-            className="arch-matrix-zone"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
+            className="arch-panel-overlay"
+            role="dialog"
+            aria-label="CMD Matrix"
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 22 }}
           >
-            <div className="arch-matrix-header">
-              <span className="arch-matrix-title">CMD MATRIX</span>
-              <span className="arch-matrix-sub">PERMISSION GRID — ARM TO EDIT</span>
+            <div className="arch-panel-header">
+              <span className="arch-panel-dot" />
+              <span className="arch-panel-title">CMD MATRIX</span>
+              <span className="arch-panel-sub">PERMISSION GRID — ARM TO EDIT</span>
               <div className="arch-matrix-interlocks">
                 {!matrixArmed ? (
                   <button className="arch-matrix-arm" onClick={handleMatrixArm}>ARM</button>
                 ) : (
                   <>
-                    <button className="arch-matrix-commit" onClick={handleMatrixCommit}
-                      disabled={Object.keys(matrixPending).length === 0}>COMMIT</button>
+                    <button className="arch-matrix-commit" onClick={handleMatrixCommit} disabled={Object.keys(matrixPending).length === 0}>COMMIT</button>
                     <button className="arch-matrix-cancel" onClick={handleMatrixDisarm}>CANCEL</button>
                   </>
                 )}
-                <button
-                  className="arch-matrix-rollback"
-                  onClick={handleMatrixRollback}
-                  disabled={matrixHistory.length === 0}
-                >
-                  ROLLBACK
-                </button>
+                <button className="arch-matrix-rollback" onClick={handleMatrixRollback} disabled={matrixHistory.length === 0}>ROLLBACK</button>
               </div>
+              <button className="arch-panel-close" onClick={toggleMatrix} aria-label="Close matrix">✕</button>
             </div>
 
-            <table className="arch-matrix-table">
-              <thead>
-                <tr>
-                  <th>HANDLE</th>
-                  <th>TIER</th>
-                  <th>DOMAIN</th>
-                  <th>VOID</th>
-                  <th>TUNE</th>
-                  <th>COMMENT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.length === 0 ? (
-                  <tr><td colSpan={6} className="arch-matrix-empty">— NO MEMBERS —</td></tr>
-                ) : members.map(m => {
-                  const tierVoid    = m.tier === 'A' || m.tier === 'B';
-                  const tierTune    = m.tier === 'A' || m.tier === 'B';
-                  const tierComment = m.tier === 'A' || m.tier === 'B' || m.tier === 'C';
-                  return (
-                    <tr key={m.id} className={matrixPending[m.id] ? 'arch-matrix-row-pending' : ''}>
-                      <td className="arch-matrix-handle">{m.name}</td>
-                      <td className="arch-matrix-tier">{m.tier}</td>
-                      <td className="arch-matrix-planet">
-                        {m.planet?.startsWith(LOCKBOX_PREFIX)
-                          ? `FEATURED · ${m.planet.replace(LOCKBOX_PREFIX, '').toUpperCase()}`
-                          : (m.planet?.toUpperCase() || '—')}
-                      </td>
-                      {['void', 'tune', 'comment'].map((perm, i) => {
-                        const defaults = [tierVoid, tierTune, tierComment];
-                        const active = matrixPerm(m.id, perm, defaults[i]);
-                        const hasPending = matrixPending[m.id]?.[perm] !== undefined;
-                        return (
-                          <td key={perm}>
-                            <button
-                              className={`arch-matrix-cell ${active ? 'arch-cell-on' : 'arch-cell-off'} ${hasPending ? 'arch-cell-pending' : ''} ${!matrixArmed ? 'arch-cell-locked' : ''}`}
-                              onClick={() => handleMatrixToggle(m.id, perm)}
-                              disabled={!matrixArmed}
-                              title={matrixArmed ? `Toggle ${perm}` : 'ARM required'}
-                              aria-pressed={active}
-                              aria-label={`${m.name} ${perm} permission ${active ? 'enabled' : 'disabled'}`}
-                            >
-                              {active ? '●' : '○'}
-                            </button>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="arch-panel-body">
+              <table className="arch-data-table">
+                <thead>
+                  <tr><th>HANDLE</th><th>TIER</th><th>DOMAIN</th><th>VOID</th><th>TUNE</th><th>COMMENT</th></tr>
+                </thead>
+                <tbody>
+                  {members.length === 0 ? (
+                    <tr><td colSpan={6} className="arch-table-empty">— NO MEMBERS —</td></tr>
+                  ) : members.map(m => {
+                    const tierVoid    = m.tier === 'A' || m.tier === 'B';
+                    const tierTune    = m.tier === 'A' || m.tier === 'B';
+                    const tierComment = m.tier === 'A' || m.tier === 'B' || m.tier === 'C';
+                    return (
+                      <tr key={m.id} className={matrixPending[m.id] ? 'arch-row-pending' : ''}>
+                        <td className="arch-cell-handle">{m.name}</td>
+                        <td className="arch-cell-tier">{m.tier}</td>
+                        <td className="arch-cell-domain">{vaultLabel(m.planet)}</td>
+                        {['void', 'tune', 'comment'].map((perm, i) => {
+                          const defaults = [tierVoid, tierTune, tierComment];
+                          const active = resolveMatrixPerm({ pendingEntry: matrixPending[m.id], committedEntry: matrixCommitted[m.id], tierDefaults: { [perm]: defaults[i] }, perm });
+                          const hasPending = matrixPending[m.id]?.[perm] !== undefined;
+                          return (
+                            <td key={perm}>
+                              <button
+                                className={`arch-matrix-cell ${active ? 'arch-cell-on' : 'arch-cell-off'} ${hasPending ? 'arch-cell-pending' : ''} ${!matrixArmed ? 'arch-cell-locked' : ''}`}
+                                onClick={() => handleMatrixToggle(m.id, perm)}
+                                disabled={!matrixArmed}
+                                aria-pressed={active}
+                                aria-label={`${m.name} ${perm} ${active ? 'enabled' : 'disabled'}`}
+                              >
+                                {active ? '●' : '○'}
+                              </button>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
+        {showSettings && (
+          <motion.div
+            className="arch-panel-overlay"
+            role="dialog"
+            aria-label="Settings"
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+          >
+            <div className="arch-panel-header">
+              <span className="arch-panel-dot" />
+              <span className="arch-panel-title">SETTINGS</span>
+              <span className="arch-panel-sub">DISPLAY · PLAYBACK · VAULT MANAGEMENT</span>
+              <button className="arch-panel-close" onClick={toggleSettings} aria-label="Close settings">✕</button>
+            </div>
+            <div className="arch-panel-body arch-settings-body">
+              <section className="arch-settings-section">
+                <h4 className="arch-settings-title">DISPLAY PREFS</h4>
+                <div className="arch-settings-row"><span>Waveform Detail</span><button className={`arch-settings-toggle ${waveformDetail === 'high' ? 'active' : ''}`} onClick={() => setWaveformDetail(prev => prev === 'high' ? 'low' : 'high')}>{waveformDetail.toUpperCase()}</button></div>
+                <div className="arch-settings-row"><span>Track Color Rows</span><button className={`arch-settings-toggle ${trackColorRows ? 'active' : ''}`} onClick={() => setTrackColorRows(prev => !prev)}>{trackColorRows ? 'ON' : 'OFF'}</button></div>
+              </section>
+              <section className="arch-settings-section">
+                <h4 className="arch-settings-title">PLAYBACK PREFS</h4>
+                <div className="arch-settings-row"><span>Quantize Default</span><button className={`arch-settings-toggle ${quantizeEnabled ? 'active' : ''}`} onClick={handleQuantizeToggle}>{quantizeEnabled ? 'ON' : 'OFF'}</button></div>
+                <div className="arch-settings-row"><span>Auto Loop Default</span><button className={`arch-settings-toggle ${autoLoopDefault ? 'active' : ''}`} onClick={() => setAutoLoopDefault(prev => !prev)}>{autoLoopDefault ? 'ON' : 'OFF'}</button></div>
+              </section>
+              <section className="arch-settings-section">
+                <h4 className="arch-settings-title">VAULT MANAGEMENT</h4>
+                <div className="arch-settings-row"><span>Smart Crates</span><button className={`arch-settings-toggle ${smartCrates ? 'active' : ''}`} onClick={() => setSmartCrates(prev => !prev)}>{smartCrates ? 'ENABLED' : 'DISABLED'}</button></div>
+                <div className="arch-settings-row"><span>Track History</span><button className={`arch-settings-toggle ${historyEnabled ? 'active' : ''}`} onClick={() => setHistoryEnabled(prev => !prev)}>{historyEnabled ? 'ENABLED' : 'DISABLED'}</button></div>
+              </section>
+            </div>
+          </motion.div>
+        )}
+
         {showArchive && (
           <>
             <motion.div
-              className="arch-panel-backdrop"
+              className="arch-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowArchive(false)}
             />
-            <EventHorizonPanel
-              architectArchive={architectArchive}
-              onRestore={restoreItem}
-            />
+            <EventHorizonPanel architectArchive={architectArchive} onRestore={restoreItem} />
           </>
         )}
-        {showInbox    && <div id="arch-inbox-panel"><InboxPanel viewer="L" onClose={() => setShowInbox(false)} /></div>}
-        {showComments && <div id="arch-comments-panel"><CommentPanel viewer="L" onClose={() => setShowComments(false)} /></div>}
+        {showInbox    && <div id="arch-inbox-panel"><InboxPanel viewer={viewer} onClose={() => setShowInbox(false)} /></div>}
+        {showComments && <div id="arch-comments-panel"><CommentPanel viewer={viewer} onClose={() => setShowComments(false)} /></div>}
       </AnimatePresence>
 
       <AnimatePresence>
-        {showVoidConfirm && (
+        {showTrackList && (
           <motion.div
-            className="arch-confirm-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            id="arch-track-list-zone"
+            className="arch-panel-overlay"
+            role="dialog"
+            aria-label="Track Registry"
+            initial={{ x: '100%', opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 22 }}
           >
-            <div
-              className="arch-confirm-dialog"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="arch-void-title"
-              aria-describedby="arch-void-msg"
-            >
+            <div className="arch-panel-header">
+              <span className="arch-panel-dot" />
+              <span className="arch-panel-title">TRACK REGISTRY</span>
+              <span className="arch-panel-sub">{trackListLoading ? '…' : `${trackListData.length} TRACKS`}</span>
+              <button className="arch-panel-close" onClick={toggleTrackList} aria-label="Close track registry">✕</button>
+            </div>
+            <div className="arch-panel-body">
+              <table className="arch-data-table">
+                <thead>
+                  <tr><th>TITLE</th><th>ARTIST</th><th>BPM</th><th>VAULT</th><th>INGESTED</th></tr>
+                </thead>
+                <tbody>
+                  {trackListLoading ? (
+                    <tr><td colSpan={5} className="arch-table-empty">QUERYING VAULT…</td></tr>
+                  ) : trackListData.length === 0 ? (
+                    <tr><td colSpan={5} className="arch-table-empty">— NO TRACKS IN VAULT —</td></tr>
+                  ) : trackListData.map(t => (
+                    <tr key={t.id}>
+                      <td className="arch-cell-handle">{t.title}</td>
+                      <td className="arch-cell-domain">{t.artist || '—'}</td>
+                      <td className="arch-cell-tier">{t.bpm || '—'}</td>
+                      <td className="arch-cell-domain">{vaultLabel(t.vault)}</td>
+                      <td className="arch-cell-date">
+                        {t.created_at ? new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── CONFIRM DIALOGS ───────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showVoidConfirm && (
+          <motion.div className="arch-confirm-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="arch-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="arch-void-title" aria-describedby="arch-void-msg">
               <div id="arch-void-title" className="arch-confirm-title">INITIATE VOID PROTOCOL?</div>
-              <div id="arch-void-msg" className="arch-confirm-msg">Move {activePlanet?.toUpperCase()} protocol record into secured archive.</div>
+              <div id="arch-void-msg" className="arch-confirm-msg">Move {vaultLabel(activeVault)} protocol record into secured archive.</div>
               <div className="arch-confirm-btns">
                 <button className="arch-confirm-yes" onClick={confirmVoidProtocol}>CONFIRM</button>
                 <button className="arch-confirm-no" onClick={() => setShowVoidConfirm(false)}>CANCEL</button>
@@ -767,31 +1284,23 @@ function ArchitectConsole({ onPowerDown, onExplorePlanet, onBroadcast }) {
         )}
 
         {showPowerConfirm && (
-          <motion.div
-            className="arch-confirm-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div
-              className="arch-confirm-dialog"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="arch-power-title"
-              aria-describedby="arch-power-msg"
-            >
+          <motion.div className="arch-confirm-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="arch-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="arch-power-title" aria-describedby="arch-power-msg">
               <div id="arch-power-title" className="arch-confirm-title">POWER DOWN ARCHITECT TERMINAL?</div>
               <div id="arch-power-msg" className="arch-confirm-msg">Return to Gate. Sovereign lock will hold.</div>
               <div className="arch-confirm-btns">
                 <button className="arch-confirm-yes" onClick={confirmPowerDown}>CONFIRM</button>
-                <button className="arch-confirm-no"  onClick={() => setShowPowerConfirm(false)}>CANCEL</button>
+                <button className="arch-confirm-no" onClick={() => setShowPowerConfirm(false)}>CANCEL</button>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {isBroadcasting && <div className="arch-broadcast-pulse" role="status">ARCHITECT BROADCAST ACTIVE</div>}
     </motion.div>
   );
+
 }
 
 export default ArchitectConsole;

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { INBOX_KEY, MEMBERS_KEY, LISTENERS_KEY, COMMENTS_KEY, SESSION_KEY } from '../config';
-import { fetchVaultTracks } from '../lib/tracks';
+import { fetchVaultTracks, fetchAllTracks } from '../lib/tracks';
 import { getResidencySplit, isMaintenanceDue } from '../utils/sovereignFinance';
 import { RESIDENT_REGISTRY, findResidentByCode } from '../data/residentBlueprint';
 import {
@@ -156,7 +156,19 @@ export function SystemProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('psc_command_log')) || []; } catch (_) { return []; }
   });
   // A3: Live vault tracks (keyed by vault id)
-  const [tracks,            setTracks]             = useState({ saturn: [], venus: [] });
+  const [tracks,            setTracks]             = useState({ saturn: [], venus: [], mercury: [], earth: [] });
+
+  // D7: Eager-load all tracks from Supabase when a session is authenticated
+  useEffect(() => {
+    if (!consoleOwner) return;
+    fetchAllTracks().then((data) => {
+      const grouped = { saturn: [], venus: [], mercury: [], earth: [] };
+      data.forEach(t => {
+        if (grouped[t.vault]) grouped[t.vault].push(t);
+      });
+      setTracks(grouped);
+    });
+  }, [consoleOwner]);
 
   // ─── Persistence effects ───────────────────────────────────────────────────
   useEffect(() => {
@@ -333,7 +345,7 @@ export function SystemProvider({ children }) {
   const canEnterLockbox = (meta, lockboxId) => {
     if (!meta) return false;
     if (meta.tier === 'A') return true;
-    if (meta.vault === lockboxId) return true;
+    if (meta.planet === lockboxId) return true;
     const collab = getCollaboratorForSession(meta);
     if (collab) return canLockboxAccess(collab, lockboxId);
     return false;

@@ -1,0 +1,188 @@
+.direct-line-trigger {
+  background: transparent;
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  color: rgba(0, 229, 255, 0.62);
+  padding: 5px 12px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.direct-line-trigger.analog {
+  border-color: rgba(255, 191, 0, 0.42);
+  color: rgba(255, 214, 130, 0.92);
+  background: linear-gradient(180deg, rgba(255, 191, 0, 0.1) 0%, rgba(255, 191, 0, 0.02) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 191, 0, 0.08), 0 0 10px rgba(255, 191, 0, 0.16);
+}
+
+.direct-line-badge {
+  background: rgba(0, 229, 255, 0.15);
+  color: #00e5ff;
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  padding: 1px 5px;
+}
+
+.direct-line-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(0, 0, 0, 0.68);
+  display: grid;
+  place-items: center;
+}
+
+.direct-line-panel {
+  width: min(560px, 92vw);
+  max-height: min(82vh, 760px);
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  background: #050b10;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.direct-line-panel.analog {
+  border-color: rgba(255, 191, 0, 0.4);
+  background:
+    radial-gradient(circle at 50% -30%, rgba(255, 191, 0, 0.12) 0%, transparent 55%),
+    #090705;
+  box-shadow: 0 0 28px rgba(255, 191, 0, 0.16);
+}
+
+.direct-line-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.12);
+}
+
+.direct-line-panel.analog .direct-line-head {
+  border-bottom-color: rgba(255, 191, 0, 0.24);
+}
+
+.direct-line-title {
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: rgba(0, 229, 255, 0.68);
+  text-transform: uppercase;
+}
+
+.direct-line-panel.analog .direct-line-title {
+  color: rgba(255, 214, 130, 0.95);
+  text-shadow: 0 0 8px rgba(255, 191, 0, 0.3);
+}
+
+.direct-line-close {
+  background: transparent;
+  border: none;
+  color: rgba(180, 200, 210, 0.4);
+  cursor: pointer;
+}
+
+.direct-line-thread {
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.direct-line-empty {
+  text-align: center;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: rgba(180, 200, 210, 0.28);
+  margin-top: 24px;
+}
+
+.direct-line-msg {
+  max-width: 86%;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  padding: 8px;
+}
+
+.direct-line-msg.inbound {
+  align-self: flex-start;
+  background: rgba(0, 229, 255, 0.05);
+}
+
+.direct-line-msg.outbound {
+  align-self: flex-end;
+  background: rgba(0, 229, 255, 0.1);
+}
+
+.direct-line-panel.analog .direct-line-msg {
+  border-color: rgba(255, 191, 0, 0.28);
+}
+
+.direct-line-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.54rem;
+  color: rgba(0, 229, 255, 0.52);
+  margin-bottom: 4px;
+}
+
+.direct-line-panel.analog .direct-line-meta {
+  color: rgba(255, 213, 126, 0.76);
+}
+
+.direct-line-body {
+  font-size: 0.7rem;
+  color: rgba(220, 230, 240, 0.82);
+  line-height: 1.4;
+}
+
+.direct-line-compose {
+  border-top: 1px solid rgba(0, 229, 255, 0.1);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.direct-line-panel.analog .direct-line-compose {
+  border-top-color: rgba(255, 191, 0, 0.22);
+}
+
+.direct-line-input {
+  min-height: 64px;
+  resize: vertical;
+  background: rgba(0, 229, 255, 0.03);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  color: rgba(220, 230, 240, 0.85);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.66rem;
+  padding: 8px;
+}
+
+.direct-line-panel.analog .direct-line-input {
+  background: rgba(255, 191, 0, 0.06);
+  border-color: rgba(255, 191, 0, 0.34);
+}
+
+.direct-line-send {
+  align-self: end;
+  background: transparent;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  color: #00e5ff;
+  padding: 8px 12px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.direct-line-panel.analog .direct-line-send {
+  border-color: rgba(255, 191, 0, 0.62);
+  color: rgba(255, 214, 130, 0.98);
+  box-shadow: 0 0 8px rgba(255, 191, 0, 0.18);
+}
