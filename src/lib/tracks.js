@@ -20,24 +20,29 @@ export async function fetchVaultTracks(vault) {
 // Upload an audio file + insert track record
 // metadata: { vault, title, artist?, bpm?, frequency_hz?, uploaded_by }
 export async function uploadTrack(file, metadata) {
-  // Upload to R2 via Cloudflare Worker
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("vault", metadata.vault);
-
-  const uploadResponse = await fetch(UPLOAD_WORKER_URL, {
-    method: "POST",
-    body: formData,
+  // LOCAL STORAGE FALLBACK (dev mode)
+  // Store file as base64 data URL in localStorage
+  const audio_path = `${metadata.vault}/${Date.now()}-${file.name}`;
+  
+  const reader = new FileReader();
+  const dataUrlPromise = new Promise((resolve, reject) => {
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
-
-  if (!uploadResponse.ok) {
-    const errorData = await uploadResponse
-      .json()
-      .catch(() => ({ error: "Upload failed" }));
-    throw new Error(`STORAGE: ${errorData.error || uploadResponse.statusText}`);
+  
+  const dataUrl = await dataUrlPromise;
+  
+  // Store in localStorage
+  const storageKey = `psc_audio_${audio_path.replace(/\//g, '_')}`;
+  try {
+    localStorage.setItem(storageKey, dataUrl);
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      throw new Error('STORAGE: localStorage quota exceeded. Clear old uploads or use R2 backend.');
+    }
+    throw new Error(`STORAGE: ${e.message}`);
   }
-
-  const { audio_path, public_url } = await uploadResponse.json();
 
   // Insert track record into Supabase
   const { data, error } = await supabase
@@ -55,8 +60,7 @@ export async function uploadTrack(file, metadata) {
     .single();
 
   if (error) {
-    // Note: R2 cleanup would require a separate worker endpoint
-    // For now, orphaned files stay in R2 (acceptable for MVP)
+    localStorage.removeItem(storageKey);
     throw new Error(
       `DB: ${error.message} (vault=${metadata.vault}, path=${audio_path})`,
     );
@@ -90,12 +94,9 @@ export async function fetchAllTracks() {
 }
 
 // Get the public URL for a stored audio file
-// With R2, we construct the URL from the R2 public domain
+// LOCAL STORAGE FALLBACK: returns data URL from localStorage
 export function getAudioUrl(audio_path) {
   if (!audio_path) return null;
-  // R2 public URL format: https://pub-{hash}.r2.dev/{audio_path}
-  // Or custom domain: https://audio.psoulc.com/{audio_path}
-  const r2PublicDomain =
-    import.meta.env.VITE_R2_PUBLIC_URL || "https://pub-placeholder.r2.dev";
-  return `${r2PublicDomain}/${audio_path}`;
+  const storageKey = `psc_audio_${audio_path.replace(/\//g, '_')}`;
+  return localStorage.getItem(storageKey);
 }
