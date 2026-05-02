@@ -1,8 +1,16 @@
 # NEXT SESSION — START HERE. READ THIS BEFORE TOUCHING ANYTHING.
 
+## CLAUDE BEHAVIOR RULES — NON-NEGOTIABLE
+- **Ask questions. Wait for answers. Do not proceed until Lisa confirms.**
+- **Use plan mode for every non-trivial action. No exceptions.**
+- **Never summarize Lisa's words back to her and then proceed — confirm first.**
+- Lisa was burned badly this session by Claude running ahead without confirmation. Do not repeat this.
+
+---
+
 ## THE RULE
 Do not skip tasks. Do not jump ahead. Do not follow the user's excitement into a later task.
-If the user says "I'm excited about task 7," say: "We get there after 2, 3, 4, 5, 6. Ready?"
+If the user says "I'm excited about task 7," say: "We get there after [current task]. Ready?"
 The sequence is law. Lisa trusts the sequence. Honor it.
 
 ---
@@ -22,37 +30,86 @@ Only these people exist. Do not invent others. Do not ask about others.
 
 **Angi does not exist. Jess B does not exist. Never mention them again.**
 
+L = Lisa = the Architect = the user you are talking to. D = Darnell = Soul Pleasant = the artist. D has seen NOTHING yet. L is building this FOR D.
+
 ---
 
-## THE DESIGN IS DONE. DO NOT REVISIT IT.
+## USER TIERS — CANONICAL NAMES
 
-The A+ design is locked and committed. These files are the source of truth:
+- **MASTERS** — Tier A (D, L, and future invited masters)
+- **MEMBERS / SUBSCRIBERS** — paying subscribers
+- **MUSES** — lockbox artists (Janet, Erikah, Larry, Drake)
+- **LISTENERS** — free/public viewers. **NEED A BETTER WORD.** Must hint they are not fully part of the collective but make them WANT to be. Lisa wants this renamed. Do not use "Listeners" in any new design work — flag it as unresolved.
+- **COLLABORATORS** — vault access / vetted contributors
 
-- `public/psc-design-preview.html` — full system design, A+ polish (167KB, committed c73d0db)
-- `public/d-console-preview.html` — D console direction locked (30KB, committed)
+---
 
-**Do not run /design-consultation. Do not run /design-shotgun. Do not redesign anything.**
-The design work is finished. The job now is implementing it in code.
+## APP IS NOT RENDERING CORRECTLY — FIX THIS FIRST
 
-### Design decisions that are settled — never re-ask these:
+The app at port 5173 is showing unstyled/plain text. CSS loads fine (confirmed via curl).
+This is a browser-side JavaScript error. Lisa needs to:
+1. Open port 5173 in Codespace browser
+2. Press F12 → Console tab
+3. Report the first red error
 
-- **Typography:** Chakra Petch everywhere (all UI/display). Comfortaa logo-only (4 places, quarantined). No serifs. No Space Mono. No Geist. No Rajdhani.
-- **Entry screen:** Black on black. No color pre-auth. Near-white rgba only (0.07–0.22 opacity).
-- **Colors:** D = amber `#ffbf00` / `#B87333`. L = cyan `#00e5ff`. Base = achromatic `#050505`.
-- **Lockbox colors:** Janet `#cc3399`, Erikah `#cc6633`, Larry `#7aaa5a`, Drake `#c4a428`
-- **Lockbox mood tracks:** Janet → *Would You Mind*, Erikah → *Honey*, Larry → *Empty Pages*, Drake → *Passionfruit*
-- **Border radius:** 0px everywhere. Hard edges. Hardware language.
-- **Vaults:** saturn, mercury, venus, earth. No mars. No amethyst. No space language. No moons.
-- **Lockbox prefix:** `lockbox_` (not `moon_`). Component: `LockboxVault` (not `MoonVault`).
-- **Device targets:** Listener view = iPhone. D console = desktop. L console = desktop.
-- **Vault display names (UI-facing, never planet names):**
-  - saturn → ORIGINAL MUSIC
-  - mercury → LIVE SETS
-  - venus → MIXES
-  - earth → SONIC ARCH
-  - Source of truth: `VAULT_DISPLAY_NAMES` in `src/config.js`
-- **MasterClock:** No 528Hz label. Removed. Just the oscilloscope waveform + local time.
-- **THE SIGNAL:** Name locked for the future live broadcast feature. Not a vault. Not in scope until post-P10-7.
+**Quickest thing to try first (no error reporting needed):**
+In browser → F12 → Application tab → Local Storage → delete `psc_session` → hard refresh (Ctrl+Shift+R).
+If entry screen appears, the app is working. A corrupted session was likely the cause.
+
+**Modified files (minor changes, likely not the crash cause):**
+- `src/state/SystemContext.jsx` — `meta.vault` → `meta.planet` (1 line)
+- `src/listener/ListenerShell.jsx` — vault transition moved to useEffect
+- `src/components/UploadModal.jsx` — `tags` field added to upload
+
+---
+
+## DESIGN DIRECTION — CONFIRMED THIS SESSION (2026-04-30)
+
+Lisa confirmed this in conversation. Do NOT re-derive from old files. These override anything older.
+
+### What is confirmed correct (items 1–4):
+1. Entry screen is good — do not touch it
+2. There is no consistent design base yet — that is the core problem to solve
+3. The next design task is: **L's console / Architect Console**
+4. **General Master Console = the base template** — Serato-inspired. Both D and L consoles build from this.
+
+### Item 5 — D's console (corrected):
+- D's console = General Master Console base + his identity touches
+- **Serato-inspired but stripped of things D won't use.** If unsure whether to keep something, LEAVE IT IN — D will say what to remove.
+- **Amber problem:** the current design has amber everywhere — it looks cheap and boring. Lisa's words: "amber vomited all over it."
+- **Correct amber usage = fashion luxury rule:** amber appears in MAXIMUM 3 specific places. Luxury brands use colour as a signal, not wallpaper. One amber element = powerful. Amber everywhere = nothing.
+- D's console keeps amber — but surgically, not saturated.
+
+### Item 6 — L's console (corrected):
+- L = GOD MODE. L is: admin + IT + marketing + gatekeeper + security for the entire system.
+- L controls ALL tiers: MASTERS, MEMBERS/SUBSCRIBERS, MUSES, LISTENERS (rename needed), COLLABORATORS.
+- L's console = General Master Console WITHOUT amber. Cyan identity only, used with the same restraint.
+- **COLLABORATOR ONBOARDING — Phase 11 feature (do not build now, keep in context):**
+  - Vault Access Request form collects phone/email
+  - Autoresponse includes a link with copy: **"ARE YOU A GENIUS WITH NO SOVEREIGN HOME FOR YOUR ART TO LIVE AND BREATHE? DOES THE COLLECTIVE FEEL LIKE HOME?"**
+  - Link leads to: upload original music / submit work to be vetted by L
+  - If L approves → sends to D for review
+  - This is Phase 11 scope. Do not build. Do capture the vision.
+
+### Item 7 — L and D are CO-CREATORS (confirmed):
+- L and D are co-creators. The hierarchy L → D → Everyone Else is confirmed correct.
+- L handles ALL backend: admin, IT, marketing, gatekeeper, security
+- D populates the system, gives it life, and ideally focuses purely on his art
+- Future MASTERS will have full control of their own systems just like D — except whatever L/D decide they shouldn't touch in the UX
+- The design must reflect this partnership at the top level, not just "L controls D"
+
+---
+
+## DO NOT REDESIGN ANYTHING WITHOUT A CONFIRMED PLAN
+
+The design-shotgun AI image generation requires OpenAI org verification — it does NOT work in this environment.
+Fall back to HTML mockups only. Do not attempt AI image generation.
+
+**Before building any HTML mockup:**
+1. Write the plan
+2. Present it to Lisa
+3. Wait for her confirmation
+4. Then and only then: build
 
 ---
 
@@ -61,69 +118,100 @@ The design work is finished. The job now is implementing it in code.
 
 ---
 
-## WHAT WAS DONE THIS SESSION (2026-04-27 — SESSION 2)
+## P10-7 — D CONSOLE IMPLEMENTATION (after design is settled)
 
-### P10-7 partial implementation — INCOMPLETE, resume immediately
+The locked preview is `public/d-console-preview.html`. But the amber design direction is under review per item 5 above. **Do not implement until Lisa confirms the design direction.**
 
-**What IS done (all unstaged, not yet committed):**
-- ✅ `src/console/SpectralStack.jsx` — NEW file, untracked. BPM-derived stacked sine-wave canvas. Uses FALLBACK_BPMS if no tracks. Ready to use.
-- ✅ `src/App.css` — Full 5-zone D console CSS added. `.analog-console`, `.d-rail`, `.d-bins`, `.d-monitor`, `.d-chain`, `.d-transport`, `.d-cursor`, `.d-spotlight`, aurora blobs, gold foil, CRT scanlines, MUSE panel styles — all present.
-- ✅ `src/config.js` — `LOCKBOX_CODES` added (`lockbox_janet: 'J528'`, etc.)
-- ✅ `src/console/ArchitectConsole.jsx` — MUSE Outreach Composer panel added. MUSE tab button + full panel with lockbox selector, L's message, D's note, COPY INVITE.
+**What IS done:**
+- `src/console/SpectralStack.jsx` — NEW, untracked. BPM-derived stacked sine-wave canvas.
+- `src/App.css` — Full 5-zone D console CSS added.
+- `src/config.js` — `LOCKBOX_CODES` added.
+- `src/console/ArchitectConsole.jsx` — MUSE Outreach Composer panel added.
 
-**What is NOT done (do immediately):**
-- ❌ `src/console/AnalogConsole.jsx` — THE COMPLETE REWRITE WAS NEVER WRITTEN. Still old 263-line 3-zone version importing SATURN_TRACKS. This is the entire console. All CSS and SpectralStack are ready but nothing uses them yet.
+**What is NOT done:**
+- `src/console/AnalogConsole.jsx` — THE REWRITE WAS NEVER WRITTEN. Still old 84-line placeholder.
 
-**4 fixes to apply while writing the rewrite:**
-1. **D1**: Add a VOICE toggle in the CHAIN system-toggles block (alongside Members) — opens CommentPanel. Use the `.d-tog` pattern, same as the Members toggle.
-2. **D2**: Add `countVaultTracks(vault)` to `src/lib/tracks.js` using `select('*', { count: 'exact', head: true })`. Use it in `loadCounts` instead of fetching full arrays.
-3. **D3**: Fix MUSE clipboard output format in ArchitectConsole.jsx (line ~844). Change `'Access code:'` → `'Your lockbox:'` and add `'— D\n'` before D's note text.
-4. **Bonus**: Add `handleNext` — track navigation forward. Transport has ◀◀ and ■ Stop but no ▶▶.
+**4 fixes to apply while writing:**
+1. Add VOICE toggle in CHAIN system-toggles block
+2. Add `countVaultTracks(vault)` to `src/lib/tracks.js`
+3. Fix MUSE clipboard format in ArchitectConsole.jsx (~line 844)
+4. Add `handleNext` track navigation
 
-### How to write AnalogConsole.jsx
-
-The complete spec is in `tasks/plan.active.md` (search for `# P10-7 Implementation Plan`). The locked preview is at `public/d-console-preview.html`.
-
-Key implementation notes:
-- `export default function AnalogConsole({ onBroadcast, onIntake, isBroadcasting, onPowerDown, activeNode, onNodeSelect, onNodeLongPress, onClaimNode, latentNodes, artistLockboxes, onLockboxSync })` — keep legacy props for App.jsx compat
-- Imports: `fetchVaultTracks, getAudioUrl` from `'../lib/tracks'`; `countVaultTracks` from `'../lib/tracks'` (after you add it); `VAULT_COLORS, VAULT_DISPLAY_NAMES` from `'../config'`; `SpectralStack` from `'./SpectralStack'`
-- Vault labels (local, for bins): `{ saturn: 'Original Music', venus: 'Curated Mixes', mercury: 'Live Sets', earth: 'Sonic Archive' }`
-- VAULT_ORDER: `['saturn', 'venus', 'mercury', 'earth']`
-- M³ defaults: `masterCount || 2` and `museCount || 4` (because members array may show 0 before load)
-- Audio useEffect deps: include `isPlaying` to avoid stale closure
-- Cancelled flag pattern: `let cancelled = false; return () => { cancelled = true; }` in vault load effect
-- Total tracks: `Object.values(vaultCounts).reduce((a, b) => a + b, 0)`
-- The `.analog-console` CSS now uses `flex: 1` + CSS grid. The `.cockpit` in App.jsx is already `display: flex; flex-direction: column; height: 100svh`.
-
-After writing, run `npm run preflight` — must be green before done.
+**After AnalogConsole is written:** run `npm run preflight` — must be green.
 
 ---
 
-## DO THESE IN ORDER. NO EXCEPTIONS.
+## UPLOAD — MIGRATED TO CLOUDFLARE R2
 
-- [x] **P10-2** — Collaborator object system — COMPLETE
-- [x] **P10-6** — Lockbox access layer — COMPLETE
-- [x] **P10-8** — Pull cord surgery — COMPLETE
-- [x] **P10-5** — REC voice comments — COMPLETE
-- [x] **P10-4** — ID3 auto-read on upload — COMPLETE
-- [x] **P10-1** — QA sweep — COMPLETE
+**STATUS:** Upload modal UI is complete. Storage backend migrated from Supabase (50MB limit) to Cloudflare R2 (no size limits).
 
-- [ ] **P10-7** — D console implementation — IN PROGRESS
-  **RESUME HERE. Write AnalogConsole.jsx + apply 4 fixes above. Run preflight. Then /plan-eng-review.**
-  Design is LOCKED. CSS is done. SpectralStack.jsx is done. ArchitectConsole MUSE is done.
-  The ONLY missing piece is AnalogConsole.jsx itself.
-  📬 MUSE OUTREACH COMPOSER: done in ArchitectConsole.jsx (except D3 format fix).
+**SETUP REQUIRED:**
+1. Create R2 bucket: `wrangler r2 bucket create psc-audio`
+2. Deploy worker: `cd worker && npm install && npm run deploy`
+3. Set environment variables in `.env`:
+   - `VITE_UPLOAD_WORKER_URL=https://psc-upload-worker.{your-account}.workers.dev`
+   - `VITE_R2_PUBLIC_URL=https://pub-{hash}.r2.dev`
+4. See `worker/README.md` for complete setup instructions
+
+**LOCAL DEV TESTING:**
+- Run `cd worker && npm run dev` (starts worker on localhost:8787)
+- Main app uses `http://localhost:8787` by default
+- No R2 account needed for initial testing (worker will error but shows flow)
+
+**Lisa has 5 mixes (121MB+) ready to upload once R2 is configured.**
+4. This counts toward Gate A (50+ tracks needed before inviting Masters)
+
+L's master key — check `src/config.js` for AUTH_CODES if Lisa doesn't know it.
+
+---
+
+## MESSAGING SYSTEM — NEW FEATURE (plan before building)
+
+Lisa wants in-console messaging:
+- D ↔ L console-to-console
+- D or L → Members
+- D or L → Muses
+
+This needs its own design + implementation plan. Do not build without planning first.
+Suggested scope: post-P10-7.
+
+---
+
+## TIER SYSTEM — CANONICAL (updated 2026-04-30)
+
+| Tier | Who | Current Code |
+|------|-----|-------------|
+| A | L + D + future Masters | `A` |
+| B | Members / Subscribers | `B` |
+| C | Muses (Janet, Erikah, Larry, Drake) | `C` |
+| D | Collaborators | `D` |
+| G | Generic / General / Public | `G` |
+
+**LISTENER word is still unresolved — needs a new name that hints they are not fully part of the collective but makes them WANT to be. Flag this in any UI work.**
+
+**Phase 11 — Rename tiers using a music scale:**
+- Ask D what his favourite scale is. Use that scale's note names for tier naming.
+- Placeholder: D Major scale (D, E, F#, G, A, B, C#)
+- Do NOT implement until D is consulted. Capture the idea only.
+
+---
+
+## DESIGN DECISIONS SETTLED — NEVER RE-ASK
+
+- **Typography:** Chakra Petch everywhere. Comfortaa logo/wordmark only. No serifs.
+- **Entry screen:** Black on black. One screen: wordmark TL, request-access center, master key BR. GOOD. DO NOT TOUCH.
+- **Colors:** D = amber `#ffb347` (3 places max). L = cyan `#00e5ff` (restrained). Base = achromatic `#050505`.
+- **Border radius:** 0px everywhere. Hard edges.
+- **pleasantsoulcollective wordmark:** all lowercase, soul at 1.2× scale, Comfortaa 700, fixed TL.
+- **Lockbox colors:** Janet `#cc3399`, Erikah `#cc6633`, Larry `#7aaa5a`, Drake `#c4a428`
+- **Device targets:** Listener = iPhone. D/L consoles = desktop.
+- **Living monogram:** one dp pulses at a time (0→0.07→0, 2.5s), never two at once.
+- **Vault display names:** ORIGINAL MUSIC · LIVE SETS · MIXES · SONIC ARCH (no astronomical names in UI ever)
+- **Amber rule:** fashion luxury — one amber element is powerful, amber everywhere is nothing. Max 3 placements.
 
 ---
 
 ## DO NOT TOUCH
+- `public/d-console-preview.html` — locked reference (amber direction under review)
 - `public/psc-design-preview.html` — locked
-- `public/d-console-preview.html` — locked
-- Space language of any kind (see DESIGN.md HARD STOPS)
-
----
-
-## THE A+ MOVE
-P10-7 is the A+ unlock — implementing D's console from the locked preview.
-It is LAST. Do not touch it until P10-4 and P10-1 are done.
-Lisa is ready to show this to D. Protect that moment.
+- Space/astronomical language of any kind — EVER. Not in UI, not in code comments, not in plans.
