@@ -1,0 +1,263 @@
+/* AdminSettings — L's full-screen admin surface */
+/* Achromatic base. Cyan accent in 3 surgical placements only. */
+
+.adm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #050505;
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.adm-shell {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── NAV RAIL ── */
+.adm-nav {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: #070707;
+  padding: 28px 0 20px;
+  gap: 2px;
+}
+
+.adm-nav-wordmark {
+  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.22);
+  padding: 0 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 12px;
+}
+
+.adm-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.36);
+  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-align: left;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.adm-nav-item:hover {
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Cyan — placement 1: active nav item */
+.adm-nav-item.active {
+  color: #00e5ff;
+  background: rgba(0, 229, 255, 0.04);
+}
+
+.adm-nav-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00e5ff;
+  flex-shrink: 0;
+}
+
+.adm-nav-close {
+  margin-top: auto;
+  background: transparent;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.28);
+  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  padding: 16px 20px;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.adm-nav-close:hover {
+  color: rgba(255, 255, 255, 0.56);
+}
+
+/* ── CONTENT AREA ── */
+.adm-content {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.adm-content-header {
+  padding: 28px 36px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+/* Cyan — placement 2: section title */
+.adm-content-title {
+  font-family: 'Sora', 'Chakra Petch', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #00e5ff;
+}
+
+.adm-section-body {
+  padding: 28px 36px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── GROUPS ── */
+.adm-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.adm-group-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.28);
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 4px;
+}
+
+.adm-group-note {
+  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.32);
+  line-height: 1.5;
+  margin: 8px 0 16px;
+}
+
+.adm-empty {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.2);
+  padding: 24px 0;
+}
+
+/* ── ROWS ── */
+.adm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.adm-row-label {
+  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-size: 0.82rem;
+  color: rgba(240, 237, 232, 0.68);
+}
+
+/* ── TOGGLES ── */
+.adm-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.42);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.adm-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  color: rgba(255, 255, 255, 0.68);
+}
+
+/* Cyan — placement 3: active toggle state */
+.adm-toggle.active {
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00e5ff;
+  background: rgba(0, 229, 255, 0.06);
+}
+
+/* ── TABLES ── */
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.adm-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.54rem;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.28);
+  text-align: left;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 500;
+}
+
+.adm-table td {
+  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-size: 0.8rem;
+  color: rgba(240, 237, 232, 0.72);
+  padding: 11px 12px 11px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.adm-table tr:last-child td {
+  border-bottom: none;
+}
+
+.adm-cell-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+}
+
+.adm-cell-muted {
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.adm-cell-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  user-select: none;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.12s;
+}
+
+.adm-cell-code:hover,
+.adm-cell-code:focus {
+  color: rgba(240, 237, 232, 0.92);
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-toggle,
+  .adm-nav-item,
+  .adm-cell-code {
+    transition: none;
+  }
+}

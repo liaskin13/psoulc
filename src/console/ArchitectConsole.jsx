@@ -22,6 +22,7 @@ import {
   SERATO_COLORS,
 } from "../lib/waveformAnalyzer";
 import * as audioEngine from "../lib/audioEngine";
+import AdminSettings from "../admin/AdminSettings";
 
 const VAULT_ROUTES = [
   { id: "venus",   label: VAULT_DISPLAY_NAMES.venus,    color: VAULT_ACCENT_COLORS.venus   },
@@ -2090,7 +2091,25 @@ function ArchitectConsole({
       </AnimatePresence>
 
       <AnimatePresence>
-        {showSettings && (
+        {showSettings && viewer !== "D" && (
+          <AdminSettings
+            onClose={toggleSettings}
+            members={members}
+            waveformDetail={waveformDetail}
+            setWaveformDetail={setWaveformDetail}
+            trackColorRows={trackColorRows}
+            setTrackColorRows={setTrackColorRows}
+            quantizeEnabled={quantizeEnabled}
+            handleQuantizeToggle={handleQuantizeToggle}
+            autoLoopDefault={autoLoopDefault}
+            setAutoLoopDefault={setAutoLoopDefault}
+            smartCrates={smartCrates}
+            setSmartCrates={setSmartCrates}
+            historyEnabled={historyEnabled}
+            setHistoryEnabled={setHistoryEnabled}
+          />
+        )}
+        {showSettings && viewer === "D" && (
           <motion.div
             className="arch-panel-overlay"
             role="dialog"
@@ -2102,84 +2121,42 @@ function ArchitectConsole({
           >
             <div className="arch-panel-header">
               <span className="arch-panel-dot" />
-              <span className="arch-panel-title">SETTINGS</span>
-              <span className="arch-panel-sub">
-                DISPLAY · PLAYBACK · VAULT MANAGEMENT
-              </span>
-              <button
-                className="arch-panel-close"
-                onClick={toggleSettings}
-                aria-label="Close settings"
-              >
-                ✕
-              </button>
+              <span className="arch-panel-title">PREFERENCES</span>
+              <span className="arch-panel-sub">DISPLAY · PLAYBACK · VAULT</span>
+              <button className="arch-panel-close" onClick={toggleSettings} aria-label="Close settings">✕</button>
             </div>
             <div className="arch-panel-body arch-settings-body">
               <section className="arch-settings-section">
-                <h4 className="arch-settings-title">DISPLAY PREFS</h4>
+                <h4 className="arch-settings-title">DISPLAY</h4>
                 <div className="arch-settings-row">
                   <span>Waveform Detail</span>
-                  <button
-                    className={`arch-settings-toggle ${waveformDetail === "high" ? "active" : ""}`}
-                    onClick={() =>
-                      setWaveformDetail((prev) =>
-                        prev === "high" ? "low" : "high",
-                      )
-                    }
-                  >
-                    {waveformDetail.toUpperCase()}
-                  </button>
+                  <button className={`arch-settings-toggle ${waveformDetail === "high" ? "active" : ""}`} onClick={() => setWaveformDetail(p => p === "high" ? "low" : "high")}>{waveformDetail.toUpperCase()}</button>
                 </div>
                 <div className="arch-settings-row">
                   <span>Track Color Rows</span>
-                  <button
-                    className={`arch-settings-toggle ${trackColorRows ? "active" : ""}`}
-                    onClick={() => setTrackColorRows((prev) => !prev)}
-                  >
-                    {trackColorRows ? "ON" : "OFF"}
-                  </button>
+                  <button className={`arch-settings-toggle ${trackColorRows ? "active" : ""}`} onClick={() => setTrackColorRows(p => !p)}>{trackColorRows ? "ON" : "OFF"}</button>
                 </div>
               </section>
               <section className="arch-settings-section">
-                <h4 className="arch-settings-title">PLAYBACK PREFS</h4>
+                <h4 className="arch-settings-title">PLAYBACK</h4>
                 <div className="arch-settings-row">
                   <span>Quantize Default</span>
-                  <button
-                    className={`arch-settings-toggle ${quantizeEnabled ? "active" : ""}`}
-                    onClick={handleQuantizeToggle}
-                  >
-                    {quantizeEnabled ? "ON" : "OFF"}
-                  </button>
+                  <button className={`arch-settings-toggle ${quantizeEnabled ? "active" : ""}`} onClick={handleQuantizeToggle}>{quantizeEnabled ? "ON" : "OFF"}</button>
                 </div>
                 <div className="arch-settings-row">
                   <span>Auto Loop Default</span>
-                  <button
-                    className={`arch-settings-toggle ${autoLoopDefault ? "active" : ""}`}
-                    onClick={() => setAutoLoopDefault((prev) => !prev)}
-                  >
-                    {autoLoopDefault ? "ON" : "OFF"}
-                  </button>
+                  <button className={`arch-settings-toggle ${autoLoopDefault ? "active" : ""}`} onClick={() => setAutoLoopDefault(p => !p)}>{autoLoopDefault ? "ON" : "OFF"}</button>
                 </div>
               </section>
               <section className="arch-settings-section">
-                <h4 className="arch-settings-title">VAULT MANAGEMENT</h4>
+                <h4 className="arch-settings-title">VAULT</h4>
                 <div className="arch-settings-row">
                   <span>Smart Crates</span>
-                  <button
-                    className={`arch-settings-toggle ${smartCrates ? "active" : ""}`}
-                    onClick={() => setSmartCrates((prev) => !prev)}
-                  >
-                    {smartCrates ? "ENABLED" : "DISABLED"}
-                  </button>
+                  <button className={`arch-settings-toggle ${smartCrates ? "active" : ""}`} onClick={() => setSmartCrates(p => !p)}>{smartCrates ? "ENABLED" : "DISABLED"}</button>
                 </div>
                 <div className="arch-settings-row">
                   <span>Track History</span>
-                  <button
-                    className={`arch-settings-toggle ${historyEnabled ? "active" : ""}`}
-                    onClick={() => setHistoryEnabled((prev) => !prev)}
-                  >
-                    {historyEnabled ? "ENABLED" : "DISABLED"}
-                  </button>
+                  <button className={`arch-settings-toggle ${historyEnabled ? "active" : ""}`} onClick={() => setHistoryEnabled(p => !p)}>{historyEnabled ? "ENABLED" : "DISABLED"}</button>
                 </div>
               </section>
             </div>
