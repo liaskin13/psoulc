@@ -17,6 +17,7 @@ fi
 allowed_paths=(
   "src/entry/DPWallpaper.jsx"
   "src/components/RecordShelf.css"
+  "src/components/PSCWordmark.css"
   "src/styles/identity.css"
   "src/App.css"
 )
@@ -88,6 +89,32 @@ fi
 if [[ -s "$tmp_banned" ]]; then
   echo "Design-law check failed: banned space-themed display language found in active UI files."
   cat "$tmp_banned"
+  exit 1
+fi
+
+# 4) Listener room stage must stay wired to ListenerShell in App.
+room_stage_guard='if \(stage === '\''room'\'' && !activeNode\)'
+listener_shell_guard='<ListenerShell onPowerDown=\{handlePowerDown\} sessionMeta=\{sessionMeta\} />'
+
+if [[ "$SEARCH_TOOL" == "rg" ]]; then
+  rg -n "$room_stage_guard" "src/App.jsx" >/tmp/psc_listener_room_guard.txt 2>/dev/null || true
+else
+  grep -nE "$room_stage_guard" "src/App.jsx" >/tmp/psc_listener_room_guard.txt 2>/dev/null || true
+fi
+
+if [[ ! -s /tmp/psc_listener_room_guard.txt ]]; then
+  echo "Design-law check failed: App room stage guard is missing."
+  exit 1
+fi
+
+if [[ "$SEARCH_TOOL" == "rg" ]]; then
+  rg -n "$listener_shell_guard" "src/App.jsx" >/tmp/psc_listener_shell_guard.txt 2>/dev/null || true
+else
+  grep -nE "$listener_shell_guard" "src/App.jsx" >/tmp/psc_listener_shell_guard.txt 2>/dev/null || true
+fi
+
+if [[ ! -s /tmp/psc_listener_shell_guard.txt ]]; then
+  echo "Design-law check failed: App room stage is not rendering ListenerShell with required props."
   exit 1
 fi
 
