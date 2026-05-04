@@ -1,49 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useSystem } from '../state/SystemContext';
-import { SATURN_TRACKS } from '../data/saturn';
-import { VENUS_MIXES } from '../data/venus';
-import { EARTH_DOCUMENTS } from '../data/earth';
-import { MERCURY_TRACKS } from '../data/mercury';
+import React, { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useSystem } from "../state/SystemContext";
+import { SATURN_TRACKS } from "../data/saturn";
+import { VENUS_MIXES } from "../data/venus";
+import { EARTH_DOCUMENTS } from "../data/earth";
+import { MERCURY_TRACKS } from "../data/mercury";
 
 const TOTAL_TRACKS =
   SATURN_TRACKS.length +
   VENUS_MIXES.length +
   EARTH_DOCUMENTS.length +
   MERCURY_TRACKS.length;
-import GodModePullCord from './GodModePullCord';
-import MasterClock from './MasterClock';
-import ReadoutNavigator from './ReadoutNavigator';
-import ConduitSlider from './ConduitSlider';
-import AssetIntakeSlot from './AssetIntakeSlot';
-import LatentTray from './LatentTray';
-import InboxPanel from './InboxPanel';
-import MembersPanel from './MembersPanel';
-import CommentPanel from './CommentPanel';
+import GodModePullCord from "./GodModePullCord";
+import MasterClock from "./MasterClock";
+import ReadoutNavigator from "./ReadoutNavigator";
+import ConduitSlider from "./ConduitSlider";
+import AssetIntakeSlot from "./AssetIntakeSlot";
+import LatentTray from "./LatentTray";
+import InboxPanel from "./InboxPanel";
+import MembersPanel from "./MembersPanel";
+import CommentPanel from "./CommentPanel";
 
 // ── Vault pad bank — left AKAI zone ────────────────────────────────────────
 // Each pad maps to a planet vault. Chakra-lit when active.
 const VAULT_PADS = [
-  { id: 'venus',   abbr: 'MIX', label: 'MIXES',          color: '#ff7c00' },
-  { id: 'saturn',  abbr: 'OG',  label: 'ORIGINAL MUSIC', color: '#9b59b6' },
-  { id: 'mercury', abbr: 'LST', label: 'LIVE SETS',      color: '#8B0000' },
-  { id: 'earth',   abbr: 'ARC', label: 'SONIC ARCH',     color: '#00cc44' },
+  { id: "venus", abbr: "MIX", label: "MIXES", color: "#ff7c00" },
+  { id: "saturn", abbr: "OG", label: "ORIGINAL MUSIC", color: "#9b59b6" },
+  { id: "mercury", abbr: "LST", label: "LIVE SETS", color: "#8B0000" },
+  { id: "earth", abbr: "ARC", label: "SONIC ARCH", color: "#00cc44" },
 ];
 
 // ── LED meter strip — Neve-style visual indicator ────────────────────────────
-function LedStrip({ color = 'var(--identity)', segments = 8, level = 0 }) {
+function LedStrip({ color = "var(--identity)", segments = 8, level = 0 }) {
   return (
     <div className="console-led-strip" aria-hidden="true">
       {Array.from({ length: segments }, (_, i) => {
         const lit = i < level;
         const red = i >= segments - 2;
         const yellow = i >= segments - 4 && !red;
-        const segColor = lit ? (red ? '#ff2020' : yellow ? '#ffcc00' : color) : 'rgba(40,30,20,0.6)';
+        const segColor = lit
+          ? red
+            ? "#ff2020"
+            : yellow
+              ? "#ffcc00"
+              : color
+          : "rgba(40,30,20,0.6)";
         return (
           <div
             key={i}
             className="console-led-segment"
-            style={{ backgroundColor: segColor, boxShadow: lit ? `0 0 4px ${segColor}80` : 'none' }}
+            style={{
+              backgroundColor: segColor,
+              boxShadow: lit ? `0 0 4px ${segColor}80` : "none",
+            }}
           />
         );
       })}
@@ -55,10 +64,10 @@ function LedStrip({ color = 'var(--identity)', segments = 8, level = 0 }) {
 function VaultPad({ pad, isActive, onClick }) {
   return (
     <motion.button
-      className={`console-pad vault-pad ${isActive ? 'pad-active' : ''}`}
+      className={`console-pad vault-pad ${isActive ? "pad-active" : ""}`}
       style={{
-        '--pad-color': pad.color,
-        '--pad-glow': pad.color + '60',
+        "--pad-color": pad.color,
+        "--pad-glow": pad.color + "60",
       }}
       onClick={() => onClick(pad)}
       aria-label={`Open ${pad.label} vault`}
@@ -72,11 +81,19 @@ function VaultPad({ pad, isActive, onClick }) {
 }
 
 // ── Action pad ───────────────────────────────────────────────────────────────
-function ActionPad({ label, color = 'var(--identity)', badge, armed, disabled, onClick, ariaLabel }) {
+function ActionPad({
+  label,
+  color = "var(--identity)",
+  badge,
+  armed,
+  disabled,
+  onClick,
+  ariaLabel,
+}) {
   return (
     <motion.button
-      className={`console-pad action-pad ${armed ? 'pad-armed' : ''} ${disabled ? 'pad-disabled' : ''}`}
-      style={{ '--pad-color': color, '--pad-glow': color + '60' }}
+      className={`console-pad action-pad ${armed ? "pad-armed" : ""} ${disabled ? "pad-disabled" : ""}`}
+      style={{ "--pad-color": color, "--pad-glow": color + "60" }}
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel || label}
@@ -98,14 +115,16 @@ function ConsoleTopbar() {
     return () => clearInterval(id);
   }, []);
 
-  const hh = String(time.getHours()).padStart(2, '0');
-  const mm = String(time.getMinutes()).padStart(2, '0');
-  const ss = String(time.getSeconds()).padStart(2, '0');
+  const hh = String(time.getHours()).padStart(2, "0");
+  const mm = String(time.getMinutes()).padStart(2, "0");
+  const ss = String(time.getSeconds()).padStart(2, "0");
 
   return (
     <div className="console-topbar">
       <div className="topbar-clock">
-        <span className="topbar-clock-digits">{hh}:{mm}:{ss}</span>
+        <span className="topbar-clock-digits">
+          {hh}:{mm}:{ss}
+        </span>
         <span className="topbar-clock-label">LOCAL</span>
       </div>
       <div className="topbar-divider" />
@@ -134,11 +153,18 @@ function AnalogConsole({
   latentNodes = [],
   saturnMoons,
   onMoonSync,
-  onPowerDown
+  onPowerDown,
 }) {
-  const { isProtected, unreadCount, members, unreadCommentCount, animationsEnabled, setAnimationsEnabled } = useSystem();
-  const [showInbox,    setShowInbox]    = useState(false);
-  const [showMembers,  setShowMembers]  = useState(false);
+  const {
+    isProtected,
+    unreadCount,
+    members,
+    unreadCommentCount,
+    animationsEnabled,
+    setAnimationsEnabled,
+  } = useSystem();
+  const [showInbox, setShowInbox] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
   const activeVaultId = activeNode?.id;
@@ -148,15 +174,19 @@ function AnalogConsole({
   };
 
   return (
-    <div className={`analog-console ${isProtected ? 'protected' : 'create'}`}>
+    <div className={`analog-console ${isProtected ? "protected" : "create"}`}>
       <ConsoleTopbar />
 
       {/* ── LEFT ZONE — Vault pad grid ────────────────────────────────────── */}
       <div className="console-left console-pad-zone">
         <span className="console-zone-label">VAULTS</span>
-        <LedStrip color="var(--identity)" segments={8} level={activeVaultId ? 4 : 1} />
+        <LedStrip
+          color="var(--identity)"
+          segments={8}
+          level={activeVaultId ? 4 : 1}
+        />
         <div className="pad-grid pad-grid-2x3">
-          {VAULT_PADS.map(pad => (
+          {VAULT_PADS.map((pad) => (
             <VaultPad
               key={pad.id}
               pad={pad}
@@ -170,10 +200,10 @@ function AnalogConsole({
           <GodModePullCord onPowerDown={onPowerDown} />
           <button
             className="anim-toggle-btn"
-            onClick={() => setAnimationsEnabled(v => !v)}
-            aria-label={`Entry animations ${animationsEnabled ? 'on' : 'off'}`}
+            onClick={() => setAnimationsEnabled((v) => !v)}
+            aria-label={`Entry animations ${animationsEnabled ? "on" : "off"}`}
           >
-            {animationsEnabled ? '◉' : '○'}
+            {animationsEnabled ? "◉" : "○"}
           </button>
         </div>
       </div>
@@ -198,7 +228,13 @@ function AnalogConsole({
       {/* ── RIGHT ZONE — Action pad grid ──────────────────────────────────── */}
       <div className="console-right console-pad-zone">
         <span className="console-zone-label">OPERATIONS</span>
-        <LedStrip color="#00aaff" segments={8} level={isBroadcasting ? 7 : (unreadCount + unreadCommentCount > 0 ? 3 : 1)} />
+        <LedStrip
+          color="#00aaff"
+          segments={8}
+          level={
+            isBroadcasting ? 7 : unreadCount + unreadCommentCount > 0 ? 3 : 1
+          }
+        />
         <div className="pad-grid pad-grid-2x4">
           <ActionPad
             label="INBOX"
@@ -228,19 +264,24 @@ function AnalogConsole({
             ariaLabel="Asset intake"
           />
           <ActionPad
-            label={isBroadcasting ? '■ CAST' : '▶ CAST'}
+            label={isBroadcasting ? "■ CAST" : "▶ CAST"}
             color="#00aaff"
             armed={isBroadcasting}
             onClick={onBroadcast}
-            ariaLabel={isBroadcasting ? 'Stop broadcast' : 'Start broadcast'}
+            ariaLabel={isBroadcasting ? "Stop broadcast" : "Start broadcast"}
           />
-          <ActionPad label="POWER" color="#cc2020" onClick={onPowerDown} ariaLabel="Power down" />
           <ActionPad
-            label={animationsEnabled ? 'ANIM ●' : 'ANIM ○'}
+            label="POWER"
+            color="#cc2020"
+            onClick={onPowerDown}
+            ariaLabel="Power down"
+          />
+          <ActionPad
+            label={animationsEnabled ? "ANIM ●" : "ANIM ○"}
             color="var(--identity)"
             armed={animationsEnabled}
-            onClick={() => setAnimationsEnabled(v => !v)}
-            ariaLabel={`Animations ${animationsEnabled ? 'on' : 'off'}`}
+            onClick={() => setAnimationsEnabled((v) => !v)}
+            ariaLabel={`Animations ${animationsEnabled ? "on" : "off"}`}
           />
           <ActionPad label="SPARE" color="#444" disabled ariaLabel="Reserved" />
         </div>
@@ -252,9 +293,15 @@ function AnalogConsole({
 
       {/* Slide-in panels */}
       <AnimatePresence>
-        {showInbox    && <InboxPanel    viewer="D" onClose={() => setShowInbox(false)} />}
-        {showMembers  && <MembersPanel  viewer="D" onClose={() => setShowMembers(false)} />}
-        {showComments && <CommentPanel  viewer="D" onClose={() => setShowComments(false)} />}
+        {showInbox && (
+          <InboxPanel viewer="D" onClose={() => setShowInbox(false)} />
+        )}
+        {showMembers && (
+          <MembersPanel viewer="D" onClose={() => setShowMembers(false)} />
+        )}
+        {showComments && (
+          <CommentPanel viewer="D" onClose={() => setShowComments(false)} />
+        )}
       </AnimatePresence>
     </div>
   );

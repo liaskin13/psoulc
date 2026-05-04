@@ -44,6 +44,16 @@ body::after {
   /* backdrop-filter removed — was triggering full-viewport GPU repaint on every frame */
 }
 
+@media (prefers-reduced-motion: reduce),
+(max-width: 768px) {
+
+  body::before,
+  body::after {
+    background-image: none;
+    opacity: 0;
+  }
+}
+
 /* ── TYPOGRAPHY HIERARCHY ──────────────────────────── */
 h1,
 h2,
