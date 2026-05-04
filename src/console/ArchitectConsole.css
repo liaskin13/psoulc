@@ -18,81 +18,22 @@
   color: rgba(210, 225, 235, 0.75);
   overflow: hidden;
   z-index: 10;
+  cursor: none;
   /* Entry-matched reveal — handled by framer motion in JSX */
 }
 
-.architect-console.architect-console--amber {
-  --arch-accent-rgb: 255, 191, 0;
-  --arch-accent: #ffbf00;
-}
-
-.architect-console.architect-console--amber {
-  background:
-    radial-gradient(circle at 50% -15%, rgba(255, 191, 0, 0.14) 0%, rgba(255, 191, 0, 0.03) 34%, transparent 66%),
-    linear-gradient(180deg, #090705 0%, #060402 58%, #050402 100%);
-}
-
-.architect-console.architect-console--amber .arch-grain-layer {
-  background-image:
-    radial-gradient(ellipse 90% 45% at 50% -5%, rgba(255, 191, 0, 0.08) 0%, transparent 68%),
-    radial-gradient(ellipse 70% 25% at 52% 104%, rgba(255, 191, 0, 0.07) 0%, transparent 72%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");
-  background-size: cover, cover, 240px 240px;
-}
-
-.architect-console.architect-console--amber .arch-bg-mark {
-  color: rgba(255, 191, 0, 0.032);
-  text-shadow: 0 0 56px rgba(255, 191, 0, 0.08);
-}
-
-.architect-console.architect-console--amber .arch-top-rail {
-  background: linear-gradient(180deg, rgba(26, 16, 3, 0.9) 0%, rgba(10, 7, 2, 0.74) 100%);
-  border-bottom-color: rgba(255, 191, 0, 0.2);
-  box-shadow: inset 0 -1px 0 rgba(255, 191, 0, 0.08);
-}
-
-.architect-console.architect-console--amber .arch-rail-btn {
-  border-color: rgba(255, 191, 0, 0.26);
-  color: rgba(255, 213, 128, 0.78);
-}
-
-.architect-console.architect-console--amber .arch-rail-btn:hover {
-  border-color: rgba(255, 191, 0, 0.62);
-  color: #ffd470;
-  background: rgba(255, 191, 0, 0.12);
-}
-
-.architect-console.architect-console--amber .arch-rail-btn.active {
-  box-shadow: 0 0 10px rgba(255, 191, 0, 0.24);
-}
-
-.architect-console.architect-console--amber .arch-tab-glider {
-  box-shadow: 0 0 12px rgba(255, 191, 0, 0.44);
-}
-
-.architect-console.architect-console--amber .arch-track-row.selected {
-  background: linear-gradient(90deg, rgba(255, 191, 0, 0.12) 0%, rgba(255, 191, 0, 0.02) 65%, transparent 100%);
-}
-
-.architect-console.architect-console--amber .arch-wave-bar {
-  filter: drop-shadow(0 0 5px rgba(255, 191, 0, 0.34));
-}
-
-.architect-console.architect-console--amber .arch-state-dot {
-  box-shadow: 0 0 7px rgba(255, 191, 0, 0.72);
-}
 
 /* ── Cursor ball ────────────────────────────────────────────────────────── */
 .arch-cursor-ball {
   position: fixed;
   top: 0;
   left: 0;
-  width: 28px;
-  height: 28px;
-  margin: -14px 0 0 -14px;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 38%, rgba(var(--arch-accent-rgb), 0.92) 0%, rgba(var(--arch-accent-rgb), 0.18) 60%, transparent 100%);
-  box-shadow: 0 0 18px 6px rgba(var(--arch-accent-rgb), 0.35), 0 0 48px 16px rgba(var(--arch-accent-rgb), 0.12);
+  background: radial-gradient(circle at 40% 40%, rgba(var(--arch-accent-rgb), 1) 0%, rgba(var(--arch-accent-rgb), 0.6) 45%, rgba(var(--arch-accent-rgb), 0.08) 80%, transparent 100%);
+  box-shadow: 0 0 8px 3px rgba(var(--arch-accent-rgb), 0.25), 0 0 16px 6px rgba(var(--arch-accent-rgb), 0.08);
   pointer-events: none;
   z-index: 9999;
   will-change: transform;
@@ -100,7 +41,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arch-cursor-ball { display: none; }
+  .arch-cursor-ball {
+    display: none;
+  }
 }
 
 /* ── Background ─────────────────────────────────────────────────────────── */
@@ -173,7 +116,7 @@
   text-transform: uppercase;
   padding: 2px 7px;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.15);
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .arch-top-actions {
@@ -216,7 +159,7 @@
   width: 5px;
   height: 10px;
   background: rgba(180, 200, 210, 0.15);
-  border-radius: 1px;
+  border-radius: 0;
 }
 
 .arch-vu-seg.on {
@@ -241,7 +184,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
   white-space: nowrap;
 }
@@ -286,7 +229,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   padding: 1px 5px;
-  border-radius: 10px;
+  border-radius: 9999px;
   letter-spacing: 0.04em;
 }
 
@@ -345,7 +288,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.56rem;
   letter-spacing: 0.08em;
-  border-radius: 2px;
+  border-radius: 0;
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s, background 0.12s;
 }
@@ -383,18 +326,65 @@
    No streaming service or music player does this.
 */
 @keyframes arch-standing-wave {
-  0%   { transform: scaleY(1); }
-  50%  { transform: scaleY(calc(1 + var(--bar-amp, 0.5) * 0.22)); }
-  100% { transform: scaleY(1); }
+  0% {
+    transform: scaleY(1);
+  }
+
+  50% {
+    transform: scaleY(calc(1 + var(--bar-amp, 0.5) * 0.22));
+  }
+
+  100% {
+    transform: scaleY(1);
+  }
 }
 
 .arch-waveform-main {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1.5px;
   height: 64px;
   margin-bottom: 6px;
   overflow: hidden;
+}
+
+.arch-deck-empty-state {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: rgba(var(--arch-accent-rgb), 0.5);
+  text-align: center;
+  opacity: 0.5;
+  font-weight: 600;
+}
+
+.arch-deck-metadata {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 6px 0 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(210, 225, 235, 0.8);
+  line-height: 1.4;
+}
+
+.arch-meta-title {
+  font-weight: 600;
+  color: rgba(var(--arch-accent-rgb), 0.9);
+}
+
+.arch-meta-artist,
+.arch-meta-bpm,
+.arch-meta-uploader {
+  font-weight: 400;
+  color: rgba(180, 200, 210, 0.65);
+}
+
+.arch-meta-sep {
+  color: rgba(var(--arch-accent-rgb), 0.3);
+  font-weight: 400;
 }
 
 .arch-wave-bar {
@@ -402,12 +392,10 @@
   width: 3px;
   height: var(--bar-h, 40%);
   min-height: 2px;
-  background: linear-gradient(
-    to top,
-    rgba(var(--arch-accent-rgb), 0.55),
-    rgba(var(--arch-accent-rgb), 0.18)
-  );
-  border-radius: 1px;
+  background: linear-gradient(to top,
+      rgba(var(--arch-accent-rgb), 0.55),
+      rgba(var(--arch-accent-rgb), 0.18));
+  border-radius: 0;
   flex-shrink: 0;
   transform-origin: center;
   animation: arch-standing-wave 2.8s ease-in-out infinite;
@@ -415,11 +403,9 @@
 }
 
 .arch-wave-bar:nth-child(4n) {
-  background: linear-gradient(
-    to top,
-    rgba(var(--arch-accent-rgb), 0.7),
-    rgba(var(--arch-accent-rgb), 0.25)
-  );
+  background: linear-gradient(to top,
+      rgba(var(--arch-accent-rgb), 0.7),
+      rgba(var(--arch-accent-rgb), 0.25));
 }
 
 /* Overview strip */
@@ -430,7 +416,7 @@
   gap: 1px;
   height: 20px;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
-  border-radius: 1px;
+  border-radius: 0;
   padding: 2px 2px 0;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.3);
@@ -524,7 +510,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
   display: flex;
   align-items: center;
@@ -554,23 +540,39 @@
 
 .arch-hotcue {
   background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
-  color: rgba(var(--arch-accent-rgb), 0.4);
+  border: 1px solid var(--cue-color, rgba(var(--arch-accent-rgb), 0.12));
+  color: rgba(180, 200, 210, 0.5);
   width: 26px;
   height: 28px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 2px;
-  transition: border-color 0.15s, color 0.15s;
+  border-radius: 0;
+  transition: all 0.15s;
 }
 
 .arch-hotcue:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.5);
-  color: var(--arch-accent);
+  border-color: var(--cue-color, rgba(var(--arch-accent-rgb), 0.5));
+  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--cue-color, var(--arch-accent)) 40%, transparent);
 }
 
-.arch-transport-spacer { flex: 1; }
+.arch-hotcue.has-cue {
+  background: var(--cue-color);
+  color: #000;
+  border-color: var(--cue-color);
+  font-weight: 700;
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--cue-color) 35%, transparent);
+}
+
+.arch-hotcue.has-cue:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 12px 3px color-mix(in srgb, var(--cue-color) 50%, transparent);
+}
+
+.arch-transport-spacer {
+  flex: 1;
+}
 
 .arch-loop-controls {
   display: flex;
@@ -586,7 +588,7 @@
   font-size: 0.6rem;
   letter-spacing: 0.06em;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: border-color 0.15s, color 0.15s;
 }
 
@@ -604,7 +606,7 @@
   font-size: 0.56rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border-radius: 2px;
+  border-radius: 0;
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s, background 0.12s;
 }
@@ -663,6 +665,92 @@
 .arch-monitor-btn:hover {
   border-color: rgba(var(--arch-accent-rgb), 0.35);
   color: rgba(var(--arch-accent-rgb), 0.75);
+}
+
+/* ── VOLUME SLIDER ──────────────────────────────────────────────────────── */
+.arch-monitor-vol {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.arch-vol-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 90px;
+  height: 3px;
+  background: rgba(var(--arch-accent-rgb), 0.15);
+  outline: none;
+  cursor: pointer;
+}
+
+.arch-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  background: var(--arch-accent);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.arch-vol-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: var(--arch-accent);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.arch-vol-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.54rem;
+  color: rgba(var(--arch-accent-rgb), 0.5);
+  min-width: 22px;
+  text-align: right;
+}
+
+/* ── TRANSPORT ACTIVE / LOADING STATES ──────────────────────────────────── */
+.arch-transport-btn.active {
+  border-color: var(--arch-accent);
+  color: var(--arch-accent);
+  background: rgba(var(--arch-accent-rgb), 0.1);
+}
+
+.arch-transport-btn.loading {
+  opacity: 0.45;
+  cursor: wait;
+}
+
+.arch-transport-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── DECK TIME DISPLAY ───────────────────────────────────────────────────── */
+.arch-elapsed--playing {
+  color: var(--arch-accent);
+}
+
+.arch-loading-tag {
+  color: rgba(var(--arch-accent-rgb), 0.6);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  animation: arch-blink 1s step-start infinite;
+}
+
+.arch-error-tag {
+  color: #e52020;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  cursor: help;
+}
+
+@keyframes arch-blink {
+  50% {
+    opacity: 0;
+  }
 }
 
 /* ── LOWER ZONE ─────────────────────────────────────────────────────────── */
@@ -856,7 +944,7 @@
   font-size: 0.54rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border-radius: 2px;
+  border-radius: 0;
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s, background 0.12s;
 }
@@ -865,6 +953,27 @@
   border-color: rgba(var(--arch-accent-rgb), 0.4);
   color: var(--arch-accent);
   background: rgba(var(--arch-accent-rgb), 0.06);
+}
+
+.arch-vault-pip {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vault-color, rgba(255, 255, 255, 0.22));
+  opacity: 0.45;
+  margin-right: 7px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  transition: opacity 0.18s;
+}
+
+.arch-vault-tab:hover .arch-vault-pip {
+  opacity: 0.7;
+}
+
+.arch-vault-tab.active .arch-vault-pip {
+  opacity: 1;
 }
 
 .arch-vault-tab:hover {
@@ -929,14 +1038,34 @@
    No streaming service does this.
 */
 @keyframes arch-scan-line {
-  0%   { top: -2px; opacity: 1; }
-  95%  { opacity: 0.6; }
-  100% { top: 100%; opacity: 0; }
+  0% {
+    top: -2px;
+    opacity: 1;
+    box-shadow: 0 0 12px rgba(var(--arch-accent-rgb), 0.5);
+  }
+
+  95% {
+    opacity: 0.3;
+    box-shadow: 0 0 6px rgba(var(--arch-accent-rgb), 0.2);
+  }
+
+  100% {
+    top: 100%;
+    opacity: 0;
+    box-shadow: none;
+  }
 }
 
 @keyframes arch-row-ignite {
-  0%   { opacity: 0; transform: translateY(4px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .arch-track-list {
@@ -960,10 +1089,22 @@
   letter-spacing: 0.18em;
   color: rgba(var(--arch-accent-rgb), 0.28);
 
-.arch-track-row-venus { border-left-color: rgba(var(--arch-accent-rgb), 0.62); }
-.arch-track-row-saturn { border-left-color: rgba(var(--arch-accent-rgb), 0.48); }
-.arch-track-row-mercury { border-left-color: rgba(var(--arch-accent-rgb), 0.34); }
-.arch-track-row-earth { border-left-color: rgba(var(--arch-accent-rgb), 0.24); }
+  .arch-track-row-venus {
+    border-left-color: rgba(var(--arch-accent-rgb), 0.62);
+  }
+
+  .arch-track-row-saturn {
+    border-left-color: rgba(var(--arch-accent-rgb), 0.48);
+  }
+
+  .arch-track-row-mercury {
+    border-left-color: rgba(var(--arch-accent-rgb), 0.34);
+  }
+
+  .arch-track-row-earth {
+    border-left-color: rgba(var(--arch-accent-rgb), 0.24);
+  }
+
   text-transform: uppercase;
 }
 
@@ -979,18 +1120,17 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(var(--arch-accent-rgb), 0.6) 30%,
-    rgba(var(--arch-accent-rgb), 0.9) 50%,
-    rgba(var(--arch-accent-rgb), 0.6) 70%,
-    transparent 100%
-  );
+  background: linear-gradient(to right,
+      transparent 0%,
+      rgba(var(--arch-accent-rgb), 0.6) 30%,
+      rgba(var(--arch-accent-rgb), 0.9) 50%,
+      rgba(var(--arch-accent-rgb), 0.6) 70%,
+      transparent 100%);
   box-shadow: 0 0 12px rgba(var(--arch-accent-rgb), 0.5);
   animation: arch-scan-line 1.2s ease-out forwards;
   pointer-events: none;
   z-index: 2;
+  will-change: top, opacity;
 }
 
 .arch-track-row {
@@ -1077,7 +1217,7 @@
 .arch-track-wave-mini i {
   display: block;
   width: 3px;
-  border-radius: 1px;
+  border-radius: 0;
   background: rgba(var(--arch-accent-rgb), 0.65);
   box-shadow: 0 0 4px rgba(var(--arch-accent-rgb), 0.3);
 }
@@ -1324,7 +1464,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .arch-matrix-commit {
@@ -1337,10 +1477,13 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
-.arch-matrix-commit:disabled { opacity: 0.3; cursor: not-allowed; }
+.arch-matrix-commit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
 
 .arch-matrix-cancel,
 .arch-matrix-rollback {
@@ -1353,10 +1496,13 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
-.arch-matrix-rollback:disabled { opacity: 0.2; cursor: not-allowed; }
+.arch-matrix-rollback:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
 
 .arch-matrix-cell {
   background: transparent;
@@ -1366,7 +1512,7 @@
   height: 28px;
   font-size: 0.7rem;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: border-color 0.12s, color 0.12s, background 0.12s;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -1387,7 +1533,10 @@
   color: rgba(220, 220, 60, 0.75) !important;
 }
 
-.arch-cell-locked { cursor: not-allowed; opacity: 0.45; }
+.arch-cell-locked {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
 
 /* ── Roster flash / add form ────────────────────────────────────────────── */
 .arch-roster-flash {
@@ -1395,7 +1544,7 @@
   padding: 14px 18px;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.3);
   background: rgba(var(--arch-accent-rgb), 0.04);
-  border-radius: 2px;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1434,7 +1583,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   align-self: flex-start;
 }
 
@@ -1448,7 +1597,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: border-color 0.15s, color 0.15s;
 }
 
@@ -1470,14 +1619,20 @@
   padding: 9px 12px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
-  border-radius: 2px;
+  border-radius: 0;
   outline: none;
   transition: border-color 0.15s;
   letter-spacing: 0.06em;
 }
 
-.arch-form-input::placeholder { color: rgba(var(--arch-accent-rgb), 0.18); letter-spacing: 0.12em; }
-.arch-form-input:focus { border-color: rgba(var(--arch-accent-rgb), 0.4); }
+.arch-form-input::placeholder {
+  color: rgba(var(--arch-accent-rgb), 0.18);
+  letter-spacing: 0.12em;
+}
+
+.arch-form-input:focus {
+  border-color: rgba(var(--arch-accent-rgb), 0.4);
+}
 
 .arch-form-select {
   background: rgba(var(--arch-accent-rgb), 0.03);
@@ -1486,7 +1641,7 @@
   padding: 9px 12px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
-  border-radius: 2px;
+  border-radius: 0;
   outline: none;
 }
 
@@ -1505,7 +1660,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: border-color 0.15s, color 0.15s;
 }
 
@@ -1529,10 +1684,13 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
-.arch-form-commit:disabled { opacity: 0.3; cursor: not-allowed; }
+.arch-form-commit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
 
 .arch-form-cancel {
   background: transparent;
@@ -1544,7 +1702,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 /* ── Archive panel ──────────────────────────────────────────────────────── */
@@ -1585,8 +1743,13 @@
   gap: 4px;
 }
 
-.arch-horizon-entry:hover { background: rgba(var(--arch-accent-rgb), 0.02); }
-.arch-horizon-entry.restored { opacity: 0.45; }
+.arch-horizon-entry:hover {
+  background: rgba(var(--arch-accent-rgb), 0.02);
+}
+
+.arch-horizon-entry.restored {
+  opacity: 0.45;
+}
 
 .arch-entry-name {
   font-size: 0.7rem;
@@ -1624,12 +1787,21 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: border-color 0.15s, color 0.15s;
 }
 
-.arch-restore-btn:hover { border-color: var(--arch-accent); color: var(--arch-accent); }
-.arch-restored-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.56rem; color: rgba(var(--arch-accent-rgb), 0.28); letter-spacing: 0.12em; }
+.arch-restore-btn:hover {
+  border-color: var(--arch-accent);
+  color: var(--arch-accent);
+}
+
+.arch-restored-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.56rem;
+  color: rgba(var(--arch-accent-rgb), 0.28);
+  letter-spacing: 0.12em;
+}
 
 .arch-panel-footer {
   display: flex;
@@ -1715,11 +1887,15 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
-.arch-confirm-yes:hover { background: rgba(220, 60, 60, 0.16); border-color: rgba(220, 60, 60, 0.65); color: rgba(220, 80, 80, 1); }
+.arch-confirm-yes:hover {
+  background: rgba(220, 60, 60, 0.16);
+  border-color: rgba(220, 60, 60, 0.65);
+  color: rgba(220, 80, 80, 1);
+}
 
 .arch-confirm-no {
   background: transparent;
@@ -1731,7 +1907,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 /* ── Focus ring ─────────────────────────────────────────────────────────── */
@@ -1742,9 +1918,26 @@
 
 /* ── Reduced motion ─────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .arch-wave-bar { animation: none !important; }
-  .arch-track-list-body::before { animation: none !important; display: none; }
-  .arch-track-row { opacity: 1 !important; animation: none !important; }
-  .arch-tab-glider { transition: none !important; }
-  .arch-top-dot, .arch-panel-dot { box-shadow: none; }
+  .arch-wave-bar {
+    animation: none !important;
+  }
+
+  .arch-track-list-body::before {
+    animation: none !important;
+    display: none;
+  }
+
+  .arch-track-row {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+
+  .arch-tab-glider {
+    transition: none !important;
+  }
+
+  .arch-top-dot,
+  .arch-panel-dot {
+    box-shadow: none;
+  }
 }
