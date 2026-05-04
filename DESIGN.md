@@ -1,5 +1,53 @@
 # Design System — Pleasant Soul Collective
 
+## ⚡ AGENT SESSION CHECKLIST — READ THIS BEFORE TOUCHING ANY FILE
+
+| Check | Rule |
+|---|---|
+| D's identity colour | `#14dc14` (green). Applied in exactly **3 places**: THE SIGNAL button · active track accent line · BPM/Key in track detail panel. Nowhere else. |
+| L's identity colour | `#00e5ff` (cyan). Same 3 places. Same restraint. |
+| Amber | **Banned from all surfaces. Zero exceptions.** Search for `#ffb347`, `#ffbf00`, `rgba(255,179,71`, `rgba(255,191,0` before committing. All must return zero hits outside config legacy keys. |
+| THE SIGNAL | Always Serato red `#e52020`. On every surface. Never identity green. |
+| `AnalogConsole.jsx` | Must not be the 84-line placeholder before shipping. If it is, the console is not built. |
+| This file | Read it in full. The settled decisions log and Hard Stops sections exist because every one of those mistakes was made by a session that didn't read far enough. |
+
+---
+
+## System Architecture — The Three Layers
+
+Every surface in PSC is built from the same three layers in order. Later layers never override earlier ones except through the defined token system.
+
+### Layer 1 — Achromatic Base (every surface, always)
+- Void black (`#050505`) canvas
+- Chakra Petch as the only typeface
+- Living dp monogram canvas — black on black, one instance pulsing at a time
+- `pleasantsoulcollective` wordmark fixed top-left post-auth
+- 1px structural borders only (`--border: #222222`), 0px radius everywhere
+- Serato 8-colour palette as **functional data signals only**: hotcue markers, waveform loop regions, vault tab accents, THE SIGNAL indicator (always red `#e52020`). Not identity. Not decoration.
+
+### Layer 2 — Identity Overlay (3 points only, per authenticated user)
+Identity colour appears in exactly **3 places** on any surface. No more. Luxury brands use colour as a signal, not wallpaper. One identity element = powerful. Identity colour spread across a surface = nothing.
+
+| User | Colour | Token |
+|---|---|---|
+| D | `#14dc14` green | `--identity` |
+| L | `#00e5ff` cyan | `--identity` |
+| Listener view | none — achromatic only | — |
+
+**The 3 identity points:**
+1. THE SIGNAL button
+2. Active track accent line (1px left edge on selected cell)
+3. BPM/Key text in the track detail panel
+
+### Layer 3 — General Master Console Template
+One base template. Both D and L consoles build from this.
+- Structural reference: Serato DJ library model (single-deck, archive management, not mixing surface)
+- Implementation target: `src/console/AnalogConsole.jsx`
+- Sections: vault rail · vault track wall · track detail panel (slides from right edge)
+- D adds green at 3 points. L adds cyan at 3 points. Everything else is identical.
+
+---
+
 ## Product Context
 - **What this is:** A cinematic, artist-first music platform. Sovereign infrastructure for independent creators.
 - **Who it's for:** D (primary), L (co-architect), and  muses, members, those who aspire to collaborate, and discerning listeners to whom autheticity and skill reign supreme..
@@ -14,8 +62,8 @@
 ## Aesthetic Direction
 - **Direction:** Achromatic Brutalist Futurism + Artist Identity Layer
 - **Decoration level:** Intentional — dp wallpaper canvas texture, 1px structural borders, identity glows. Nothing decorative for its own sake.
-- **Mood:** The platform has no color identity of its own. It is pure black architecture — monumental, precise, cold. The artist brings the color. When you are in D's world, his amber bleeds into everything. When you are in L's world, cyan does. The color IS the sovereignty.
-- **Key insight:** Every music platform has a brand color. PSC's brand color is *whoever you're visiting.*
+- **Mood:** The platform has no color identity of its own. It is pure black architecture — monumental, precise, cold. The artist brings the color. When you are in D's world, his green bleeds into 3 precise places. When you are in L's world, cyan does. The color IS the sovereignty.
+- **Key insight:** Every music platform has a brand color. PSC's brand color is *whoever you're visiting.* Applied with the restraint of a luxury brand, not the saturation of a streaming service.
 
 ---
 
@@ -89,16 +137,15 @@ Note: Space Mono is kept in `--font-mono` only for genuine numeric data readouts
 ### Pre-Auth Entry Accent (Scrapped — see Settled Entry Design)
 Concept: copper accent before theme applied. **Current state (settled 2026-04-26):** This has been removed. Entry screen is now BLACK ON BLACK (no copper, no amber, no color identity until post-auth theme applied). All entry controls use near-white rgba only (0.07–0.22 opacity). The DPWallpaper canvas is the sole visual element on entry.
 
-### D's Theme (70s Soul)
+### D's Theme (Electric Soul)
 Applied via `data-theme="d-soul"` on `<body>`:
 ```css
 [data-theme="d-soul"] {
-  --identity:        #ffb347;
-  --identity-dim:    rgba(255, 179, 71, 0.12);
-  --identity-glow:   0 0 24px rgba(255, 179, 71, 0.25);
-  --surface:         #0a0806;   /* warm brown-black — like a room lit by one lamp */
-  --text-primary:    #f5ead8;   /* cream, not white */
-  --studer-copper:   #ffb347;   /* pre-auth copper promoted to D's amber after auth */
+  --identity:        #14dc14;
+  --identity-dim:    rgba(20, 220, 20, 0.10);
+  --identity-glow:   0 0 24px rgba(20, 220, 20, 0.22);
+  --surface:         #050805;   /* near-black with faint green undertone */
+  --text-primary:    #f0ede8;   /* warm off-white */
 }
 ```
 
@@ -256,6 +303,8 @@ Songs are mood/visual inspiration for each lockbox interior — not literal cont
 
 ## ⛔ HARD STOPS — Never introduce these, no exceptions
 
+- **Amber** — `#ffb347`, `#ffbf00`, `rgba(255,179,71,*)`, `rgba(255,191,0,*)` — permanently banned from all surfaces. It was D's identity colour. It is no longer. D's identity is green (`#14dc14`). Do not reintroduce amber under any name, in any token, on any surface. This decision is locked.
+
 These are not "deprecated ideas." They were built, caused regressions, and were permanently removed. Any AI reading this: do not re-introduce any of the following under any circumstances — not in code, not in comments, not in copy, not in component names, not as internal IDs.
 
 - **Space Mono** — removed from the font stack entirely. `--font-mono` uses SF Mono / system monospace. Do not add Space Mono back. Do not load it from Google Fonts.
@@ -293,10 +342,10 @@ The console is D's private archive. Not a cockpit. Not a mixing surface. Not a c
 
 Three laws govern every element:
 - **Negative space is load-bearing.** Wide margins. Generous row heights. Nothing crowds the waveform. What is absent is as deliberate as what is present.
-- **Amber in three places only:** THE SIGNAL button · the active track accent line · BPM/Key in the detail panel. Nowhere else. Amber is rare here — that is why it means something.
+- **Identity in three places only:** THE SIGNAL button · the active track accent line · BPM/Key in the detail panel. Nowhere else. Identity colour is rare here — that is why it means something.
 - **Nothing performs.** No animated title gradients. No aurora light show. The one thing that moves is the waveform, because the waveform is alive with music.
 
-Atmospheric depth: A single barely-visible warm vignette — `radial-gradient(ellipse 60% 40% at 0% 100%, rgba(255,179,71,0.06) 0%, transparent 100%)` — bottom-left corner of the canvas. Warmth you feel, not warmth you see.
+Atmospheric depth: A single barely-visible vignette — `radial-gradient(ellipse 60% 40% at 0% 100%, rgba(20, 220, 20, 0.04) 0%, transparent 100%)` — bottom-left corner of the D console canvas. Felt, not seen. Not amber. Not warm. Cold electricity at the edge of the room.
 
 ### Layout — Vault Archive Console
 ```
@@ -357,11 +406,10 @@ Slides in from right edge on track selection. 300px wide. `background: #0b0806`.
 - **Dismiss:** `×` top-right corner, Chakra Petch 500, 10px, `--text-muted`.
 
 ### Identity Color Application (sparse)
-- `--amber: #ffb347` — primary identity
-- `--gold: #d4890a` — BPM/Key in detail panel only
-- `--pale: #ffe4a0` — THE SIGNAL live glow only
+- `--identity: #14dc14` (D) / `#00e5ff` (L) — applied in exactly **3 places only**
 - Applied in exactly three places: **THE SIGNAL button · active track accent line · BPM/Key in detail panel**
-- The warm vignette (bottom-left atmospheric warmth) is not amber — it is felt, not named.
+- Amber (`#ffb347`, `#ffbf00`) is **permanently banned** from all surfaces. It does not exist here.
+- THE SIGNAL dot colour is Serato red `#e52020` — not identity green.
 
 ### Cursor
 - Custom glowing amber ball (12px, `box-shadow: 0 0 8px #ffb347, 0 0 20px #ffb347, 0 0 50px #ffb347`)

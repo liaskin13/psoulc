@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSystem } from '../state/SystemContext';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSystem } from "../state/SystemContext";
 
 // ── REQUEST ACCESS MODAL ───────────────────────────────────────────────────
 // Two paths:
@@ -11,56 +11,58 @@ import { useSystem } from '../state/SystemContext';
 
 const VETTING_QUESTIONS = [
   {
-    id: 'q1',
-    prompt: 'TUPAC or BIGGIE?',
-    type: 'choice',
-    options: ['TUPAC', 'BIGGIE', 'BOTH'],
+    id: "q1",
+    prompt: "TUPAC or BIGGIE?",
+    type: "choice",
+    options: ["TUPAC", "BIGGIE", "BOTH"],
   },
   {
-    id: 'q2',
-    prompt: 'EAST COAST or WEST COAST?',
-    type: 'choice',
-    options: ['EAST', 'WEST', 'NEITHER'],
+    id: "q2",
+    prompt: "EAST COAST or WEST COAST?",
+    type: "choice",
+    options: ["EAST", "WEST", "NEITHER"],
   },
   {
-    id: 'q3',
-    prompt: 'What does PSC mean to you?',
-    type: 'text',
+    id: "q3",
+    prompt: "What does PSC mean to you?",
+    type: "text",
     maxLength: 280,
   },
 ];
 
 const OVERLAY_VARIANTS = {
-  hidden:  { opacity: 0 },
+  hidden: { opacity: 0 },
   visible: { opacity: 1 },
 };
 
 const MODAL_VARIANTS = {
-  hidden:  { scale: 0.88, opacity: 0, y: 24 },
-  visible: { scale: 1,    opacity: 1, y: 0  },
-  exit:    { scale: 0.88, opacity: 0, y: 24 },
+  hidden: { scale: 0.88, opacity: 0, y: 24 },
+  visible: { scale: 1, opacity: 1, y: 0 },
+  exit: { scale: 0.88, opacity: 0, y: 24 },
 };
 
 function RequestAccessModal({ mode, onClose }) {
   const { addInboxRequest, addListener } = useSystem();
 
   // Shared fields
-  const [name,    setName]    = useState('');
-  const [contact, setContact] = useState('');
+  const [name, setName] = useState("");
+  const [contact, setContact] = useState("");
 
   // Collaborate-only fields
-  const [step,    setStep]    = useState(1);   // 1=vetting, 2=contact, 3=file
+  const [step, setStep] = useState(1); // 1=vetting, 2=contact, 3=file
   const [answers, setAnswers] = useState({});
-  const [file,    setFile]    = useState(null);
+  const [file, setFile] = useState(null);
 
   // Confirmation
   const [submitted, setSubmitted] = useState(false);
 
   // Close on Escape
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
   // ── LISTEN: auto-approve → addListener → show code 0000 immediately ──────
@@ -75,7 +77,7 @@ function RequestAccessModal({ mode, onClose }) {
   const handleCollaborateNext = (e) => {
     e.preventDefault();
     if (step === 1) {
-      const allAnswered = VETTING_QUESTIONS.every(q => answers[q.id]?.trim());
+      const allAnswered = VETTING_QUESTIONS.every((q) => answers[q.id]?.trim());
       if (!allAnswered) return;
       setStep(2);
     } else if (step === 2) {
@@ -83,7 +85,7 @@ function RequestAccessModal({ mode, onClose }) {
       setStep(3);
     } else if (step === 3) {
       addInboxRequest({
-        type: 'collaborate',
+        type: "collaborate",
         name: name.trim(),
         contact: contact.trim(),
         answers,
@@ -93,7 +95,8 @@ function RequestAccessModal({ mode, onClose }) {
     }
   };
 
-  const setAnswer = (id, value) => setAnswers(prev => ({ ...prev, [id]: value }));
+  const setAnswer = (id, value) =>
+    setAnswers((prev) => ({ ...prev, [id]: value }));
 
   // ── CONFIRMATION SCREEN ─────────────────────────────────────────────────
   const renderConfirm = () => (
@@ -101,9 +104,16 @@ function RequestAccessModal({ mode, onClose }) {
       <div className="access-confirm-glyph">◉</div>
       <div className="access-confirm-title">SIGNAL RECEIVED</div>
       <div className="access-confirm-body">
-        {mode === 'listen' ? (
+        {mode === "listen" ? (
           <>
-            <div style={{ fontSize: '1.6rem', letterSpacing: '0.3em', marginBottom: '8px', color: 'var(--amber)' }}>
+            <div
+              style={{
+                fontSize: "1.6rem",
+                letterSpacing: "0.3em",
+                marginBottom: "8px",
+                color: "var(--studer-copper)",
+              }}
+            >
               YOUR CODE: 0000
             </div>
             <div>Enter this code at the gate to access all frequencies.</div>
@@ -111,9 +121,9 @@ function RequestAccessModal({ mode, onClose }) {
         ) : (
           <>
             <div>Your frequency is under review.</div>
-            <div style={{ marginTop: '8px', opacity: 0.7 }}>
-              Use code <strong>0000</strong> for listening access while you wait.
-              A personal code will be transmitted upon approval.
+            <div style={{ marginTop: "8px", opacity: 0.7 }}>
+              Use code <strong>0000</strong> for listening access while you
+              wait. A personal code will be transmitted upon approval.
             </div>
           </>
         )}
@@ -129,7 +139,9 @@ function RequestAccessModal({ mode, onClose }) {
     <form onSubmit={handleListenSubmit}>
       <div className="access-modal-header">
         <span className="access-modal-title">REQUEST LISTENER ACCESS</span>
-        <span className="access-modal-sub">ALL FREQUENCIES · IMMEDIATE ACCESS</span>
+        <span className="access-modal-sub">
+          ALL FREQUENCIES · IMMEDIATE ACCESS
+        </span>
       </div>
 
       <div className="access-field">
@@ -137,7 +149,7 @@ function RequestAccessModal({ mode, onClose }) {
         <input
           className="access-input"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
           placeholder="your name"
           maxLength={64}
           autoComplete="name"
@@ -150,7 +162,7 @@ function RequestAccessModal({ mode, onClose }) {
         <input
           className="access-input"
           value={contact}
-          onChange={e => setContact(e.target.value)}
+          onChange={(e) => setContact(e.target.value)}
           placeholder="for your records"
           maxLength={128}
           required
@@ -162,9 +174,18 @@ function RequestAccessModal({ mode, onClose }) {
       </div>
 
       <div className="access-modal-actions">
-        <button type="button" className="access-btn access-btn-cancel" onClick={onClose}>CANCEL</button>
-        <button type="submit" className="access-btn access-btn-primary"
-          disabled={!name.trim() || !contact.trim()}>
+        <button
+          type="button"
+          className="access-btn access-btn-cancel"
+          onClick={onClose}
+        >
+          CANCEL
+        </button>
+        <button
+          type="submit"
+          className="access-btn access-btn-primary"
+          disabled={!name.trim() || !contact.trim()}
+        >
           GRANT ACCESS
         </button>
       </div>
@@ -175,20 +196,24 @@ function RequestAccessModal({ mode, onClose }) {
   const renderVettingStep = () => (
     <form onSubmit={handleCollaborateNext}>
       <div className="access-modal-header">
-        <span className="access-modal-title">COLLABORATE WITH THE COLLECTIVE</span>
-        <span className="access-modal-sub">STEP 1 OF 3 · FREQUENCY VETTING</span>
+        <span className="access-modal-title">
+          COLLABORATE WITH THE COLLECTIVE
+        </span>
+        <span className="access-modal-sub">
+          STEP 1 OF 3 · FREQUENCY VETTING
+        </span>
       </div>
 
-      {VETTING_QUESTIONS.map(q => (
+      {VETTING_QUESTIONS.map((q) => (
         <div key={q.id} className="access-field">
           <label className="access-field-label">{q.prompt}</label>
-          {q.type === 'choice' ? (
+          {q.type === "choice" ? (
             <div className="access-choice-group">
-              {q.options.map(opt => (
+              {q.options.map((opt) => (
                 <button
                   key={opt}
                   type="button"
-                  className={`access-choice-btn ${answers[q.id] === opt ? 'selected' : ''}`}
+                  className={`access-choice-btn ${answers[q.id] === opt ? "selected" : ""}`}
                   onClick={() => setAnswer(q.id, opt)}
                 >
                   {opt}
@@ -198,8 +223,8 @@ function RequestAccessModal({ mode, onClose }) {
           ) : (
             <textarea
               className="access-textarea"
-              value={answers[q.id] || ''}
-              onChange={e => setAnswer(q.id, e.target.value)}
+              value={answers[q.id] || ""}
+              onChange={(e) => setAnswer(q.id, e.target.value)}
               placeholder="your answer..."
               maxLength={q.maxLength}
               rows={3}
@@ -209,9 +234,18 @@ function RequestAccessModal({ mode, onClose }) {
       ))}
 
       <div className="access-modal-actions">
-        <button type="button" className="access-btn access-btn-cancel" onClick={onClose}>CANCEL</button>
-        <button type="submit" className="access-btn access-btn-primary"
-          disabled={!VETTING_QUESTIONS.every(q => answers[q.id]?.trim())}>
+        <button
+          type="button"
+          className="access-btn access-btn-cancel"
+          onClick={onClose}
+        >
+          CANCEL
+        </button>
+        <button
+          type="submit"
+          className="access-btn access-btn-primary"
+          disabled={!VETTING_QUESTIONS.every((q) => answers[q.id]?.trim())}
+        >
           NEXT →
         </button>
       </div>
@@ -222,7 +256,9 @@ function RequestAccessModal({ mode, onClose }) {
   const renderContactStep = () => (
     <form onSubmit={handleCollaborateNext}>
       <div className="access-modal-header">
-        <span className="access-modal-title">COLLABORATE WITH THE COLLECTIVE</span>
+        <span className="access-modal-title">
+          COLLABORATE WITH THE COLLECTIVE
+        </span>
         <span className="access-modal-sub">STEP 2 OF 3 · YOUR FREQUENCY</span>
       </div>
 
@@ -231,7 +267,7 @@ function RequestAccessModal({ mode, onClose }) {
         <input
           className="access-input"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
           placeholder="your name"
           maxLength={64}
           required
@@ -243,7 +279,7 @@ function RequestAccessModal({ mode, onClose }) {
         <input
           className="access-input"
           value={contact}
-          onChange={e => setContact(e.target.value)}
+          onChange={(e) => setContact(e.target.value)}
           placeholder="where to reach you"
           maxLength={128}
           required
@@ -251,10 +287,18 @@ function RequestAccessModal({ mode, onClose }) {
       </div>
 
       <div className="access-modal-actions">
-        <button type="button" className="access-btn access-btn-cancel"
-          onClick={() => setStep(1)}>← BACK</button>
-        <button type="submit" className="access-btn access-btn-primary"
-          disabled={!name.trim() || !contact.trim()}>
+        <button
+          type="button"
+          className="access-btn access-btn-cancel"
+          onClick={() => setStep(1)}
+        >
+          ← BACK
+        </button>
+        <button
+          type="submit"
+          className="access-btn access-btn-primary"
+          disabled={!name.trim() || !contact.trim()}
+        >
           NEXT →
         </button>
       </div>
@@ -265,33 +309,48 @@ function RequestAccessModal({ mode, onClose }) {
   const renderFileStep = () => (
     <form onSubmit={handleCollaborateNext}>
       <div className="access-modal-header">
-        <span className="access-modal-title">COLLABORATE WITH THE COLLECTIVE</span>
-        <span className="access-modal-sub">STEP 3 OF 3 · UPLOAD FOR REVIEW</span>
+        <span className="access-modal-title">
+          COLLABORATE WITH THE COLLECTIVE
+        </span>
+        <span className="access-modal-sub">
+          STEP 3 OF 3 · UPLOAD FOR REVIEW
+        </span>
       </div>
 
       <div className="access-field">
         <label className="access-field-label">MUSIC FILE (optional)</label>
-        <div className="access-file-zone" onClick={() => document.getElementById('access-file-input').click()}>
-          {file
-            ? <span className="access-file-name">{file.name}</span>
-            : <span className="access-file-placeholder">Click to select — MP3, WAV, or FLAC</span>
-          }
+        <div
+          className="access-file-zone"
+          onClick={() => document.getElementById("access-file-input").click()}
+        >
+          {file ? (
+            <span className="access-file-name">{file.name}</span>
+          ) : (
+            <span className="access-file-placeholder">
+              Click to select — MP3, WAV, or FLAC
+            </span>
+          )}
         </div>
         <input
           id="access-file-input"
           type="file"
           accept=".mp3,.wav,.flac,.aif,.aiff"
-          style={{ display: 'none' }}
-          onChange={e => setFile(e.target.files?.[0] || null)}
+          style={{ display: "none" }}
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
         />
-        <div className="access-modal-note" style={{ marginTop: '8px' }}>
+        <div className="access-modal-note" style={{ marginTop: "8px" }}>
           Submission goes to L for vetting, then to D for final approval.
         </div>
       </div>
 
       <div className="access-modal-actions">
-        <button type="button" className="access-btn access-btn-cancel"
-          onClick={() => setStep(2)}>← BACK</button>
+        <button
+          type="button"
+          className="access-btn access-btn-cancel"
+          onClick={() => setStep(2)}
+        >
+          ← BACK
+        </button>
         <button type="submit" className="access-btn access-btn-primary">
           TRANSMIT APPLICATION
         </button>
@@ -301,7 +360,7 @@ function RequestAccessModal({ mode, onClose }) {
 
   const renderContent = () => {
     if (submitted) return renderConfirm();
-    if (mode === 'listen') return renderListenForm();
+    if (mode === "listen") return renderListenForm();
     if (step === 1) return renderVettingStep();
     if (step === 2) return renderContactStep();
     return renderFileStep();
@@ -316,7 +375,9 @@ function RequestAccessModal({ mode, onClose }) {
         animate="visible"
         exit="hidden"
         transition={{ duration: 0.25 }}
-        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
       >
         <motion.div
           className="access-modal"

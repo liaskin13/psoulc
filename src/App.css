@@ -1,5 +1,7 @@
 /* ─── CHAKRA PETCH: Singular console typeface ─── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   font-family: 'Chakra Petch', sans-serif;
   box-sizing: border-box;
 }
@@ -8,7 +10,8 @@
 .entry-aperture {
   position: fixed;
   inset: 0;
-  width: 100vw; height: 100svh;
+  width: 100vw;
+  height: 100svh;
   background: transparent;
   overflow: hidden;
   z-index: 1000;
@@ -17,39 +20,65 @@
 /* Gate panels — left/right split */
 .entry-gate {
   position: fixed;
-  top: 0; bottom: 0;
+  top: 0;
+  bottom: 0;
   width: 50%;
-  background: rgba(0,0,0,.55);
+  background: rgba(0, 0, 0, .55);
   z-index: 8;
-  transition: transform 1.1s cubic-bezier(.76,0,.24,1), opacity .8s ease;
+  transition: transform 1.1s cubic-bezier(.76, 0, .24, 1), opacity .8s ease;
 }
-.entry-gate-l { left: 0; }
-.entry-gate-r { right: 0; }
-.entry-gate-l.entry-gate-open { transform: translateX(-100%); }
-.entry-gate-r.entry-gate-open { transform: translateX(100%); }
+
+.entry-gate-l {
+  left: 0;
+}
+
+.entry-gate-r {
+  right: 0;
+}
+
+.entry-gate-l.entry-gate-open {
+  transform: translateX(-100%);
+}
+
+.entry-gate-r.entry-gate-open {
+  transform: translateX(100%);
+}
 
 /* Wordmark — top-left, locked forever */
 .entry-wordmark {
   position: fixed;
-  top: 28px; left: 32px;
+  top: 28px;
+  left: 32px;
   z-index: 20;
   font-family: 'Comfortaa', cursive;
   font-weight: 700;
   font-size: 15px;
   letter-spacing: .16em;
-  color: rgba(232,228,222,.32);
+  color: rgba(232, 228, 222, .32);
   user-select: none;
   pointer-events: none;
   animation: entryFadeIn .7s ease .3s both;
 }
-.entry-wordmark span { font-size: 22px; }
 
-@keyframes entryFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.entry-wordmark span {
+  font-size: 22px;
+}
+
+@keyframes entryFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
 
 /* Center — request access form */
 .entry-center-form {
   position: fixed;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
   z-index: 20;
   display: flex;
@@ -61,53 +90,57 @@
 
 .entry-request-input {
   width: 280px;
-  background: rgba(255,255,255,.025);
-  border: 1px solid rgba(255,255,255,.08);
-  border-bottom: 1px solid rgba(255,255,255,.18);
+  background: rgba(255, 255, 255, .025);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
   padding: 13px 16px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 12px;
-  color: rgba(232,228,222,.8);
+  color: rgba(232, 228, 222, .8);
   outline: none;
   letter-spacing: .06em;
   text-align: center;
   transition: border-color 200ms, background 200ms;
 }
+
 .entry-request-input::placeholder {
-  color: rgba(255,255,255,.2);
+  color: rgba(255, 255, 255, .2);
   font-size: 10px;
   letter-spacing: .24em;
 }
+
 .entry-request-input:focus {
-  border-color: rgba(255,255,255,.2);
-  border-bottom-color: rgba(255,255,255,.4);
-  background: rgba(255,255,255,.04);
+  border-color: rgba(255, 255, 255, .2);
+  border-bottom-color: rgba(255, 255, 255, .4);
+  background: rgba(255, 255, 255, .04);
 }
 
 .entry-request-btn {
   width: 280px;
   padding: 12px 0;
   background: transparent;
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid rgba(255, 255, 255, .12);
   font-family: 'Chakra Petch', sans-serif;
   font-size: 9px;
   font-weight: 600;
   letter-spacing: .32em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.35);
+  color: rgba(255, 255, 255, .35);
   cursor: none;
   transition: border-color 200ms, color 200ms, background 200ms;
 }
+
 .entry-request-btn:hover {
-  border-color: rgba(255,255,255,.3);
-  color: rgba(232,228,222,.7);
-  background: rgba(255,255,255,.03);
+  border-color: rgba(255, 255, 255, .3);
+  color: rgba(232, 228, 222, .7);
+  background: rgba(255, 255, 255, .03);
 }
 
 /* Bottom-right — mystery code cells */
 .entry-code-corner {
   position: fixed;
-  bottom: 28px; right: 32px;
+  bottom: 28px;
+  right: 32px;
   z-index: 20;
   display: flex;
   flex-direction: column;
@@ -122,50 +155,96 @@
 }
 
 .entry-cell {
-  width: 40px; height: 50px;
-  border: 1px solid rgba(255,255,255,.07);
-  background: rgba(255,255,255,.015);
+  width: 40px;
+  height: 50px;
+  border: 1px solid #1e1e1e;
+  border-bottom-color: #080808;
+  background: linear-gradient(180deg, #161616 0%, #0d0d0d 100%);
+  box-shadow:
+    0 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 20px;
   font-weight: 700;
-  color: rgba(255,255,255,.85);
+  color: rgba(255, 255, 255, .85);
   position: relative;
   overflow: hidden;
-  transition: border-color 180ms, background 180ms;
+  transition: box-shadow 60ms ease, border-color 180ms;
 }
+
 .entry-cell.entry-cell-active {
-  border-color: rgba(255,255,255,.22);
-  background: rgba(255,255,255,.035);
+  border-color: #2a2a2a;
+  border-bottom-color: #060606;
+  background: linear-gradient(180deg, #1a1a1a 0%, #111 100%);
+  box-shadow:
+    0 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
+
 .entry-cell.entry-cell-active::before {
   content: '';
   position: absolute;
-  bottom: 0; left: 15%; right: 15%;
+  bottom: 0;
+  left: 15%;
+  right: 15%;
   height: 1px;
-  background: rgba(255,255,255,.28);
+  background: rgba(255, 255, 255, .28);
   animation: entryCellBlink 1.2s ease-in-out infinite;
 }
-@keyframes entryCellBlink { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+@keyframes entryCellBlink {
+
+  0%,
+  100% {
+    opacity: .3
+  }
+
+  50% {
+    opacity: 1
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .entry-cell.entry-cell-active::before { animation: none; }
+  .entry-cell.entry-cell-active::before {
+    animation: none;
+  }
 }
+
 .entry-cell.entry-cell-correct {
-  border-color: rgba(255,179,71,.4);
-  background: rgba(255,179,71,.04);
+  border-color: rgba(184, 115, 51, 0.35);
+  border-bottom-color: #050505;
+  background: linear-gradient(180deg, #1a1409 0%, #120e06 100%);
+  box-shadow:
+    0 1px 0 #000,
+    inset 2px 2px 8px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(184, 115, 51, 0.12);
+  transform: translateY(1px);
 }
+
 .entry-cell.entry-cell-correct::after {
   content: '';
   position: absolute;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 1px;
-  background: rgba(255,179,71,.55);
+  background: rgba(184, 115, 51, 0.55);
 }
+
 .entry-cell.entry-cell-wrong {
-  border-color: rgba(200,40,0,.4);
-  background: rgba(200,40,0,.03);
+  border-color: rgba(229, 32, 32, .35);
+  border-bottom-color: #050505;
+  background: linear-gradient(180deg, #140a0a 0%, #0c0606 100%);
+  box-shadow:
+    0 1px 0 #000,
+    inset 2px 2px 8px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(229, 32, 32, 0.1);
+  transform: translateY(1px);
 }
 
 .entry-err {
@@ -174,7 +253,7 @@
   font-weight: 500;
   letter-spacing: .22em;
   text-transform: uppercase;
-  color: rgba(200,40,0,.65);
+  color: rgba(200, 40, 0, .65);
   height: 14px;
 }
 
@@ -183,27 +262,31 @@
   position: fixed;
   pointer-events: none;
   z-index: 9999;
-  width: 7px; height: 7px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: rgba(232,228,222,.7);
-  transform: translate(-50%,-50%);
+  background: rgba(232, 228, 222, .7);
+  transform: translate(-50%, -50%);
   transition: width 60ms, height 60ms;
 }
+
 .cur-ring {
   position: fixed;
   pointer-events: none;
   z-index: 9998;
-  width: 26px; height: 26px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  border: 1px solid rgba(232,228,222,.14);
-  transform: translate(-50%,-50%);
+  border: 1px solid rgba(232, 228, 222, .14);
+  transform: translate(-50%, -50%);
   transition: width 150ms, height 150ms;
 }
 
 /* ─── MAIN LAYOUT SHELL ─── */
 .universe {
   background: var(--void-black, #050505);
-  width: 100vw; height: 100svh;
+  width: 100vw;
+  height: 100svh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -220,7 +303,8 @@
 
 .glitter-grain {
   position: absolute;
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   pointer-events: none;
@@ -276,8 +360,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .d-cursor {
-    transition: none; /* Disable size transitions */
-    box-shadow: none; /* Remove glow for reduced motion */
+    transition: none;
+    /* Disable size transitions */
+    box-shadow: none;
+    /* Remove glow for reduced motion */
   }
 }
 
@@ -299,7 +385,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .d-spotlight {
-    background: transparent; /* Remove spotlight effect */
+    background: transparent;
+    /* Remove spotlight effect */
   }
 }
 
@@ -336,7 +423,7 @@
   font-size: clamp(13px, 2vw, 18px);
   font-weight: 600;
   letter-spacing: 0.25em;
-  color: var(--identity);
+  color: var(--text-primary);
   text-align: center;
 }
 
@@ -344,18 +431,21 @@
   font-family: 'Chakra Petch', sans-serif;
   font-size: clamp(10px, 1.2vw, 12px);
   letter-spacing: 0.18em;
-  color: var(--identity-dim);
+  color: var(--text-secondary);
   text-align: center;
 }
 
 /* ─── MONITOR SYSTEM ─── */
 .d-monitor {
-  background: #000000; /* Absolute OLED Black per DESIGN.md - ensures highest contrast for glows */
+  background: #000000;
+  /* Absolute OLED Black per DESIGN.md - ensures highest contrast for glows */
   border: 1px solid var(--identity-dim);
   position: relative;
   display: grid;
-  grid-template-rows: 30px 1fr 52px; /* RAIL | MONITOR | TRANSPORT per DESIGN.md */
-  grid-template-columns: 1fr; /* Single column for the overall layout */
+  grid-template-rows: 30px 1fr 52px;
+  /* RAIL | MONITOR | TRANSPORT per DESIGN.md */
+  grid-template-columns: 1fr;
+  /* Single column for the overall layout */
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -363,53 +453,12 @@
   transition: border-color var(--dur-medium) var(--ease-hw), box-shadow var(--dur-medium) var(--ease-hw);
 }
 
-/* ─── AURORA / MESH GRADIENT ─── */
-.aurora-layer {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.aurora-blob {
-  position: absolute;
-  filter: blur(80px);
-  mix-blend-mode: screen;
-  border-radius: 50%;
-  opacity: 0.15; /* Within the 0.10–0.18 range per DESIGN.md */
-}
-
-.aurora-blob-1 {
-  width: 600px; height: 400px;
-  background: var(--identity);
-  top: -100px; left: -100px;
-  animation: aurora-drift-1 18s var(--ease-hw) infinite alternate;
-}
-
-.aurora-blob-2 {
-  width: 400px; height: 500px;
-  background: color-mix(in srgb, var(--identity) 80%, black); /* Deeper identity shade */
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  animation: aurora-drift-2 24s var(--ease-hw) infinite alternate;
-}
-
-.aurora-blob-3 {
-  width: 350px; height: 350px;
-  background: color-mix(in srgb, var(--identity) 50%, white); /* Paler identity highlight */
-  bottom: -50px; right: -50px;
-  animation: aurora-drift-3 20s var(--ease-hw) infinite alternate;
-}
-
-@keyframes aurora-drift-1 { from { transform: translate(0, 0); } to { transform: translate(100px, 40px); } }
-@keyframes aurora-drift-2 { from { transform: translate(-50%, -50%); } to { transform: translate(-45%, -55%); } }
-@keyframes aurora-drift-3 { from { transform: translate(0, 0); } to { transform: translate(-80px, -30px); } }
+/* Aurora blobs removed — banned per DESIGN.md ("No aurora light show") */
 
 /* "Boil the Lake" accessibility guard: high-frequency flicker and bloom only if preferred */
 @media (prefers-reduced-motion: no-preference) {
   .d-monitor {
-    animation: 
+    animation:
       d-monitor-flicker var(--dur-micro) infinite alternate,
       d-monitor-power-on var(--dur-long) var(--ease-hw) forwards;
   }
@@ -420,7 +469,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: 
+  background-image:
     repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px),
     repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.02) 2px, rgba(0, 0, 0, 0.02) 4px);
   mix-blend-mode: overlay;
@@ -428,14 +477,34 @@
 }
 
 @keyframes d-monitor-power-on {
-  0% { transform: scaleX(0) scaleY(0.001); opacity: 0; filter: brightness(5); }
-  40% { transform: scaleX(1) scaleY(0.001); opacity: 1; filter: brightness(2); }
-  100% { transform: scaleX(1) scaleY(1); filter: brightness(1); }
+  0% {
+    transform: scaleX(0) scaleY(0.001);
+    opacity: 0;
+    filter: brightness(5);
+  }
+
+  40% {
+    transform: scaleX(1) scaleY(0.001);
+    opacity: 1;
+    filter: brightness(2);
+  }
+
+  100% {
+    transform: scaleX(1) scaleY(1);
+    filter: brightness(1);
+  }
 }
 
 @keyframes d-monitor-flicker {
-  0% { filter: brightness(1.0); opacity: 0.99; }
-  100% { filter: brightness(1.02); opacity: 1; }
+  0% {
+    filter: brightness(1.0);
+    opacity: 0.99;
+  }
+
+  100% {
+    filter: brightness(1.02);
+    opacity: 1;
+  }
 }
 
 /* ─── MONITOR HEADER & STATUS (RAIL) ─── */
@@ -444,7 +513,8 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--sp-2) var(--sp-4);
-  background: color-mix(in srgb, var(--void) 80%, transparent); /* Use void with opacity */
+  background: color-mix(in srgb, var(--void) 80%, transparent);
+  /* Use void with opacity */
   border-bottom: 1px solid var(--identity-dim);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -485,7 +555,7 @@
   border-radius: 50%;
   background: var(--text-muted);
   transition: all var(--dur-medium) var(--ease-hw);
-  box-shadow: inset 0 1px 1px rgba(0,0,0,0.5);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
 .d-lock-led.is-active {
@@ -501,7 +571,8 @@
 /* ─── 5-ZONE LAYOUT ENGINE (BINS | MONITOR | CHAIN) ─── */
 .d-monitor-content-area {
   display: grid;
-  grid-template-columns: 214px 1fr 188px; /* BINS | MONITOR | CHAIN per DESIGN.md */
+  grid-template-columns: 214px 1fr 188px;
+  /* BINS | MONITOR | CHAIN per DESIGN.md */
   height: 100%;
   position: relative;
   z-index: 1;
@@ -509,18 +580,23 @@
 
 /* ─── BINS COLUMN ─── */
 .d-bins-column {
-  background: var(--surface); /* Use surface for warm black, as per D's theme */
+  background: var(--surface);
+  /* Use surface for warm black, as per D's theme */
   border-right: 1px solid var(--border);
   padding: var(--sp-4);
   overflow-y: auto;
-  position: relative; /* For accent line positioning */
+  position: relative;
+  /* For accent line positioning */
 }
 
 .d-bins-column::before {
   content: "";
   position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 2px; /* Amber accent line width */
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  /* Amber accent line width */
   background: var(--identity);
   box-shadow: 0 0 8px var(--identity-dim);
 }
@@ -538,50 +614,21 @@
 
 /* Waveform container placeholder */
 .d-waveform-container {
-  height: 56px; /* As per DESIGN.md */
+  height: 56px;
+  /* As per DESIGN.md */
 }
 
 /* ─── HERO SECTION (NOW PLAYING) ─── */
 .d-monitor-hero {
-  grid-column: 1 / -1; /* Span full width of d-monitor-main */
+  grid-column: 1 / -1;
   text-align: center;
-  font-family: var(--font-display); /* Chakra Petch as per DESIGN.md */
-  font-size: 54px; /* As per DESIGN.md */
-  font-weight: var(--weight-bold); /* 700 as per DESIGN.md */
+  font-family: var(--font-display);
+  font-size: 54px;
+  font-weight: var(--weight-bold);
   text-transform: uppercase;
   letter-spacing: var(--kerning-tight);
-  /* Animated gold foil gradient */
-  background: linear-gradient(
-    90deg,
-    var(--identity-dim) 0%,
-    var(--identity) 25%,
-    color-mix(in srgb, var(--identity) 50%, white) 50%, /* Brightest part of the "gold" */
-    var(--identity) 75%,
-    var(--identity-dim) 100%
-  );
-  background-size: 300% 100%; /* 300% as per DESIGN.md */
-  background-position: 0% 50%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gold-foil-drift 5s linear infinite alternate; /* 5s as per DESIGN.md */
+  color: var(--text-primary);
   padding: var(--sp-4) 0;
-  position: relative; /* For potential radial glow */
-}
-
-.d-monitor-hero::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  /* Radial amber glow from left edge per DESIGN.md */
-  background: radial-gradient(circle at left center, var(--identity-dim) 0%, transparent 60%);
-  z-index: -1;
-  pointer-events: none;
-}
-
-@keyframes gold-foil-drift {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
 }
 
 /* ─── SIGNAL CHAIN COLUMN ─── */
@@ -589,8 +636,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  width: 188px; /* Fixed width per DESIGN.md */
-  background: color-mix(in srgb, var(--void) 80%, transparent); /* Use void for cool dark, as per L's theme */
+  width: 188px;
+  /* Fixed width per DESIGN.md */
+  background: color-mix(in srgb, var(--void) 80%, transparent);
+  /* Use void for cool dark, as per L's theme */
   padding: var(--sp-2);
   border-left: 1px solid var(--border);
   overflow-y: auto;
@@ -620,7 +669,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.1) 1px, rgba(0,0,0,0.1) 2px);
+  background: repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0, 0, 0, 0.1) 1px, rgba(0, 0, 0, 0.1) 2px);
   pointer-events: none;
 }
 
@@ -679,8 +728,10 @@
 .d-vault-pad::after {
   content: "";
   position: absolute;
-  bottom: 0; left: 0;
-  width: 100%; height: 2px;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
   background: transparent;
   transition: background var(--dur-short) var(--ease-hw);
 }
@@ -722,8 +773,10 @@
 }
 
 .d-toggle-switch .pill {
-  width: 32px; height: 16px;
-  border-radius: 9999px; /* Pill shape */
+  width: 32px;
+  height: 16px;
+  border-radius: 9999px;
+  /* Pill shape */
   background: var(--surface-raised);
   border: 1px solid var(--border);
   position: relative;
@@ -733,8 +786,10 @@
 .d-toggle-switch .pill::before {
   content: "";
   position: absolute;
-  left: 2px; top: 2px;
-  width: 10px; height: 10px;
+  left: 2px;
+  top: 2px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--text-muted);
   transition: all var(--dur-short) var(--ease-hw);
@@ -747,7 +802,8 @@
 }
 
 .d-toggle-switch.is-on .pill::before {
-  left: 18px; /* Move to right */
+  left: 18px;
+  /* Move to right */
   background: var(--text-primary);
 }
 
@@ -756,7 +812,8 @@
   background: var(--surface);
   border: 1px solid var(--border);
   padding: var(--sp-3);
-  display: grid; /* 2x2 grid */
+  display: grid;
+  /* 2x2 grid */
   grid-template-columns: 1fr 1fr;
   gap: var(--sp-2);
   align-items: center;
@@ -786,7 +843,8 @@
   flex-direction: column;
   gap: var(--sp-1);
   padding: var(--sp-2);
-  background: color-mix(in srgb, var(--void) 70%, transparent); /* Use void with opacity */
+  background: color-mix(in srgb, var(--void) 70%, transparent);
+  /* Use void with opacity */
   border: 1px solid var(--border);
 }
 
@@ -799,7 +857,9 @@
 
 .d-meter-fill {
   position: absolute;
-  top: 0; left: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
   background: var(--identity);
   box-shadow: 0 0 8px var(--identity-dim);
   transition: width var(--dur-micro) linear;
@@ -853,7 +913,8 @@
   justify-content: center;
 }
 
-.encoder-btn, .encoder-push {
+.encoder-btn,
+.encoder-push {
   min-height: var(--sp-6);
   padding: 0 var(--sp-4);
   background: var(--surface);
@@ -863,15 +924,19 @@
   transition: all var(--dur-short) var(--ease-hw);
 }
 
-.encoder-btn:hover, .encoder-push:hover {
+.encoder-btn:hover,
+.encoder-push:hover {
   background: var(--surface-raised);
   border-color: var(--identity);
   box-shadow: 0 0 10px var(--identity-dim);
-  transform: translateY(-1px); /* Subtle lift on hover */
-  filter: brightness(1.1); /* Slight glow */
+  transform: translateY(-1px);
+  /* Subtle lift on hover */
+  filter: brightness(1.1);
+  /* Slight glow */
 }
 
-.encoder-btn:active, .encoder-push:active {
+.encoder-btn:active,
+.encoder-push:active {
   transform: translateY(1px);
   filter: brightness(1.2);
 }

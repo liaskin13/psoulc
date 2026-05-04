@@ -5,13 +5,19 @@
 // Tier G: Generic listeners — browse only, no comments
 
 export const canVoid = (sessionMeta, planetId) =>
-  sessionMeta?.tier === 'A' ||
-  (sessionMeta?.tier === 'B' && !!sessionMeta?.planet && sessionMeta.planet === planetId);
+  sessionMeta?.tier === "A" ||
+  (sessionMeta?.tier === "B" &&
+    !!sessionMeta?.vault &&
+    sessionMeta.vault === planetId);
 
 export const canEdit = (sessionMeta, planetId) =>
-  sessionMeta?.tier === 'A' ||
-  (sessionMeta?.tier === 'B' && !!sessionMeta?.planet && sessionMeta.planet === planetId);
+  sessionMeta?.tier === "A" ||
+  (sessionMeta?.tier === "B" &&
+    !!sessionMeta?.vault &&
+    sessionMeta.vault === planetId);
 
 // Tier A, B, and C can comment. Tier G cannot.
 export const canComment = (sessionMeta) =>
-  sessionMeta?.tier === 'A' || sessionMeta?.tier === 'B' || sessionMeta?.tier === 'C';
+  sessionMeta?.tier === "A" ||
+  sessionMeta?.tier === "B" ||
+  sessionMeta?.tier === "C";

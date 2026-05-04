@@ -3,52 +3,58 @@
 
 :root {
   /* ── FOUNDATION (canonical) ──────────────────────── */
-  --void:            #050505;   /* universal canvas */
-  --surface:         #0d0d0d;   /* panels, cards */
-  --surface-raised:  #141414;   /* modals, dropdowns */
-  --border:          #222222;   /* 1px structural borders */
+  --void: #050505;
+  /* universal canvas */
+  --surface: #0d0d0d;
+  /* panels, cards */
+  --surface-raised: #141414;
+  /* modals, dropdowns */
+  --border: #222222;
+  /* 1px structural borders */
 
   /* ── TYPOGRAPHY (canonical) ──────────────────────── */
-  --text-primary:    #f0ede8;   /* warm off-white */
-  --text-secondary:  #7a7a7a;   /* 4.53:1 on --surface — WCAG AA */
-  --text-muted:      #333333;
+  --text-primary: #f0ede8;
+  /* warm off-white */
+  --text-secondary: #7a7a7a;
+  /* 4.53:1 on --surface — WCAG AA */
+  --text-muted: #333333;
 
   /* ── IDENTITY (filled by theme, transparent by default) ── */
-  --identity:        transparent;
-  --identity-dim:    transparent;
-  --identity-glow:   none;
+  --identity: transparent;
+  --identity-dim: transparent;
+  --identity-glow: none;
 
   /* ── FONT SYSTEM (canonical) ─────────────────────── */
-  --font-display:  'Chakra Petch', sans-serif;
-  --font-primary:  'Chakra Petch', sans-serif;
-  --font-ui:       'Chakra Petch', sans-serif;
-  --font-headers:  'Chakra Petch', sans-serif;
-  --font-mono:     'SF Mono', 'Monaco', 'Courier New', monospace;
+  --font-display: 'Chakra Petch', sans-serif;
+  --font-primary: 'Chakra Petch', sans-serif;
+  --font-ui: 'Chakra Petch', sans-serif;
+  --font-headers: 'Chakra Petch', sans-serif;
+  --font-mono: 'SF Mono', 'Monaco', 'Courier New', monospace;
 
   /* ── SYSTEM STATES ───────────────────────────────── */
-  --record-red:         #cc2200;
-  --error-surface:      #1a0505;
-  --error-text:         #ff4444;
-  --cmd-success:        rgba(0, 200, 80, 0.22);
-  --cmd-fail:           rgba(204, 34, 0, 0.32);
+  --record-red: #cc2200;
+  --error-surface: #1a0505;
+  --error-text: #ff4444;
+  --cmd-success: rgba(0, 200, 80, 0.22);
+  --cmd-fail: rgba(204, 34, 0, 0.32);
   --section-unreleased: #1a1200;
-  --section-released:   #0a1a0a;
-  --section-archive:    #181818;
+  --section-released: #0a1a0a;
+  --section-archive: #181818;
 
   /* ── NOISE / FILM GRAIN ──────────────────────────── */
   --noise-opacity: 0.025;
-  --noise-blend:   overlay;
+  --noise-blend: overlay;
 
   /* ── SPACING SCALE (4px base) ────────────────────── */
-  --sp-1:  2px;
-  --sp-2:  4px;
-  --sp-3:  8px;
-  --sp-4:  12px;
-  --sp-5:  16px;
-  --sp-6:  24px;
-  --sp-7:  32px;
-  --sp-8:  48px;
-  --sp-9:  64px;
+  --sp-1: 2px;
+  --sp-2: 4px;
+  --sp-3: 8px;
+  --sp-4: 12px;
+  --sp-5: 16px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 48px;
+  --sp-9: 64px;
   --sp-10: 96px;
 
   /* ── MPC III BUTTON DEPTH (Akai MPC III reference) ─ */
@@ -64,10 +70,10 @@
 
   /* ── MOTION ──────────────────────────────────────── */
   --ease-hw: cubic-bezier(0.25, 0, 0, 1);
-  --dur-micro:  60ms;
-  --dur-short:  120ms;
+  --dur-micro: 60ms;
+  --dur-short: 120ms;
   --dur-medium: 200ms;
-  --dur-long:   350ms;
+  --dur-long: 350ms;
 
   /* ═══════════════════════════════════════════════════
      BACKWARD-COMPAT ALIASES — migrate components
@@ -75,61 +81,60 @@
      ═══════════════════════════════════════════════════ */
 
   /* Color aliases */
-  --void-black:      var(--void);
+  --void-black: var(--void);
   --mainframe-black: var(--surface);
-  --midnight-vault:  var(--void);
+  --midnight-vault: var(--void);
   --sovereign-white: var(--text-primary);
   --industrial-gray: #2B2B2B;
-  --aged-stone:      #8B7355;
-  --studer-silver:   #C0C0C0;
+  --aged-stone: #8B7355;
+  --studer-silver: #C0C0C0;
   --cream-off-white: #f5f1e8;
-  --dymo-black:      #121212;
-  --dymo-white:      #eeeeee;
+  --dymo-black: #121212;
+  --dymo-white: #eeeeee;
 
   /* Pre-auth copper — entry screen accent (no theme applied yet) */
-  --studer-copper:   #B87333;
-  --walnut-dark:     #3e2723;
-  --burnt-orange:    #d2691e;
-  --warm-brass:      #b8860b;
+  --studer-copper: #B87333;
+  --walnut-dark: #3e2723;
+  --burnt-orange: #d2691e;
+  --warm-brass: #b8860b;
 
   /* Architect console (L) palette */
-  --arch-bg:           #070a0d;
-  --arch-accent:       #00e5ff;
-  --arch-phosphor:     #00e5ff;
+  --arch-bg: #070a0d;
+  --arch-accent: #00e5ff;
+  --arch-phosphor: #00e5ff;
   --arch-phosphor-dim: rgba(0, 229, 255, 0.20);
-  --arch-separator:    #1a2530;
+  --arch-separator: #1a2530;
 
   /* Vault identity (legacy names) */
-  --vault-master:    #B87333;
-  --vault-registry:  #C0C0C0;
-  --vault-shadow:    #8B7355;
-  --vault-resonance: rgba(255,255,255,0.35);
+  --vault-master: #B87333;
+  --vault-registry: #C0C0C0;
+  --vault-shadow: #8B7355;
+  --vault-resonance: rgba(255, 255, 255, 0.35);
 
   /* Weight / kerning legacy tokens */
-  --weight-light:  300;
+  --weight-light: 300;
   --weight-normal: 400;
   --weight-medium: 500;
-  --weight-bold:   700;
+  --weight-bold: 700;
   --kerning-tight: -0.02em;
-  --kerning-wide:  0.12em;
+  --kerning-wide: 0.12em;
 }
 
 /* ── D's THEME — 70s Soul ──────────────────────────── */
 [data-theme="d-soul"] {
-  --identity:        #ffb347;
-  --identity-dim:    rgba(255, 179, 71, 0.12);
-  --identity-glow:   0 0 24px rgba(255, 179, 71, 0.25);
-  --surface:         #0a0806;   /* warm brown-black */
-  --text-primary:    #f5ead8;   /* cream */
-  --studer-copper:   #ffb347;
-  --amber-phosphor:  #ffbf00;   /* D's console only — never in global scope */
+  --identity: #14dc14;
+  --identity-dim: rgba(20, 220, 20, 0.10);
+  --identity-glow: 0 0 24px rgba(20, 220, 20, 0.22);
+  --surface: #050805;
+  --text-primary: #f0ede8;
 }
 
 /* ── L's THEME — Architect ─────────────────────────── */
 [data-theme="l-architect"] {
-  --identity:      #00e5ff;
-  --identity-dim:  rgba(0, 229, 255, 0.12);
+  --identity: #00e5ff;
+  --identity-dim: rgba(0, 229, 255, 0.12);
   --identity-glow: 0 0 24px rgba(0, 229, 255, 0.22);
-  --surface:       #070a0d;   /* cold near-black */
+  --surface: #070a0d;
+  /* cold near-black */
   --studer-copper: #00e5ff;
 }

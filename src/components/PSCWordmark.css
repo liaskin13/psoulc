@@ -43,7 +43,18 @@
 }
 
 @keyframes wordmark-amber-pulse {
-  0%   { color: rgba(232, 228, 222, 0.26); text-shadow: none; }
-  18%  { color: rgba(255, 179, 71, 0.95);  text-shadow: 0 0 16px rgba(255, 179, 71, 0.55); }
-  100% { color: rgba(232, 228, 222, 0.26); text-shadow: none; }
+  0% {
+    color: rgba(232, 228, 222, 0.26);
+    text-shadow: none;
+  }
+
+  18% {
+    color: rgba(232, 228, 222, 0.82);
+    text-shadow: 0 0 16px rgba(232, 228, 222, 0.35);
+  }
+
+  100% {
+    color: rgba(232, 228, 222, 0.26);
+    text-shadow: none;
+  }
 }

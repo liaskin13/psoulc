@@ -7,7 +7,11 @@ import InboxPanel from "./InboxPanel";
 import CommentPanel from "./CommentPanel";
 import DirectLinePanel from "./DirectLinePanel";
 import DeckWaveform from "../components/DeckWaveform";
-import { LOCKBOX_PREFIX, VAULT_DISPLAY_NAMES, VAULT_ACCENT_COLORS } from "../config";
+import {
+  LOCKBOX_PREFIX,
+  VAULT_DISPLAY_NAMES,
+  VAULT_ACCENT_COLORS,
+} from "../config";
 import {
   tierDefaultsForMember,
   resolveMatrixPerm,
@@ -15,7 +19,7 @@ import {
   commitMatrixState,
   rollbackMatrixState,
 } from "./matrixState";
-import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
+import { fetchAllTracks, getAudioUrl, countVaultTracks } from "../lib/tracks";
 import { getWaveformBars } from "../utils/waveform";
 import {
   generateAndSaveWaveform,
@@ -26,10 +30,26 @@ import AdminSettings from "../admin/AdminSettings";
 import PSCWordmark from "../components/PSCWordmark";
 
 const VAULT_ROUTES = [
-  { id: "venus",   label: VAULT_DISPLAY_NAMES.venus,    color: VAULT_ACCENT_COLORS.venus   },
-  { id: "saturn",  label: VAULT_DISPLAY_NAMES.saturn,   color: VAULT_ACCENT_COLORS.saturn  },
-  { id: "mercury", label: VAULT_DISPLAY_NAMES.mercury,  color: VAULT_ACCENT_COLORS.mercury },
-  { id: "earth",   label: VAULT_DISPLAY_NAMES.earth,    color: VAULT_ACCENT_COLORS.earth   },
+  {
+    id: "venus",
+    label: VAULT_DISPLAY_NAMES.venus,
+    color: VAULT_ACCENT_COLORS.venus,
+  },
+  {
+    id: "saturn",
+    label: VAULT_DISPLAY_NAMES.saturn,
+    color: VAULT_ACCENT_COLORS.saturn,
+  },
+  {
+    id: "mercury",
+    label: VAULT_DISPLAY_NAMES.mercury,
+    color: VAULT_ACCENT_COLORS.mercury,
+  },
+  {
+    id: "earth",
+    label: VAULT_DISPLAY_NAMES.earth,
+    color: VAULT_ACCENT_COLORS.earth,
+  },
 ];
 
 function vaultLabel(id) {
@@ -613,40 +633,49 @@ function ArchitectConsole({
     });
   };
 
-  const [showSignalPanel, setShowSignalPanel]   = useState(false);
-  const [signalTitle,     setSignalTitle]       = useState('');
-  const [signalLive,      setSignalLive]        = useState(false);
-  const [signalWorking,   setSignalWorking]     = useState(false);
+  const [showSignalPanel, setShowSignalPanel] = useState(false);
+  const [signalTitle, setSignalTitle] = useState("");
+  const [signalLive, setSignalLive] = useState(false);
+  const [signalWorking, setSignalWorking] = useState(false);
 
-  const SIGNAL_WORKER = 'https://psc-upload-worker.psoulc.workers.dev';
+  const SIGNAL_WORKER = "https://psc-upload-worker.psoulc.workers.dev";
 
   const handleGoLive = async () => {
     setSignalWorking(true);
     try {
       await fetch(`${SIGNAL_WORKER}/signal`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_live: 1, title: signalTitle.trim() || 'THE SIGNAL' }),
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          is_live: 1,
+          title: signalTitle.trim() || "THE SIGNAL",
+        }),
       });
       setSignalLive(true);
       setIsBroadcasting(true);
       onBroadcast?.();
-      announce('The Signal is live.');
-    } catch (_) {} finally { setSignalWorking(false); }
+      announce("The Signal is live.");
+    } catch (_) {
+    } finally {
+      setSignalWorking(false);
+    }
   };
 
   const handleEndSignal = async () => {
     setSignalWorking(true);
     try {
       await fetch(`${SIGNAL_WORKER}/signal`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_live: 0, title: null }),
       });
       setSignalLive(false);
       setIsBroadcasting(false);
-      announce('The Signal ended.');
-    } catch (_) {} finally { setSignalWorking(false); }
+      announce("The Signal ended.");
+    } catch (_) {
+    } finally {
+      setSignalWorking(false);
+    }
   };
 
   const handleBroadcast = () => setShowSignalPanel(true);
@@ -752,6 +781,27 @@ function ArchitectConsole({
         return next;
       });
     }
+  };
+
+  const handleNext = () => {
+    if (!visibleTracks.length) return;
+    const idx = loadedTrack
+      ? visibleTracks.findIndex((t) => t.id === loadedTrack.id)
+      : -1;
+    const next = visibleTracks[idx + 1] ?? visibleTracks[0];
+    loadAndPlay(next);
+    announce(`Loading ${next.title || "next track"}.`);
+  };
+
+  const handlePrev = () => {
+    if (!visibleTracks.length) return;
+    const idx = loadedTrack
+      ? visibleTracks.findIndex((t) => t.id === loadedTrack.id)
+      : 0;
+    const prev =
+      visibleTracks[idx - 1] ?? visibleTracks[visibleTracks.length - 1];
+    loadAndPlay(prev);
+    announce(`Loading ${prev.title || "previous track"}.`);
   };
 
   const handleHotCueClick = (num) => {
@@ -1021,9 +1071,16 @@ function ArchitectConsole({
     showVoidConfirm,
   ]);
 
+  const isD = viewer === "D";
+
   return (
     <motion.div
-      className="architect-console"
+      className={`architect-console${isD ? " architect-console--d" : ""}`}
+      style={
+        isD
+          ? { "--arch-accent-rgb": "20, 220, 20", "--arch-accent": "#14dc14" }
+          : undefined
+      }
       initial={{ opacity: 0, filter: "brightness(0) blur(8px)" }}
       animate={{ opacity: 1, filter: "brightness(1) blur(0px)" }}
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}
@@ -1047,7 +1104,9 @@ function ArchitectConsole({
           <span className="arch-top-name">
             {viewer} · {viewer === "D" ? "SOVEREIGN" : "ARCHITECT"}
           </span>
-          <span className="arch-top-tier">GOD MODE PLUS</span>
+          <span className="arch-top-tier">
+            {viewer === "D" ? "SOVEREIGN" : "GOD MODE PLUS"}
+          </span>
         </div>
 
         <div className="arch-top-system" aria-label="System status">
@@ -1305,6 +1364,14 @@ function ArchitectConsole({
           aria-label="Playback"
         >
           <button
+            className="arch-transport-btn arch-skip-btn"
+            aria-label="Previous track"
+            onClick={handlePrev}
+            disabled={!visibleTracks.length}
+          >
+            ⏮ PREV
+          </button>
+          <button
             className={`arch-transport-btn arch-play-btn${isPlaying ? " active" : ""}${audioLoading ? " loading" : ""}`}
             aria-label={isPlaying ? "Pause" : "Play"}
             aria-pressed={isPlaying}
@@ -1322,6 +1389,14 @@ function ArchitectConsole({
           >
             ■ CUE
           </button>
+          <button
+            className="arch-transport-btn arch-skip-btn"
+            aria-label="Next track"
+            onClick={handleNext}
+            disabled={!visibleTracks.length}
+          >
+            NEXT ⏭
+          </button>
         </div>
 
         <div className="arch-hotcues" role="group" aria-label="Hot cues">
@@ -1333,10 +1408,12 @@ function ArchitectConsole({
               <button
                 key={n}
                 className={`arch-hotcue ${cue ? "has-cue" : ""}`}
-                aria-label={`Hot cue ${n}`}
+                aria-label={
+                  cue ? `Hot cue ${n} — double-click to clear` : `Hot cue ${n}`
+                }
                 onClick={() => handleHotCueClick(n)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
                   clearHotCue(n, e);
                 }}
                 style={{
@@ -1521,29 +1598,35 @@ function ArchitectConsole({
               ref={gliderRef}
               aria-hidden="true"
             />
-            {VAULT_ROUTES.map((v, i) => (
-              <button
-                key={v.id}
-                ref={(el) => (tabRefs.current[i] = el)}
-                role="tab"
-                className={`arch-vault-tab ${activeLibVault === v.id ? "active" : ""}`}
-                style={{ "--vault-color": v.color }}
-                aria-selected={activeLibVault === v.id}
-                onClick={() => {
-                  onExplorePlanet?.({ id: v.id });
-                  announce(`Opening ${v.label}.`);
-                }}
-                onMouseEnter={() => hoverGlider(i)}
-                onMouseLeave={() =>
-                  moveGlider(
-                    VAULT_ROUTES.findIndex((r) => r.id === activeLibVault),
-                  )
-                }
-              >
-                <span className="arch-vault-pip" aria-hidden="true" />
-                {v.label}
-              </button>
-            ))}
+            {VAULT_ROUTES.map((v, i) => {
+              const count = countVaultTracks(v.id);
+              return (
+                <button
+                  key={v.id}
+                  ref={(el) => (tabRefs.current[i] = el)}
+                  role="tab"
+                  className={`arch-vault-tab ${activeLibVault === v.id ? "active" : ""}`}
+                  style={{ "--vault-color": v.color }}
+                  aria-selected={activeLibVault === v.id}
+                  onClick={() => {
+                    onExplorePlanet?.({ id: v.id });
+                    announce(`Opening ${v.label}.`);
+                  }}
+                  onMouseEnter={() => hoverGlider(i)}
+                  onMouseLeave={() =>
+                    moveGlider(
+                      VAULT_ROUTES.findIndex((r) => r.id === activeLibVault),
+                    )
+                  }
+                >
+                  <span className="arch-vault-pip" aria-hidden="true" />
+                  {v.label}
+                  {count > 0 && (
+                    <span className="arch-vault-count">{count}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           <div
@@ -2124,40 +2207,78 @@ function ArchitectConsole({
               <span className="arch-panel-dot" />
               <span className="arch-panel-title">PREFERENCES</span>
               <span className="arch-panel-sub">DISPLAY · PLAYBACK · VAULT</span>
-              <button className="arch-panel-close" onClick={toggleSettings} aria-label="Close settings">✕</button>
+              <button
+                className="arch-panel-close"
+                onClick={toggleSettings}
+                aria-label="Close settings"
+              >
+                ✕
+              </button>
             </div>
             <div className="arch-panel-body arch-settings-body">
               <section className="arch-settings-section">
                 <h4 className="arch-settings-title">DISPLAY</h4>
                 <div className="arch-settings-row">
                   <span>Waveform Detail</span>
-                  <button className={`arch-settings-toggle ${waveformDetail === "high" ? "active" : ""}`} onClick={() => setWaveformDetail(p => p === "high" ? "low" : "high")}>{waveformDetail.toUpperCase()}</button>
+                  <button
+                    className={`arch-settings-toggle ${waveformDetail === "high" ? "active" : ""}`}
+                    onClick={() =>
+                      setWaveformDetail((p) => (p === "high" ? "low" : "high"))
+                    }
+                  >
+                    {waveformDetail.toUpperCase()}
+                  </button>
                 </div>
                 <div className="arch-settings-row">
                   <span>Track Color Rows</span>
-                  <button className={`arch-settings-toggle ${trackColorRows ? "active" : ""}`} onClick={() => setTrackColorRows(p => !p)}>{trackColorRows ? "ON" : "OFF"}</button>
+                  <button
+                    className={`arch-settings-toggle ${trackColorRows ? "active" : ""}`}
+                    onClick={() => setTrackColorRows((p) => !p)}
+                  >
+                    {trackColorRows ? "ON" : "OFF"}
+                  </button>
                 </div>
               </section>
               <section className="arch-settings-section">
                 <h4 className="arch-settings-title">PLAYBACK</h4>
                 <div className="arch-settings-row">
                   <span>Quantize Default</span>
-                  <button className={`arch-settings-toggle ${quantizeEnabled ? "active" : ""}`} onClick={handleQuantizeToggle}>{quantizeEnabled ? "ON" : "OFF"}</button>
+                  <button
+                    className={`arch-settings-toggle ${quantizeEnabled ? "active" : ""}`}
+                    onClick={handleQuantizeToggle}
+                  >
+                    {quantizeEnabled ? "ON" : "OFF"}
+                  </button>
                 </div>
                 <div className="arch-settings-row">
                   <span>Auto Loop Default</span>
-                  <button className={`arch-settings-toggle ${autoLoopDefault ? "active" : ""}`} onClick={() => setAutoLoopDefault(p => !p)}>{autoLoopDefault ? "ON" : "OFF"}</button>
+                  <button
+                    className={`arch-settings-toggle ${autoLoopDefault ? "active" : ""}`}
+                    onClick={() => setAutoLoopDefault((p) => !p)}
+                  >
+                    {autoLoopDefault ? "ON" : "OFF"}
+                  </button>
                 </div>
               </section>
               <section className="arch-settings-section">
                 <h4 className="arch-settings-title">VAULT</h4>
                 <div className="arch-settings-row">
                   <span>Smart Crates</span>
-                  <button className={`arch-settings-toggle ${smartCrates ? "active" : ""}`} onClick={() => setSmartCrates(p => !p)}>{smartCrates ? "ENABLED" : "DISABLED"}</button>
+                  <button
+                    className={`arch-settings-toggle ${smartCrates ? "active" : ""}`}
+                    onClick={() => setSmartCrates((p) => !p)}
+                  >
+                    {smartCrates ? "ENABLED" : "DISABLED"}
+                  </button>
                 </div>
                 <div className="arch-settings-row">
                   <span>Track History</span>
-                  <button className={`arch-settings-toggle ${historyEnabled ? "active" : ""}`} onClick={() => setHistoryEnabled(p => !p)}>{historyEnabled ? "ENABLED" : "DISABLED"}</button>
+                  <button
+                    className={`arch-settings-toggle ${historyEnabled ? "active" : ""}`}
+                    onClick={() => setHistoryEnabled((p) => !p)}
+                  >
+                    {historyEnabled ? "ENABLED" : "DISABLED"}
+                  </button>
                 </div>
               </section>
             </div>
@@ -2360,7 +2481,9 @@ function ArchitectConsole({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={e => { if (e.target === e.currentTarget) setShowSignalPanel(false); }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowSignalPanel(false);
+            }}
           >
             <motion.div
               className="signal-panel"
@@ -2383,7 +2506,7 @@ function ArchitectConsole({
                 <input
                   className="signal-panel-input"
                   value={signalTitle}
-                  onChange={e => setSignalTitle(e.target.value)}
+                  onChange={(e) => setSignalTitle(e.target.value)}
                   placeholder="SOUL PLEASANT LIVE SESSION"
                   maxLength={64}
                   disabled={signalLive}
@@ -2392,7 +2515,9 @@ function ArchitectConsole({
               </div>
 
               <div className="signal-panel-field">
-                <label className="signal-panel-label">OBS SETTINGS (D ONLY)</label>
+                <label className="signal-panel-label">
+                  OBS SETTINGS (D ONLY)
+                </label>
                 <div className="signal-panel-mono">
                   <div>SERVER: rtmps://live.cloudflare.com:443/live/</div>
                   <div>KEY: dede7aa1a5039f9d121f59e924369990</div>
@@ -2406,7 +2531,7 @@ function ArchitectConsole({
                     onClick={handleGoLive}
                     disabled={signalWorking}
                   >
-                    {signalWorking ? 'CONNECTING…' : 'GO LIVE'}
+                    {signalWorking ? "CONNECTING…" : "GO LIVE"}
                   </button>
                 ) : (
                   <button
@@ -2414,14 +2539,14 @@ function ArchitectConsole({
                     onClick={handleEndSignal}
                     disabled={signalWorking}
                   >
-                    {signalWorking ? 'ENDING…' : 'END SIGNAL'}
+                    {signalWorking ? "ENDING…" : "END SIGNAL"}
                   </button>
                 )}
                 <button
                   className="signal-panel-close"
                   onClick={() => setShowSignalPanel(false)}
                 >
-                  {signalLive ? 'MINIMISE' : 'CANCEL'}
+                  {signalLive ? "MINIMISE" : "CANCEL"}
                 </button>
               </div>
             </motion.div>
@@ -2436,7 +2561,8 @@ function ArchitectConsole({
           onClick={() => setShowSignalPanel(true)}
           aria-label="The Signal is live — click to manage"
         >
-          <span className="signal-live-dot" aria-hidden="true" /> THE SIGNAL IS LIVE
+          <span className="signal-live-dot" aria-hidden="true" /> THE SIGNAL IS
+          LIVE
         </button>
       )}
     </motion.div>

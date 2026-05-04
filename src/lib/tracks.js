@@ -100,3 +100,9 @@ export async function saveTrackWaveform(id, waveformData) {
 export function getAudioUrl(audio_path) {
   return null; // Playback disabled in dev mode
 }
+
+// Count active (non-voided) tracks in a given vault
+export function countVaultTracks(vault) {
+  const allTracks = loadTracksFromStorage();
+  return allTracks.filter((t) => t.vault === vault && !t.is_voided).length;
+}

@@ -16,14 +16,14 @@
 .locked-door-rail {
   width: 2px;
   height: 48px;
-  background: var(--locked-door-color, #ffbf00);
+  background: var(--locked-door-color, #888888);
   opacity: 0.7;
 }
 
 .locked-door-name {
   font-size: 0.7rem;
   letter-spacing: 0.35em;
-  color: var(--locked-door-color, #ffbf00);
+  color: var(--locked-door-color, #888888);
   opacity: 0.7;
   text-transform: uppercase;
 }
@@ -31,17 +31,17 @@
 .locked-door-sealed {
   font-size: 2.2rem;
   letter-spacing: 0.22em;
-  color: #ffbf00;
+  color: rgba(255, 255, 255, 0.12);
   opacity: 0.13;
   font-weight: 700;
-  text-shadow: 0 0 12px #ffbf0033;
+  text-shadow: none;
 }
 
 .locked-door-btn {
   margin-top: 1.2rem;
   background: transparent;
-  border: 1.5px solid var(--locked-door-color, #ffbf00);
-  color: var(--locked-door-color, #ffbf00);
+  border: 1.5px solid var(--locked-door-color, #888888);
+  color: var(--locked-door-color, #888888);
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.7rem;
   letter-spacing: 0.28em;
@@ -51,8 +51,9 @@
   text-transform: uppercase;
   transition: background 0.18s, color 0.18s;
 }
+
 .locked-door-btn:hover {
-  background: #18120a;
-  color: #ffbf00;
+  background: #121212;
+  color: rgba(255, 255, 255, 0.85);
   opacity: 1;
 }

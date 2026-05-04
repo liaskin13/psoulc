@@ -1,13 +1,16 @@
 /* ─────────────────────────────────────────────────────────────────────────
-   ArchitectConsole.css — L's console. GOD MODE PLUS.
-   Serato-shaped layout. Cyan var(--arch-accent) only. Zero amber. Ever.
-   Chakra Petch (UI) · JetBrains Mono (data) · #070a0d (void)
+   ArchitectConsole.css — Shared console base. GOD MODE.
+   Serato-shaped layout. Identity color via --arch-accent / --arch-accent-rgb.
+   L default: cyan #00e5ff. D override: green #14dc14 (set via inline style).
+   Chakra Petch (UI) · JetBrains Mono (data)
    ───────────────────────────────────────────────────────────────────────── */
 
 /* ── Layout root ────────────────────────────────────────────────────────── */
 .architect-console {
   --arch-accent-rgb: 0, 229, 255;
   --arch-accent: #00e5ff;
+  --arch-neutral-rgb: 210, 225, 235;
+  --arch-neutral: #d2e1eb;
   position: fixed;
   inset: 0;
   background: #070a0d;
@@ -20,6 +23,21 @@
   z-index: 10;
   cursor: none;
   /* Entry-matched reveal — handled by framer motion in JSX */
+}
+
+/* ── D's sovereign overrides ────────────────────────────────────────────── */
+/* --arch-accent-rgb and --arch-accent are set via inline style in JSX       */
+.architect-console--d {
+  --arch-neutral-rgb: 235, 240, 235;
+  --arch-neutral: #ebf0eb;
+  background: #060806;
+  color: rgba(235, 240, 235, 0.75);
+}
+
+.architect-console--d .arch-grain-layer {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
 }
 
 
@@ -162,10 +180,14 @@
 }
 
 .arch-rail-btn {
-  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.2) 100%);
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.14);
-  box-shadow: var(--shadow-btn-outset);
-  color: rgba(var(--arch-accent-rgb), 0.6);
+  background: linear-gradient(180deg, #1c1c1c 0%, #111 100%);
+  border: 1px solid #2a2a2a;
+  border-bottom-color: #080808;
+  box-shadow:
+    0 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: rgba(var(--arch-accent-rgb), 0.7);
   padding: 5px 12px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.62rem;
@@ -173,28 +195,44 @@
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 0;
-  transition: box-shadow 80ms ease, color 0.15s, border-color 0.15s;
+  transition: box-shadow 60ms ease, transform 60ms ease, color 0.12s;
   white-space: nowrap;
+  position: relative;
+  top: 0;
 }
 
 .arch-rail-btn:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.42);
   color: var(--arch-accent);
+  border-color: #333;
 }
 
 .arch-rail-btn:active {
-  box-shadow: var(--shadow-btn-inset);
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 #000,
+    inset 2px 2px 8px rgba(0, 0, 0, 0.9),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.02);
+  top: 1px;
 }
 
 .arch-rail-btn.active {
-  border-color: rgba(var(--arch-accent-rgb), 0.55);
+  background: linear-gradient(180deg, #0e0e0e 0%, #151515 100%);
+  border-color: rgba(var(--arch-accent-rgb), 0.4);
   color: var(--arch-accent);
-  box-shadow: var(--shadow-btn-inset);
+  box-shadow:
+    0 1px 0 #000,
+    inset 2px 2px 8px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(var(--arch-accent-rgb), 0.25);
 }
 
 .arch-intake-btn {
-  border-color: rgba(var(--arch-accent-rgb), 0.4);
-  color: rgba(var(--arch-accent-rgb), 0.85);
+  border-color: rgba(var(--arch-accent-rgb), 0.35);
+  color: rgba(var(--arch-accent-rgb), 0.9);
+  box-shadow:
+    0 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.7),
+    0 0 6px rgba(var(--arch-accent-rgb), 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .arch-exit-btn {
@@ -205,7 +243,6 @@
 .arch-exit-btn:hover {
   border-color: rgba(180, 200, 210, 0.3);
   color: rgba(180, 200, 210, 0.65);
-  background: transparent;
 }
 
 .arch-badge-btn {
@@ -272,22 +309,31 @@
 }
 
 .arch-deck-tool-btn {
-  background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
-  color: rgba(180, 200, 210, 0.45);
+  background: linear-gradient(180deg, #191919 0%, #101010 100%);
+  border: 1px solid #252525;
+  border-bottom-color: #060606;
+  box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  color: rgba(180, 200, 210, 0.5);
   padding: 4px 9px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.56rem;
   letter-spacing: 0.08em;
   border-radius: 0;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  transition: box-shadow 60ms ease, transform 60ms ease, color 0.1s;
+  position: relative;
+}
+
+.arch-deck-tool-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 #000, inset 2px 2px 6px rgba(0, 0, 0, 0.9);
 }
 
 .arch-deck-tool-btn.active {
-  border-color: rgba(var(--arch-accent-rgb), 0.45);
+  background: linear-gradient(180deg, #0d0d0d 0%, #131313 100%);
+  border-color: rgba(var(--arch-accent-rgb), 0.35);
   color: var(--arch-accent);
-  background: rgba(var(--arch-accent-rgb), 0.08);
+  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.8), 0 0 6px rgba(var(--arch-accent-rgb), 0.2);
 }
 
 .arch-stat {
@@ -457,18 +503,26 @@
 }
 
 .arch-deck-mini-btn {
-  background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
+  background: linear-gradient(180deg, #191919 0%, #0f0f0f 100%);
+  border: 1px solid #232323;
+  border-bottom-color: #050505;
+  box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.025);
   color: rgba(180, 200, 210, 0.4);
   padding: 3px 6px;
   font-size: 0.52rem;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.06em;
   cursor: pointer;
+  transition: box-shadow 60ms ease, transform 60ms ease;
+}
+
+.arch-deck-mini-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.9);
 }
 
 .arch-deck-mini-btn:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.38);
+  border-color: rgba(var(--arch-accent-rgb), 0.3);
   color: rgba(var(--arch-accent-rgb), 0.8);
 }
 
@@ -492,9 +546,14 @@
 }
 
 .arch-transport-btn {
-  background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
-  color: rgba(var(--arch-accent-rgb), 0.6);
+  background: linear-gradient(180deg, #1e1e1e 0%, #121212 100%);
+  border: 1px solid #2e2e2e;
+  border-bottom-color: #080808;
+  box-shadow:
+    0 3px 0 #000,
+    0 5px 10px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: rgba(var(--arch-accent-rgb), 0.65);
   padding: 7px 18px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.68rem;
@@ -502,15 +561,32 @@
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 0;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition: box-shadow 60ms ease, transform 60ms ease, color 0.1s;
   display: flex;
   align-items: center;
   gap: 6px;
+  position: relative;
 }
 
 .arch-play-btn {
-  border-color: rgba(var(--arch-accent-rgb), 0.4);
-  color: rgba(var(--arch-accent-rgb), 0.85);
+  border-color: rgba(var(--arch-accent-rgb), 0.35);
+  color: rgba(var(--arch-accent-rgb), 0.9);
+  box-shadow:
+    0 3px 0 #000,
+    0 5px 10px rgba(0, 0, 0, 0.75),
+    0 0 8px rgba(var(--arch-accent-rgb), 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.arch-skip-btn {
+  color: rgba(255, 255, 255, 0.4);
+  padding: 7px 12px;
+  font-size: 0.63rem;
+}
+
+.arch-skip-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
 }
 
 .arch-play-icon {
@@ -518,9 +594,15 @@
 }
 
 .arch-transport-btn:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.7);
   color: var(--arch-accent);
-  background: rgba(var(--arch-accent-rgb), 0.06);
+  border-color: rgba(var(--arch-accent-rgb), 0.5);
+}
+
+.arch-transport-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 #000,
+    inset 2px 2px 8px rgba(0, 0, 0, 0.95);
 }
 
 .arch-hotcues {
@@ -530,9 +612,14 @@
 }
 
 .arch-hotcue {
-  background: transparent;
-  border: 1px solid var(--cue-color, rgba(var(--arch-accent-rgb), 0.12));
-  color: rgba(180, 200, 210, 0.5);
+  background: linear-gradient(180deg, #1a1a1a 0%, #111 100%);
+  border: 1px solid #2a2a2a;
+  border-bottom-color: #070707;
+  box-shadow:
+    0 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  color: rgba(180, 200, 210, 0.4);
   width: 26px;
   height: 28px;
   font-family: 'JetBrains Mono', monospace;
@@ -540,12 +627,20 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: 0;
-  transition: all 0.15s;
+  transition: box-shadow 60ms ease, transform 60ms ease;
+}
+
+.arch-hotcue:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #000, inset 2px 2px 6px rgba(0, 0, 0, 0.95);
 }
 
 .arch-hotcue:hover {
-  border-color: var(--cue-color, rgba(var(--arch-accent-rgb), 0.5));
-  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--cue-color, var(--arch-accent)) 40%, transparent);
+  border-color: var(--cue-color, rgba(var(--arch-accent-rgb), 0.4));
+  box-shadow:
+    0 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.7),
+    0 0 8px 2px color-mix(in srgb, var(--cue-color, var(--arch-accent)) 30%, transparent);
 }
 
 .arch-hotcue.has-cue {
@@ -553,12 +648,26 @@
   color: #000;
   border-color: var(--cue-color);
   font-weight: 700;
-  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--cue-color) 35%, transparent);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.8),
+    0 0 10px 2px color-mix(in srgb, var(--cue-color) 50%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.arch-hotcue.has-cue:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.8),
+    0 0 6px 1px color-mix(in srgb, var(--cue-color) 40%, transparent),
+    inset 2px 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .arch-hotcue.has-cue:hover {
-  filter: brightness(1.15);
-  box-shadow: 0 0 12px 3px color-mix(in srgb, var(--cue-color) 50%, transparent);
+  filter: brightness(1.2);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.8),
+    0 0 16px 4px color-mix(in srgb, var(--cue-color) 60%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .arch-transport-spacer {
@@ -571,27 +680,36 @@
 }
 
 .arch-loop-btn {
-  background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
-  color: rgba(180, 200, 210, 0.35);
+  background: linear-gradient(180deg, #181818 0%, #0f0f0f 100%);
+  border: 1px solid #242424;
+  border-bottom-color: #060606;
+  box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  color: rgba(180, 200, 210, 0.38);
   padding: 6px 10px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.06em;
   cursor: pointer;
   border-radius: 0;
-  transition: border-color 0.15s, color 0.15s;
+  transition: box-shadow 60ms ease, transform 60ms ease, color 0.1s;
+}
+
+.arch-loop-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.9);
 }
 
 .arch-loop-btn:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.35);
-  color: rgba(var(--arch-accent-rgb), 0.7);
+  border-color: rgba(var(--arch-accent-rgb), 0.3);
+  color: rgba(var(--arch-accent-rgb), 0.75);
 }
 
 .arch-mode-btn {
-  background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
-  color: rgba(180, 200, 210, 0.35);
+  background: linear-gradient(180deg, #181818 0%, #0f0f0f 100%);
+  border: 1px solid #242424;
+  border-bottom-color: #060606;
+  box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  color: rgba(180, 200, 210, 0.38);
   padding: 6px 10px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.56rem;
@@ -599,13 +717,19 @@
   text-transform: uppercase;
   border-radius: 0;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  transition: box-shadow 60ms ease, transform 60ms ease, color 0.1s;
+}
+
+.arch-mode-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.9);
 }
 
 .arch-mode-btn.active {
-  border-color: rgba(var(--arch-accent-rgb), 0.45);
+  background: linear-gradient(180deg, #0c0c0c 0%, #121212 100%);
+  border-color: rgba(var(--arch-accent-rgb), 0.4);
   color: var(--arch-accent);
-  background: rgba(var(--arch-accent-rgb), 0.06);
+  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.8), 0 0 8px rgba(var(--arch-accent-rgb), 0.2);
 }
 
 .arch-monitor-strip {
@@ -643,19 +767,27 @@
 }
 
 .arch-monitor-btn {
-  background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
-  color: rgba(180, 200, 210, 0.38);
+  background: linear-gradient(180deg, #171717 0%, #0e0e0e 100%);
+  border: 1px solid #222;
+  border-bottom-color: #050505;
+  box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  color: rgba(180, 200, 210, 0.4);
   padding: 4px 7px;
   font-size: 0.52rem;
   letter-spacing: 0.1em;
   font-family: 'JetBrains Mono', monospace;
   cursor: pointer;
+  transition: box-shadow 60ms ease, transform 60ms ease;
+}
+
+.arch-monitor-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.9);
 }
 
 .arch-monitor-btn:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.35);
-  color: rgba(var(--arch-accent-rgb), 0.75);
+  border-color: rgba(var(--arch-accent-rgb), 0.3);
+  color: rgba(var(--arch-accent-rgb), 0.8);
 }
 
 /* ── VOLUME SLIDER ──────────────────────────────────────────────────────── */
@@ -704,9 +836,14 @@
 
 /* ── TRANSPORT ACTIVE / LOADING STATES ──────────────────────────────────── */
 .arch-transport-btn.active {
-  border-color: var(--arch-accent);
+  background: linear-gradient(180deg, #0d0d0d 0%, #141414 100%);
+  border-color: rgba(var(--arch-accent-rgb), 0.5);
   color: var(--arch-accent);
-  background: rgba(var(--arch-accent-rgb), 0.1);
+  box-shadow:
+    0 1px 0 #000,
+    inset 2px 2px 8px rgba(0, 0, 0, 0.95),
+    0 0 12px rgba(var(--arch-accent-rgb), 0.3);
+  transform: translateY(1px);
 }
 
 .arch-transport-btn.loading {
@@ -864,20 +1001,13 @@
   min-height: 0;
 }
 
-/* ── Vault Tabs — Animation 3: Magnetic Glider ──────────────────────────── */
-/*
-   .arch-tab-glider is a physical element that moves between tabs.
-   JS drives its position via getBoundingClientRect().
-   On hover, it pulls 40% toward the hovered tab (magnetic pull).
-   On click, it commits with a spring-like transition.
-   No music platform or streaming service does this.
-*/
+/* ── Vault Tabs — Serato color per vault, physical depth ────────────────── */
 .arch-vault-tabs {
   position: relative;
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.1);
-  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid #111;
+  background: #080808;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -887,33 +1017,45 @@
   bottom: 0;
   left: 0;
   height: 2px;
-  background: var(--arch-accent);
-  box-shadow: 0 0 8px rgba(var(--arch-accent-rgb), 0.7);
+  background: var(--vault-color, var(--arch-accent));
+  box-shadow: 0 0 8px var(--vault-color, rgba(var(--arch-accent-rgb), 0.7));
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
   z-index: 2;
 }
 
 .arch-vault-tab {
-  background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.15) 100%);
+  background: linear-gradient(180deg, #181818 0%, #0f0f0f 100%);
   border: none;
-  border-right: 1px solid rgba(255,255,255,0.04);
-  box-shadow: var(--shadow-btn-outset);
-  color: rgba(180, 200, 210, 0.38);
+  border-right: 1px solid #111;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  color: rgba(180, 200, 210, 0.35);
   padding: 10px 18px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.65rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: box-shadow 80ms ease, color 0.18s;
+  transition: color 0.15s, background 0.15s, box-shadow 60ms ease;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
 }
 
 .arch-vault-tab:active {
-  box-shadow: var(--shadow-btn-inset);
+  background: linear-gradient(180deg, #0e0e0e 0%, #0a0a0a 100%);
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.arch-vault-tab.active {
+  color: var(--vault-color, var(--arch-accent));
+  background: linear-gradient(180deg, #141414 0%, #111 100%);
+  box-shadow: inset 0 -2px 0 var(--vault-color, var(--arch-accent));
+}
+
+.arch-vault-tab:hover:not(.active) {
+  color: rgba(255, 255, 255, 0.6);
+  background: linear-gradient(180deg, #1e1e1e 0%, #141414 100%);
 }
 
 .arch-browser-utility {
@@ -933,9 +1075,11 @@
 }
 
 .arch-browser-btn {
-  background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
-  color: rgba(180, 200, 210, 0.36);
+  background: linear-gradient(180deg, #181818 0%, #101010 100%);
+  border: 1px solid #222;
+  border-bottom-color: #060606;
+  box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  color: rgba(180, 200, 210, 0.38);
   padding: 5px 8px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.54rem;
@@ -943,13 +1087,19 @@
   text-transform: uppercase;
   border-radius: 0;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  transition: box-shadow 60ms ease, transform 60ms ease, color 0.1s;
+}
+
+.arch-browser-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.9);
 }
 
 .arch-browser-btn.active {
-  border-color: rgba(var(--arch-accent-rgb), 0.4);
+  background: linear-gradient(180deg, #0c0c0c 0%, #121212 100%);
+  border-color: rgba(var(--arch-accent-rgb), 0.35);
   color: var(--arch-accent);
-  background: rgba(var(--arch-accent-rgb), 0.06);
+  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.8), 0 0 6px rgba(var(--arch-accent-rgb), 0.18);
 }
 
 .arch-vault-pip {
@@ -958,27 +1108,33 @@
   height: 6px;
   border-radius: 50%;
   background: var(--vault-color, rgba(255, 255, 255, 0.22));
-  opacity: 0.45;
+  opacity: 0.6;
   margin-right: 7px;
   vertical-align: middle;
   flex-shrink: 0;
-  transition: opacity 0.18s;
+  transition: opacity 0.18s, box-shadow 0.18s;
+  box-shadow: 0 0 0 transparent;
+}
+
+.arch-vault-tab.active .arch-vault-pip {
+  opacity: 1;
+  box-shadow: 0 0 6px 2px var(--vault-color, rgba(255, 255, 255, 0.3));
 }
 
 .arch-vault-tab:hover .arch-vault-pip {
   opacity: 0.7;
 }
 
-.arch-vault-tab.active .arch-vault-pip {
-  opacity: 1;
+.arch-vault-count {
+  font-size: 0.55rem;
+  opacity: 0.5;
+  margin-left: 4px;
+  font-family: 'JetBrains Mono', monospace;
 }
 
-.arch-vault-tab:hover {
-  color: rgba(var(--arch-accent-rgb), 0.7);
-}
-
-.arch-vault-tab.active {
-  color: var(--arch-accent);
+.arch-vault-tab.active .arch-vault-count {
+  opacity: 0.75;
+  color: var(--vault-color, rgba(255, 255, 255, 0.6));
 }
 
 /* Library search */
@@ -1822,15 +1978,17 @@
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(var(--arch-accent-rgb), 0.07);
-  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.28);
+  background: rgba(229, 32, 32, 0.09);
+  border-bottom: 2px solid #e52020;
+  box-shadow: 0 2px 20px rgba(229, 32, 32, 0.25);
   text-align: center;
-  padding: 8px;
+  padding: 9px;
   font-size: 0.6rem;
   letter-spacing: 0.26em;
-  color: var(--arch-accent);
+  color: #e52020;
   text-transform: uppercase;
   font-family: 'Chakra Petch', sans-serif;
+  cursor: pointer;
 }
 
 /* ── Confirm overlays ───────────────────────────────────────────────────── */

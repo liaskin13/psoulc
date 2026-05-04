@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 // SpectralStack — The Helix
 // Renders tracks from the active vault as stacked amber sine-wave layers.
@@ -6,26 +6,27 @@ import React, { useEffect, useRef } from 'react';
 // Lives behind the hero + tracklist in the MONITOR column (z-index: 1).
 
 const FALLBACK_BPMS = [88, 93, 104];
-const SCROLL_SPEED  = 20; // px per second
+const SCROLL_SPEED = 20; // px per second
 
 export default function SpectralStack({ tracks = [] }) {
   const canvasRef = useRef(null);
-  const rafRef    = useRef(null);
+  const rafRef = useRef(null);
   const offsetRef = useRef(0);
   const prevTimeRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const sources = tracks.length > 0
-      ? tracks.slice(0, 10).map((t, i) => ({ bpm: t.bpm || 90, index: i }))
-      : FALLBACK_BPMS.map((bpm, i) => ({ bpm, index: i }));
+    const sources =
+      tracks.length > 0
+        ? tracks.slice(0, 10).map((t, i) => ({ bpm: t.bpm || 90, index: i }))
+        : FALLBACK_BPMS.map((bpm, i) => ({ bpm, index: i }));
 
     function resize() {
-      canvas.width  = canvas.offsetWidth;
+      canvas.width = canvas.offsetWidth;
       canvas.height = canvas.offsetHeight;
     }
     resize();
@@ -44,21 +45,22 @@ export default function SpectralStack({ tracks = [] }) {
       ctx.clearRect(0, 0, w, h);
 
       sources.forEach(({ bpm, index }) => {
-        const amplitude  = 20 + (bpm % 40);
-        const freq       = bpm / 120;
-        const phase      = index * (Math.PI / 5);
-        const baseline   = h * 0.5 + (index - sources.length / 2) * 18;
-        const opacity    = 0.08 + index * 0.015;
+        const amplitude = 20 + (bpm % 40);
+        const freq = bpm / 120;
+        const phase = index * (Math.PI / 5);
+        const baseline = h * 0.5 + (index - sources.length / 2) * 18;
+        const opacity = 0.08 + index * 0.015;
 
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(255, 191, 0, ${Math.min(opacity, 0.18)})`;
-        ctx.lineWidth   = 1.5;
+        ctx.strokeStyle = `rgba(240, 237, 232, ${Math.min(opacity, 0.12)})`;
+        ctx.lineWidth = 1.5;
 
         for (let x = 0; x <= w; x += 2) {
           const t = (x + offsetRef.current) / w;
-          const y = baseline + amplitude * Math.sin(freq * t * Math.PI * 2 + phase);
+          const y =
+            baseline + amplitude * Math.sin(freq * t * Math.PI * 2 + phase);
           if (x === 0) ctx.moveTo(x, y);
-          else         ctx.lineTo(x, y);
+          else ctx.lineTo(x, y);
         }
         ctx.stroke();
       });

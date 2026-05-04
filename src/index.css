@@ -255,8 +255,8 @@ h3,
 }
 
 .nixie-display {
-  background-color: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.8);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
   padding: var(--space-md);
   border-radius: 0;
   margin-bottom: var(--space-lg);
@@ -319,7 +319,7 @@ h3,
 }
 
 .master-reel:hover {
-  filter: drop-shadow(0 0 8px rgba(255, 191, 0, 0.45));
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.20));
 }
 
 .master-reel:active {
@@ -367,7 +367,7 @@ h3,
   box-shadow:
     inset 0 1px 4px rgba(255, 255, 255, 0.25),
     inset 0 -2px 4px rgba(0, 0, 0, 0.5),
-    0 0 0 3px rgba(255, 191, 0, 0.15);
+    0 0 0 3px rgba(255, 255, 255, 0.06);
 }
 
 /* Center spindle hole */
@@ -389,15 +389,15 @@ h3,
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  color: var(--identity, rgba(255,255,255,0.5));
+  color: var(--identity, rgba(255, 255, 255, 0.5));
   font-family: var(--font-mono);
   font-size: 0.65rem;
-  text-shadow: 0 0 6px var(--identity, rgba(255,255,255,0.2));
+  text-shadow: 0 0 6px var(--identity, rgba(255, 255, 255, 0.2));
   z-index: 3;
   pointer-events: none;
   /* Amber phosphor label card */
   background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 191, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 0;
   padding: 4px 6px;
   width: 60%;
@@ -421,7 +421,7 @@ h3,
 .freq-display {
   font-family: var(--font-mono);
   font-size: 0.58rem;
-  color: var(--identity, rgba(255,255,255,0.5));
+  color: var(--identity, rgba(255, 255, 255, 0.5));
   opacity: 0.85;
   letter-spacing: 0.08em;
 }
@@ -449,7 +449,7 @@ h3,
 .transport-btn {
   background: linear-gradient(135deg, #404040, #202020);
   border: 2px solid #606060;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   padding: var(--space-md) var(--space-lg);
   font-family: var(--font-mono);
   font-size: 0.9rem;
@@ -463,7 +463,7 @@ h3,
 
 .transport-btn:hover {
   background: linear-gradient(135deg, #505050, #303030);
-  box-shadow: 0 0 15px rgba(255, 191, 0, 0.3);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.12);
 }
 
 .pitch-control {
@@ -500,7 +500,7 @@ h3,
 }
 
 .pitch-value {
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   font-family: var(--font-mono);
   font-size: 0.9rem;
   min-width: 40px;
@@ -545,7 +545,7 @@ h3,
 }
 
 .god-btn {
-  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.18) 100%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: var(--shadow-btn-outset);
   color: rgba(232, 228, 222, 0.72);
@@ -659,8 +659,8 @@ h3,
 }
 
 .status-indicator.standby {
-  background: rgba(255,255,255,0.4);
-  box-shadow: 0 0 10px rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
   animation: standby-pulse 2s ease-in-out infinite;
 }
 
@@ -869,8 +869,8 @@ h3,
 }
 
 .doc-classification.confidential {
-  color: rgba(255,255,255,0.6);
-  border-color: rgba(255,255,255,0.2);
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .doc-classification.classified {
@@ -902,7 +902,7 @@ h3,
   left: 1rem;
   z-index: 1001;
   padding: 0.5rem 1.25rem;
-  background: var(--identity, rgba(255,255,255,0.5));
+  background: var(--identity, rgba(255, 255, 255, 0.5));
   color: var(--void-black);
   font-family: var(--font-ui);
   font-weight: 700;
@@ -921,7 +921,7 @@ h3,
 /* ── Global Focus Visibility ─────────────────────────────────── */
 /* Restores keyboard navigation without overriding custom input focus styles */
 :focus-visible {
-  outline: 2px solid var(--identity, rgba(255,255,255,0.4));
+  outline: 2px solid var(--identity, rgba(255, 255, 255, 0.4));
   outline-offset: 3px;
   border-radius: 0;
 }
@@ -995,7 +995,7 @@ h3,
 
   .singularity-dot {
     animation: none !important;
-    box-shadow: 0 0 8px var(--identity, rgba(255,255,255,0.25)) !important;
+    box-shadow: 0 0 8px var(--identity, rgba(255, 255, 255, 0.25)) !important;
   }
 
   .resonance-ring {
@@ -1067,8 +1067,8 @@ h3,
   padding: var(--space-xs) var(--space-md);
   padding-top: calc(var(--space-xs) + var(--safe-top));
   background: rgba(5, 5, 5, 0.92);
-  border-bottom: 1px solid rgba(255, 191, 0, 0.25);
-  color: var(--identity, rgba(255,255,255,0.5));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--identity, rgba(255, 255, 255, 0.5));
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.12em;
@@ -1083,7 +1083,7 @@ h3,
   margin-top: 4px;
   height: 28px;
   border-radius: 0;
-  accent-color: var(--identity, rgba(255,255,255,0.5));
+  accent-color: var(--identity, rgba(255, 255, 255, 0.5));
   background: rgba(0, 0, 0, 0.4);
 }
 
@@ -1098,7 +1098,7 @@ h3,
   font-family: var(--font-primary);
   font-size: 0.6rem;
   letter-spacing: 0.12em;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
   opacity: 0.85;
 }
 
@@ -1305,7 +1305,7 @@ h3,
 .vault-deck-time,
 .vault-deck-duration {
   font-feature-settings: 'tnum';
-  color: rgba(255, 191, 0, 0.6);
+  color: rgba(255, 255, 255, 0.45);
   min-width: 48px;
 }
 
@@ -1452,14 +1452,14 @@ h3,
    THE SIGNAL — Live broadcast room + controls
    ═══════════════════════════════════════════════════════════════ */
 
-/* Shared live dot — record red */
+/* Shared live dot — Serato red #e52020 */
 .signal-live-dot {
   display: inline-block;
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #cc2200;
-  box-shadow: 0 0 6px #cc2200, 0 0 12px rgba(204, 34, 0, 0.4);
+  background: #e52020;
+  box-shadow: 0 0 6px #e52020, 0 0 12px rgba(229, 32, 32, 0.45);
   flex-shrink: 0;
 }
 
@@ -1474,12 +1474,12 @@ h3,
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 6px #cc2200, 0 0 12px rgba(204, 34, 0, 0.4);
+    box-shadow: 0 0 6px #e52020, 0 0 12px rgba(229, 32, 32, 0.45);
   }
 
   50% {
     opacity: 0.5;
-    box-shadow: 0 0 3px #cc2200;
+    box-shadow: 0 0 3px #e52020;
   }
 }
 
@@ -1509,10 +1509,10 @@ h3,
 
 .listener-powerdown {
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.18) 100%);
   box-shadow: var(--shadow-btn-outset);
   color: rgba(240, 237, 232, 0.62);
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.16em;
   padding: 8px 12px;
@@ -1520,6 +1520,7 @@ h3,
   cursor: pointer;
   transition: box-shadow 80ms ease, color 120ms ease;
 }
+
 .listener-powerdown:active {
   box-shadow: var(--shadow-btn-inset);
 }
@@ -1538,7 +1539,7 @@ h3,
 .listener-marquee {
   white-space: nowrap;
   overflow: hidden;
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.54rem;
   letter-spacing: 0.28em;
   color: rgba(255, 255, 255, 0.26);
@@ -1567,7 +1568,7 @@ h3,
 .listener-hero-title {
   margin: 0;
   max-width: 14ch;
-  font-family: 'Sora', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: clamp(2rem, 6vw, 3.7rem);
   line-height: 0.98;
   letter-spacing: -0.01em;
@@ -1577,7 +1578,7 @@ h3,
 .listener-hero-copy {
   margin: 0;
   max-width: 45ch;
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.95rem;
   line-height: 1.6;
   color: rgba(240, 237, 232, 0.68);
@@ -1586,10 +1587,10 @@ h3,
 .listener-hero-enter {
   width: fit-content;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.18) 100%);
   box-shadow: var(--shadow-btn-outset);
   color: rgba(240, 237, 232, 0.72);
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.66rem;
   letter-spacing: 0.17em;
   padding: 12px 16px;
@@ -1631,6 +1632,7 @@ h3,
 
 .listener-rail-panel {
   border: 1px solid rgba(255, 255, 255, 0.09);
+  border-left: 2px solid var(--vault-color, rgba(255, 255, 255, 0.09));
   background:
     linear-gradient(120deg, rgba(255, 255, 255, 0.02), transparent 55%),
     linear-gradient(180deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.48));
@@ -1649,7 +1651,7 @@ h3,
 }
 
 .listener-panel-kicker {
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.56rem;
   letter-spacing: 0.22em;
   color: rgba(255, 255, 255, 0.4);
@@ -1658,7 +1660,7 @@ h3,
 
 .listener-panel-title {
   margin: 0;
-  font-family: 'Sora', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: clamp(1.3rem, 4.5vw, 2rem);
   line-height: 1.05;
   color: rgba(240, 237, 232, 0.92);
@@ -1667,7 +1669,7 @@ h3,
 .listener-panel-copy {
   margin: 10px 0 0;
   max-width: 46ch;
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.88rem;
   line-height: 1.56;
   color: rgba(240, 237, 232, 0.64);
@@ -1676,10 +1678,10 @@ h3,
 .listener-panel-enter {
   margin-top: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.18) 100%);
   box-shadow: var(--shadow-btn-outset);
   color: rgba(240, 237, 232, 0.82);
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.6rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1716,7 +1718,7 @@ h3,
 }
 
 .listener-np-label {
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.14em;
   color: rgba(240, 237, 232, 0.82);
@@ -1771,7 +1773,7 @@ h3,
 }
 
 .listener-shell-handoff-label {
-  font-family: 'Sora', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: clamp(0.95rem, 2.8vw, 1.4rem);
   letter-spacing: 0.03em;
   color: rgba(240, 237, 232, 0.96);
@@ -1779,10 +1781,10 @@ h3,
 
 .listener-vault-btn {
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.18) 100%);
   box-shadow: var(--shadow-btn-outset);
   color: rgba(240, 237, 232, 0.72);
-  font-family: 'IBM Plex Sans', 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.58rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1800,8 +1802,11 @@ h3,
 }
 
 .listener-vault-active {
-  border-color: rgba(255, 255, 255, 0.38);
+  border-color: var(--vault-color, rgba(255, 255, 255, 0.38));
   color: rgba(240, 237, 232, 0.94);
+  box-shadow:
+    var(--shadow-btn-inset),
+    0 0 8px rgba(0, 0, 0, 0.4);
 }
 
 .listener-vault-pip {
@@ -1810,13 +1815,20 @@ h3,
   border-radius: 50%;
   background: var(--vault-color, rgba(255, 255, 255, 0.22));
   opacity: 0.8;
+  transition: box-shadow 0.18s;
+}
+
+.listener-vault-active .listener-vault-pip {
+  opacity: 1;
+  box-shadow: 0 0 6px 2px var(--vault-color, rgba(255, 255, 255, 0.3));
 }
 
 .listener-signal-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #cc2200;
+  background: #e52020;
+  box-shadow: 0 0 5px rgba(229, 32, 32, 0.6);
 }
 
 /* ── Listener — live indicator button ─── */
@@ -1830,7 +1842,7 @@ h3,
   gap: 10px;
   margin: 0;
   padding: 10px 14px;
-  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.18) 100%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: var(--shadow-btn-outset);
   cursor: pointer;
@@ -1954,7 +1966,7 @@ h3,
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   letter-spacing: 0.18em;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .signal-title {
@@ -2062,7 +2074,7 @@ h3,
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.12em;
-  color: rgba(255, 191, 0, 0.6);
+  color: rgba(240, 237, 232, 0.55);
   text-transform: uppercase;
 }
 
@@ -2109,14 +2121,14 @@ h3,
   padding: 10px 14px;
   background: transparent;
   border: none;
-  color: rgba(255, 191, 0, 0.6);
+  color: rgba(240, 237, 232, 0.50);
   cursor: pointer;
   font-size: 1rem;
   transition: color 150ms;
 }
 
 .signal-chat-send:hover:not(:disabled) {
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .signal-chat-send:disabled {
@@ -2177,7 +2189,7 @@ h3,
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.14em;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .signal-panel-field {
@@ -2207,7 +2219,7 @@ h3,
 }
 
 .signal-panel-input:focus {
-  border-bottom-color: rgba(255, 191, 0, 0.5);
+  border-bottom-color: rgba(255, 255, 255, 0.35);
 }
 
 .signal-panel-input:disabled {
@@ -2234,19 +2246,19 @@ h3,
 .signal-panel-go {
   flex: 1;
   padding: 12px;
-  background: rgba(255, 191, 0, 0.1);
-  border: 1px solid rgba(255, 191, 0, 0.45);
+  background: var(--identity-dim, rgba(255, 255, 255, 0.06));
+  border: 1px solid color-mix(in srgb, var(--identity, #fff) 40%, transparent);
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.22em;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: background 150ms, border-color 150ms;
 }
 
 .signal-panel-go:hover:not(:disabled) {
-  background: rgba(255, 191, 0, 0.18);
+  background: color-mix(in srgb, var(--identity, #fff) 14%, transparent);
 }
 
 .signal-panel-go:disabled {
@@ -2304,16 +2316,16 @@ h3,
   gap: 8px;
   padding: 8px 16px;
   background: rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(255, 191, 0, 0.35);
+  border: 1px solid rgba(var(--arch-accent-rgb, 255, 255, 255), 0.35);
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.68rem;
   letter-spacing: 0.18em;
-  color: rgba(255, 191, 0, 0.8);
+  color: rgba(var(--arch-accent-rgb, 255, 255, 255), 0.8);
   cursor: pointer;
   z-index: 200;
   transition: border-color 150ms;
 }
 
 .arch-broadcast-pulse:hover {
-  border-color: rgba(255, 191, 0, 0.65);
+  border-color: rgba(var(--arch-accent-rgb, 255, 255, 255), 0.65);
 }

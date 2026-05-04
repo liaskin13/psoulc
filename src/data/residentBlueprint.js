@@ -12,7 +12,7 @@ export const RESIDENT_REGISTRY = [
     accessCode: "0528",
     vaultId: "saturn",
     tier: "A", // Master / Sun
-    palette: { primary: "#B87333", accent: "#ffbf00" },
+    palette: { primary: "#B87333", accent: "#7a6a5a" },
   },
   {
     residentId: 2,
@@ -38,7 +38,7 @@ export const RESIDENT_REGISTRY = [
     accessCode: "E-1971",
     vaultId: "lockbox_erikah",
     tier: "C", // Featured Artist
-    palette: { primary: "#cc6633", accent: "#ffbf00" },
+    palette: { primary: "#cc6633", accent: "#8a5a42" },
   },
   {
     residentId: 103,
@@ -62,19 +62,19 @@ export const RESIDENT_REGISTRY = [
  * Finds a resident by their access code.
  */
 export function findResidentByCode(code) {
-  return RESIDENT_REGISTRY.find(r => r.accessCode === code) || null;
+  return RESIDENT_REGISTRY.find((r) => r.accessCode === code) || null;
 }
 
 /**
  * Gets a resident's metadata with role flags derived from residentId.
  */
 export function getResidentMetadata(residentId) {
-  const resident = RESIDENT_REGISTRY.find(r => r.residentId === residentId);
+  const resident = RESIDENT_REGISTRY.find((r) => r.residentId === residentId);
   if (!resident) return null;
   return {
     ...resident,
-    isMaster:   resident.residentId <= 10,
+    isMaster: resident.residentId <= 10,
     isResident: resident.residentId > 10 && resident.residentId <= 100,
-    isGuest:    resident.residentId > 100,
+    isGuest: resident.residentId > 100,
   };
 }

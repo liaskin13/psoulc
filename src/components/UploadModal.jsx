@@ -228,39 +228,77 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
     setUploading(true);
     setError(null);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("vault", vault);
-      formData.append("title", title.trim());
-      formData.append("artist", artist.trim() || "");
-      formData.append("bpm", String(Math.round(bpmNumeric * 100) / 100));
-      formData.append("uploaded_by", consoleOwner);
+      // DEV MODE: Skip worker if localhost (worker not running)
+      const isDevMode = UPLOAD_WORKER_URL.includes("localhost");
 
-      await withTimeout(
-        fetch(`${UPLOAD_WORKER_URL}/upload`, {
-          method: "POST",
-          headers: { "PSC-Secret": UPLOAD_SECRET },
-          body: formData,
-        }).then(async (res) => {
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.error || `HTTP ${res.status}`);
-          }
-          return res.json();
-        }),
-        60000,
-        "UPLOAD",
-      );
-      setUploadPhase("finalizing");
-      setUploadProgress(97);
-      dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
-      await withTimeout(
-        Promise.all(VAULT_IDS.map((id) => loadVaultTracks(id))),
-        25000,
-        "LIBRARY REFRESH",
-      );
-      setUploadProgress(100);
-      setSuccess({ title: title.trim(), vault });
+      if (isDevMode) {
+        // Client-side upload for dev/beta testing
+        setUploadPhase("finalizing");
+        setUploadProgress(97);
+
+        // Store in localStorage (tracks.js will handle it)
+        const newTrack = {
+          id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          vault,
+          title: title.trim(),
+          artist: artist.trim() || null,
+          bpm: String(Math.round(bpmNumeric * 100) / 100),
+          uploaded_by: consoleOwner,
+          is_voided: false,
+          created_at: new Date().toISOString(),
+          audio_path: `dev/${vault}/${file.name}`,
+          waveform_data: null, // Generated on playback if needed
+        };
+
+        const existing = JSON.parse(
+          localStorage.getItem("psc_dev_tracks") || "[]",
+        );
+        existing.push(newTrack);
+        localStorage.setItem("psc_dev_tracks", JSON.stringify(existing));
+
+        dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
+        window.dispatchEvent(
+          new CustomEvent("psc:track-uploaded", { detail: newTrack }),
+        );
+
+        setUploadProgress(100);
+        setSuccess({ title: title.trim(), vault });
+      } else {
+        // Production mode: use worker
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("vault", vault);
+        formData.append("title", title.trim());
+        formData.append("artist", artist.trim() || "");
+        formData.append("bpm", String(Math.round(bpmNumeric * 100) / 100));
+        formData.append("uploaded_by", consoleOwner);
+
+        await withTimeout(
+          fetch(`${UPLOAD_WORKER_URL}/upload`, {
+            method: "POST",
+            headers: { "PSC-Secret": UPLOAD_SECRET },
+            body: formData,
+          }).then(async (res) => {
+            if (!res.ok) {
+              const body = await res.json().catch(() => ({}));
+              throw new Error(body.error || `HTTP ${res.status}`);
+            }
+            return res.json();
+          }),
+          60000,
+          "UPLOAD",
+        );
+        setUploadPhase("finalizing");
+        setUploadProgress(97);
+        dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
+        await withTimeout(
+          Promise.all(VAULT_IDS.map((id) => loadVaultTracks(id))),
+          25000,
+          "LIBRARY REFRESH",
+        );
+        setUploadProgress(100);
+        setSuccess({ title: title.trim(), vault });
+      }
     } catch (err) {
       setError(err.message || "UPLOAD FAILED — CHECK SIGNAL");
     } finally {

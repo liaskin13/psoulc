@@ -46,8 +46,8 @@
 }
 
 .tune-modal--amber {
-    --intake-accent-rgb: 255, 191, 0;
-    --intake-accent: #ffbf00;
+    --intake-accent-rgb: 200, 195, 188;
+    --intake-accent: #c8c3bc;
 }
 
 .tune-modal-header {

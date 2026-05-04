@@ -19,27 +19,50 @@ export const GATE_LOCKOUT_MS = 30 * 1000;
 // Industrial Identity Colors
 export const STUDER_COPPER = "#B87333";
 export const STUDER_SILVER = "#C0C0C0";
-export const STUDER_AMBER = "#ffbf00";
+// STUDER_AMBER retired — amber is permanently banned from all surfaces
 export const AGED_STONE = "#8B7355";
 
-// Serato navigation accent colors — functional signals, not identity colors
-export const VAULT_ACCENT_COLORS = {
-  saturn: "#1464dc", // Serato blue   — Original Music
-  venus: "#8c14dc", // Serato purple — Mixes
-  mercury: "#00c8dc", // Serato cyan   — Live Sets
-  earth: "#14dc14", // Serato green  — Sonic Architecture
+// ── SERATO PALETTE — full 8-color system ────────────────────────────────
+// Each color is a functional signal, not an identity color.
+// Hotcues, waveform markers, vault tabs, lockbox accents — all pull from here.
+export const SERATO = {
+  red: "#e52020", // THE SIGNAL — live broadcast
+  orange: "#e56020", // Future artist slot A
+  yellow: "#e5a020", // Future artist slot B
+  green: "#14dc14", // earth — Sonic Architecture
+  cyan: "#00c8dc", // mercury — Live Sets
+  blue: "#1464dc", // saturn — Original Music
+  purple: "#8c14dc", // venus — Mixes
+  white: "#e5e5e5", // Future artist slot C
 };
 
-// Registry Colors (Replaces Chakra system)
+export const SIGNAL_COLOR = SERATO.red; // THE SIGNAL is always red
+
+// Vault tabs — Serato color per vault
+export const VAULT_ACCENT_COLORS = {
+  saturn: SERATO.blue,
+  venus: SERATO.purple,
+  mercury: SERATO.cyan,
+  earth: SERATO.green,
+};
+
+// Future artist lockboxes — Serato color reserved, name TBD by D
+export const FUTURE_LOCKBOX_COLORS = {
+  future_a: SERATO.orange, // "Who does D invite next?"
+  future_b: SERATO.yellow, // Slot reserved
+  future_c: SERATO.white, // Slot reserved
+};
+
+// Registry Colors
 export const VAULT_COLORS = {
   saturn: "#B87333", // Copper — Master Tracks
   venus: "#C0C0C0", // Silver — Curated Registry
-  mercury: "#ffbf00", // Amber  — Live Resonance
+  mercury: "#00c8dc", // Cyan   — Live Sets
   earth: "#8B7355", // Stone  — Sonic Architecture
 };
 
-export const D_IDENTITY_COLOR = "#ffbf00"; // Amber
-export const D_CHAKRA_COLOR = "#ffbf00"; // Amber — D's personal chakra
+export const D_IDENTITY_COLOR = "#14dc14"; // Green — D's identity (locked 2026-05-04)
+export const D_CHAKRA_COLOR = "#14dc14"; // Green — D's personal identity colour
 export const BROADCAST_DURATION_MS = 5000;
 export const LOCKBOX_PREFIX = "lockbox_";
 
@@ -73,7 +96,7 @@ export const UPLOAD_SECRET = import.meta.env.VITE_UPLOAD_SECRET || "";
 export const VOID_CHAKRA_COLORS = {
   saturn: "#cc4400", // Scarlet
   venus: "#ff8800", // Orange
-  mercury: "#ffbf00", // Amber
+  mercury: "#00c8dc", // Cyan
   earth: "#00aa44", // Green
   moon: "#00b4d8", // Cyan (default for moon vaults)
 };
@@ -82,7 +105,7 @@ export const VOID_CHAKRA_COLORS = {
 export const MEMBER_CHAKRA_COLORS = {
   D: "#B87333", // Copper
   L: "#00e5ff", // Cyan
-  B: "#ffbf00", // Amber
+  B: "#c8c8c8", // Silver
   C: "#6600cc", // Indigo
   default: "#8B7355", // Stone
 };
