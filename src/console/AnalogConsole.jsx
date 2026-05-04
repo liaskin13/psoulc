@@ -11,7 +11,6 @@ const TOTAL_TRACKS =
   VENUS_MIXES.length +
   EARTH_DOCUMENTS.length +
   MERCURY_TRACKS.length;
-import GodModePullCord from "./GodModePullCord";
 import MasterClock from "./MasterClock";
 import ReadoutNavigator from "./ReadoutNavigator";
 import ConduitSlider from "./ConduitSlider";
@@ -21,8 +20,8 @@ import InboxPanel from "./InboxPanel";
 import MembersPanel from "./MembersPanel";
 import CommentPanel from "./CommentPanel";
 
-// ── Vault pad bank — left AKAI zone ────────────────────────────────────────
-// Each pad maps to a planet vault. Chakra-lit when active.
+// ── Vault pad bank ─────────────────────────────────────────────────────────
+// Each pad maps to a vault. Chakra-lit when active.
 const VAULT_PADS = [
   { id: "venus", abbr: "MIX", label: "MIXES", color: "#ff7c00" },
   { id: "saturn", abbr: "OG", label: "ORIGINAL MUSIC", color: "#9b59b6" },
@@ -30,7 +29,7 @@ const VAULT_PADS = [
   { id: "earth", abbr: "ARC", label: "SONIC ARCH", color: "#00cc44" },
 ];
 
-// ── LED meter strip — Neve-style visual indicator ────────────────────────────
+// ── LED meter strip ────────────────────────────────────────────────────────
 function LedStrip({ color = "var(--identity)", segments = 8, level = 0 }) {
   return (
     <div className="console-led-strip" aria-hidden="true">
@@ -197,7 +196,6 @@ function AnalogConsole({
         </div>
         {/* Power controls below pads */}
         <div className="console-power-row">
-          <GodModePullCord onPowerDown={onPowerDown} />
           <button
             className="anim-toggle-btn"
             onClick={() => setAnimationsEnabled((v) => !v)}
