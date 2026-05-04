@@ -1633,7 +1633,8 @@ h3,
 }
 
 .listener-panel-index {
-  color: rgba(255, 255, 255, 0.28);
+  color: var(--vault-color, rgba(255, 255, 255, 0.28));
+  opacity: 0.72;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
   letter-spacing: 0.16em;
@@ -1699,7 +1700,6 @@ h3,
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.28);
 }
 
 .listener-np-label {
@@ -1789,7 +1789,8 @@ h3,
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--vault-color, rgba(255, 255, 255, 0.22));
+  opacity: 0.8;
 }
 
 .listener-signal-dot {

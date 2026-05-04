@@ -16,6 +16,7 @@ import {
 import VaultSkeleton from "../components/VaultSkeleton";
 import { getWaveformBars } from "../utils/waveform";
 import TheSignal from "../signal/TheSignal";
+import { VAULT_ACCENT_COLORS } from "../config";
 
 const WORKER_URL = "https://psc-upload-worker.psoulc.workers.dev";
 const SIGNAL_POLL_MS = 10000;
@@ -56,11 +57,10 @@ const TheVault = lazy(() => import("../components/TheVault"));
 // Active vaults only — in launch priority order.
 // Crystal (Amethyst) and Mars excluded: no content to upload yet.
 // Earth (Sonic Architecture) exists but is not a listener priority yet.
-// Colors removed — Serato palette (blue/purple/cyan) added in Step 1 of config.js migration.
 const LISTENER_VAULTS = [
-  { id: "venus", label: "MIXES" },
-  { id: "saturn", label: "ORIGINAL MUSIC" },
-  { id: "mercury", label: "LIVE SETS" },
+  { id: "venus",   label: "MIXES",           color: VAULT_ACCENT_COLORS.venus   },
+  { id: "saturn",  label: "ORIGINAL MUSIC",  color: VAULT_ACCENT_COLORS.saturn  },
+  { id: "mercury", label: "LIVE SETS",       color: VAULT_ACCENT_COLORS.mercury },
 ];
 
 function renderVault(id, onBack) {
@@ -250,6 +250,7 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
           <motion.article
             key={vault.id}
             className="listener-rail-panel"
+            style={{ "--vault-color": vault.color }}
             initial={prefersReducedMotion ? false : { opacity: 0, y: 40 }}
             whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.35 }}
@@ -283,7 +284,7 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
-            <span className="listener-np-dot" aria-hidden="true" />
+            <span className="listener-np-dot" style={{ background: lastVaultMeta.color }} aria-hidden="true" />
             <span className="listener-np-label">{lastVaultMeta.label}</span>
             <span className="listener-np-status">LAST OPENED</span>
           </motion.div>
@@ -315,6 +316,7 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
           <motion.button
             key={vault.id}
             className={`listener-vault-btn ${lastPlayed === vault.id ? "listener-vault-active" : ""}`}
+            style={{ "--vault-color": vault.color }}
             onClick={() => handleArchiveSelect(vault.id, vault.label)}
             whileHover={prefersReducedMotion ? {} : { scale: 1.04, y: -2 }}
             whileTap={{ scale: 0.98 }}
