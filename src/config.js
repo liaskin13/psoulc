@@ -24,10 +24,10 @@ export const AGED_STONE = "#8B7355";
 
 // Serato navigation accent colors — functional signals, not identity colors
 export const VAULT_ACCENT_COLORS = {
-  saturn:  "#1464dc", // Serato blue   — Original Music
-  venus:   "#8c14dc", // Serato purple — Mixes
+  saturn: "#1464dc", // Serato blue   — Original Music
+  venus: "#8c14dc", // Serato purple — Mixes
   mercury: "#00c8dc", // Serato cyan   — Live Sets
-  earth:   "#14dc14", // Serato green  — Sonic Architecture
+  earth: "#14dc14", // Serato green  — Sonic Architecture
 };
 
 // Registry Colors (Replaces Chakra system)
@@ -58,8 +58,7 @@ export const VAULT_DISPLAY_NAMES = {
 };
 
 // Cloudflare Stream HLS URL for The Signal live broadcast
-export const SIGNAL_HLS_URL =
-  import.meta.env.VITE_SIGNAL_HLS_URL || "";
+export const SIGNAL_HLS_URL = import.meta.env.VITE_SIGNAL_HLS_URL || "";
 
 // Cloudflare R2 Upload Worker
 // Set this to your deployed worker URL after running: cd worker && wrangler deploy
@@ -67,6 +66,8 @@ export const SIGNAL_HLS_URL =
 // Production: https://psc-upload-worker.{your-account}.workers.dev
 export const UPLOAD_WORKER_URL =
   import.meta.env.VITE_UPLOAD_WORKER_URL || "http://localhost:8787";
+
+export const UPLOAD_SECRET = import.meta.env.VITE_UPLOAD_SECRET || "";
 
 // True spectrum chakra colors — void events (distinct from ambient earth tones)
 export const VOID_CHAKRA_COLORS = {

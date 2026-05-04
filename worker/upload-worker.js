@@ -8,12 +8,15 @@ export default {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, PSC-Secret",
     };
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
     }
+
+    const isAuthenticated =
+      request.headers.get("PSC-Secret") === env.PSC_SECRET;
 
     try {
       // GET /tracks/:vault
@@ -43,6 +46,13 @@ export default {
 
       // POST /upload
       if (request.method === "POST" && url.pathname === "/upload") {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         const formData = await request.formData();
         const file = formData.get("file");
         const vault = formData.get("vault");
@@ -109,11 +119,41 @@ export default {
         request.method === "PUT" &&
         url.pathname.match(/^\/tracks\/[^\/]+\/void$/)
       ) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         const id = url.pathname.split("/")[2];
         const { success } = await env.PSC_DB.prepare(
           "UPDATE tracks SET is_voided = 1 WHERE id = ?",
         )
           .bind(id)
+          .run();
+
+        return new Response(JSON.stringify({ success }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // POST /tracks/:id/waveform
+      if (
+        request.method === "POST" &&
+        url.pathname.match(/^\/tracks\/[^\/]+\/waveform$/)
+      ) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const id = url.pathname.split("/")[2];
+        const { waveform_data } = await request.json();
+        const { success } = await env.PSC_DB.prepare(
+          "UPDATE tracks SET waveform_data = ? WHERE id = ?",
+        )
+          .bind(JSON.stringify(waveform_data), id)
           .run();
 
         return new Response(JSON.stringify({ success }), {

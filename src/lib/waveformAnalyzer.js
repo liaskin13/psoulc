@@ -1,7 +1,9 @@
 // Client-side waveform analyzer using Web Audio API
 // Generates frequency-colored peak data for Serato-style visualization
 
-const WORKER_URL = "https://psc-upload-worker.psoulc.workers.dev";
+import { UPLOAD_WORKER_URL, UPLOAD_SECRET } from "../config";
+
+const WORKER_URL = UPLOAD_WORKER_URL;
 
 // Serato cue color palette (exact)
 export const SERATO_COLORS = [
@@ -17,8 +19,8 @@ export const SERATO_COLORS = [
 
 // Frequency bands for Serato-style coloring
 const FREQ_BANDS = {
-  low:  { color: "#1464dc" }, // bass — blue
-  mid:  { color: "#14dc14" }, // mids — green
+  low: { color: "#1464dc" }, // bass — blue
+  mid: { color: "#14dc14" }, // mids — green
   high: { color: "#e56020" }, // treble — orange
 };
 
@@ -36,8 +38,8 @@ function getFreqColor(samples) {
   energy = Math.sqrt(energy / samples.length);
   if (energy < 0.001) return FREQ_BANDS.mid.color;
   const normRoughness = Math.sqrt(roughness / (samples.length - 1)) / energy;
-  if (normRoughness < 0.6)  return FREQ_BANDS.low.color;
-  if (normRoughness > 1.4)  return FREQ_BANDS.high.color;
+  if (normRoughness < 0.6) return FREQ_BANDS.low.color;
+  if (normRoughness > 1.4) return FREQ_BANDS.high.color;
   return FREQ_BANDS.mid.color;
 }
 
@@ -62,7 +64,7 @@ export async function analyzeAudio(
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
   const highRes = generateWaveformData(audioBuffer, highResSamples);
-  const lowRes  = generateWaveformData(audioBuffer, lowResSamples);
+  const lowRes = generateWaveformData(audioBuffer, lowResSamples);
 
   return { high: highRes, low: lowRes };
 }
@@ -95,7 +97,10 @@ function generateWaveformData(audioBuffer, samples) {
 export async function saveWaveform(trackId, waveformData) {
   const res = await fetch(`${WORKER_URL}/tracks/${trackId}/waveform`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "PSC-Secret": UPLOAD_SECRET,
+    },
     body: JSON.stringify({ waveform_data: waveformData }),
   });
   if (!res.ok) throw new Error(`Failed to save waveform: ${res.status}`);

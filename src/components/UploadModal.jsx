@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { uploadTrack } from "../lib/tracks";
 import { useSystem, CMD } from "../state/SystemContext";
-import { VAULT_DISPLAY_NAMES } from "../config";
+import {
+  VAULT_DISPLAY_NAMES,
+  UPLOAD_WORKER_URL,
+  UPLOAD_SECRET,
+} from "../config";
 import "./TuneModal.css";
 
 const VAULT_IDS = ["saturn", "venus", "mercury", "earth"];
@@ -225,13 +228,25 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
     setUploading(true);
     setError(null);
     try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("vault", vault);
+      formData.append("title", title.trim());
+      formData.append("artist", artist.trim() || "");
+      formData.append("bpm", String(Math.round(bpmNumeric * 100) / 100));
+      formData.append("uploaded_by", consoleOwner);
+
       await withTimeout(
-        uploadTrack(file, {
-          vault,
-          title: title.trim(),
-          artist: artist.trim() || null,
-          bpm: Math.round(bpmNumeric * 100) / 100,
-          uploaded_by: consoleOwner,
+        fetch(`${UPLOAD_WORKER_URL}/upload`, {
+          method: "POST",
+          headers: { "PSC-Secret": UPLOAD_SECRET },
+          body: formData,
+        }).then(async (res) => {
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || `HTTP ${res.status}`);
+          }
+          return res.json();
         }),
         60000,
         "UPLOAD",

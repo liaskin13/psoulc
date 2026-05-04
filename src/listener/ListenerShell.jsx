@@ -16,10 +16,10 @@ import {
 import VaultSkeleton from "../components/VaultSkeleton";
 import { getWaveformBars } from "../utils/waveform";
 import TheSignal from "../signal/TheSignal";
-import { VAULT_ACCENT_COLORS } from "../config";
+import { VAULT_ACCENT_COLORS, UPLOAD_WORKER_URL } from "../config";
 import PSCWordmark from "../components/PSCWordmark";
 
-const WORKER_URL = "https://psc-upload-worker.psoulc.workers.dev";
+const WORKER_URL = UPLOAD_WORKER_URL;
 const SIGNAL_POLL_MS = 10000;
 
 function ListenerWatermark() {
@@ -59,9 +59,9 @@ const TheVault = lazy(() => import("../components/TheVault"));
 // Crystal (Amethyst) and Mars excluded: no content to upload yet.
 // Earth (Sonic Architecture) exists but is not a listener priority yet.
 const LISTENER_VAULTS = [
-  { id: "venus",   label: "MIXES",           color: VAULT_ACCENT_COLORS.venus   },
-  { id: "saturn",  label: "ORIGINAL MUSIC",  color: VAULT_ACCENT_COLORS.saturn  },
-  { id: "mercury", label: "LIVE SETS",       color: VAULT_ACCENT_COLORS.mercury },
+  { id: "venus", label: "MIXES", color: VAULT_ACCENT_COLORS.venus },
+  { id: "saturn", label: "ORIGINAL MUSIC", color: VAULT_ACCENT_COLORS.saturn },
+  { id: "mercury", label: "LIVE SETS", color: VAULT_ACCENT_COLORS.mercury },
 ];
 
 function renderVault(id, onBack) {
@@ -226,12 +226,8 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
         <div className="listener-marquee" aria-hidden="true">
           D WORLD ACCESS D WORLD ACCESS D WORLD ACCESS D WORLD ACCESS
         </div>
-        <h1 className="listener-hero-title">
-          D'S ARCHIVE
-        </h1>
-        <p className="listener-hero-copy">
-          You have access. Enter a vault.
-        </p>
+        <h1 className="listener-hero-title">D'S ARCHIVE</h1>
+        <p className="listener-hero-copy">You have access. Enter a vault.</p>
         <button
           className="listener-hero-enter"
           onClick={() => handleArchiveSelect("saturn", "ORIGINAL MUSIC")}
@@ -285,7 +281,11 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
-            <span className="listener-np-dot" style={{ background: lastVaultMeta.color }} aria-hidden="true" />
+            <span
+              className="listener-np-dot"
+              style={{ background: lastVaultMeta.color }}
+              aria-hidden="true"
+            />
             <span className="listener-np-label">{lastVaultMeta.label}</span>
             <span className="listener-np-status">LAST OPENED</span>
           </motion.div>

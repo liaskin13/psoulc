@@ -49,16 +49,13 @@ first.
 
 ## Phase 10 — Captured from plan-eng-review (2026-05-01)
 
-### Orphan file cleanup in uploadTrack()
-**Priority:** Medium
+### Orphan file cleanup in upload worker
+**Priority:** DONE — implemented in worker
 **Blocked by:** nothing
 
-If `supabase.storage.upload()` succeeds but the `tracks` table insert fails, the audio
-file is orphaned in storage with no DB record. No cleanup logic exists.
-
-**Fix:** In `src/lib/tracks.js:uploadTrack()`, wrap the DB insert in a try/catch. On
-insert failure, call `supabase.storage.from('audio').remove([path])` to delete the orphan,
-then re-throw. ~5 lines.
+If R2 `put()` succeeds but the D1 `tracks` insert fails, the worker already deletes the
+orphaned R2 object (`await env.PSC_AUDIO.delete(key)`) before throwing. Worker handles
+this case correctly as of the Phase 10 waveform/worker commit.
 
 ---
 
