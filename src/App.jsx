@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import "./App.css";
 
 import { useSystem } from "./state/SystemContext";
-import { SESSION_KEY, LOCKBOX_PREFIX, VAULT_DISPLAY_NAMES } from "./config";
+import { SESSION_KEY, LOCKBOX_PREFIX } from "./config";
 import { canVoid, canEdit } from "./utils/permissions";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useBreakpoint } from "./hooks/useBreakpoint";
@@ -12,7 +12,6 @@ import { useBreakpoint } from "./hooks/useBreakpoint";
 import EntrySequence from "./entry/EntrySequence";
 
 // ── LAZY IMPORTS ─────────────────────────────────────────────────────────────
-const AnalogConsole = lazy(() => import("./console/AnalogConsole"));
 const ArchitectConsole = lazy(() => import("./console/ArchitectConsole"));
 const ListenerShell = lazy(() => import("./listener/ListenerShell"));
 
@@ -25,7 +24,6 @@ const UploadModal = lazy(() => import("./components/UploadModal"));
 import VaultSkeleton from "./components/VaultSkeleton";
 import BottomNav from "./components/BottomNav";
 
-import { ARTIST_LOCKBOXES } from "./data/saturn";
 import { BROADCAST_DURATION_MS } from "./config";
 
 const VAULT_IDS = new Set(["saturn", "mercury", "venus", "earth"]);
@@ -70,11 +68,8 @@ function App() {
   const [stage, setStage] = useState("entry");
   const [owner, setOwner] = useState(null);
   const [activeNode, setActiveNode] = useState(null);
-  const [activeLockbox, setActiveLockbox] = useState(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
-  const [latentNodes, setLatentNodes] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const intakeInputRef = useRef(null);
 
   useEffect(() => {
     console.log("📍 APP STAGE:", stage);
@@ -136,45 +131,9 @@ function App() {
     setStage("entry");
   };
 
-  const handleNodeSelect = (node) => {
-    setActiveLockbox(null);
-    setActiveNode(node);
-  };
-
-  const handleNodeLongPress = (_node) => {
-    // TODO: replace with in-UI modal before D sees his console (Gate B)
-  };
-
-  const handleLockboxSync = (lockbox) => {
-    setActiveLockbox(lockbox);
-    setActiveNode(null);
-  };
-
   const handleBroadcast = () => {
     setIsBroadcasting(true);
     setTimeout(() => setIsBroadcasting(false), BROADCAST_DURATION_MS);
-  };
-
-  const handleIntakeFiles = (event) => {
-    const files = Array.from(event.target.files || []);
-    if (!files.length) return;
-    const targetPlanet = VAULT_IDS.has(activeNode?.id) ? activeNode.id : null;
-    const incoming = files.map((file) => ({
-      id: `latent-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      label: file.name,
-      size: file.size,
-      targetPlanet,
-      receivedAt: new Date().toISOString(),
-    }));
-    setLatentNodes((prev) => [...incoming, ...prev]);
-    event.target.value = "";
-  };
-
-  const handleClaimNode = (node) => {
-    setLatentNodes((prev) => prev.filter((n) => n.id !== node.id));
-    if (node.targetPlanet && VAULT_IDS.has(node.targetPlanet)) {
-      setActiveNode({ id: node.targetPlanet });
-    }
   };
 
   const handleArchitectExplore = (planetId) => {
@@ -331,15 +290,6 @@ function App() {
           </div>
         )}
 
-        <input
-          ref={intakeInputRef}
-          type="file"
-          multiple
-          onChange={handleIntakeFiles}
-          style={{ display: "none" }}
-          aria-hidden="true"
-        />
-
         <motion.div
           id="main-content"
           className="cockpit"
@@ -356,17 +306,11 @@ function App() {
           }
         >
           <Suspense fallback={null}>
-            <AnalogConsole
-              activeNode={activeNode}
-              onNodeSelect={handleNodeSelect}
-              onNodeLongPress={handleNodeLongPress}
-              onClaimNode={handleClaimNode}
+            <ArchitectConsole
+              viewer="D"
+              onExplorePlanet={handleArchitectExplore}
               onBroadcast={handleBroadcast}
               onIntake={() => setShowUploadModal(true)}
-              isBroadcasting={isBroadcasting}
-              latentNodes={latentNodes}
-              artistLockboxes={ARTIST_LOCKBOXES}
-              onLockboxSync={handleLockboxSync}
               onPowerDown={handlePowerDown}
             />
           </Suspense>

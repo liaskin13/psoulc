@@ -118,26 +118,16 @@ Fall back to HTML mockups only. Do not attempt AI image generation.
 
 ---
 
-## P10-7 — D CONSOLE IMPLEMENTATION (after design is settled)
+## CONSOLE ARCHITECTURE — LOCKED
 
-The locked preview is `public/d-console-preview.html`. But the amber design direction is under review per item 5 above. **Do not implement until Lisa confirms the design direction.**
+Old Analog console path is deleted.
 
-**What IS done:**
-- `src/console/SpectralStack.jsx` — NEW, untracked. BPM-derived stacked sine-wave canvas.
-- `src/App.css` — Full 5-zone D console CSS added.
-- `src/config.js` — `LOCKBOX_CODES` added.
-- `src/console/ArchitectConsole.jsx` — MUSE Outreach Composer panel added.
+- D and L now use the same console chassis: `ArchitectConsole`.
+- D route uses `viewer="D"`; L route uses default architect view.
+- `src/console/AnalogConsole.jsx` has been removed.
+- `src/console/GodModePullCord.jsx` and `src/console/GodModePullCord.css` have been removed.
 
-**What is NOT done:**
-- `src/console/AnalogConsole.jsx` — THE REWRITE WAS NEVER WRITTEN. Still old 84-line placeholder.
-
-**4 fixes to apply while writing:**
-1. Add VOICE toggle in CHAIN system-toggles block
-2. Add `countVaultTracks(vault)` to `src/lib/tracks.js`
-3. Fix MUSE clipboard format in ArchitectConsole.jsx (~line 844)
-4. Add `handleNext` track navigation
-
-**After AnalogConsole is written:** run `npm run preflight` — must be green.
+Run `npm run preflight` before shipping any follow-up changes.
 
 ---
 
@@ -173,7 +163,7 @@ Lisa wants in-console messaging:
 - D or L → Muses
 
 This needs its own design + implementation plan. Do not build without planning first.
-Suggested scope: post-P10-7.
+Suggested scope: post-phase-10 tracker reconciliation.
 
 ---
 

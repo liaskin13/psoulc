@@ -76,7 +76,7 @@ export default function DirectLinePanel({ viewer, variant = 'architect' }) {
   return (
     <>
       <button
-        className={`direct-line-trigger ${variant === 'architect' ? 'architect' : 'analog'}`}
+        className={`direct-line-trigger ${variant === 'architect' ? 'architect' : 'd-mode'}`}
         onClick={() => setOpen(true)}
         aria-expanded={open}
       >
@@ -86,7 +86,7 @@ export default function DirectLinePanel({ viewer, variant = 'architect' }) {
 
       {open && (
         <div className="direct-line-overlay" role="dialog" aria-modal="true" aria-label="Direct line">
-          <div className={`direct-line-panel ${variant === 'architect' ? 'architect' : 'analog'}`}>
+          <div className={`direct-line-panel ${variant === 'architect' ? 'architect' : 'd-mode'}`}>
             <div className="direct-line-head">
               <span className="direct-line-title">DIRECT LINE · {viewer} ↔ {peer}</span>
               <button className="direct-line-close" onClick={() => setOpen(false)} aria-label="Close direct line">✕</button>

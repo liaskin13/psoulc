@@ -1135,7 +1135,7 @@ function ArchitectConsole({
           </button>
           <DirectLinePanel
             viewer={viewer}
-            variant={viewer === "D" ? "analog" : "architect"}
+            variant={viewer === "D" ? "d-mode" : "architect"}
           />
           <button className="arch-rail-btn arch-intake-btn" onClick={onIntake}>
             INTAKE

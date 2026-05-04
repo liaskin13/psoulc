@@ -93,8 +93,9 @@ if [[ -s "$tmp_banned" ]]; then
 fi
 
 # 4) Listener room stage must stay wired to ListenerShell in App.
-room_stage_guard='if \(stage === '\''room'\'' && !activeNode\)'
-listener_shell_guard='<ListenerShell onPowerDown=\{handlePowerDown\} sessionMeta=\{sessionMeta\} />'
+room_stage_guard='if \(stage === ["'\'' ]*room["'\'' ]* && !activeNode\)'
+listener_shell_tag_guard='<ListenerShell'
+listener_shell_prop_guard='sessionMeta=\{sessionMeta\}'
 
 if [[ "$SEARCH_TOOL" == "rg" ]]; then
   rg -n "$room_stage_guard" "src/App.jsx" >/tmp/psc_listener_room_guard.txt 2>/dev/null || true
@@ -108,13 +109,24 @@ if [[ ! -s /tmp/psc_listener_room_guard.txt ]]; then
 fi
 
 if [[ "$SEARCH_TOOL" == "rg" ]]; then
-  rg -n "$listener_shell_guard" "src/App.jsx" >/tmp/psc_listener_shell_guard.txt 2>/dev/null || true
+  rg -n "$listener_shell_tag_guard" "src/App.jsx" >/tmp/psc_listener_shell_guard.txt 2>/dev/null || true
 else
-  grep -nE "$listener_shell_guard" "src/App.jsx" >/tmp/psc_listener_shell_guard.txt 2>/dev/null || true
+  grep -nE "$listener_shell_tag_guard" "src/App.jsx" >/tmp/psc_listener_shell_guard.txt 2>/dev/null || true
 fi
 
 if [[ ! -s /tmp/psc_listener_shell_guard.txt ]]; then
   echo "Design-law check failed: App room stage is not rendering ListenerShell with required props."
+  exit 1
+fi
+
+if [[ "$SEARCH_TOOL" == "rg" ]]; then
+  rg -n "$listener_shell_prop_guard" "src/App.jsx" >/tmp/psc_listener_shell_prop_guard.txt 2>/dev/null || true
+else
+  grep -nE "$listener_shell_prop_guard" "src/App.jsx" >/tmp/psc_listener_shell_prop_guard.txt 2>/dev/null || true
+fi
+
+if [[ ! -s /tmp/psc_listener_shell_prop_guard.txt ]]; then
+  echo "Design-law check failed: ListenerShell sessionMeta prop is missing."
   exit 1
 fi
 

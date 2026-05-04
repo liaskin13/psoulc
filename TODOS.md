@@ -70,14 +70,11 @@ component shows a "Load more" button or infinite scroll trigger at the bottom.
 
 ---
 
-### AnalogConsole.jsx — holding screen
-**Priority:** High (before D's first login)
-**Blocked by:** nothing
+### Console path unified
+**Status:** Complete
 
-`AnalogConsole.jsx` is currently a cursor/spotlight stub with no console UI. If D logs in
-before P10-7 is built, he sees a blank screen with a cursor effect. Add a minimal holding
-screen: black background, `dp` seal centered, "YOUR CONSOLE IS BEING BUILT" in Chakra Petch,
-amber glow. One file, ~30 lines.
+Old `AnalogConsole.jsx` path has been removed. D and L now run through the same
+`ArchitectConsole` chassis with `viewer`-based identity overlays.
 
 ---
 
