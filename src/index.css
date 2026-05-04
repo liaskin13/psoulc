@@ -521,7 +521,7 @@ h3,
 }
 
 .vault-header h1 {
-  color: var(--burnished-copper);
+  color: var(--vault-color, rgba(232, 228, 222, 0.92));
   font-family: var(--font-headers);
   font-size: 2.5rem;
   font-weight: var(--weight-heavy);
@@ -545,24 +545,28 @@ h3,
 }
 
 .god-btn {
-  background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-  border: 2px solid var(--burnished-copper);
-  color: var(--burnished-copper);
+  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-btn-outset);
+  color: rgba(232, 228, 222, 0.72);
   padding: var(--space-md) var(--space-xl);
   font-family: var(--font-mono);
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   border-radius: 0;
-  transition: all 0.3s ease;
+  transition: color 0.15s, border-color 0.15s;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .god-btn:hover {
-  background: linear-gradient(135deg, var(--burnished-copper), #8b7333);
-  color: var(--midnight-vault);
-  box-shadow: 0 0 20px rgba(184, 115, 51, 0.4);
+  color: rgba(232, 228, 222, 0.95);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.god-btn:active {
+  box-shadow: var(--shadow-btn-inset);
 }
 
 .reel-grid {
@@ -1134,7 +1138,8 @@ h3,
 
 .vault-status-indicator {
   font-size: 0.65rem;
-  color: rgba(255, 191, 0, 0.5);
+  color: var(--vault-color, rgba(255, 255, 255, 0.5));
+  opacity: 0.72;
   flex-shrink: 0;
 }
 
@@ -1339,8 +1344,8 @@ h3,
 }
 
 .vault-search-input:focus {
-  border-color: rgba(255, 255, 255, 0.2);
-  border-bottom-color: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.14);
+  border-bottom-color: var(--vault-color, rgba(255, 255, 255, 0.4));
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -1368,9 +1373,10 @@ h3,
 }
 
 .vault-sort-pill.is-active {
-  border-color: rgba(255, 255, 255, 0.35);
-  color: rgba(232, 228, 222, 0.9);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--vault-color, rgba(255, 255, 255, 0.35));
+  color: var(--vault-color, rgba(232, 228, 222, 0.9));
+  background: rgba(255, 255, 255, 0.04);
+  opacity: 0.85;
 }
 
 .vault-track-count {
@@ -1824,15 +1830,19 @@ h3,
   gap: 10px;
   margin: 0;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.02);
+  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
   border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-btn-outset);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: color 0.15s, border-color 0.15s;
 }
 
 .listener-signal-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.28);
+}
+
+.listener-signal-btn:active {
+  box-shadow: var(--shadow-btn-inset);
 }
 
 .listener-signal-label {
