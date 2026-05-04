@@ -14,6 +14,7 @@ import EntrySequence from './entry/EntrySequence';
 // ── LAZY IMPORTS ─────────────────────────────────────────────────────────────
 const AnalogConsole     = lazy(() => import('./console/AnalogConsole'));
 const ArchitectConsole  = lazy(() => import('./console/ArchitectConsole'));
+const ListenerShell     = lazy(() => import('./listener/ListenerShell'));
 
 const TheVault       = lazy(() => import('./components/TheVault'));
 const LockboxVault   = lazy(() => import('./lockbox/LockboxVault'));
@@ -208,26 +209,12 @@ function App() {
     );
   }
 
-  // ── ROOM — guest / listener lounge ───────────────────────────────────────
-  // Note: vault check below handles activeNode for room-stage users too
+  // ── LISTENER SHELL — guest / member listening room ───────────────────────
   if (stage === 'room' && !activeNode) {
     return (
-      <div className="the-room" id="main-content">
-        <div className="room-backdrop" />
-        <div className="room-light" />
-        <div className="room-header">PLEASANT SOUL COLLECTIVE</div>
-        <div className="room-vault-grid">
-          {[...VAULT_IDS].map(id => (
-            <button
-              key={id}
-              className="vault-panel"
-              onClick={() => setActiveNode({ id })}
-            >
-              <span className="vault-panel-name">{VAULT_DISPLAY_NAMES[id] ?? id.toUpperCase()}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <Suspense fallback={null}>
+        <ListenerShell onPowerDown={handlePowerDown} sessionMeta={sessionMeta} />
+      </Suspense>
     );
   }
 

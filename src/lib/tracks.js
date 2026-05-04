@@ -75,6 +75,26 @@ export async function fetchAllTracks() {
     }));
 }
 
+// Save hot cues for a track
+export async function saveTrackHotCues(id, hotCues) {
+  const allTracks = loadTracksFromStorage();
+  const track = allTracks.find((t) => t.id === id);
+  if (track) {
+    track.hot_cues = JSON.stringify(hotCues);
+    saveTracksToStorage(allTracks);
+  }
+}
+
+// Save waveform data for a track
+export async function saveTrackWaveform(id, waveformData) {
+  const allTracks = loadTracksFromStorage();
+  const track = allTracks.find((t) => t.id === id);
+  if (track) {
+    track.waveform_data = JSON.stringify(waveformData);
+    saveTracksToStorage(allTracks);
+  }
+}
+
 // Get the public URL for a stored audio file
 // DEV MODE: returns null (playback disabled until R2 configured)
 export function getAudioUrl(audio_path) {
