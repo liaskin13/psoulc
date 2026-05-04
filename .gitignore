@@ -6,3 +6,6 @@ dist/
 .gstack/
 .gitnexus
 .vercel
+worker/.wrangler/
+*.swp
+*.swo
