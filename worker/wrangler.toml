@@ -7,7 +7,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "PSC_DB"
 database_name = "psc-tracks"
-database_id = "YOUR_D1_DATABASE_ID"  # Set after: wrangler d1 create psc-tracks
+database_id = "1babb698-2162-449d-a36e-c8476f85fc91"
 
 # R2 bucket binding
 [[r2_buckets]]
