@@ -17,6 +17,7 @@ import VaultSkeleton from "../components/VaultSkeleton";
 import { getWaveformBars } from "../utils/waveform";
 import TheSignal from "../signal/TheSignal";
 import { VAULT_ACCENT_COLORS } from "../config";
+import PSCWordmark from "../components/PSCWordmark";
 
 const WORKER_URL = "https://psc-upload-worker.psoulc.workers.dev";
 const SIGNAL_POLL_MS = 10000;
@@ -207,11 +208,11 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
   // ── MAIN LISTENER SHELL ─────────────────────────────────────────
   return (
     <div className="listener-shell" ref={shellRef}>
+      <PSCWordmark />
       <div className="listener-topbar">
         <button className="listener-powerdown" onClick={onPowerDown}>
           EXIT SYSTEM
         </button>
-        <span className="listener-title">PLEASANTSOULCOLLECTIVE</span>
       </div>
 
       <motion.section

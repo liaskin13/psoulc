@@ -1,0 +1,49 @@
+/* PSCWordmark — fixed dp mark, top-left, all authenticated surfaces */
+
+.psc-wordmark {
+  position: fixed;
+  top: 12px;
+  left: 22px;
+  z-index: 200;
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  font-family: 'Comfortaa', cursive;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  color: rgba(232, 228, 222, 0.26);
+  user-select: none;
+  cursor: pointer;
+  transition: color 150ms ease;
+  line-height: 1;
+}
+
+.psc-wordmark:hover {
+  color: rgba(232, 228, 222, 0.44);
+}
+
+.psc-wordmark:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.2);
+  outline-offset: 4px;
+}
+
+/* Easter egg — D's amber, one breath, then gone */
+@media (prefers-reduced-motion: no-preference) {
+  .psc-wordmark--pulse {
+    animation: wordmark-amber-pulse 0.9s ease-out forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .psc-wordmark--pulse {
+    color: rgba(232, 228, 222, 0.6);
+    transition: none;
+  }
+}
+
+@keyframes wordmark-amber-pulse {
+  0%   { color: rgba(232, 228, 222, 0.26); text-shadow: none; }
+  18%  { color: rgba(255, 179, 71, 0.95);  text-shadow: 0 0 16px rgba(255, 179, 71, 0.55); }
+  100% { color: rgba(232, 228, 222, 0.26); text-shadow: none; }
+}

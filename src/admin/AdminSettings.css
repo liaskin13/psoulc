@@ -174,20 +174,24 @@
 
 /* ── TOGGLES ── */
 .adm-toggle {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.18) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-btn-outset);
   color: rgba(255, 255, 255, 0.42);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.14em;
   padding: 6px 12px;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition: box-shadow 80ms ease, color 0.15s;
 }
 
 .adm-toggle:hover {
-  border-color: rgba(255, 255, 255, 0.24);
-  color: rgba(255, 255, 255, 0.68);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.adm-toggle:active {
+  box-shadow: var(--shadow-btn-inset);
 }
 
 /* Cyan — placement 3: active toggle state */

@@ -23,6 +23,7 @@ import {
 } from "../lib/waveformAnalyzer";
 import * as audioEngine from "../lib/audioEngine";
 import AdminSettings from "../admin/AdminSettings";
+import PSCWordmark from "../components/PSCWordmark";
 
 const VAULT_ROUTES = [
   { id: "venus",   label: VAULT_DISPLAY_NAMES.venus,    color: VAULT_ACCENT_COLORS.venus   },
@@ -1028,7 +1029,7 @@ function ArchitectConsole({
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}
     >
       <div className="arch-grain-layer" />
-      <div className="arch-bg-mark">{viewer}</div>
+      <PSCWordmark />
       <div className="arch-cursor-ball" ref={cursorRef} aria-hidden="true" />
       <div
         style={SR_ONLY_STYLE}

@@ -58,20 +58,7 @@
   z-index: 0;
 }
 
-.arch-bg-mark {
-  position: absolute;
-  bottom: -0.08em;
-  right: 0.04em;
-  font-size: clamp(16rem, 26vw, 32rem);
-  font-family: 'Chakra Petch', sans-serif;
-  font-weight: 700;
-  color: rgba(var(--arch-accent-rgb), 0.018);
-  letter-spacing: -0.06em;
-  line-height: 1;
-  user-select: none;
-  pointer-events: none;
-  z-index: 0;
-}
+/* arch-bg-mark removed — dp wordmark (PSCWordmark) is the identity mark now */
 
 /* ── TOP RAIL ───────────────────────────────────────────────────────────── */
 .arch-top-rail {
@@ -80,7 +67,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 20px 0 80px;
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.1);
   background: rgba(0, 0, 0, 0.5);
   height: 40px;
@@ -175,8 +162,9 @@
 }
 
 .arch-rail-btn {
-  background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.18);
+  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.2) 100%);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.14);
+  box-shadow: var(--shadow-btn-outset);
   color: rgba(var(--arch-accent-rgb), 0.6);
   padding: 5px 12px;
   font-family: 'Chakra Petch', sans-serif;
@@ -185,20 +173,23 @@
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 0;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition: box-shadow 80ms ease, color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
 
 .arch-rail-btn:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.55);
+  border-color: rgba(var(--arch-accent-rgb), 0.42);
   color: var(--arch-accent);
-  background: rgba(var(--arch-accent-rgb), 0.06);
+}
+
+.arch-rail-btn:active {
+  box-shadow: var(--shadow-btn-inset);
 }
 
 .arch-rail-btn.active {
-  border-color: rgba(var(--arch-accent-rgb), 0.65);
+  border-color: rgba(var(--arch-accent-rgb), 0.55);
   color: var(--arch-accent);
-  background: rgba(var(--arch-accent-rgb), 0.1);
+  box-shadow: var(--shadow-btn-inset);
 }
 
 .arch-intake-btn {
@@ -904,8 +895,10 @@
 }
 
 .arch-vault-tab {
-  background: transparent;
+  background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.15) 100%);
   border: none;
+  border-right: 1px solid rgba(255,255,255,0.04);
+  box-shadow: var(--shadow-btn-outset);
   color: rgba(180, 200, 210, 0.38);
   padding: 10px 18px;
   font-family: 'Chakra Petch', sans-serif;
@@ -913,10 +906,14 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: color 0.18s;
+  transition: box-shadow 80ms ease, color 0.18s;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
+}
+
+.arch-vault-tab:active {
+  box-shadow: var(--shadow-btn-inset);
 }
 
 .arch-browser-utility {

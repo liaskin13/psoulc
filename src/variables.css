@@ -51,6 +51,17 @@
   --sp-9:  64px;
   --sp-10: 96px;
 
+  /* ── MPC III BUTTON DEPTH (Akai MPC III reference) ─ */
+  /* Outset: machined surface at rest — light top-left, shadow bottom-right */
+  --shadow-btn-outset:
+    3px 3px 8px rgba(0, 0, 0, 0.85),
+    -1px -1px 3px rgba(255, 255, 255, 0.033),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  /* Inset: pad pressed — sinks into the surface */
+  --shadow-btn-inset:
+    inset 2px 2px 8px rgba(0, 0, 0, 0.92),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.02);
+
   /* ── MOTION ──────────────────────────────────────── */
   --ease-hw: cubic-bezier(0.25, 0, 0, 1);
   --dur-micro:  60ms;
@@ -77,7 +88,6 @@
 
   /* Pre-auth copper — entry screen accent (no theme applied yet) */
   --studer-copper:   #B87333;
-  --amber-phosphor:  #ffbf00;
   --walnut-dark:     #3e2723;
   --burnt-orange:    #d2691e;
   --warm-brass:      #b8860b;
@@ -93,7 +103,7 @@
   --vault-master:    #B87333;
   --vault-registry:  #C0C0C0;
   --vault-shadow:    #8B7355;
-  --vault-resonance: #ffbf00;
+  --vault-resonance: rgba(255,255,255,0.35);
 
   /* Weight / kerning legacy tokens */
   --weight-light:  300;
@@ -106,12 +116,13 @@
 
 /* ── D's THEME — 70s Soul ──────────────────────────── */
 [data-theme="d-soul"] {
-  --identity:      #ffb347;
-  --identity-dim:  rgba(255, 179, 71, 0.12);
-  --identity-glow: 0 0 24px rgba(255, 179, 71, 0.25);
-  --surface:       #0a0806;   /* warm brown-black */
-  --text-primary:  #f5ead8;   /* cream */
-  --studer-copper: #ffb347;   /* entry accent promoted to D's amber after auth */
+  --identity:        #ffb347;
+  --identity-dim:    rgba(255, 179, 71, 0.12);
+  --identity-glow:   0 0 24px rgba(255, 179, 71, 0.25);
+  --surface:         #0a0806;   /* warm brown-black */
+  --text-primary:    #f5ead8;   /* cream */
+  --studer-copper:   #ffb347;
+  --amber-phosphor:  #ffbf00;   /* D's console only — never in global scope */
 }
 
 /* ── L's THEME — Architect ─────────────────────────── */

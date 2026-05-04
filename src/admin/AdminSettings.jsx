@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { LOCKBOX_CODES, VAULT_DISPLAY_NAMES } from "../config";
+import PSCWordmark from "../components/PSCWordmark";
 import "./AdminSettings.css";
 
 const SECTIONS = [
@@ -202,6 +203,7 @@ export default function AdminSettings({ onClose, members, waveformDetail, setWav
 
   return (
     <div className="adm-overlay" role="dialog" aria-label="Architect admin settings">
+      <PSCWordmark />
       <div className="adm-shell">
 
         <nav className="adm-nav" aria-label="Settings sections">
