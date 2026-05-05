@@ -1,6 +1,11 @@
-import React, { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import React, { useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+
+const prefersReducedMotion =
+  typeof window !== "undefined"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    : false;
 
 // ── STROBE VINYL SHADER ────────────────────────────────────────────────────
 // Simulates 70s film capture of spinning vinyl under a stroboscopic light.
@@ -12,7 +17,7 @@ import * as THREE from 'three';
 //   uBPM      — track BPM (drives rotation speed + shutter frequency)
 //   uPitch    — pitch multiplier from varispeed (affects both)
 
-const VINYL_VERT = /* glsl */`
+const VINYL_VERT = /* glsl */ `
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -20,7 +25,7 @@ const VINYL_VERT = /* glsl */`
   }
 `;
 
-const VINYL_FRAG = /* glsl */`
+const VINYL_FRAG = /* glsl */ `
   precision highp float;
   uniform float uTime;
   uniform float uBPM;
@@ -104,14 +109,15 @@ function StrobeDisk({ bpm, pitchMultiplier }) {
   const matRef = useRef();
 
   const uniforms = useRef({
-    uTime:  { value: 0 },
-    uBPM:   { value: bpm || 98 },
+    uTime: { value: 0 },
+    uBPM: { value: bpm || 98 },
     uPitch: { value: pitchMultiplier || 1.0 },
   });
 
   useFrame((state) => {
-    uniforms.current.uTime.value  = state.clock.getElapsedTime();
-    uniforms.current.uBPM.value   = bpm || 98;
+    if (prefersReducedMotion) return;
+    uniforms.current.uTime.value = state.clock.getElapsedTime();
+    uniforms.current.uBPM.value = bpm || 98;
     uniforms.current.uPitch.value = pitchMultiplier || 1.0;
   });
 
@@ -137,16 +143,23 @@ function StrobeDisk({ bpm, pitchMultiplier }) {
 //   pitchMultiplier — varispeed ratio (default 1.0)
 //   size            — canvas pixel size (square, default 160)
 //   chakraColor     — hex color for ownership soul-chakra overlay (optional)
-function StrobeVinylCanvas({ bpm = 98, pitchMultiplier = 1.0, size = 160, chakraColor = null }) {
+function StrobeVinylCanvas({
+  bpm = 98,
+  pitchMultiplier = 1.0,
+  size = 160,
+  chakraColor = null,
+}) {
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+    <div
+      style={{ position: "relative", width: size, height: size, flexShrink: 0 }}
+    >
       <Canvas
-        style={{ width: size, height: size, pointerEvents: 'none' }}
+        style={{ width: size, height: size, pointerEvents: "none" }}
         camera={{ position: [0, 1.8, 0], fov: 45, near: 0.01, far: 10 }}
         gl={{
           antialias: true,
           alpha: true,
-          powerPreference: 'high-performance',
+          powerPreference: "high-performance",
           outputColorSpace: THREE.SRGBColorSpace,
         }}
         onCreated={({ gl, camera }) => {
@@ -174,13 +187,13 @@ function StrobeVinylCanvas({ bpm = 98, pitchMultiplier = 1.0, size = 160, chakra
         <div
           aria-hidden="true"
           style={{
-            position: 'absolute',
+            position: "absolute",
             inset: 0,
-            borderRadius: '50%',
+            borderRadius: "50%",
             background: chakraColor,
             opacity: 0.22,
-            mixBlendMode: 'screen',
-            pointerEvents: 'none',
+            mixBlendMode: "screen",
+            pointerEvents: "none",
           }}
         />
       )}
