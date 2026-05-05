@@ -204,6 +204,16 @@
     }
 }
 
+.upload-devmode-banner {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    padding: 6px 10px;
+    text-align: center;
+    background: rgba(255, 160, 0, 0.12);
+    border: 1px solid rgba(255, 160, 0, 0.4);
+    color: rgba(255, 200, 80, 0.95);
+}
+
 .upload-error,
 .upload-success {
     font-size: 0.72rem;

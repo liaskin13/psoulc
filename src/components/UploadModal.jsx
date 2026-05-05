@@ -146,6 +146,8 @@ function isAudioFileCandidate(file) {
   return Boolean(ext && AUDIO_EXTENSIONS.has(ext));
 }
 
+const isDevMode = UPLOAD_WORKER_URL.includes("localhost");
+
 function UploadModal({ onClose, defaultVault = "saturn" }) {
   const { consoleOwner, sessionMeta, loadVaultTracks, dispatchCommand } =
     useSystem();
@@ -228,9 +230,6 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
     setUploading(true);
     setError(null);
     try {
-      // DEV MODE: Skip worker if localhost (worker not running)
-      const isDevMode = UPLOAD_WORKER_URL.includes("localhost");
-
       if (isDevMode) {
         // Client-side upload for dev/beta testing
         setUploadPhase("finalizing");
@@ -362,6 +361,11 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
               ASSET UPLOAD · VAULT INGESTION PROTOCOL
             </span>
           </div>
+          {isDevMode && (
+            <div className="upload-devmode-banner">
+              DEV MODE — LOCAL ONLY — NOT UPLOADED TO VAULT
+            </div>
+          )}
 
           <div className="tune-field">
             <label className="tune-field-label">DESTINATION</label>

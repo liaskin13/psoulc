@@ -38,12 +38,13 @@ wrangler deploy
 
 Copy the deployed worker URL (e.g., `https://psc-upload-worker.{your-account}.workers.dev`)
 
-### 5. Update frontend config
+### 5. Update frontend .env
 
-In `src/config.js`, set:
+Add to `/workspaces/psoulc/.env` (copy from `.env.example`):
 
-```javascript
-export const UPLOAD_WORKER_URL = 'https://psc-upload-worker.{your-account}.workers.dev';
+```bash
+VITE_UPLOAD_WORKER_URL=https://psc-upload-worker.{your-account}.workers.dev
+VITE_UPLOAD_SECRET=<same secret as PSC_SECRET above>
 ```
 
 ## Local development
