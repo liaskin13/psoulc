@@ -59,9 +59,24 @@ const TheVault = lazy(() => import("../components/TheVault"));
 // Crystal (Amethyst) and Mars excluded: no content to upload yet.
 // Earth (Sonic Architecture) exists but is not a listener priority yet.
 const LISTENER_VAULTS = [
-  { id: "venus", label: "MIXES", color: VAULT_ACCENT_COLORS.venus },
-  { id: "saturn", label: "ORIGINAL MUSIC", color: VAULT_ACCENT_COLORS.saturn },
-  { id: "mercury", label: "LIVE SETS", color: VAULT_ACCENT_COLORS.mercury },
+  {
+    id: "venus",
+    label: "MIXES",
+    color: VAULT_ACCENT_COLORS.venus,
+    copy: "Extended DJ sets. Full sequences, no interruptions. The way they were meant to land.",
+  },
+  {
+    id: "saturn",
+    label: "ORIGINAL MUSIC",
+    color: VAULT_ACCENT_COLORS.saturn,
+    copy: "Studio recordings, stems, and unreleased cuts. The archive behind the artist.",
+  },
+  {
+    id: "mercury",
+    label: "LIVE SETS",
+    color: VAULT_ACCENT_COLORS.mercury,
+    copy: "Raw from the room. Captured in the moment, mastered for the archive.",
+  },
 ];
 
 function renderVault(id, onBack) {
@@ -257,10 +272,7 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
             <div className="listener-panel-body">
               <div className="listener-panel-kicker">VAULT</div>
               <h2 className="listener-panel-title">{vault.label}</h2>
-              <p className="listener-panel-copy">
-                Curated sequencing, waveform-led browsing, and signal-rich
-                metadata. Familiar to DJs, surprising to everyone else.
-              </p>
+              <p className="listener-panel-copy">{vault.copy}</p>
               <button
                 className="listener-panel-enter"
                 onClick={() => handleArchiveSelect(vault.id, vault.label)}
