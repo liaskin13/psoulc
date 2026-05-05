@@ -138,7 +138,7 @@ function RequestAccessModal({ mode, onClose }) {
   const renderListenForm = () => (
     <form onSubmit={handleListenSubmit}>
       <div className="access-modal-header">
-        <span className="access-modal-title">REQUEST LISTENER ACCESS</span>
+        <span className="access-modal-title">REQUEST GUEST ACCESS</span>
         <span className="access-modal-sub">
           ALL FREQUENCIES · IMMEDIATE ACCESS
         </span>
