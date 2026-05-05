@@ -27,15 +27,6 @@ function notifyListeners() {
 export function getState() {
   const a = audio;
   const dur = a ? (isFinite(a.duration) ? a.duration : 0) : 0;
-  if (a && a.src) {
-    console.log("[audioEngine] getState:", {
-      src: a.src.substring(a.src.lastIndexOf("/") + 1),
-      duration: a.duration,
-      isFinite: isFinite(a.duration),
-      returned: dur,
-      readyState: a.readyState,
-    });
-  }
   return {
     isPlaying: a ? !a.paused && !a.ended : false,
     duration: dur,
@@ -59,11 +50,6 @@ export async function load(url) {
 
   await new Promise((resolve, reject) => {
     const onMeta = () => {
-      console.log("[audioEngine] loadedmetadata:", {
-        duration: a.duration,
-        readyState: a.readyState,
-        src: url.substring(url.lastIndexOf("/") + 1),
-      });
       cleanup();
       resolve();
     };
@@ -81,7 +67,6 @@ export async function load(url) {
     a.load();
   });
 
-  console.log("[audioEngine] after await, duration:", a.duration);
   notifyListeners();
 }
 

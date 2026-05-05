@@ -71,10 +71,6 @@ function App() {
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  useEffect(() => {
-    console.log("📍 APP STAGE:", stage);
-  }, [stage]);
-
   // Apply identity theme to <body> based on authenticated owner
   useEffect(() => {
     const themeMap = { D: "d-soul", L: "l-architect" };
