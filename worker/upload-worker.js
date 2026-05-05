@@ -1,6 +1,18 @@
 // Cloudflare Worker: PSC Audio Upload + Database Proxy
 // Handles R2 storage + D1 database without exposing credentials
 
+function timingSafeEqual(a, b) {
+  const enc = new TextEncoder();
+  const aBytes = enc.encode(a);
+  const bBytes = enc.encode(b);
+  if (aBytes.length !== bBytes.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    mismatch |= aBytes[i] ^ bBytes[i];
+  }
+  return mismatch === 0;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -15,10 +27,24 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    const isAuthenticated =
-      request.headers.get("PSC-Secret") === env.PSC_SECRET;
+    const isAuthenticated = timingSafeEqual(
+      request.headers.get("PSC-Secret") || "",
+      env.PSC_SECRET || "",
+    );
 
     try {
+      // GET /health
+      if (request.method === "GET" && url.pathname === "/health") {
+        let dbOk = false;
+        try {
+          await env.PSC_DB.prepare("SELECT 1").first();
+          dbOk = true;
+        } catch (_) {}
+        return new Response(
+          JSON.stringify({ ok: true, db: dbOk, r2_url: !!env.R2_PUBLIC_URL }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       // GET /tracks/:vault
       if (request.method === "GET" && url.pathname.startsWith("/tracks/")) {
         const vault = url.pathname.split("/")[2];
@@ -63,7 +89,7 @@ export default {
 
         if (!file || !vault || !title) {
           return new Response(
-            JSON.stringify({ error: "Missing required fields" }),
+            JSON.stringify({ error: "Missing required fields: file, vault, title" }),
             {
               status: 400,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -71,8 +97,18 @@ export default {
           );
         }
 
+        if (!env.R2_PUBLIC_URL) {
+          return new Response(
+            JSON.stringify({ error: "Worker misconfigured: R2_PUBLIC_URL secret not set" }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
+
         const ext = file.name.split(".").pop();
-        const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const filename = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
         const key = `${vault}/${filename}`;
 
         await env.PSC_AUDIO.put(key, file.stream(), {
@@ -96,7 +132,7 @@ export default {
 
         if (!result) {
           await env.PSC_AUDIO.delete(key);
-          throw new Error("Database insert failed");
+          throw new Error(`Database insert failed: vault=${vault} title="${title}"`);
         }
 
         const publicUrl = `${env.R2_PUBLIC_URL}/${key}`;
@@ -163,7 +199,7 @@ export default {
 
       return new Response("Not found", { status: 404 });
     } catch (error) {
-      console.error("Worker error:", error);
+      console.error("Worker error:", error.message, { vault: url.pathname });
       return new Response(
         JSON.stringify({
           success: false,
