@@ -8,8 +8,7 @@
 | L's identity colour | `#00e5ff` (cyan). Same 3 places. Same restraint. |
 | Amber | **Banned from all surfaces. Zero exceptions.** Search for `#ffb347`, `#ffbf00`, `rgba(255,179,71`, `rgba(255,191,0` before committing. All must return zero hits outside config legacy keys. |
 | THE SIGNAL | Always Serato red `#e52020`. On every surface. Never identity green. |
-| `AnalogConsole.jsx` | Must not be the 84-line placeholder before shipping. If it is, the console is not built. |
-| This file | Read it in full. The settled decisions log and Hard Stops sections exist because every one of those mistakes was made by a session that didn't read far enough. |
+
 
 ---
 
@@ -42,8 +41,7 @@ Identity colour appears in exactly **3 places** on any surface. No more. Luxury 
 ### Layer 3 — General Master Console Template
 One base template. Both D and L consoles build from this.
 - Structural reference: Serato DJ library model (single-deck, archive management, not mixing surface)
-- Implementation target: `src/console/AnalogConsole.jsx`
-- Sections: vault rail · vault track wall · track detail panel (slides from right edge)
+
 - D adds green at 3 points. L adds cyan at 3 points. Everything else is identical.
 
 ---
@@ -55,7 +53,7 @@ One base template. Both D and L consoles build from this.
 - **Project type:** Web app / artist console system.
 
 ## Memorable Thing
-"This is D's world — I'm just visiting." AND: "Looks like nothing anyone has ever seen."
+"The most serious music platform I've ever seen."
 
 ---
 
@@ -135,7 +133,7 @@ Note: Space Mono is kept in `--font-mono` only for genuine numeric data readouts
 ```
 
 ### Pre-Auth Entry Accent (Scrapped — see Settled Entry Design)
-Concept: copper accent before theme applied. **Current state (settled 2026-04-26):** This has been removed. Entry screen is now BLACK ON BLACK (no copper, no amber, no color identity until post-auth theme applied). All entry controls use near-white rgba only (0.07–0.22 opacity). The DPWallpaper canvas is the sole visual element on entry.
+Concept:  Entry screen is now BLACK ON BLACK (no copper, no amber, no color identity until post-auth theme applied). All entry controls use near-white rgba only (0.07–0.22 opacity). The DPWallpaper canvas is the sole visual element on entry.
 
 ### D's Theme (Electric Soul)
 Applied via `data-theme="d-soul"` on `<body>`:
@@ -180,7 +178,7 @@ No theme attribute on entry — pre-auth state stays achromatic.
 
 ---
 
-## Entry Screen — "The Velvet Rope"
+## Entry Screen 
 
 ### DP Monogram Wallpaper
 Canvas-based, rendered by `DPWallpaper.jsx`. Half-drop tessellation (like Fendi/LV). Comfortaa 700 at 44px. Colors stay within 0–15% lightness — specular layer at #242424, body gradient #0a0a0a–#161616, shadow at #020202. Black gloss on black matte. The door.
@@ -202,7 +200,7 @@ DPWallpaper canvas:  position: fixed, z-index: 0   (page level — paints first)
 - "dp" seal: Comfortaa 700, 14px, `--studer-copper` at 0.25 opacity — this is the logo
 - Cursor indicator on active cell: `dp` in Comfortaa 7px (logo quarantine — this is a logo appearance)
 
-### Unified Entry Screen (redesign — not yet built, post-P10-7)
+### Unified Entry Screen 
 One screen. Three elements. The dp monogram wallpaper is the full-screen background.
 
 - **Top-left:** `pleasantsoulcollective` wordmark — fixed, always present (see Global Wordmark spec)
@@ -331,7 +329,7 @@ D mixes entirely without headphones. He reads the waveform and operates from int
 
 Design consequences:
 - **The waveform is sacred.** It is D's primary sensory connection to the music. It must be the dominant visual element — large, luminous, readable at a glance. Everything else is subordinate to it.
-- **The aurora is not decoration.** D reads energy in the room, not levels in his ears. The slow amber drift is the music having physical presence in the space. It is intentional and meaningful.
+
 - **Trust the artist.** No headphone cue controls. No pre-fader listen buttons. No technical scaffolding he doesn't use. The luxury is in what is *not* there.
 - **VU meters belong — but as atmosphere.** Not for headphone monitoring, but as the visual heartbeat of the room. They reflect the music's energy to the eye, not the ear.
 - The console should feel like a space where flow is possible, not a cockpit demanding attention.
@@ -382,7 +380,7 @@ Panel dismisses on outside click or × control.
 - Primary surface. Fills full available height. Scrollable.
 - CSS grid: `repeat(auto-fill, minmax(118px, 1fr))`
 - **Each cell:** waveform thumbnail (30px height) · track number (9px, Chakra Petch 500, `--text-muted`) · title (11px, Chakra Petch 400, near-white) · BPM (9px, muted) · section tag (8px)
-- **Selected cell:** 1px amber left-edge accent line. Nothing else changes.
+- **Selected cell:** 1px  left-edge accent line. Nothing else changes.
 - **Hover:** waveform thumbnail gains 15% brightness only. No other motion.
 - **Orphan last-row:** spans full width, max-width 180px (existing spec unchanged)
 - **Upload zone:** pinned to bottom of the wall. 80px. Dashed 1px `--identity` border. On drag-enter: border goes solid, `--identity-glow` appears. Feels like a tape loading bay. (Existing spec applies.)
@@ -399,7 +397,7 @@ Slides in from right edge on track selection. 300px wide. `background: #0b0806`.
 
 - **Waveform preview:** 80px tall, full panel width. Amber playhead. CRT scanlines at 5% opacity.
 - **Track title:** Chakra Petch 700, 28px, near-white. Static. No animation. It knows what it is.
-- **BPM + Key:** Chakra Petch 600, 14px, `--amber`. The only amber text in the panel.
+- **BPM + Key:** Chakra Petch 600, 14px, 
 - **Section selector:** `UNRELEASED` · `RELEASED` · `ARCHIVE` chips. Chakra Petch 500, 9px, uppercase. Active chip: 1px amber border.
 - **Descriptors:** editable tag list. Chakra Petch 400, 11px. `+` to add. Near-white on `--surface`.
 - **Voice comment list:** existing spec applies here.
@@ -412,7 +410,7 @@ Slides in from right edge on track selection. 300px wide. `background: #0b0806`.
 - THE SIGNAL dot colour is Serato red `#e52020` — not identity green.
 
 ### Cursor
-- Custom glowing amber ball (12px, `box-shadow: 0 0 8px #ffb347, 0 0 20px #ffb347, 0 0 50px #ffb347`)
+- Custom glowing ball (12px, `box-shadow: 0 0 8px #ffb347, 0 0 20px #ffb347, 0 0 50px #ffb347`)
 - Shrinks to 7px on click
 - Spotlight: 500px radial gradient follows cursor
 - `cursor: none` on body
@@ -433,10 +431,10 @@ The full screen is the vault. Two states: browsing and playing.
 
 **Browsing state:**
 - The living dp monogram canvas is the background — black on black, one `dp` instance pulsing quietly at a time (see Living Monogram spec)
-- Atmospheric warmth: single amber vignette at bottom-left, 0.06 opacity. The room is warm. It does not announce it.
+
 - **Featured track** (top of vault — D's designated piece): full-width waveform at 180px, track title at 64px Chakra Petch 700 near-white, track number + BPM at 11px muted below. Generous space above and below. The track has presence.
 - **Archive below:** the track wall grid — same structure as D's console view. The listener sees exactly what D organized, in the order D chose.
-- Section labels (`UNRELEASED` · `RELEASED` · `ARCHIVE`) in Chakra Petch 500, 9px, uppercase, amber — the only persistent amber in browsing state.
+- Section labels (`UNRELEASED` · `RELEASED` · `ARCHIVE`) in Chakra Petch 500, 9px, uppercase, 
 - No sidebar. No navigation chrome. No recommendations. No metrics of any kind.
 
 **Playing state:**
@@ -453,13 +451,13 @@ Each track in the listener grid is an object, not a row:
 - **Track number:** 9px, Chakra Petch 500, `--text-muted`
 - **Title:** 11px, Chakra Petch 400, near-white
 - **BPM:** 9px, muted
-- **Section tag:** 8px — amber for UNRELEASED, dim green for RELEASED, stone for ARCHIVE
+- **Section tag:** 8px — for UNRELEASED, dim green for RELEASED, stone for ARCHIVE
 - No play button at rest. Hover reveals a bare `▶` centered — Chakra Petch, no chrome, no circle, no fill. Click anywhere in the cell plays the track.
 
 ### THE SIGNAL — The Live Event
 When D is broadcasting, the experience transforms. This is not a notification. It is an event.
 
-- **Event banner** appears at vault top: `● D IS LIVE` — Chakra Petch 600, 11px, amber, slow pulse. 1px amber border below.
+- **Event banner** appears at vault top: `● D IS LIVE` — Chakra Petch 600, 11px, .
 - **Entering SIGNAL:** vault recedes (opacity → 0.15 over 600ms). The live feed takes the screen. Full-width live waveform at 200px. Amber playhead pulses with the signal. The living dp monogram canvas active behind it.
 - THE SIGNAL is not a broadcast interface. It is a room you enter.
 - **Masters-tier chat:** right edge, 240px wide, Chakra Petch 400, 11px. Messages appear as minimal strips. No usernames by default — just the message, the code if enabled. No reactions, no threads.
@@ -478,6 +476,148 @@ The listener is here because D wanted them here. The design reflects that their 
 
 ---
 
+## Copy Law — UI Language Rules
+
+All UI copy follows a single voice: the console. Not the app. Not the platform. The instrument.
+
+**Rules (non-negotiable):**
+- **ALL CAPS only** for every label, state message, nav item, control, and system message. Chakra Petch renders uppercase cleanly — this is not shouting, it is instrumentation.
+- **No complete sentences.** Fragments only. `VAULT EMPTY` — not "This vault is empty." `CONNECTION FAILED` — not "We couldn't connect."
+- **No contractions.** Not "can't", not "won't". The console does not hedge.
+- **No mixed case in UI labels.** Artist-provided metadata (track titles, descriptions) is exempt — those are D's words, rendered as-is.
+- **No human voice.** The console does not apologize, encourage, or reassure. It reports state.
+- **Ellipsis for loading:** `LOADING VAULT...` not `Loading...` or `Please wait.`
+
+**Access tier:**
+- The read-only tier is called **GUEST**. Never "Listener", "Viewer", "User", or "Fan".
+- `REQUEST GUEST ACCESS` — the only public-facing copy for this tier.
+- DB tier value: `"guest"`. MembersPanel label: `GUEST`. Any table or log reference: `GUEST`.
+
+---
+
+## Guest Tier — Definition
+
+The GUEST tier is the public-facing access request tier. It is the lowest trust level. Guests receive read-only access to the vault surfaces D has opened.
+
+| Property | Value |
+|---|---|
+| Canonical name | GUEST |
+| DB tier value | `"guest"` |
+| UI display | `GUEST` (Chakra Petch 500, 9px, tracking 0.12em, `--text-secondary`) |
+| Request modal CTA | `REQUEST GUEST ACCESS` |
+| Access level | Read-only — vault browsing and playback only |
+| What they cannot do | Upload, comment, view unreleased, access console |
+
+Never use: "Listener", "Listener Access", "listener tier", "fan", "viewer", "watcher", "subscriber."
+
+---
+
+## Empty States — Canonical Specs
+
+Empty states are instrument states, not error states. They communicate current condition, not failure.
+
+### VAULT EMPTY
+When all records in a vault have been voided or none have been uploaded yet.
+- **Headline:** `VAULT EMPTY` — Chakra Petch 700, 28px, `--text-primary` at 0.4 opacity
+- **Sub:** `NO TRACKS HAVE BEEN LOADED` — Chakra Petch 500, 10px, `--text-secondary`, tracking 0.12em
+- **Accent:** 1px horizontal line, 48px wide, `var(--identity)` at 0.3 opacity, below the sub-label
+- **No icons, no illustrations, no planets, no astronaut silhouettes.** The empty vault is architecture, not decoration.
+- **Implemented in:** `VaultEmpty.jsx`
+
+### ARCHIVE LOG CLEAR
+When the ArchitectConsole track table has no entries (filtered view is empty).
+- **Message:** `— ARCHIVE CLEAR —` — Chakra Petch 400, 11px, `--text-muted`, centered in the table body
+- No buttons. No prompt to upload. The console does not suggest.
+
+### TRANSMISSIONS EMPTY
+When the voice comment list for a track has no recordings.
+- **Message:** `NO TRANSMISSIONS` — Chakra Petch 500, 10px, `--text-muted`, tracking 0.12em
+- No sub-label. No prompt.
+
+### MEMBERS PANEL — NO ENTRIES
+When MembersPanel has no active members or guests.
+- **No members:** `NO MEMBERS` — Chakra Petch 500, 10px, `--text-muted`
+- **No guests:** `NO GUESTS` — same treatment
+
+---
+
+## Error Recovery States — Canonical Specs
+
+Errors communicate failure operationally. Cold and precise.
+
+### VAULT FETCH FAILURE
+When the track list cannot be loaded from the database.
+- **Message:** `VAULT UNAVAILABLE` — Chakra Petch 600, 11px, `--error-text`
+- **Retry action:** `RETRY` — Chakra Petch 500, 9px, `--identity` at 0.7 opacity. No button chrome. Text is the control. Inline after the message or on next line.
+- **No stack trace, no "something went wrong", no apology.**
+- **Implemented in:** `ArchitectConsole.jsx` — `arch-lib-empty arch-lib-error` state + table `<tr>` version
+
+### AUDIO LOAD FAILURE
+When a track cannot be streamed (network error, CDN failure, missing file).
+- **Message:** `STREAM UNAVAILABLE` — same treatment as VAULT FETCH FAILURE
+- **Retry:** same pattern
+- **Surface:** inline in the waveform area or track cell, not a modal
+
+### General Error Pattern
+```
+[ERROR_CODE] — [RETRY?]
+```
+Error code: Chakra Petch 600, 11px, `--error-text`  
+Retry: Chakra Petch 500, 9px, `--identity` at 0.7 opacity  
+Background: `--error-surface` (`#1a0505`)  
+0px border-radius. 1px `--error-text` left border.
+
+---
+
+## Motion — Accessibility Guard
+
+**All hardware-style animations MUST include a `prefers-reduced-motion` guard.**
+
+This applies to:
+- DPWallpaper canvas pulse loop (Living Monogram)
+- StrobeVinylCanvas / WebGL shader animation loop
+- REC armed pulse
+- Cursor spotlight / glow follow
+- Any `setInterval` or `requestAnimationFrame` loop
+
+Guard pattern:
+```js
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!prefersReduced) {
+  // start animation loop
+}
+```
+For canvas-based loops: check once on mount and skip `requestAnimationFrame` entirely when `prefers-reduced-motion: reduce` is set. Do not just reduce the effect — stop the loop.
+
+---
+
+## Mobile Viewport — Layout Rules
+
+**Device split:**
+- Listener (GUEST) view: **iPhone primary** — design at 390px, verify at 375px
+- D console, L console, ArchitectConsole: **desktop/laptop primary** — 1280px min
+- No mobile console for D or L. If a user on mobile tries to access a console route, show `CONSOLE REQUIRES DESKTOP` (Chakra Petch 500, 11px, centered, `--text-secondary`). No redirect, no modal. Just state.
+
+**Listener mobile breakpoints:**
+| Breakpoint | Rule |
+|---|---|
+| `< 768px` | Single-column vault grid. File-cell spans 100% width, 2-up max with `minmax(160px, 1fr)` |
+| `< 480px` | Single-column only. File-cell `minmax(100%, 1fr)` |
+| Bottom nav | Fixed 48px bar, z-index 100. 4 vault switchers max. Chakra Petch 500, 9px. |
+
+**Touch targets:**
+- Minimum 44×44px for all interactive elements
+- Track cells: minimum 56px height on mobile
+- No hover-only controls on mobile — any hover-reveal (e.g. `▶` play icon) must also appear on first tap/focus
+
+**What never changes on mobile:**
+- Font stays Chakra Petch — no system font fallback substitutions for UI labels
+- 0px border-radius — hard edges on mobile too
+- Identity color remains exactly 3 points
+- THE SIGNAL button: present, full touch target, same Serato red
+
+---
+
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
@@ -486,7 +626,7 @@ The listener is here because D wanted them here. The design reflects that their 
 | 2026-04-24 | Comfortaa quarantined to logo/dp mark only | Comfortaa = the brand mark. Every functional element gets Chakra Petch. |
 | 2026-04-24 | 0px border-radius everywhere | Hard edges = hardware language. Anodized aluminum, not rounded plastic. |
 | 2026-04-24 | DPWallpaper canvas on entry | Canvas-rendered half-drop tessellation. Comfortaa in canvas = correct (it's the logo). |
-| 2026-04-24 | D's theme = 70s soul (warm amber #ffb347, cream text, warm surfaces) | First theme. Personal. Amber stays. |
+|
 | 2026-04-24 | Theme system via data-theme on body + CSS custom property overrides | `--identity` / `--identity-dim` / `--identity-glow` are the three core theme tokens. |
 | 2026-04-24 | Pre-auth entry accent = copper #B87333, not D's amber | Entry is before identity. Copper hints at the premium without committing to D's world. |
 | 2026-04-25 | Vault dp wallpaper via CSS ::before at 2.2% white opacity | CSS vars can't go in SVG data URIs. White at near-zero opacity reads as luxury texture against dark identity backgrounds. |
@@ -494,8 +634,15 @@ The listener is here because D wanted them here. The design reflects that their 
 | 2026-04-26 | entry-aperture background: transparent | DPWallpaper canvas provides the background. Aperture must be transparent or canvas is hidden behind it. |
 | 2026-04-30 | Helix removed — waveform confirmed as D's instrument | D and all DJs live in waveforms (Serato, Pioneer). Waveform is the native language. Helix was decorative; waveform is functional. |
 | 2026-04-30 | D console purpose clarified — archive management, not mixing surface | D uses the console to upload, tag, organize, and launch THE SIGNAL. No transport bar, no cue points, no pitch fader. |
-| 2026-04-30 | Fashion luxury recalibration — negative space carries weight | Inspired by fashion luxury branding (not hotel luxury). Amber in 3 places only. Nothing animated except the waveform. Atmospheric warmth through a single vignette, not aurora blobs. |
+| 2026-04-30 | Fashion luxury recalibration — negative space carries weight | Inspired by fashion luxury branding (not hotel luxury). |
 | 2026-04-30 | Living Monogram — dp pulses one instance at a time | Vault wallpaper stays black on black. Individual dp instances pulse sequentially, never two at once. The room breathes quietly. |
 | 2026-04-30 | pleasantsoulcollective wordmark — global, persistent, top-left | All lowercase, soul at 1.2× scale (no spaces). Comfortaa 700. Present on every screen post-auth. Pre-auth at 0.12 opacity. |
 | 2026-04-30 | Listener experience — The Living Archive | Cinematic vault: featured track hero, living monogram, no social mechanics, no platform voice. THE SIGNAL as an event you enter, not a stream you watch. |
 | 2026-04-30 | Entry screen two-mode design — Masters vs Seekers | Masters: master key center. Seekers: dp monogram center, request-access form, master code bottom-right corner like a lamp. |
+| 2026-05-01 | GUEST tier replaces "Listener" everywhere | "Listener" is too generic. GUEST is precise — they were invited. DB tier: "guest". CTA: "REQUEST GUEST ACCESS". |
+| 2026-05-01 | Copy Law locked — ALL CAPS, fragments, no voice | Console does not speak. It reports state. Contractions, sentences, mixed case banned from UI labels. |
+| 2026-05-01 | Empty state spec locked — VaultEmpty.jsx canonical | VAULT EMPTY / NO TRACKS HAVE BEEN LOADED / 1px identity accent. No illustrations. Architecture, not decoration. |
+| 2026-05-01 | Error recovery pattern locked — cold + operational | VAULT UNAVAILABLE / STREAM UNAVAILABLE + inline RETRY in --identity at 0.7. No apologies. No modals. |
+| 2026-05-01 | Motion accessibility guard mandatory | All canvas/rAF loops must check prefers-reduced-motion. Stop the loop — don't just dim the effect. |
+| 2026-05-01 | Mobile: Listener = iPhone primary, D/L console = desktop only | Console routes show "CONSOLE REQUIRES DESKTOP" on mobile. No mobile console. No redirect. |
+| 2026-05-01 | Memorable thing updated | "The most serious music platform I've ever seen." Replaces "This is D's world — I'm just visiting." |

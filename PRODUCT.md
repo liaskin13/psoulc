@@ -5,7 +5,7 @@ product
 
 ## Users
 - **D (Darnell / Soul Pleasant)** — The artist. Primary user. Master tier. God Mode. Sees his sovereign console with green identity (`#14dc14`). Uses the platform to upload, tag, organize, and broadcast his work.
-- **L (Lisa)** — The Architect. Co-creator and platform builder. Master tier. God Mode Plus. Admin, IT, marketing, gatekeeper, security. Sees her architect console with cyan identity.
+- **L (Lisa)** — The Architect. Co-creator and platform builder. Master tier. God Mode Plus. Admin, IT, marketing, gatekeeper, security. Sees her architect console with  identity.
 - **Muses** (Janet, Erikah, Larry, Drake) — Tier C. Lockbox artists. They have their own vaults with unique identity colors. Access via lockbox codes.
 - **Members/Subscribers** — Paying tier. Access to vault content D has chosen to share.
 - **Listeners** — Free/public viewers. Need a better name — something that hints they are not fully part of the collective but makes them *want* to be. Do not use "Listeners" in new design work.
@@ -31,12 +31,12 @@ Listener view: no identity colour. Guest in D's world. Achromatic only.
 - No Spotify, SoundCloud, Apple Music UI patterns
 - No social metrics (likes, follower counts, play counts)
 - No algorithmic recommendations
-- No rounded corners, gradient blobs, glassmorphism as default
+- No rounded corners, gradient blobs, 
 - No space/astronomy themes (banned permanently)
 - No aurora light shows, animated hero gradients, gradient text
 - No amber anywhere on any surface — amber is permanently retired
 - No identity colour beyond the 3 designated spots — identity colour spread across a surface is wallpaper, not sovereignty
-- No CSS-only cosmetics presented as a console implementation — `AnalogConsole.jsx` must be a real built component
+
 - Never show D anything that has not been confirmed working in a real browser session
 
 ## Strategic Principles

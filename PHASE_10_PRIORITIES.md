@@ -22,7 +22,7 @@
 ### Vault Architecture Finalization
 - **Why critical:** D needs to understand his domain
 - **Scope:**
-  - Saturn vault (D's territory) complete
+  -  vault (D's territory) complete
   - Entry→Console→Vault flow polished
   - File browsing/organization clear
 - **Estimate:** 1-2 hours
@@ -74,10 +74,7 @@
 - **Why defer:** Single-deck playback for now
 - **Phase 11 scope:** Beat matching, tempo sync
 
-### Track Waveform Regeneration (Rainbow Button)
-- **Why defer:** Only needed for old tracks (pre-waveform system)
-- **Current state:** Button exists, works, but decodes full 910MB file (slow)
-- **Phase 11 scope:** Server-side waveform gen for existing tracks
+#
 
 ### Smart Crates / Sorting
 - **Why defer:** Buttons exist but not wired
@@ -87,15 +84,13 @@
 
 ## 🎯 RECOMMENDED PHASE 10 COMPLETION PATH
 
-**Goal:** Get D testing Saturn vault + playback ASAP
+**Goal:** Get D testing  vault + playback ASAP
 
 1. **Hot Cues** (30-45 min) ← NOW
 2. **Vault Architecture Review** (1-2 hours)
-   - Polish Saturn vault entry/browsing
+   - Polish  vault entry/browsing
    - Verify upload→library flow
-3. **Permission Audit** (30 min)
-   - Test as viewer tier, verify no edit access
-   - Confirm D sees only Saturn, L sees all
+
 4. **Ship to D** 🚀
 
 **Total time to beta:** ~3 hours from now

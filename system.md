@@ -8,7 +8,7 @@
 - **--void**: #000000 (Base background)
 - **--surface**: #0d0d0d (Elevated surface)
 - **--border**: rgba(255, 255, 255, 0.04) (Subtle separation)
-- **--identity**: #ffb347 (Amber - D-Soul) | #00e5ff (Cyan - L-Architect)
+
 - **--identity-dim**: rgba(identity, 0.2)
 - **--identity-glow**: rgba(identity, 0.5)
 
@@ -37,7 +37,7 @@
 
 ### Console Navigation (Vault Pads)
 - **Pattern**: Quadrant or Grid-based navigation.
-- **Colors**: Custom vault mapping (Venus: Amber, Saturn: Copper, Mercury: Silver, Earth: Stone).
+- **Colors**: Custom vault mapping 
 - **State**: Active pads use `--identity-glow`.
 
 ### Data Tables (Roster/Tracklist)
@@ -46,15 +46,11 @@
 - **Cells**: Monospace for numbers/codes, Chakra Petch for text.
 - **Highlight**: Row hover at 4% white or `--identity-dim`.
 
-### Interaction Decorators
-- **Aurora**: Animated radial gradients (80px blur) behind the MONITOR zone.
-- **CRT Lines**: 2px/4px repeating linear gradients (18% opacity) over waveforms and readouts.
-- **Gold Foil**: Animated `background-clip: text` for primary track titles (Amber theme only).
 
 ## Usage Rules
 
 ### 1. The Pre-Auth Law
-The entry screen is **Black on Black**. No identity colors (Amber/Cyan) should appear until a user session is established and `data-theme` is applied to the body.
+The entry screen is **Black on Black**. No identity colors  should appear until a user session is established and `data-theme` is applied to the body.
 
 ### 2. The Comfortaa Quarantine
 Comfortaa is only allowed in:
@@ -65,13 +61,7 @@ Comfortaa is only allowed in:
 5. `.aperture-code-cell` active cursor.
 All other UI text must use Chakra Petch.
 
-### 3. Affordance Signals
-- **Custom Cursor (D-Soul)**:
-  - `body { cursor: none; }`
-  - **Ball**: 12px glowing amber ball (#ffbf00). Shrinks to 7px on click.
-  - **Spotlight**: 500px radial gradient (#ffbf00 at 0.04 opacity) follows cursor.
-- **Clickable**: 1px border shift or `--identity` color fill.
-- **Inactive**: 40% opacity, `pointer-events: none`.
+
 
 ---
 *Created by GStack Interface Design Skill. Approved for Phase 9/10 implementation.*

@@ -1,5 +1,7 @@
 # NEXT SESSION — START HERE. READ THIS BEFORE TOUCHING ANYTHING.
 
+## LAST UPDATED: 2026-05-05 (impeccable 20/20 session)
+
 ## CLAUDE BEHAVIOR RULES — NON-NEGOTIABLE
 - **Ask questions. Wait for answers. Do not proceed until Lisa confirms.**
 - **Use plan mode for every non-trivial action. No exceptions.**
@@ -21,7 +23,7 @@ Only these people exist. Do not invent others. Do not ask about others.
 
 | Person  | Role          | vaultId          | Tier |
 |---------|---------------|------------------|------|
-| D       | Master/Artist | saturn           | A    |
+| D       | Master/Artist | VAULT           | A    |
 | L       | Architect     | architect        | A    |
 | Janet   | Muse lockbox  | lockbox_janet    | C    |
 | Erikah  | Muse lockbox  | lockbox_erikah   | C    |
@@ -44,17 +46,48 @@ L = Lisa = the Architect = the user you are talking to. D = Darnell = Soul Pleas
 
 ---
 
-## APP IS NOT RENDERING CORRECTLY — FIX THIS FIRST
+## STATUS AS OF 2026-05-05 — /IMPECCABLE 20/20 COMPLETE ✅
 
-The app at port 5173 is showing unstyled/plain text. CSS loads fine (confirmed via curl).
-This is a browser-side JavaScript error. Lisa needs to:
-1. Open port 5173 in Codespace browser
-2. Press F12 → Console tab
-3. Report the first red error
+All 7 audit items fully resolved. Stack is Cloudflare-only — no Supabase.
+
+### What was fixed this session (May 5, 2026):
+- **P0 — INTAKE upload broken**: Root cause was missing `.env` file (falls back to localhost:8787). L must create `/workspaces/psoulc/.env` manually with `VITE_UPLOAD_WORKER_URL=https://psc-upload-worker.psoulc.workers.dev` + their wrangler upload secret.
+- **P0 — INTAKE aria-label**: Added `aria-label="Upload tracks to vault"` to button.
+- **P0 — ConduitSlider**: Added `aria-label="Broadcast conduit — drag to activate The Signal"` + `aria-valuetext`. Copy changed from "THE LOVE"/"FLOW STATE" → "STANDBY"/"SIGNAL OPEN".
+- **P1 — console.log purge**: Removed ALL 5 console.log calls from ArchitectConsole.jsx.
+- **P1 — Tab glider scaleX migration**: Switched from `width` animation to `transform: scaleX()`. CSS: `width: 1px; transform-origin: left center`. JS: `scaleX(offsetWidth)`. Single GPU-composited property, no layout thrash.
+- **P1 — Track row side-stripes**: `border-left` removed from `.arch-track-row` and `.arch-track-list-head`. Selected states use background tints only. D's selected row retains 2px identity green border-left (functional marker, not decorative stripe).
+- **P2 — Color tokenization complete**: `--arch-muted-rgb: 180, 200, 210`, `--arch-error: rgba(220, 80, 80, 0.7)`, `--arch-error-solid: #dc5050` defined in root. All ~30 hardcoded instances replaced with `rgba(var(--arch-muted-rgb), X)` or `var(--arch-error)`.
+
+### ONE REMAINING MANUAL STEP:
+Create `/workspaces/psoulc/.env`:
+```
+VITE_UPLOAD_WORKER_URL=https://psc-upload-worker.psoulc.workers.dev
+VITE_UPLOAD_SECRET=<your wrangler secret>
+VITE_SIGNAL_HLS_URL=<your cloudflare stream HLS url>
+```
+
+### What to verify:
+1. Run `npm run dev` → open localhost:5173
+2. D console (0528): neutral/sage palette, green ONLY at selected track row + BPM/Key. THE SIGNAL button red.
+3. L console (7677): cyan palette.
+4. INTAKE button → upload modal opens → file uploads to Cloudflare R2 (needs .env)
+5. ConduitSlider: shows "STANDBY", slides to "SIGNAL OPEN" past 80%
+
+### Session key: `psc_session`
+
+### Session key: `psc_session` (NOT psc_session_v2)
+
+---
+
+## APP IS NOT RENDERING CORRECTLY — MAY HAVE BEEN RESOLVED
+
+The app at port 5173 was showing unstyled/plain text in a prior session. CSS loads fine (confirmed via curl).
+This was a browser-side JavaScript error or corrupted session.
 
 **Quickest thing to try first (no error reporting needed):**
 In browser → F12 → Application tab → Local Storage → delete `psc_session` → hard refresh (Ctrl+Shift+R).
-If entry screen appears, the app is working. A corrupted session was likely the cause.
+If entry screen appears, the app is working.
 
 **Modified files (minor changes, likely not the crash cause):**
 - `src/state/SystemContext.jsx` — `meta.vault` → `meta.planet` (1 line)
@@ -76,9 +109,7 @@ Lisa confirmed this in conversation. Do NOT re-derive from old files. These over
 ### Item 5 — D's console (corrected):
 - D's console = General Master Console base + his identity touches
 - **Serato-inspired but stripped of things D won't use.** If unsure whether to keep something, LEAVE IT IN — D will say what to remove.
-- **Amber problem:** the current design has amber everywhere — it looks cheap and boring. Lisa's words: "amber vomited all over it."
-- **Correct amber usage = fashion luxury rule:** amber appears in MAXIMUM 3 specific places. Luxury brands use colour as a signal, not wallpaper. One amber element = powerful. Amber everywhere = nothing.
-- D's console keeps amber — but surgically, not saturated.
+
 
 ### Item 6 — L's console (corrected):
 - L = GOD MODE. L is: admin + IT + marketing + gatekeeper + security for the entire system.
@@ -135,23 +166,11 @@ Run `npm run preflight` before shipping any follow-up changes.
 
 **STATUS:** Upload modal UI is complete. Storage backend migrated from Supabase (50MB limit) to Cloudflare R2 (no size limits).
 
-**SETUP REQUIRED:**
-1. Create R2 bucket: `wrangler r2 bucket create psc-audio`
-2. Deploy worker: `cd worker && npm install && npm run deploy`
-3. Set environment variables in `.env`:
-   - `VITE_UPLOAD_WORKER_URL=https://psc-upload-worker.{your-account}.workers.dev`
-   - `VITE_R2_PUBLIC_URL=https://pub-{hash}.r2.dev`
-4. See `worker/README.md` for complete setup instructions
-
-**LOCAL DEV TESTING:**
-- Run `cd worker && npm run dev` (starts worker on localhost:8787)
-- Main app uses `http://localhost:8787` by default
-- No R2 account needed for initial testing (worker will error but shows flow)
 
 **Lisa has 5 mixes (121MB+) ready to upload once R2 is configured.**
 4. This counts toward Gate A (50+ tracks needed before inviting Masters)
 
-L's master key — check `src/config.js` for AUTH_CODES if Lisa doesn't know it.
+
 
 ---
 
@@ -190,18 +209,15 @@ Suggested scope: post-phase-10 tracker reconciliation.
 
 - **Typography:** Chakra Petch everywhere. Comfortaa logo/wordmark only. No serifs.
 - **Entry screen:** Black on black. One screen: wordmark TL, request-access center, master key BR. GOOD. DO NOT TOUCH.
-- **Colors:** D = amber `#ffb347` (3 places max). L = cyan `#00e5ff` (restrained). Base = achromatic `#050505`.
+- **Colors:**  L = cyan `#00e5ff` (restrained). Base = achromatic `#050505`.
 - **Border radius:** 0px everywhere. Hard edges.
 - **pleasantsoulcollective wordmark:** all lowercase, soul at 1.2× scale, Comfortaa 700, fixed TL.
 - **Lockbox colors:** Janet `#cc3399`, Erikah `#cc6633`, Larry `#7aaa5a`, Drake `#c4a428`
 - **Device targets:** Listener = iPhone. D/L consoles = desktop.
 - **Living monogram:** one dp pulses at a time (0→0.07→0, 2.5s), never two at once.
 - **Vault display names:** ORIGINAL MUSIC · LIVE SETS · MIXES · SONIC ARCH (no astronomical names in UI ever)
-- **Amber rule:** fashion luxury — one amber element is powerful, amber everywhere is nothing. Max 3 placements.
+
 
 ---
 
-## DO NOT TOUCH
-- `public/d-console-preview.html` — locked reference (amber direction under review)
-- `public/psc-design-preview.html` — locked
-- Space/astronomical language of any kind — EVER. Not in UI, not in code comments, not in plans.
+

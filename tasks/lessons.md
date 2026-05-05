@@ -29,6 +29,24 @@ All of it was deleted. The code now matches the docs. See DESIGN.md's ⛔ HARD S
 - **Rule**: When DESIGN.md bans a language family (for example space-themed vocabulary), enforce it in CI/local guardrails for active UI files. Do not rely on memory or manual review.
 - **How to apply**: Keep a narrow banned-display-phrase check in `scripts/check-design-law.sh` scoped to active surface files (`App.jsx`, `EntrySequence.jsx`, `ArchitectConsole.jsx`) and fail fast on prohibited phrases.
 
+---
+
+### Session: /impeccable 20/20 Audit Pass (May 5, 2026)
+
+#### All Fixes Executed — Architecture is Cloudflare-only (no Supabase)
+
+- **Stack**: React + Vite + Cloudflare Workers (R2 upload) + Cloudflare Stream (HLS). No Supabase anywhere in src/.
+- **`.env` creation**: No file-creation tool available in this environment. Only `.env.example` exists. L must manually create `.env` with:
+  ```
+  VITE_UPLOAD_WORKER_URL=https://psc-upload-worker.psoulc.workers.dev
+  VITE_UPLOAD_SECRET=<wrangler secret>
+  VITE_SIGNAL_HLS_URL=<cloudflare stream HLS url>
+  ```
+- **Tab glider scaleX**: Switched from `width` property animation to `transform: translateX() scaleX()`. CSS sets `width: 1px; transform-origin: left center`. JS uses `scaleX(offsetWidth)` — 1px base × offsetWidth = correct pixel width. GPU-composited, no layout thrash.
+- **Color tokenization**: All `rgba(180, 200, 210, X)` → `rgba(var(--arch-muted-rgb), X)`. All `rgba(220, 80, 80, X)` → `var(--arch-error)` / `var(--arch-error-solid)`. Token definitions live in `.architect-console` root block.
+- **Rule**: NEVER animate `width` on a glider/indicator element. Use `transform: scaleX()` with `transform-origin: left`. It's free on the GPU.
+- **Rule**: Define `--muted-rgb`, `--error`, `--error-solid` tokens in the root block of any component CSS that uses neutral/error colors in multiple places.
+
 ## Agent Routing Calibration Log
 
 ### Session: Architect Console Contract Lock (May 2, 2026)
