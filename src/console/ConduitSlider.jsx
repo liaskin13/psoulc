@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 function ConduitSlider({ onBroadcast, isBroadcasting }) {
   const [sliderValue, setSliderValue] = useState(0);
@@ -21,9 +21,17 @@ function ConduitSlider({ onBroadcast, isBroadcasting }) {
           value={sliderValue}
           onChange={handleSliderChange}
           className="slider-input"
+          aria-label="Broadcast conduit — drag to activate The Signal"
+          aria-valuetext={sliderValue > 80 ? "Signal active" : "Standby"}
         />
-        <div className="slider-label">{sliderValue > 80 ? 'THE LOVE' : 'FLOW STATE'}</div>
-        <div className={`broadcast-indicator ${isBroadcasting ? 'active' : ''}`}>●</div>
+        <div className="slider-label">
+          {sliderValue > 80 ? "SIGNAL OPEN" : "STANDBY"}
+        </div>
+        <div
+          className={`broadcast-indicator ${isBroadcasting ? "active" : ""}`}
+        >
+          ●
+        </div>
       </div>
     </div>
   );

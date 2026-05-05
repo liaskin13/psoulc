@@ -104,7 +104,7 @@ function EventHorizonPanel({ architectArchive, onRestore }) {
 
       <div className="arch-horizon-entries">
         {architectArchive.length === 0 ? (
-          <div className="arch-horizon-empty">— Archive log is clear. —</div>
+          <div className="arch-horizon-empty">— ARCHIVE CLEAR —</div>
         ) : (
           architectArchive.map((item) => (
             <motion.div
@@ -190,6 +190,7 @@ function ArchitectConsole({
   const [showSettings, setShowSettings] = useState(false);
   const [trackListData, setTrackListData] = useState([]);
   const [trackListLoading, setTrackListLoading] = useState(false);
+  const [trackLoadError, setTrackLoadError] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [quantizeEnabled, setQuantizeEnabled] = useState(true);
   const [activePerfMode, setActivePerfMode] = useState("hotcue");
@@ -249,19 +250,20 @@ function ArchitectConsole({
   // Auto-load tracks on mount + listen for upload events
   useEffect(() => {
     const loadTracks = () => {
-      console.log("[PSC] Loading tracks from database...");
       fetchAllTracks()
         .then((tracks) => {
-          console.log(`[PSC] Loaded ${tracks.length} tracks:`, tracks);
           setTrackListData(tracks);
+          setTrackLoadError(null);
         })
-        .catch((err) => console.error("[PSC] Failed to load tracks:", err));
+        .catch((err) => {
+          console.error("[PSC] Failed to load tracks:", err);
+          setTrackLoadError("VAULT UNAVAILABLE");
+        });
     };
     loadTracks();
 
     // Refresh when new track uploaded
-    const handleUpload = (e) => {
-      console.log("[PSC] Track uploaded event:", e.detail);
+    const handleUpload = () => {
       loadTracks();
     };
     window.addEventListener("psc:track-uploaded", handleUpload);
@@ -294,8 +296,7 @@ function ArchitectConsole({
     const glider = gliderRef.current;
     if (!tab || !glider) return;
     const { offsetLeft, offsetWidth } = tab;
-    glider.style.transform = `translateX(${offsetLeft}px)`;
-    glider.style.width = `${offsetWidth}px`;
+    glider.style.transform = `translateX(${offsetLeft}px) scaleX(${offsetWidth})`;
   }, []);
 
   const hoverGlider = useCallback(
@@ -311,8 +312,7 @@ function ArchitectConsole({
       const fromW = activTab.offsetWidth;
       const toW = hoverTab.offsetWidth;
       const pulledW = fromW + (toW - fromW) * 0.4;
-      glider.style.transform = `translateX(${pulled}px)`;
-      glider.style.width = `${pulledW}px`;
+      glider.style.transform = `translateX(${pulled}px) scaleX(${pulledW})`;
     },
     [activeLibVault],
   );
@@ -473,14 +473,8 @@ function ArchitectConsole({
   // ── Audio handlers ──────────────────────────────────────────────────
   const loadAndPlay = async (track) => {
     const url = getAudioUrl(track.audio_path);
-    console.log("[PSC] loadAndPlay:", {
-      track,
-      url,
-      hasWaveform: !!track.waveform_data,
-    });
     if (!url) {
       announce("No audio file for this track.");
-      console.error("[PSC] No audio URL for track:", track);
       return;
     }
     setAudioError(null);
@@ -488,7 +482,6 @@ function ArchitectConsole({
     announce(`Loading ${track.title || "track"}…`);
     try {
       await audioEngine.load(url);
-      console.log("[PSC] Audio loaded successfully");
       setLoadedTrack(track);
       setLoadedDeckId(track.id);
       pushTrackHistory(track);
@@ -497,7 +490,6 @@ function ArchitectConsole({
         [track.id]: (prev[track.id] || 0) + 1,
       }));
       audioEngine.play();
-      console.log("[PSC] Audio playing");
       announce(`Playing ${track.title || "track"}.`);
     } catch (err) {
       console.error("[PSC] Audio load error:", err);
@@ -1076,11 +1068,6 @@ function ArchitectConsole({
   return (
     <motion.div
       className={`architect-console${isD ? " architect-console--d" : ""}`}
-      style={
-        isD
-          ? { "--arch-accent-rgb": "20, 220, 20", "--arch-accent": "#14dc14" }
-          : undefined
-      }
       initial={{ opacity: 0, filter: "brightness(0) blur(8px)" }}
       animate={{ opacity: 1, filter: "brightness(1) blur(0px)" }}
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}
@@ -1104,9 +1091,9 @@ function ArchitectConsole({
           <span className="arch-top-name">
             {viewer} · {viewer === "D" ? "SOVEREIGN" : "ARCHITECT"}
           </span>
-          <span className="arch-top-tier">
-            {viewer === "D" ? "SOVEREIGN" : "GOD MODE PLUS"}
-          </span>
+          {viewer !== "D" && (
+            <span className="arch-top-tier">GOD MODE PLUS</span>
+          )}
         </div>
 
         <div className="arch-top-system" aria-label="System status">
@@ -1137,7 +1124,11 @@ function ArchitectConsole({
             viewer={viewer}
             variant={viewer === "D" ? "d-mode" : "architect"}
           />
-          <button className="arch-rail-btn arch-intake-btn" onClick={onIntake}>
+          <button
+            className="arch-rail-btn arch-intake-btn"
+            onClick={onIntake}
+            aria-label="Upload tracks to vault"
+          >
             INTAKE
           </button>
 
@@ -1238,9 +1229,7 @@ function ArchitectConsole({
         {/* Main waveform — real audio analysis with playhead */}
         <div className="arch-waveform-main" aria-hidden="true">
           {!loadedTrack ? (
-            <div className="arch-deck-empty-state">
-              NO TRACK LOADED · SELECT FROM LIBRARY
-            </div>
+            <div className="arch-deck-empty-state">SELECT A TRACK TO BEGIN</div>
           ) : (
             <DeckWaveform
               waveformData={
@@ -1712,10 +1701,26 @@ function ArchitectConsole({
             <div className="arch-track-list-body">
               {trackListLoading ? (
                 <div className="arch-lib-empty">QUERYING VAULT…</div>
-              ) : visibleTracks.length === 0 ? (
-                <div className="arch-lib-empty">
-                  — NO TRACKS IN {vaultLabel(activeLibVault)} —
+              ) : trackLoadError ? (
+                <div className="arch-lib-empty arch-lib-error">
+                  {trackLoadError} —{" "}
+                  <button
+                    className="arch-lib-retry"
+                    onClick={() => {
+                      setTrackLoadError(null);
+                      fetchAllTracks()
+                        .then(setTrackListData)
+                        .catch((err) => {
+                          console.error("[PSC] Failed to load tracks:", err);
+                          setTrackLoadError("VAULT UNAVAILABLE");
+                        });
+                    }}
+                  >
+                    RETRY
+                  </button>
                 </div>
+              ) : visibleTracks.length === 0 ? (
+                <div className="arch-lib-empty">VAULT IS EMPTY</div>
               ) : (
                 visibleTracks.map((t, i) => {
                   // Get waveform preview data (low-res)
@@ -2357,6 +2362,32 @@ function ArchitectConsole({
                     <tr>
                       <td colSpan={5} className="arch-table-empty">
                         QUERYING VAULT…
+                      </td>
+                    </tr>
+                  ) : trackLoadError ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="arch-table-empty arch-lib-error"
+                      >
+                        {trackLoadError} —{" "}
+                        <button
+                          className="arch-lib-retry"
+                          onClick={() => {
+                            setTrackLoadError(null);
+                            fetchAllTracks()
+                              .then(setTrackListData)
+                              .catch((err) => {
+                                console.error(
+                                  "[PSC] Failed to load tracks:",
+                                  err,
+                                );
+                                setTrackLoadError("VAULT UNAVAILABLE");
+                              });
+                          }}
+                        >
+                          RETRY
+                        </button>
                       </td>
                     </tr>
                   ) : trackListData.length === 0 ? (

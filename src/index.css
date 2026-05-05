@@ -936,10 +936,17 @@ h3,
   border-radius: 0;
 }
 
-/* Architect console: cyan focus ring */
+/* Architect console: accent focus ring */
 .arch-console :focus-visible,
 .architect-console :focus-visible {
   outline-color: var(--arch-accent);
+}
+
+/* ── BottomNav — mobile only ─────────────────────────────────── */
+@media (min-width: 768px) {
+  .bottom-nav {
+    display: none !important;
+  }
 }
 
 /* ── Windows High Contrast / Forced Colors ───────────────────── */

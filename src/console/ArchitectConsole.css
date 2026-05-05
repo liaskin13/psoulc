@@ -11,27 +11,84 @@
   --arch-accent: #00e5ff;
   --arch-neutral-rgb: 210, 225, 235;
   --arch-neutral: #d2e1eb;
+  --arch-muted: rgba(180, 200, 210, 0.5);
+  --arch-muted-rgb: 180, 200, 210;
+  --arch-error: rgba(220, 80, 80, 0.7);
+  --arch-error-solid: #dc5050;
   position: fixed;
   inset: 0;
   background: #070a0d;
   display: grid;
-  grid-template-rows: 40px 1fr auto auto;
+  grid-template-rows: 40px auto auto 1fr;
   /* top-rail | deck | transport | lower-zone */
   font-family: 'Chakra Petch', sans-serif;
   color: rgba(210, 225, 235, 0.75);
   overflow: hidden;
+  width: 100vw;
+  height: 100vh;
   z-index: 10;
   cursor: none;
   /* Entry-matched reveal — handled by framer motion in JSX */
 }
 
-/* ── D's sovereign overrides ────────────────────────────────────────────── */
-/* --arch-accent-rgb and --arch-accent are set via inline style in JSX       */
+/* ── BottomNav — hidden everywhere at desktop ───────────────────────────── */
+.architect-console .bottom-nav,
+.bottom-nav {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .bottom-nav {
+    display: flex !important;
+  }
+}
+
+/* ── D sovereign — THE ONE-VARIABLE FIX ────────────────────────────────── */
+/*    Override --arch-accent-rgb to neutral. Every element using this var    */
+/*    automatically goes grey. Then restore green at exactly 3 points.      */
+/*    3 identity points: THE SIGNAL button · active track row · BPM/Key     */
 .architect-console--d {
+  --arch-accent-rgb: 185, 200, 190;
+  /* neutral sage — replaces green everywhere */
+  --arch-accent: rgb(185, 200, 190);
+  --arch-identity: #14dc14;
+  /* real green — used at 3 points only */
+  --arch-identity-rgb: 20, 220, 20;
   --arch-neutral-rgb: 235, 240, 235;
   --arch-neutral: #ebf0eb;
   background: #060806;
-  color: rgba(235, 240, 235, 0.75);
+  color: rgba(210, 220, 215, 0.75);
+}
+
+/* THE SIGNAL is always Serato red #e52020 — never identity color (DESIGN.md law) */
+
+/* Identity Point 2: Active/selected track row accent line */
+.architect-console--d .arch-track-row.selected {
+  border-left: 2px solid var(--arch-identity);
+  background: rgba(var(--arch-identity-rgb), 0.04);
+}
+
+/* Identity Point 3: BPM and Key text in track detail / deck stats */
+.architect-console--d .arch-stat.bpm strong,
+.architect-console--d .arch-stat.key strong,
+.architect-console--d .arch-meta-bpm,
+.architect-console--d .arch-meta-key {
+  color: var(--arch-identity);
+}
+
+/* Cursor — hidden intentionally, focus rings restored */
+.architect-console--d *:focus-visible {
+  outline: 1px solid rgba(var(--arch-identity-rgb), 0.5);
+  outline-offset: 2px;
+}
+
+/* D grain */
+.architect-console--d .arch-search-input {
+  color: rgba(210, 225, 215, 0.75);
+}
+
+.architect-console--d .arch-col-header {
+  color: rgba(180, 195, 185, 0.35);
 }
 
 .architect-console--d .arch-grain-layer {
@@ -151,7 +208,7 @@
 .arch-vu-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.54rem;
-  color: rgba(180, 200, 210, 0.35);
+  color: rgba(var(--arch-muted-rgb), 0.35);
   letter-spacing: 0.08em;
 }
 
@@ -163,7 +220,7 @@
 .arch-vu-seg {
   width: 5px;
   height: 10px;
-  background: rgba(180, 200, 210, 0.15);
+  background: rgba(var(--arch-muted-rgb), 0.15);
   border-radius: 0;
 }
 
@@ -236,13 +293,13 @@
 }
 
 .arch-exit-btn {
-  border-color: rgba(180, 200, 210, 0.12);
-  color: rgba(180, 200, 210, 0.35);
+  border-color: rgba(var(--arch-muted-rgb), 0.12);
+  color: rgba(var(--arch-muted-rgb), 0.35);
 }
 
 .arch-exit-btn:hover {
-  border-color: rgba(180, 200, 210, 0.3);
-  color: rgba(180, 200, 210, 0.65);
+  border-color: rgba(var(--arch-muted-rgb), 0.3);
+  color: rgba(var(--arch-muted-rgb), 0.65);
 }
 
 .arch-badge-btn {
@@ -313,7 +370,7 @@
   border: 1px solid #252525;
   border-bottom-color: #060606;
   box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  color: rgba(180, 200, 210, 0.5);
+  color: rgba(var(--arch-muted-rgb), 0.5);
   padding: 4px 9px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.56rem;
@@ -339,7 +396,7 @@
 .arch-stat {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
-  color: rgba(180, 200, 210, 0.4);
+  color: rgba(var(--arch-muted-rgb), 0.4);
   letter-spacing: 0.08em;
 }
 
@@ -352,7 +409,7 @@
 .arch-stat-sep {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;
-  color: rgba(180, 200, 210, 0.2);
+  color: rgba(var(--arch-muted-rgb), 0.2);
 }
 
 /* ── WAVEFORM — Animation 2: Standing Wave ──────────────────────────────── */
@@ -388,12 +445,12 @@
 
 .arch-deck-empty-state {
   font-family: 'Chakra Petch', sans-serif;
-  font-size: 14px;
-  letter-spacing: 0.12em;
-  color: rgba(var(--arch-accent-rgb), 0.5);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: rgba(var(--arch-muted-rgb), 0.25);
   text-align: center;
-  opacity: 0.5;
-  font-weight: 600;
+  font-weight: 400;
+  text-transform: uppercase;
 }
 
 .arch-deck-metadata {
@@ -416,7 +473,7 @@
 .arch-meta-bpm,
 .arch-meta-uploader {
   font-weight: 400;
-  color: rgba(180, 200, 210, 0.65);
+  color: rgba(var(--arch-muted-rgb), 0.65);
 }
 
 .arch-meta-sep {
@@ -435,6 +492,7 @@
   border-radius: 0;
   flex-shrink: 0;
   transform-origin: center;
+  will-change: transform;
   animation: arch-standing-wave 2.8s ease-in-out infinite;
   animation-delay: calc(var(--bar-i, 0) * -0.035s);
 }
@@ -507,7 +565,7 @@
   border: 1px solid #232323;
   border-bottom-color: #050505;
   box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.025);
-  color: rgba(180, 200, 210, 0.4);
+  color: rgba(var(--arch-muted-rgb), 0.4);
   padding: 3px 6px;
   font-size: 0.52rem;
   font-family: 'JetBrains Mono', monospace;
@@ -619,7 +677,7 @@
     0 2px 0 #000,
     0 4px 8px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  color: rgba(180, 200, 210, 0.4);
+  color: rgba(var(--arch-muted-rgb), 0.4);
   width: 26px;
   height: 28px;
   font-family: 'JetBrains Mono', monospace;
@@ -684,7 +742,7 @@
   border: 1px solid #242424;
   border-bottom-color: #060606;
   box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.025);
-  color: rgba(180, 200, 210, 0.38);
+  color: rgba(var(--arch-muted-rgb), 0.38);
   padding: 6px 10px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
@@ -709,7 +767,7 @@
   border: 1px solid #242424;
   border-bottom-color: #060606;
   box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.025);
-  color: rgba(180, 200, 210, 0.38);
+  color: rgba(var(--arch-muted-rgb), 0.38);
   padding: 6px 10px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.56rem;
@@ -771,7 +829,7 @@
   border: 1px solid #222;
   border-bottom-color: #050505;
   box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  color: rgba(180, 200, 210, 0.4);
+  color: rgba(var(--arch-muted-rgb), 0.4);
   padding: 4px 7px;
   font-size: 0.52rem;
   letter-spacing: 0.1em;
@@ -887,7 +945,6 @@
   z-index: 2;
   display: grid;
   grid-template-columns: 180px 1fr;
-  flex: 1;
   overflow: hidden;
   min-height: 0;
 }
@@ -900,6 +957,11 @@
   border-right: 1px solid rgba(var(--arch-accent-rgb), 0.08);
   background: rgba(0, 0, 0, 0.35);
   overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.arch-rail::-webkit-scrollbar {
+  display: none;
 }
 
 .arch-rail-section-label {
@@ -923,7 +985,7 @@
   background: transparent;
   border: none;
   border-left: 2px solid transparent;
-  color: rgba(180, 200, 210, 0.45);
+  color: rgba(var(--arch-muted-rgb), 0.45);
   padding: 8px 14px 8px 14px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.62rem;
@@ -947,7 +1009,7 @@
 }
 
 .arch-rail-toggle.arch-armed {
-  border-left-color: rgba(220, 80, 80, 0.7);
+  border-left-color: var(--arch-error);
   color: rgba(220, 100, 100, 0.8);
 }
 
@@ -961,7 +1023,7 @@
   background: transparent;
   border: none;
   border-left: 2px solid transparent;
-  color: rgba(180, 200, 210, 0.35);
+  color: rgba(var(--arch-muted-rgb), 0.35);
   padding: 7px 14px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.6rem;
@@ -990,7 +1052,7 @@
 }
 
 .arch-rail-void:hover:not(:disabled) {
-  color: rgba(220, 80, 80, 0.8);
+  color: var(--arch-error-solid);
 }
 
 /* ── LIBRARY PANEL ──────────────────────────────────────────────────────── */
@@ -1017,10 +1079,13 @@
   bottom: 0;
   left: 0;
   height: 2px;
+  width: 1px;
+  transform-origin: left center;
   background: var(--vault-color, var(--arch-accent));
   box-shadow: 0 0 8px var(--vault-color, rgba(var(--arch-accent-rgb), 0.7));
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
+  will-change: transform;
   z-index: 2;
 }
 
@@ -1029,7 +1094,7 @@
   border: none;
   border-right: 1px solid #111;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
-  color: rgba(180, 200, 210, 0.35);
+  color: rgba(var(--arch-muted-rgb), 0.35);
   padding: 10px 18px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.65rem;
@@ -1079,7 +1144,7 @@
   border: 1px solid #222;
   border-bottom-color: #060606;
   box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  color: rgba(180, 200, 210, 0.38);
+  color: rgba(var(--arch-muted-rgb), 0.38);
   padding: 5px 8px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.54rem;
@@ -1174,7 +1239,7 @@
 
 .arch-lib-empty {
   text-align: center;
-  color: rgba(180, 200, 210, 0.22);
+  color: rgba(var(--arch-muted-rgb), 0.22);
   font-size: 0.62rem;
   letter-spacing: 0.16em;
   padding: 40px 20px;
@@ -1234,30 +1299,12 @@
   grid-template-columns: 2fr 1.3fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.8fr 0.7fr;
   padding: 6px 16px;
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
-  border-left: 2px solid rgba(var(--arch-accent-rgb), 0.035);
 }
 
 .arch-track-list-head span {
   font-size: 0.55rem;
   letter-spacing: 0.18em;
   color: rgba(var(--arch-accent-rgb), 0.28);
-
-  .arch-track-row-venus {
-    border-left-color: rgba(var(--arch-accent-rgb), 0.62);
-  }
-
-  .arch-track-row-saturn {
-    border-left-color: rgba(var(--arch-accent-rgb), 0.48);
-  }
-
-  .arch-track-row-mercury {
-    border-left-color: rgba(var(--arch-accent-rgb), 0.34);
-  }
-
-  .arch-track-row-earth {
-    border-left-color: rgba(var(--arch-accent-rgb), 0.24);
-  }
-
   text-transform: uppercase;
 }
 
@@ -1299,11 +1346,27 @@
 }
 
 .arch-track-row:hover {
-  background: rgba(var(--arch-accent-rgb), 0.04);
+  background: rgba(var(--arch-accent-rgb), 0.05);
 }
 
 .arch-track-row.selected {
+  background: rgba(var(--arch-accent-rgb), 0.1);
+}
+
+.arch-track-row-venus.selected {
+  background: rgba(var(--arch-accent-rgb), 0.12);
+}
+
+.arch-track-row-saturn.selected {
+  background: rgba(var(--arch-accent-rgb), 0.1);
+}
+
+.arch-track-row-mercury.selected {
   background: rgba(var(--arch-accent-rgb), 0.08);
+}
+
+.arch-track-row-earth.selected {
+  background: rgba(var(--arch-accent-rgb), 0.07);
 }
 
 .arch-track-title {
@@ -1378,7 +1441,7 @@
 .arch-track-action-btn {
   background: transparent;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.1);
-  color: rgba(180, 200, 210, 0.35);
+  color: rgba(var(--arch-muted-rgb), 0.35);
   padding: 2px 8px;
   font-size: 0.64rem;
   cursor: pointer;
@@ -1415,14 +1478,14 @@
   justify-content: space-between;
   gap: 8px;
   padding: 4px 0;
-  color: rgba(180, 200, 210, 0.5);
+  color: rgba(var(--arch-muted-rgb), 0.5);
   font-size: 0.62rem;
 }
 
 .arch-settings-toggle {
   background: transparent;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
-  color: rgba(180, 200, 210, 0.42);
+  color: rgba(var(--arch-muted-rgb), 0.42);
   padding: 3px 10px;
   font-size: 0.54rem;
   letter-spacing: 0.1em;
@@ -1484,7 +1547,7 @@
 
 .arch-panel-sub {
   font-size: 0.58rem;
-  color: rgba(180, 200, 210, 0.28);
+  color: rgba(var(--arch-muted-rgb), 0.28);
   letter-spacing: 0.1em;
   flex: 1;
 }
@@ -1492,7 +1555,7 @@
 .arch-panel-close {
   background: transparent;
   border: none;
-  color: rgba(180, 200, 210, 0.3);
+  color: rgba(var(--arch-muted-rgb), 0.3);
   font-size: 0.75rem;
   cursor: pointer;
   padding: 2px 4px;
@@ -1554,7 +1617,7 @@
 
 .arch-table-empty {
   text-align: center;
-  color: rgba(180, 200, 210, 0.22);
+  color: rgba(var(--arch-muted-rgb), 0.22);
   font-size: 0.62rem;
   letter-spacing: 0.14em;
   padding: 36px;
@@ -1572,7 +1635,7 @@
 }
 
 .arch-cell-domain {
-  color: rgba(180, 200, 210, 0.45);
+  color: rgba(var(--arch-muted-rgb), 0.45);
   font-size: 0.65rem;
 }
 
@@ -1609,8 +1672,8 @@
 
 .arch-matrix-arm {
   background: transparent;
-  border: 1px solid rgba(220, 80, 80, 0.3);
-  color: rgba(220, 80, 80, 0.6);
+  border: 1px solid rgba(var(--arch-error-rgb, 220, 80, 80), 0.3);
+  color: var(--arch-error);
   padding: 5px 12px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.6rem;
@@ -1641,8 +1704,8 @@
 .arch-matrix-cancel,
 .arch-matrix-rollback {
   background: transparent;
-  border: 1px solid rgba(180, 200, 210, 0.12);
-  color: rgba(180, 200, 210, 0.35);
+  border: 1px solid rgba(var(--arch-muted-rgb), 0.12);
+  color: rgba(var(--arch-muted-rgb), 0.35);
   padding: 5px 10px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.6rem;
@@ -1660,7 +1723,7 @@
 .arch-matrix-cell {
   background: transparent;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
-  color: rgba(180, 200, 210, 0.3);
+  color: rgba(var(--arch-muted-rgb), 0.3);
   width: 28px;
   height: 28px;
   font-size: 0.7rem;
@@ -1678,7 +1741,7 @@
 
 .arch-cell-off {
   border-color: rgba(var(--arch-accent-rgb), 0.06);
-  color: rgba(180, 200, 210, 0.22);
+  color: rgba(var(--arch-muted-rgb), 0.22);
 }
 
 .arch-cell-pending {
@@ -1719,7 +1782,7 @@
 
 .arch-roster-flash-sub {
   font-size: 0.56rem;
-  color: rgba(180, 200, 210, 0.35);
+  color: rgba(var(--arch-muted-rgb), 0.35);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-family: 'Chakra Petch', sans-serif;
@@ -1806,7 +1869,7 @@
 .arch-tier-btn {
   background: transparent;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
-  color: rgba(180, 200, 210, 0.4);
+  color: rgba(var(--arch-muted-rgb), 0.4);
   padding: 7px 14px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.62rem;
@@ -1847,8 +1910,8 @@
 
 .arch-form-cancel {
   background: transparent;
-  border: 1px solid rgba(180, 200, 210, 0.1);
-  color: rgba(180, 200, 210, 0.35);
+  border: 1px solid rgba(var(--arch-muted-rgb), 0.1);
+  color: rgba(var(--arch-muted-rgb), 0.35);
   padding: 9px 20px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.65rem;
@@ -1881,7 +1944,7 @@
 
 .arch-horizon-empty {
   text-align: center;
-  color: rgba(180, 200, 210, 0.22);
+  color: rgba(var(--arch-muted-rgb), 0.22);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.14em;
@@ -1967,7 +2030,7 @@
 .arch-count {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
-  color: rgba(180, 200, 210, 0.28);
+  color: rgba(var(--arch-muted-rgb), 0.28);
   letter-spacing: 0.1em;
 }
 
@@ -2021,7 +2084,7 @@
 
 .arch-confirm-msg {
   font-size: 0.68rem;
-  color: rgba(180, 200, 210, 0.45);
+  color: rgba(var(--arch-muted-rgb), 0.45);
   letter-spacing: 0.06em;
   line-height: 1.6;
 }
@@ -2035,7 +2098,7 @@
 .arch-confirm-yes {
   background: rgba(220, 60, 60, 0.08);
   border: 1px solid rgba(220, 60, 60, 0.38);
-  color: rgba(220, 80, 80, 0.8);
+  color: var(--arch-error-solid);
   padding: 10px 22px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.65rem;
@@ -2049,13 +2112,13 @@
 .arch-confirm-yes:hover {
   background: rgba(220, 60, 60, 0.16);
   border-color: rgba(220, 60, 60, 0.65);
-  color: rgba(220, 80, 80, 1);
+  color: var(--arch-error-solid);
 }
 
 .arch-confirm-no {
   background: transparent;
-  border: 1px solid rgba(180, 200, 210, 0.12);
-  color: rgba(180, 200, 210, 0.4);
+  border: 1px solid rgba(var(--arch-muted-rgb), 0.12);
+  color: rgba(var(--arch-muted-rgb), 0.4);
   padding: 10px 22px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.65rem;
