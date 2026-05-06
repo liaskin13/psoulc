@@ -19,7 +19,7 @@ import {
   commitMatrixState,
   rollbackMatrixState,
 } from "./matrixState";
-import { fetchAllTracks, getAudioUrl, countVaultTracks } from "../lib/tracks";
+import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { getWaveformBars } from "../utils/waveform";
 import {
   generateAndSaveWaveform,
@@ -172,6 +172,7 @@ function ArchitectConsole({
     unreadCommentCount,
     voidItem,
     addMember,
+    tracks: vaultTracksState,
   } = useSystem();
   const MATRIX_COMMITTED_KEY = "psc_matrix_committed";
   const MATRIX_HISTORY_KEY = "psc_matrix_history";
@@ -1229,7 +1230,7 @@ function ArchitectConsole({
             onClick={() => {
               if (!loadedTrack) return;
               audioEngine.stop();
-              audioEngine.load(getAudioUrl(loadedTrack.storage_key));
+              audioEngine.load(getAudioUrl(loadedTrack.audio_path));
             }}
           >
             RELOAD
@@ -1598,7 +1599,7 @@ function ArchitectConsole({
               aria-hidden="true"
             />
             {VAULT_ROUTES.map((v, i) => {
-              const count = countVaultTracks(v.id);
+              const count = (vaultTracksState?.[v.id] || []).filter(t => !t.is_voided).length;
               return (
                 <button
                   key={v.id}

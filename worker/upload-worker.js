@@ -115,7 +115,7 @@ export default {
         const filename = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
         const key = `${vault}/${filename}`;
 
-        await env.PSC_AUDIO.put(key, file.stream(), {
+        await env.PSC_AUDIO.put(key, await file.arrayBuffer(), {
           httpMetadata: {
             contentType: file.type || "application/octet-stream",
           },

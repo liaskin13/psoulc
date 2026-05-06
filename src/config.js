@@ -92,6 +92,11 @@ export const UPLOAD_WORKER_URL =
 
 export const UPLOAD_SECRET = import.meta.env.VITE_UPLOAD_SECRET || "";
 
+// R2 public base URL for audio playback (no trailing slash)
+// Format: https://pub-{hash}.r2.dev  OR your custom domain
+export const R2_PUBLIC_URL =
+  (import.meta.env.VITE_R2_PUBLIC_URL || "").replace(/\/$/, "");
+
 // True spectrum chakra colors — void events (distinct from ambient earth tones)
 export const VOID_CHAKRA_COLORS = {
   saturn: "#cc4400", // Scarlet
