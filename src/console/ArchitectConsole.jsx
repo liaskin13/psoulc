@@ -1067,7 +1067,7 @@ function ArchitectConsole({
 
   return (
     <motion.div
-      className={`architect-console${isD ? " architect-console--d" : ""}`}
+      className={`architect-console${isD ? " architect-console--d" : " architect-console--l"}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}

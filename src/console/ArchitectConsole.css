@@ -1,18 +1,19 @@
 /* ─────────────────────────────────────────────────────────────────────────
    ArchitectConsole.css — Shared console base. GOD MODE.
-   Serato-shaped layout. Identity color via --arch-accent / --arch-accent-rgb.
-   L default: cyan #00e5ff. D override: green #14dc14 (set via inline style).
+   Achromatic base. Identity injected at exactly 3 points per owner:
+     .architect-console--d  →  green  #14dc14
+     .architect-console--l  →  cyan   #00e5ff
    Chakra Petch (UI) · JetBrains Mono (data)
    ───────────────────────────────────────────────────────────────────────── */
 
-/* ── Layout root ────────────────────────────────────────────────────────── */
+/* ── Layout root — achromatic base, no identity color here ─────────────── */
 .architect-console {
-  --arch-accent-rgb: 0, 229, 255;
-  --arch-accent: #00e5ff;
-  --arch-neutral-rgb: 210, 225, 235;
-  --arch-neutral: #d2e1eb;
-  --arch-muted: rgba(180, 200, 210, 0.5);
-  --arch-muted-rgb: 180, 200, 210;
+  --arch-accent-rgb: 185, 195, 200;
+  --arch-accent: rgb(185, 195, 200);
+  --arch-neutral-rgb: 210, 220, 225;
+  --arch-neutral: rgb(210, 220, 225);
+  --arch-muted: rgba(165, 175, 180, 0.5);
+  --arch-muted-rgb: 165, 175, 180;
   --arch-error: rgba(220, 80, 80, 0.7);
   --arch-error-solid: #dc5050;
   position: fixed;
@@ -22,7 +23,7 @@
   grid-template-rows: 40px auto auto 1fr;
   /* top-rail | deck | transport | lower-zone */
   font-family: 'Chakra Petch', sans-serif;
-  color: rgba(210, 225, 235, 0.75);
+  color: rgba(205, 215, 220, 0.75);
   overflow: hidden;
   width: 100vw;
   height: 100vh;
@@ -65,6 +66,33 @@
   --arch-neutral: #ebf0eb;
   background: #060806;
   color: rgba(210, 220, 215, 0.75);
+}
+
+/* ── L sovereign — 3-point cyan identity on achromatic base ────────────── */
+.architect-console--l {
+  --arch-identity: #00e5ff;
+  --arch-identity-rgb: 0, 229, 255;
+  background: #070a0d;
+}
+
+/* Identity Point 2: active track row */
+.architect-console--l .arch-track-row.selected {
+  border-left: 2px solid var(--arch-identity);
+  background: rgba(var(--arch-identity-rgb), 0.04);
+}
+
+/* Identity Point 3: BPM and Key */
+.architect-console--l .arch-stat.bpm strong,
+.architect-console--l .arch-stat.key strong,
+.architect-console--l .arch-meta-bpm,
+.architect-console--l .arch-meta-key {
+  color: var(--arch-identity);
+}
+
+/* Focus rings */
+.architect-console--l *:focus-visible {
+  outline: 1px solid rgba(var(--arch-identity-rgb), 0.5);
+  outline-offset: 2px;
 }
 
 /* THE SIGNAL is always Serato red #e52020 — never identity color (DESIGN.md law) */
