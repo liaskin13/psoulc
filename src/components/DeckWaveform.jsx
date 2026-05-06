@@ -94,25 +94,54 @@ export default function DeckWaveform({
       ctx.lineTo(width, height / 2);
       ctx.stroke();
 
-      // Draw hot cue markers
+      // Draw hot cue markers — bank 1 (1-8): filled triangle, bank 2 (9-16): outlined inverse
+      ctx.textAlign = "center";
       Object.entries(hotCues).forEach(([num, cue]) => {
         if (!cue || typeof cue.time !== "number") return;
+        const n = parseInt(num, 10);
         const x = (cue.time / duration) * width;
-        const color = cueColors[num - 1] || "#ffffff";
+        const color = cueColors[n - 1] || "#ffffff";
+        const isB2 = n > 8;
 
         // Vertical line
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = isB2 ? 1.5 : 2;
+        if (isB2) ctx.setLineDash([4, 3]);
+        else ctx.setLineDash([]);
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, height);
         ctx.stroke();
+        ctx.setLineDash([]);
 
-        // Cue number badge at top
-        ctx.fillStyle = color;
-        ctx.font = "bold 10px JetBrains Mono, monospace";
-        ctx.fillText(num, x - 4, 10);
+        if (isB2) {
+          // Outlined downward triangle at bottom
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x - 6, height);
+          ctx.lineTo(x + 6, height);
+          ctx.lineTo(x, height - 12);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fillStyle = color;
+          ctx.font = "bold 7px JetBrains Mono, monospace";
+          ctx.fillText(num, x, height - 4);
+        } else {
+          // Filled downward triangle at top
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(x - 6, 0);
+          ctx.lineTo(x + 6, 0);
+          ctx.lineTo(x, 12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = "#000";
+          ctx.font = "bold 7px JetBrains Mono, monospace";
+          ctx.fillText(num, x, 10);
+        }
       });
+      ctx.textAlign = "left";
     }
 
     // Initial draw

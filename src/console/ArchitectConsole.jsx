@@ -20,10 +20,15 @@ import {
 } from "./matrixState";
 import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { getWaveformBars } from "../utils/waveform";
-import {
-  generateAndSaveWaveform,
-  SERATO_COLORS,
-} from "../lib/waveformAnalyzer";
+import { generateAndSaveWaveform } from "../lib/waveformAnalyzer";
+
+// Bank 1: Serato canonical · Bank 2: Extended palette (outlined style)
+const ALL_CUE_COLORS = [
+  "#e52020", "#e56020", "#e5a020", "#14dc14",
+  "#00c8dc", "#1464dc", "#8c14dc", "#e5e5e5",
+  "#ff2d78", "#ff7700", "#e8ff14", "#00ff66",
+  "#0099ff", "#cc00ff", "#ff88bb", "#44ffee",
+];
 import * as audioEngine from "../lib/audioEngine";
 import AudioAnalyzer from "./AudioAnalyzer";
 import AdminSettings from "../admin/AdminSettings";
@@ -473,6 +478,7 @@ function ArchitectConsole({
 
   // ── Audio handlers ──────────────────────────────────────────────────
   const loadAndPlay = async (track) => {
+    audioEngine.prewarm(); // synchronous — creates AudioContext inside gesture scope
     const url = getAudioUrl(track.audio_path);
     if (!url) {
       announce("No audio file for this track.");
@@ -502,6 +508,7 @@ function ArchitectConsole({
   };
 
   const loadToDeck = async (track) => {
+    audioEngine.prewarm();
     const url = getAudioUrl(track.audio_path);
     if (!url) {
       announce("No audio file for this track.");
@@ -525,6 +532,7 @@ function ArchitectConsole({
   };
 
   const handlePlayPause = () => {
+    audioEngine.prewarm();
     if (!audioEngine.isLoaded()) {
       // Load selected track if deck is empty
       const track = trackListData.find((t) => t.id === selectedTrackId);
@@ -1244,21 +1252,19 @@ function ArchitectConsole({
         <div className="arch-waveform-main" aria-hidden="true">
           {!loadedTrack ? (
             <div className="arch-deck-empty-state">SELECT A TRACK TO BEGIN</div>
+          ) : !loadedTrack.waveform_data ? (
+            <div className="arch-deck-empty-state">NO WAVEFORM · HIT WVF TO GENERATE</div>
           ) : (
             <DeckWaveform
-              waveformData={
-                loadedTrack?.waveform_data
-                  ? JSON.parse(loadedTrack.waveform_data).high
-                  : null
-              }
+              waveformData={JSON.parse(loadedTrack.waveform_data).high}
               currentTime={currentTime}
               duration={audioDuration}
               onSeek={handleSeek}
-              trackId={loadedTrack?.id || "default"}
+              trackId={loadedTrack.id}
               width={800}
               height={120}
-              hotCues={loadedTrack ? hotCues[loadedTrack.id] || {} : {}}
-              cueColors={SERATO_COLORS}
+              hotCues={hotCues[loadedTrack.id] || {}}
+              cueColors={ALL_CUE_COLORS}
             />
           )}
         </div>
@@ -1403,27 +1409,19 @@ function ArchitectConsole({
         </div>
 
         <div className="arch-hotcues" role="group" aria-label="Hot cues">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => {
+          {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => {
             const trackCues = loadedTrack ? hotCues[loadedTrack.id] || {} : {};
             const cue = trackCues[n];
-            const color = SERATO_COLORS[n - 1];
+            const color = ALL_CUE_COLORS[n - 1];
+            const isB2 = n > 8;
             return (
               <button
                 key={n}
-                className={`arch-hotcue ${cue ? "has-cue" : ""}`}
-                aria-label={
-                  cue ? `Hot cue ${n} — double-click to clear` : `Hot cue ${n}`
-                }
+                className={`arch-hotcue${isB2 ? " arch-hotcue--b2" : ""}${cue ? " has-cue" : ""}`}
+                aria-label={cue ? `Hot cue ${n} — double-click to clear` : `Hot cue ${n}`}
                 onClick={() => handleHotCueClick(n)}
-                onDoubleClick={(e) => {
-                  e.stopPropagation();
-                  clearHotCue(n, e);
-                }}
-                style={{
-                  "--cue-color": color,
-                  backgroundColor: cue ? color : "transparent",
-                  borderColor: color,
-                }}
+                onDoubleClick={(e) => { e.stopPropagation(); clearHotCue(n, e); }}
+                style={{ "--cue-color": color }}
               >
                 {n}
               </button>

@@ -780,29 +780,66 @@
 }
 
 .arch-hotcues {
-  display: flex;
-  gap: 4px;
-  margin-left: 12px;
+  display: grid;
+  grid-template-columns: repeat(8, 26px);
+  gap: 3px;
+  margin-left: 10px;
 }
 
 .arch-hotcue {
   background: linear-gradient(180deg, #222 0%, #111 100%);
-  border: 1px solid #2e2e2e;
+  border: 1px solid var(--cue-color, #2e2e2e);
   border-bottom-color: #060606;
   box-shadow:
-    0 3px 0 #000,
-    0 5px 10px rgba(0, 0, 0, 0.85),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
     inset 0 -1px 0 rgba(0, 0, 0, 0.4);
   color: rgba(var(--arch-muted-rgb), 0.4);
-  width: 30px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
   cursor: pointer;
   border-radius: 0;
   transition: box-shadow 60ms ease, transform 60ms ease;
+}
+
+/* Bank 2 — neutral dashed border, no color bleed until cue is set */
+.arch-hotcue--b2 {
+  border-color: #282828;
+  border-style: dashed;
+  background: linear-gradient(180deg, #161616 0%, #0e0e0e 100%);
+  color: rgba(var(--arch-muted-rgb), 0.28);
+}
+
+/* Bank 2 — outlined when cue is set (inverse of bank 1 solid fill) */
+.arch-hotcue--b2.has-cue {
+  background: transparent !important;
+  color: var(--cue-color) !important;
+  border-color: var(--cue-color) !important;
+  border-style: solid !important;
+  font-weight: 700;
+  box-shadow:
+    0 0 0 #000,
+    0 0 8px 1px color-mix(in srgb, var(--cue-color) 35%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.arch-hotcue--b2.has-cue:hover {
+  filter: brightness(1.25);
+  box-shadow:
+    0 0 0 #000,
+    0 0 14px 3px color-mix(in srgb, var(--cue-color) 50%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.arch-hotcue--b2.has-cue:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 0 0 #000,
+    0 0 6px 1px color-mix(in srgb, var(--cue-color) 25%, transparent);
 }
 
 .arch-hotcue:active {

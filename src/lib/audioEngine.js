@@ -34,6 +34,14 @@ export function resumeAudioContext() {
   if (_audioCtx?.state === 'suspended') _audioCtx.resume();
 }
 
+// Call synchronously inside a user-gesture handler before any await.
+// Creates the AudioContext + AnalyserNode while the gesture is still live
+// so autoplay policy doesn't block the subsequent a.play() call.
+export function prewarm() {
+  ensureAudioGraph();
+  resumeAudioContext();
+}
+
 function getAudio() {
   if (!audio) {
     audio = new Audio();
