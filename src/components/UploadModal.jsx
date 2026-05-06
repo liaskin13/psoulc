@@ -209,7 +209,7 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
       const id3 = await readId3Tags(f);
       if (!title) setTitle(id3.title ? id3.title.toUpperCase() : fallbackTitle);
       if (id3.artist) setArtist(id3.artist.toUpperCase());
-      if (id3.bpm) setBpm(id3.bpm.toFixed(2));
+      if (id3.bpm) setBpm(String(Math.round(id3.bpm)));
       setMetadataStatus(
         id3.title || id3.artist || id3.bpm ? "detected" : "filename-fallback",
       );
@@ -284,7 +284,7 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
             }
             return res.json();
           }),
-          60000,
+          300000,
           "UPLOAD",
         );
         setUploadPhase("finalizing");

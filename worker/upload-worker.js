@@ -99,25 +99,14 @@ export default {
           );
         }
 
-        if (!env.R2_PUBLIC_URL) {
-          return new Response(
-            JSON.stringify({
-              error: "Worker misconfigured: R2_PUBLIC_URL secret not set",
-            }),
-            {
-              status: 500,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            },
-          );
-        }
-
-        const ext = file.name.split(".").pop();
+        const ext = (file.name || "audio").split(".").pop().toLowerCase();
         const filename = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
         const key = `${vault}/${filename}`;
 
-        await env.PSC_AUDIO.put(key, await file.arrayBuffer(), {
+        // Stream file directly to R2 — no arrayBuffer(), no memory limit
+        await env.PSC_AUDIO.put(key, file.stream(), {
           httpMetadata: {
-            contentType: file.type || "application/octet-stream",
+            contentType: file.type || "audio/mpeg",
           },
         });
 
@@ -141,14 +130,12 @@ export default {
           );
         }
 
-        const publicUrl = `${env.R2_PUBLIC_URL}/${key}`;
-
+        // Return the key — frontend constructs full URL from VITE_R2_PUBLIC_URL
         return new Response(
           JSON.stringify({
             success: true,
             id: result.id,
             audio_path: key,
-            public_url: publicUrl,
           }),
           {
             headers: { ...corsHeaders, "Content-Type": "application/json" },

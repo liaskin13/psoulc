@@ -1766,7 +1766,7 @@ function ArchitectConsole({
                         {t.artist || "—"}
                       </span>
                       <span className="arch-track-bpm" role="cell">
-                        {t.bpm || "—"}
+                        {t.bpm ? Math.round(Number(t.bpm)) : "—"}
                       </span>
                       <span className="arch-track-key" role="cell">
                         —
