@@ -30,7 +30,7 @@ const ALL_CUE_COLORS = [
   "#0099ff", "#cc00ff", "#ff88bb", "#44ffee",
 ];
 import * as audioEngine from "../lib/audioEngine";
-import AudioAnalyzer from "./AudioAnalyzer";
+import useAudioAnalyzer from "./useAudioAnalyzer";
 import AdminSettings from "../admin/AdminSettings";
 import PSCWordmark from "../components/PSCWordmark";
 
@@ -252,6 +252,7 @@ function ArchitectConsole({
   const waveformBars = getWaveformBars("l-console-ambient", 80);
   const cursorRef = useRef(null);
   const cursorPos = useRef({ x: -200, y: -200 });
+  const { vuRef, specRef } = useAudioAnalyzer(isPlaying);
 
   // Auto-load tracks on mount + listen for upload events
   useEffect(() => {
@@ -1248,25 +1249,31 @@ function ArchitectConsole({
           </button>
         </div>
 
-        {/* Main waveform — real audio analysis with playhead */}
-        <div className="arch-waveform-main" aria-hidden="true">
-          {!loadedTrack ? (
-            <div className="arch-deck-empty-state">SELECT A TRACK TO BEGIN</div>
-          ) : !loadedTrack.waveform_data ? (
-            <div className="arch-deck-empty-state">NO WAVEFORM · HIT WVF TO GENERATE</div>
-          ) : (
-            <DeckWaveform
-              waveformData={JSON.parse(loadedTrack.waveform_data).high}
-              currentTime={currentTime}
-              duration={audioDuration}
-              onSeek={handleSeek}
-              trackId={loadedTrack.id}
-              width={800}
-              height={120}
-              hotCues={hotCues[loadedTrack.id] || {}}
-              cueColors={ALL_CUE_COLORS}
-            />
-          )}
+        {/* Waveform row — VU left, waveform + spectrum right */}
+        <div className="arch-waveform-row" aria-hidden="true">
+          <canvas ref={vuRef} className="arch-vu-deck" width={40} height={108} />
+          <div className="arch-waveform-col">
+            <div className="arch-waveform-main">
+              {!loadedTrack ? (
+                <div className="arch-deck-empty-state">SELECT A TRACK TO BEGIN</div>
+              ) : !loadedTrack.waveform_data ? (
+                <div className="arch-deck-empty-state">NO WAVEFORM · HIT WVF TO GENERATE</div>
+              ) : (
+                <DeckWaveform
+                  waveformData={JSON.parse(loadedTrack.waveform_data).high}
+                  currentTime={currentTime}
+                  duration={audioDuration}
+                  onSeek={handleSeek}
+                  trackId={loadedTrack.id}
+                  width={800}
+                  height={108}
+                  hotCues={hotCues[loadedTrack.id] || {}}
+                  cueColors={ALL_CUE_COLORS}
+                />
+              )}
+            </div>
+            <canvas ref={specRef} className="arch-spectrum-deck" width={800} height={48} />
+          </div>
         </div>
 
         {/* Track metadata display */}
@@ -1465,7 +1472,6 @@ function ArchitectConsole({
       </div>
 
       <div className="arch-monitor-strip" role="group" aria-label="Monitoring">
-        <AudioAnalyzer isPlaying={isPlaying} />
         <div className="arch-monitor-eq">
           <button className="arch-monitor-btn" disabled>EQ HI</button>
           <button className="arch-monitor-btn" disabled>EQ MID</button>

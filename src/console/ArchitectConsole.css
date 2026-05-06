@@ -492,6 +492,41 @@
   color: rgba(var(--arch-muted-rgb), 0.2);
 }
 
+/* ── WAVEFORM ROW — VU left, waveform+spectrum right ───────────────────── */
+.arch-waveform-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.arch-vu-deck {
+  display: block;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  background: rgba(0, 0, 0, 0.35);
+  width: 40px;
+  height: 108px;
+}
+
+.arch-waveform-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+
+.arch-spectrum-deck {
+  display: block;
+  width: 100%;
+  height: 48px;
+  image-rendering: pixelated;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  background: rgba(0, 0, 0, 0.35);
+}
+
 /* ── WAVEFORM — Animation 2: Standing Wave ──────────────────────────────── */
 /*
    Each bar oscillates with a phase offset derived from --bar-i.
@@ -519,7 +554,6 @@
   justify-content: center;
   gap: 1.5px;
   height: 108px;
-  margin-bottom: 6px;
   overflow: hidden;
   position: relative;
 }
@@ -949,8 +983,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 4px 20px 5px;
-  min-height: 52px;
+  padding: 0 20px;
+  height: 36px;
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
   background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
@@ -1496,6 +1530,11 @@
   position: relative;
   flex: 1;
   overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.arch-track-list-body::-webkit-scrollbar {
+  display: none;
 }
 
 .arch-track-list-body::before {
