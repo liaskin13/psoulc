@@ -20,8 +20,8 @@
   inset: 0;
   background: #070a0d;
   display: grid;
-  grid-template-rows: 40px auto auto 1fr;
-  /* top-rail | deck | transport | lower-zone */
+  grid-template-rows: 40px auto auto auto 1fr;
+  /* top-rail | deck | transport | monitor | lower-zone */
   font-family: 'Chakra Petch', sans-serif;
   color: rgba(205, 215, 220, 0.75);
   overflow: hidden;
@@ -363,6 +363,8 @@
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
   background: rgba(0, 0, 0, 0.25);
   flex-shrink: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .arch-deck-meta {
@@ -617,6 +619,16 @@
 .arch-deck-mini-btn:hover {
   border-color: rgba(var(--arch-accent-rgb), 0.3);
   color: rgba(var(--arch-accent-rgb), 0.8);
+}
+
+.arch-deck-mini-btn:disabled,
+.arch-loop-btn:disabled,
+.arch-monitor-btn:disabled,
+.arch-browser-btn:disabled,
+.arch-deck-tool-btn:disabled {
+  opacity: 0.22;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* ── TRANSPORT BAR ──────────────────────────────────────────────────────── */
@@ -905,6 +917,22 @@
   outline-offset: 3px;
 }
 
+.arch-vol-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(var(--arch-accent-rgb), 0.15);
+  border-radius: 0;
+  border: none;
+}
+
+.arch-vol-slider::-moz-range-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(var(--arch-accent-rgb), 0.15);
+  border-radius: 0;
+  border: none;
+}
+
 .arch-vol-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 10px;
@@ -912,6 +940,7 @@
   background: var(--arch-accent);
   border-radius: 0;
   cursor: pointer;
+  margin-top: -3.5px;
 }
 
 .arch-vol-slider::-moz-range-thumb {

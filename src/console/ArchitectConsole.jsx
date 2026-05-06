@@ -1223,7 +1223,17 @@ function ArchitectConsole({
           >
             QUANTIZE
           </button>
-          <button className="arch-deck-tool-btn">RELOAD</button>
+          <button
+            className="arch-deck-tool-btn"
+            disabled={!loadedTrack}
+            onClick={() => {
+              if (!loadedTrack) return;
+              audioEngine.stop();
+              audioEngine.load(getAudioUrl(loadedTrack.storage_key));
+            }}
+          >
+            RELOAD
+          </button>
         </div>
 
         {/* Main waveform — real audio analysis with playhead */}
@@ -1322,21 +1332,21 @@ function ArchitectConsole({
         >
           <div className="arch-cue-markers">
             <span className="arch-cue-tag">CUE</span>
-            <button className="arch-deck-mini-btn">A</button>
-            <button className="arch-deck-mini-btn">B</button>
-            <button className="arch-deck-mini-btn">C</button>
-            <button className="arch-deck-mini-btn">D</button>
+            <button className="arch-deck-mini-btn" disabled>A</button>
+            <button className="arch-deck-mini-btn" disabled>B</button>
+            <button className="arch-deck-mini-btn" disabled>C</button>
+            <button className="arch-deck-mini-btn" disabled>D</button>
           </div>
           <div className="arch-loop-region">
             <span className="arch-cue-tag">LOOP REGION</span>
-            <button className="arch-deck-mini-btn">SET START</button>
-            <button className="arch-deck-mini-btn">SET END</button>
-            <button className="arch-deck-mini-btn">CLEAR</button>
+            <button className="arch-deck-mini-btn" disabled>SET START</button>
+            <button className="arch-deck-mini-btn" disabled>SET END</button>
+            <button className="arch-deck-mini-btn" disabled>CLEAR</button>
           </div>
           <div className="arch-needle-zoom">
-            <button className="arch-deck-mini-btn">NEEDLE DROP</button>
-            <button className="arch-deck-mini-btn">ZOOM -</button>
-            <button className="arch-deck-mini-btn">ZOOM +</button>
+            <button className="arch-deck-mini-btn" disabled>NEEDLE DROP</button>
+            <button className="arch-deck-mini-btn" disabled>ZOOM -</button>
+            <button className="arch-deck-mini-btn" disabled>ZOOM +</button>
           </div>
         </div>
       </section>
@@ -1422,12 +1432,12 @@ function ArchitectConsole({
           role="group"
           aria-label="Loop controls"
         >
-          <button className="arch-loop-btn">AUTO 8</button>
-          <button className="arch-loop-btn">½</button>
-          <button className="arch-loop-btn arch-loop-in">IN</button>
-          <button className="arch-loop-btn arch-loop-out">OUT</button>
-          <button className="arch-loop-btn">×2</button>
-          <button className="arch-loop-btn">RELOOP</button>
+          <button className="arch-loop-btn" disabled>AUTO 8</button>
+          <button className="arch-loop-btn" disabled>½</button>
+          <button className="arch-loop-btn arch-loop-in" disabled>IN</button>
+          <button className="arch-loop-btn arch-loop-out" disabled>OUT</button>
+          <button className="arch-loop-btn" disabled>×2</button>
+          <button className="arch-loop-btn" disabled>RELOOP</button>
         </div>
 
         <div className="arch-transport-spacer" />
@@ -1465,13 +1475,13 @@ function ArchitectConsole({
           </span>
         </div>
         <div className="arch-monitor-eq">
-          <button className="arch-monitor-btn">EQ HI</button>
-          <button className="arch-monitor-btn">EQ MID</button>
-          <button className="arch-monitor-btn">EQ LOW</button>
-          <button className="arch-monitor-btn">FILTER</button>
-          <button className="arch-monitor-btn">GAIN</button>
-          <button className="arch-monitor-btn">MASTER</button>
-          <button className="arch-monitor-btn">HEADPHONE</button>
+          <button className="arch-monitor-btn" disabled>EQ HI</button>
+          <button className="arch-monitor-btn" disabled>EQ MID</button>
+          <button className="arch-monitor-btn" disabled>EQ LOW</button>
+          <button className="arch-monitor-btn" disabled>FILTER</button>
+          <button className="arch-monitor-btn" disabled>GAIN</button>
+          <button className="arch-monitor-btn" disabled>MASTER</button>
+          <button className="arch-monitor-btn" disabled>HEADPHONE</button>
         </div>
         <div className="arch-monitor-vol" role="group" aria-label="Volume">
           <span className="arch-monitor-label">VOL</span>
@@ -1624,10 +1634,10 @@ function ArchitectConsole({
             aria-label="Library controls"
           >
             <div className="arch-browser-group">
-              <button className="arch-browser-btn">BACK</button>
-              <button className="arch-browser-btn">FWD</button>
-              <button className="arch-browser-btn">FILES</button>
-              <button className="arch-browser-btn active">CRATES</button>
+              <button className="arch-browser-btn" disabled>BACK</button>
+              <button className="arch-browser-btn" disabled>FWD</button>
+              <button className="arch-browser-btn" disabled>FILES</button>
+              <button className="arch-browser-btn active" disabled>CRATES</button>
             </div>
             <div className="arch-browser-group">
               <button
