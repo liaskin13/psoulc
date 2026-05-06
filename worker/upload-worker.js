@@ -62,7 +62,7 @@ export default {
       // GET /tracks
       if (request.method === "GET" && url.pathname === "/tracks") {
         const { results } = await env.PSC_DB.prepare(
-          "SELECT id, vault, title, artist, bpm, created_at FROM tracks WHERE is_voided = 0 ORDER BY created_at DESC",
+          "SELECT id, vault, title, artist, bpm, musical_key, duration, audio_path, created_at FROM tracks WHERE is_voided = 0 ORDER BY created_at DESC",
         ).all();
 
         return new Response(JSON.stringify(results), {

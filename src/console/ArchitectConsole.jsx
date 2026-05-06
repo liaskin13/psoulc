@@ -1771,10 +1771,10 @@ function ArchitectConsole({
                         {t.bpm ? Math.round(Number(t.bpm)) : "—"}
                       </span>
                       <span className="arch-track-key" role="cell">
-                        —
+                        {t.musical_key || "—"}
                       </span>
                       <span className="arch-track-len" role="cell">
-                        —:——
+                        {t.duration ? formatTime(t.duration) : "—:——"}
                       </span>
                       <span className="arch-track-date" role="cell">
                         {t.created_at
@@ -1845,7 +1845,7 @@ function ArchitectConsole({
                             disabled={regeneratingWaveforms[t.id]}
                             title="Generate frequency-colored waveform"
                           >
-                            {regeneratingWaveforms[t.id] ? "⏳" : "🌈"}
+                            {regeneratingWaveforms[t.id] ? "..." : "WVF"}
                           </button>
                         )}
                       </span>
