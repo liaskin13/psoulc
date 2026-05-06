@@ -2327,11 +2327,15 @@
 .arch-vu-canvas {
   display: block;
   image-rendering: pixelated;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .arch-spectrum-canvas {
   display: block;
   image-rendering: pixelated;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 /* ── Focus ring ─────────────────────────────────────────────────────────── */

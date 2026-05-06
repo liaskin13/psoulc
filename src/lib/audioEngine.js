@@ -12,17 +12,23 @@ let _sourceConnected = false;
 
 function ensureAudioGraph() {
   if (_sourceConnected) return;
+  _sourceConnected = true; // set before try so failures don't cause retry loops
   const a = getAudio();
-  if (!_audioCtx) {
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    _analyser = _audioCtx.createAnalyser();
-    _analyser.fftSize = 512;
-    _analyser.smoothingTimeConstant = 0.8;
-    _analyser.connect(_audioCtx.destination);
+  try {
+    if (!_audioCtx) {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      _analyser = _audioCtx.createAnalyser();
+      _analyser.fftSize = 512;
+      _analyser.smoothingTimeConstant = 0.8;
+      _analyser.connect(_audioCtx.destination);
+    }
+    const source = _audioCtx.createMediaElementSource(a);
+    source.connect(_analyser);
+  } catch (err) {
+    // CORS / SecurityError — audio still plays, VU meters unavailable
+    console.warn("[audioEngine] Web Audio graph unavailable:", err.message);
+    _analyser = null;
   }
-  const source = _audioCtx.createMediaElementSource(a);
-  source.connect(_analyser);
-  _sourceConnected = true;
 }
 
 export function getAnalyser() {
@@ -112,7 +118,7 @@ export function play() {
   if (!a.src) return;
   ensureAudioGraph();
   resumeAudioContext();
-  a.play().catch(() => {});
+  a.play().catch((e) => console.warn("[audioEngine] play blocked:", e.message));
 }
 
 export function pause() {
