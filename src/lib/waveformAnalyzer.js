@@ -66,7 +66,7 @@ export async function analyzeAudio(
   const highRes = generateWaveformData(audioBuffer, highResSamples);
   const lowRes = generateWaveformData(audioBuffer, lowResSamples);
 
-  return { high: highRes, low: lowRes };
+  return { high: highRes, low: lowRes, duration: audioBuffer.duration };
 }
 
 function generateWaveformData(audioBuffer, samples) {
@@ -94,14 +94,16 @@ function generateWaveformData(audioBuffer, samples) {
 /**
  * Save waveform data to database
  */
-export async function saveWaveform(trackId, waveformData) {
+export async function saveWaveform(trackId, waveformData, duration) {
+  const body = { waveform_data: waveformData };
+  if (duration != null) body.duration = duration;
   const res = await fetch(`${WORKER_URL}/tracks/${trackId}/waveform`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "PSC-Secret": UPLOAD_SECRET,
     },
-    body: JSON.stringify({ waveform_data: waveformData }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Failed to save waveform: ${res.status}`);
   const result = await res.json();
@@ -113,9 +115,10 @@ export async function saveWaveform(trackId, waveformData) {
  */
 export async function generateAndSaveWaveform(trackId, audioUrl, onProgress) {
   if (onProgress) onProgress(10);
-  const waveformData = await analyzeAudio(audioUrl);
+  const { high, low, duration } = await analyzeAudio(audioUrl);
+  const waveformData = { high, low };
   if (onProgress) onProgress(80);
-  await saveWaveform(trackId, waveformData);
+  await saveWaveform(trackId, waveformData, duration);
   if (onProgress) onProgress(100);
   return waveformData;
 }

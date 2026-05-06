@@ -178,11 +178,16 @@ export default {
           });
         }
         const id = url.pathname.split("/")[2];
-        const { waveform_data } = await request.json();
+        const body = await request.json();
+        const { waveform_data, duration } = body;
         const { success } = await env.PSC_DB.prepare(
-          "UPDATE tracks SET waveform_data = ? WHERE id = ?",
+          duration != null
+            ? "UPDATE tracks SET waveform_data = ?, duration = ? WHERE id = ?"
+            : "UPDATE tracks SET waveform_data = ? WHERE id = ?",
         )
-          .bind(JSON.stringify(waveform_data), id)
+          .bind(...(duration != null
+            ? [JSON.stringify(waveform_data), duration, id]
+            : [JSON.stringify(waveform_data), id]))
           .run();
 
         return new Response(JSON.stringify({ success }), {
