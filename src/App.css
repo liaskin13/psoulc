@@ -121,6 +121,7 @@
 
 .entry-request-btn {
   width: min(280px, calc(100vw - 40px));
+  min-height: 44px;
   padding: 12px 0;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, .12);
@@ -369,6 +370,13 @@
 /* ─── CUSTOM CURSOR SYSTEM (D-SOUL) ─── */
 [data-theme="d-soul"] {
   cursor: none;
+}
+
+@media (pointer: coarse) {
+  [data-theme="d-soul"],
+  [data-theme="d-soul"] * {
+    cursor: auto !important;
+  }
 }
 
 .d-cursor {
@@ -878,7 +886,7 @@
   transition: color var(--dur-short) var(--ease-hw);
 }
 
-.frequency-input:focus {
+.frequency-input:focus:not(:focus-visible) {
   outline: none;
   color: var(--text-primary);
   text-shadow: 0 0 15px var(--identity);

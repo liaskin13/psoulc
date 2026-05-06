@@ -17,7 +17,7 @@
   /* warm off-white */
   --text-secondary: #7a7a7a;
   /* 4.53:1 on --surface — WCAG AA */
-  --text-muted: #333333;
+  --text-muted: #767676;
 
   /* ── IDENTITY (filled by theme, transparent by default) ── */
   --identity: transparent;
@@ -98,6 +98,11 @@
   --burnt-orange: #d2691e;
   --warm-brass: #b8860b;
 
+  /* Consolidated from identity.css — these values were winning via import order */
+  --burnished-copper: #A36942;
+  --aged-stone: #4A4A48;
+  --midnight-vault: #0A0A0B;
+
   /* Architect console (L) palette */
   --arch-bg: #070a0d;
   --arch-accent: #00e5ff;
@@ -110,6 +115,14 @@
   --vault-registry: #C0C0C0;
   --vault-shadow: #8B7355;
   --vault-resonance: rgba(255, 255, 255, 0.35);
+
+  /* Spacing aliases — map legacy --space-* to canonical --sp-* */
+  --space-xs:  var(--sp-2);   /* 4px  */
+  --space-sm:  var(--sp-3);   /* 8px  */
+  --space-md:  var(--sp-5);   /* 16px */
+  --space-lg:  var(--sp-6);   /* 24px */
+  --space-xl:  var(--sp-8);   /* 48px */
+  --space-xxl: var(--sp-9);   /* 64px */
 
   /* Weight / kerning legacy tokens */
   --weight-light: 300;

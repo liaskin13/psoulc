@@ -124,7 +124,8 @@ export default function DeckWaveform({
       animFrameRef.current = requestAnimationFrame(animate);
     }
 
-    if (currentTime > 0) {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (currentTime > 0 && !prefersReduced) {
       animate();
     }
 

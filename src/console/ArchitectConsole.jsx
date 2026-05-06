@@ -1068,8 +1068,8 @@ function ArchitectConsole({
   return (
     <motion.div
       className={`architect-console${isD ? " architect-console--d" : ""}`}
-      initial={{ opacity: 0, filter: "brightness(0) blur(8px)" }}
-      animate={{ opacity: 1, filter: "brightness(1) blur(0px)" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}
     >
       <div className="arch-grain-layer" />

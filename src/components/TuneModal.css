@@ -9,7 +9,7 @@
     background:
         radial-gradient(circle at 50% -8%, rgba(0, 229, 255, 0.09) 0%, transparent 52%),
         rgba(3, 5, 8, 0.9);
-    backdrop-filter: blur(4px) brightness(0.88);
+    background: rgba(3, 5, 8, 0.96);
 }
 
 .tune-modal {
@@ -45,7 +45,7 @@
     background-image: radial-gradient(circle at 75% 0%, rgba(var(--intake-accent-rgb), 0.1) 0%, transparent 44%);
 }
 
-.tune-modal--amber {
+.tune-modal--d {
     --intake-accent-rgb: 200, 195, 188;
     --intake-accent: #c8c3bc;
 }
@@ -92,7 +92,6 @@
     color: rgba(225, 235, 241, 0.94);
     min-height: 42px;
     padding: 10px 12px;
-    outline: none;
     font-family: "JetBrains Mono", monospace;
     letter-spacing: 0.03em;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;

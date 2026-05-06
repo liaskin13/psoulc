@@ -25,7 +25,7 @@ function WaveformThumb({ seed, chakra }) {
             width={barW}
             height={h}
             rx="1"
-            fill={chakra || 'rgba(255,191,0,0.4)'}
+            fill={chakra || 'rgba(240,237,232,0.18)'}
           />
         );
       })}
@@ -212,7 +212,7 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComm
 
       {/* Recording error banner */}
       {recError && (
-        <div className="spine-comment-form" role="alert" style={{ color: 'rgba(255,80,80,0.9)', fontSize: '0.65rem', letterSpacing: '0.1em', padding: '8px 10px' }}>
+        <div className="spine-comment-form" role="alert" style={{ color: 'var(--error-text)', fontSize: '0.65rem', letterSpacing: '0.1em', padding: '8px 10px' }}>
           ⚠ {recError.toUpperCase()}
           <button className="spine-comment-cancel" style={{ marginLeft: 12 }} onClick={cancelRecording}>DISMISS</button>
         </div>

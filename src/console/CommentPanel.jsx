@@ -15,10 +15,10 @@ function formatPin(isoString) {
 // Grouped chronologically. Mark-read on open.
 
 const PLANET_COLORS = {
-  mercury:  '#a0c4ff',
-  venus:    '#ffb7b7',
-  earth:    '#87ceeb',
-  saturn:   '#c5a059',
+  mercury:  'rgba(160, 196, 255, 0.9)',
+  venus:    'rgba(255, 183, 183, 0.9)',
+  earth:    'rgba(135, 206, 235, 0.9)',
+  saturn:   'rgba(197, 160, 89, 0.9)',
 };
 
 function CommentPanel({ onClose, viewer = 'D' }) {
@@ -59,7 +59,7 @@ function CommentPanel({ onClose, viewer = 'D' }) {
               <div className="inbox-card-header">
                 <span
                   className="inbox-type-badge"
-                  style={{ backgroundColor: PLANET_COLORS[c.planetId] || '#888', color: '#111' }}
+                  style={{ backgroundColor: PLANET_COLORS[c.planetId] || '#888', color: 'var(--void)' }}
                 >
                   {VAULT_DISPLAY_NAMES[c.planetId] ?? c.planetId?.toUpperCase() ?? 'SYSTEM'}
                 </span>

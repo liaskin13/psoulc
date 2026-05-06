@@ -89,7 +89,9 @@ export default {
 
         if (!file || !vault || !title) {
           return new Response(
-            JSON.stringify({ error: "Missing required fields: file, vault, title" }),
+            JSON.stringify({
+              error: "Missing required fields: file, vault, title",
+            }),
             {
               status: 400,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -99,7 +101,9 @@ export default {
 
         if (!env.R2_PUBLIC_URL) {
           return new Response(
-            JSON.stringify({ error: "Worker misconfigured: R2_PUBLIC_URL secret not set" }),
+            JSON.stringify({
+              error: "Worker misconfigured: R2_PUBLIC_URL secret not set",
+            }),
             {
               status: 500,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -132,7 +136,9 @@ export default {
 
         if (!result) {
           await env.PSC_AUDIO.delete(key);
-          throw new Error(`Database insert failed: vault=${vault} title="${title}"`);
+          throw new Error(
+            `Database insert failed: vault=${vault} title="${title}"`,
+          );
         }
 
         const publicUrl = `${env.R2_PUBLIC_URL}/${key}`;

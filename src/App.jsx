@@ -101,8 +101,8 @@ function App() {
     setConsoleOwner(ownerVal);
     setSessionMeta(meta);
 
-    // Tier-based routing
-    if (tier === "A") {
+    // Tier-based routing — Masters on mobile go to room (listener mode)
+    if (tier === "A" && !isMobile) {
       if (ownerVal === "L") setStage("architect");
       else setStage("console");
     } else {
@@ -199,6 +199,12 @@ function App() {
     );
   }
 
+  // ── CONSOLE MOBILE GUARD — safety net, routing handles this at login ─────
+  if (isMobile && (stage === "console" || stage === "architect")) {
+    setStage("room");
+    return null;
+  }
+
   // ── L's CONSOLE — GOD MODE PLUS (sovereign root) ──────────────────────────
   if (stage === "architect") {
     return (
@@ -292,13 +298,13 @@ function App() {
           initial={
             prefersReduced
               ? { opacity: 1 }
-              : { opacity: 0, scale: 1.06, filter: "brightness(5) blur(6px)" }
+              : { opacity: 0, scale: 1.04 }
           }
-          animate={{ opacity: 1, scale: 1, filter: "brightness(1) blur(0px)" }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={
             prefersReduced
               ? { duration: 0.15 }
-              : { duration: 2, ease: [0.08, 0, 0.3, 1] }
+              : { duration: 1.6, ease: [0.08, 0, 0.3, 1] }
           }
         >
           <Suspense fallback={null}>

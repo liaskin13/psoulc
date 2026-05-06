@@ -31,6 +31,13 @@
   /* Entry-matched reveal — handled by framer motion in JSX */
 }
 
+@media (pointer: coarse) {
+  .architect-console,
+  .architect-console * {
+    cursor: auto !important;
+  }
+}
+
 /* ── BottomNav — hidden everywhere at desktop ───────────────────────────── */
 .architect-console .bottom-nav,
 .bottom-nav {
@@ -862,8 +869,12 @@
   width: 90px;
   height: 3px;
   background: rgba(var(--arch-accent-rgb), 0.15);
-  outline: none;
   cursor: pointer;
+}
+
+.arch-vol-slider:focus-visible {
+  outline: 1px solid var(--arch-accent);
+  outline-offset: 3px;
 }
 
 .arch-vol-slider::-webkit-slider-thumb {
@@ -1219,7 +1230,6 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   letter-spacing: 0.08em;
-  outline: none;
   flex: 1;
 }
 
@@ -1836,7 +1846,6 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   border-radius: 0;
-  outline: none;
   transition: border-color 0.15s;
   letter-spacing: 0.06em;
 }
@@ -1858,6 +1867,9 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   border-radius: 0;
+}
+
+.arch-form-select:focus:not(:focus-visible) {
   outline: none;
 }
 

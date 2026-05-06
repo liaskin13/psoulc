@@ -255,7 +255,15 @@
 .adm-cell-code:hover,
 .adm-cell-code:focus {
   color: rgba(240, 237, 232, 0.92);
+}
+
+.adm-cell-code:focus:not(:focus-visible) {
   outline: none;
+}
+
+.adm-cell-code:focus-visible {
+  outline: 1px solid rgba(240, 237, 232, 0.35);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

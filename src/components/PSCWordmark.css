@@ -28,10 +28,9 @@
   outline-offset: 4px;
 }
 
-/* Easter egg — D's amber, one breath, then gone */
 @media (prefers-reduced-motion: no-preference) {
   .psc-wordmark--pulse {
-    animation: wordmark-amber-pulse 0.9s ease-out forwards;
+    animation: wordmark-pulse 0.9s ease-out forwards;
   }
 }
 
@@ -42,7 +41,7 @@
   }
 }
 
-@keyframes wordmark-amber-pulse {
+@keyframes wordmark-pulse {
   0% {
     color: rgba(232, 228, 222, 0.26);
     text-shadow: none;

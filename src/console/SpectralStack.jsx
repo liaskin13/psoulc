@@ -68,7 +68,12 @@ export default function SpectralStack({ tracks = [] }) {
       rafRef.current = requestAnimationFrame(draw);
     }
 
-    rafRef.current = requestAnimationFrame(draw);
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReduced) {
+      rafRef.current = requestAnimationFrame(draw);
+    } else {
+      draw(0);
+    }
     return () => {
       cancelAnimationFrame(rafRef.current);
       ro.disconnect();

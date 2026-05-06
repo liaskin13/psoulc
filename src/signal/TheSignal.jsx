@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Hls from "hls.js";
 import { SIGNAL_HLS_URL, UPLOAD_WORKER_URL } from "../config";
-import DPWallpaper from "../entry/DPWallpaper";
+import DPWallpaper from "../components/DPWallpaper";
 
 const WORKER_URL = UPLOAD_WORKER_URL;
 const CHAT_POLL_MS = 3000;

@@ -6,7 +6,8 @@
       "matchCommandLine": true
     },
     "git rev-parse": true,
-    "lsof": true
+    "lsof": true,
+    "git add": true
   },
   "github.copilot.chat.rateLimitAutoSwitchToAuto": true,
   "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true,

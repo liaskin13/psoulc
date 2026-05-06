@@ -130,9 +130,12 @@ function DPWallpaper({ opacity = 1 }) {
       });
     };
 
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.fonts.ready.then(() => {
       paint();
-      timerRef.current = setTimeout(() => runLoop(0), 1200);
+      if (!prefersReduced) {
+        timerRef.current = setTimeout(() => runLoop(0), 1200);
+      }
     });
 
     window.addEventListener('resize', paint);

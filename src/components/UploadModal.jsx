@@ -348,7 +348,7 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
       >
         <motion.div
           className={`tune-modal upload-modal ${
-            consoleOwner === "D" ? "tune-modal--amber" : "tune-modal--cyan"
+            consoleOwner === "D" ? "tune-modal--d" : "tune-modal--cyan"
           }`}
           initial={{ scale: 0.88, opacity: 0, y: 24 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}

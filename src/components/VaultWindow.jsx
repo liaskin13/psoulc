@@ -25,7 +25,7 @@ function HelixWaveform({ seed, chakra }) {
             width={barW}
             height={h}
             rx="0.8"
-            fill={chakra || 'rgba(255,191,0,0.7)'}
+            fill={chakra || 'rgba(240,237,232,0.25)'}
           />
         );
       })}

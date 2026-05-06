@@ -39,7 +39,7 @@ function VoidStreakOverlay({ active, source, target, color, onComplete }) {
   const length = Math.sqrt(dx * dx + dy * dy);
   const angle  = Math.atan2(dy, dx) * (180 / Math.PI);
 
-  const safeColor = color || '#9b59b6';
+  const safeColor = color || 'rgba(240, 237, 232, 0.5)';
 
   return (
     <div

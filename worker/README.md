@@ -13,11 +13,13 @@ wrangler r2 bucket create psc-audio
 ### 2. Enable public access (optional, for direct playback URLs)
 
 In Cloudflare dashboard:
+
 - Go to R2 > psc-audio > Settings
 - Enable "Public URL Access"
 - Copy the public bucket URL (e.g., `https://pub-{hash}.r2.dev`)
 
 Or use a custom domain:
+
 - Add custom domain in bucket settings
 - Point DNS CNAME to R2
 

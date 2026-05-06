@@ -10,6 +10,8 @@ function MasterClock() {
   }, []);
 
   useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
     const ticker = setInterval(() => setPhase((p) => p + 0.35), 80);
     return () => clearInterval(ticker);
   }, []);

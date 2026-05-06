@@ -7,7 +7,7 @@ import {
   GATE_MAX_ATTEMPTS,
   GATE_LOCKOUT_MS,
 } from "../config";
-import DPWallpaper from "./DPWallpaper";
+import DPWallpaper from "../components/DPWallpaper";
 
 function readLock() {
   try {

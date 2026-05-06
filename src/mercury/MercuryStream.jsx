@@ -120,7 +120,8 @@ function MercuryStream({ onBack, onExitSystem, onVoid, readOnly = false }) {
       rafRef.current = requestAnimationFrame(draw);
     };
 
-    draw();
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReduced) draw();
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);

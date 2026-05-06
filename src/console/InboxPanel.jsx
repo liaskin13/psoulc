@@ -154,7 +154,7 @@ function InboxPanel({ onClose, viewer = 'D' }) {
         <span className="inbox-panel-count">
           {pendingCount > 0 ? `${pendingCount} PENDING` : 'ALL CLEAR'}
         </span>
-        <button className="inbox-close-btn" onClick={onClose}>✕</button>
+        <button className="inbox-close-btn" onClick={onClose} aria-label="Close inbox">✕</button>
       </div>
 
       <div className="inbox-panel-body">
