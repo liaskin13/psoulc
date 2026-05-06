@@ -392,7 +392,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   padding: 1px 5px;
-  border-radius: 9999px;
+  border-radius: 0;
   letter-spacing: 0.04em;
 }
 

@@ -11,7 +11,7 @@ import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { fetchVaultTracks, saveTrackHotCues, saveTrackWaveform } from '../lib/tracks';
 import { reanalyzeFromUrl } from '../lib/audioPreprocessor';
 import { getAudioUrl } from '../lib/tracks';
-import { VOID_CHAKRA_COLORS, MEMBER_CHAKRA_COLORS, D_CHAKRA_COLOR, VAULT_DISPLAY_NAMES, VAULT_ACCENT_COLORS } from '../config';
+import { VOID_CHAKRA_COLORS, D_CHAKRA_COLOR, VAULT_DISPLAY_NAMES, VAULT_ACCENT_COLORS } from '../config';
 import { SERATO_COLORS } from '../lib/waveformAnalyzer';
 import { useSystem } from '../state/SystemContext';
 import { canComment, canEdit } from '../utils/permissions';
@@ -49,7 +49,6 @@ function trackToCell(t) {
       hotCues:   parsedHotCues,
     },
     createdBy:   t.uploaded_by || 'D',
-    chakraColor: MEMBER_CHAKRA_COLORS?.[t.uploaded_by] ?? D_CHAKRA_COLOR,
     ...CELL_PALETTE,
   };
 }

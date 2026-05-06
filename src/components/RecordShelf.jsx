@@ -4,7 +4,7 @@ import { hasHover } from '../utils/device';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 import { getWaveformBars } from '../utils/waveform';
 
-function WaveformThumb({ seed, chakra }) {
+function WaveformThumb({ seed }) {
   const bars = getWaveformBars(String(seed));
   const barW = 3, gap = 2, H = 22;
   const W = bars.length * (barW + gap) - gap;
@@ -25,7 +25,7 @@ function WaveformThumb({ seed, chakra }) {
             width={barW}
             height={h}
             rx="1"
-            fill={chakra || 'rgba(240,237,232,0.18)'}
+            fill="rgba(240,237,232,0.28)"
           />
         );
       })}
@@ -71,7 +71,6 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComm
             '--spine-base':      item.base,
             '--spine-shadow':    item.shadow,
             '--spine-glow':      item.glow,
-            '--cell-chakra':     item.chakraColor || 'rgba(255,200,100,0.3)',
           }}
           tabIndex={0}
           aria-label={`${item.label}${item.sublabel ? ` — ${item.sublabel}` : ''}`}
@@ -88,8 +87,7 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComm
           }}
         >
           <div className="file-cell-specular" aria-hidden="true" />
-          <div className="file-cell-chakra-rail" aria-hidden="true" />
-          <WaveformThumb seed={item.id} chakra={item.chakraColor} />
+          <WaveformThumb seed={item.id} />
 
           {/* Centered 'dp' mark — occupied indicator (C) */}
           <div className="file-cell-dp-mark" aria-hidden="true">dp</div>
@@ -184,8 +182,8 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComm
               }}
               whileHover={{ scale: 1.4 }}
               animate={recordingId === item.id && isRecording
-                ? { backgroundColor: ['rgba(220,0,0,0.7)', 'rgba(220,0,0,0.4)', 'rgba(220,0,0,0.7)'], scale: [1, 1.2, 1] }
-                : { backgroundColor: 'rgba(180,60,0,0.5)' }
+                ? { backgroundColor: ['rgba(229,32,32,0.7)', 'rgba(229,32,32,0.4)', 'rgba(229,32,32,0.7)'], scale: [1, 1.2, 1] }
+                : { backgroundColor: 'rgba(240,237,232,0.08)' }
               }
               transition={recordingId === item.id && isRecording
                 ? { repeat: Infinity, duration: 0.9 }

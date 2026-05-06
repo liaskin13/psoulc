@@ -1188,10 +1188,10 @@ function ArchitectConsole({
           </div>
           <div className="arch-deck-stats">
             <span className="arch-stat">
-              BPM <strong>{loadedTrack?.bpm || "—"}</strong>
+              BPM <strong>{loadedTrack?.bpm ? Math.round(loadedTrack.bpm) : "—"}</strong>
             </span>
             <span className="arch-stat">
-              KEY <strong>—</strong>
+              KEY <strong>{loadedTrack?.musical_key || "—"}</strong>
             </span>
             <span
               className={`arch-stat arch-elapsed${isPlaying ? " arch-elapsed--playing" : ""}`}

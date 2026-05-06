@@ -1,19 +1,17 @@
 /* ========================================================================
-   VAULT WALL — Deep Wood Cubby Grid
-   Reference: warm studio wooden compartment wall, amber overhead lighting,
-   deep dark cell interiors. Center-bright, edge-dark vignette.
-   Each cell = one slot in the wall. Occupied = chakra glow + dp mark.
-   Empty = dark recess only.
+   VAULT WALL — Void-Industrial Track Grid
+   Reference: matte black precision surface, like a Serato controller or
+   server rack face. No warmth. No wood. No amber. Cell occupied = chakra
+   radial presence. Cell empty = dark recess, nothing else.
    ======================================================================== */
 
 /* ── WALL CONTAINER ──────────────────────────────────────────────────────── */
 .record-shelf {
   --cell-size: clamp(86px, 10vw, 112px);
-  --wall-wood-dark: #1c1008;
-  --wall-wood-mid: #4a2e14;
-  --wall-wood-warm: #7a4e28;
-  --wall-amber: #c87c2a;
-  --cell-depth: rgba(6, 4, 2, 0.92);
+  --cell-bg-occupied: #0f0f0f;
+  --cell-bg-empty: #080808;
+  --wall-surface: #0a0a0a;
+  --wall-grid-line: #1c1c1c;
 
   position: relative;
   display: grid;
@@ -29,75 +27,65 @@
   overflow-x: hidden;
   border-radius: 0;
 
-  /* The wall itself: warm amber-wood center, darkens to near-black at edges */
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 38%,
-      rgba(200, 124, 42, 0.38) 0%,
-      rgba(120, 70, 22, 0.24) 38%,
-      rgba(30, 16, 5, 0.0) 68%),
-    linear-gradient(160deg, var(--wall-wood-dark) 0%, var(--wall-wood-mid) 42%, var(--wall-wood-warm) 72%, var(--wall-wood-dark) 100%);
-
+  background: var(--wall-surface);
   box-shadow:
-    inset 0 0 60px rgba(0, 0, 0, 0.80),
-    inset 0 -8px 28px rgba(0, 0, 0, 0.55),
-    inset 0 4px 16px rgba(255, 200, 100, 0.06);
+    inset 0 0 80px rgba(0, 0, 0, 0.7),
+    inset 0 -10px 32px rgba(0, 0, 0, 0.5);
 }
 
-/* Wood dividers — the thick lattice between cubbies */
+/* Grid lattice — matte steel dividers */
 .record-shelf::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  border-radius: 0;
   z-index: 0;
   background-image:
     repeating-linear-gradient(0deg,
-      rgba(14, 9, 4, 0.72) 0px,
-      rgba(14, 9, 4, 0.72) 6px,
+      var(--wall-grid-line) 0px,
+      var(--wall-grid-line) 6px,
       transparent 6px,
       transparent calc(var(--cell-size) + 6px)),
     repeating-linear-gradient(90deg,
-      rgba(14, 9, 4, 0.72) 0px,
-      rgba(14, 9, 4, 0.72) 6px,
+      var(--wall-grid-line) 0px,
+      var(--wall-grid-line) 6px,
       transparent 6px,
       transparent calc(var(--cell-size) + 6px));
 }
 
-/* Radial studio-light vignette — bright center, dark corners */
+/* Edge vignette — depth without warmth */
 .record-shelf::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  border-radius: 0;
   z-index: 2;
   background:
     radial-gradient(ellipse 110% 90% at 50% 45%,
       transparent 0%,
-      transparent 35%,
-      rgba(6, 4, 2, 0.30) 60%,
-      rgba(4, 2, 1, 0.70) 80%,
-      rgba(2, 1, 0, 0.90) 100%);
+      transparent 40%,
+      rgba(0, 0, 0, 0.25) 65%,
+      rgba(0, 0, 0, 0.60) 82%,
+      rgba(0, 0, 0, 0.85) 100%);
 }
 
 /* Cells above dividers, below vignette */
-.record-shelf>* {
+.record-shelf > * {
   position: relative;
   z-index: 1;
 }
 
 /* ── SCROLLBAR ───────────────────────────────────────────────────────────── */
 .record-shelf::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .record-shelf::-webkit-scrollbar-track {
-  background: rgba(10, 6, 3, 0.8);
+  background: #0a0a0a;
 }
 
 .record-shelf::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--wall-wood-warm) 0%, var(--wall-wood-dark) 100%);
+  background: #252525;
   border-radius: 0;
 }
 
@@ -112,10 +100,10 @@
   font-weight: 700;
   font-size: clamp(1rem, 3vw, 1.6rem);
   letter-spacing: -0.02em;
-  color: var(--cell-chakra, rgba(240, 237, 232, 0.20));
+  color: rgba(240, 237, 232, 0.20);
   text-shadow:
-    0 0 12px var(--cell-chakra, rgba(240, 237, 232, 0.18)),
-    0 0 28px var(--cell-chakra, rgba(240, 237, 232, 0.10));
+    0 0 12px rgba(240, 237, 232, 0.18),
+    0 0 28px rgba(240, 237, 232, 0.10);
   opacity: 0.32;
   pointer-events: none;
   transition: opacity 0.22s ease, text-shadow 0.22s ease;
@@ -126,27 +114,24 @@
 .file-cell:hover .file-cell-dp-mark {
   opacity: 0.72;
   text-shadow:
-    0 0 16px var(--cell-chakra, rgba(240, 237, 232, 0.40)),
-    0 0 40px var(--cell-chakra, rgba(240, 237, 232, 0.20));
+    0 0 16px rgba(240, 237, 232, 0.40),
+    0 0 40px rgba(240, 237, 232, 0.20);
 }
 
-/* ── OCCUPIED CELL — inner chakra glow (B) ───────────────────────────────── */
+/* ── OCCUPIED CELL — subtle achromatic depth ─────────────────────────────── */
 .file-cell-occupied {
   background:
     radial-gradient(ellipse 80% 80% at 50% 50%,
-      color-mix(in srgb, var(--cell-chakra, rgba(240, 237, 232, 0.10)) 22%, transparent 78%) 0%,
+      rgba(240, 237, 232, 0.04) 0%,
       transparent 65%),
-    linear-gradient(160deg, rgba(18, 11, 5, 0.0) 0%, rgba(6, 3, 1, 0.55) 100%),
-    #0d0804 !important;
+    var(--cell-bg-occupied) !important;
 }
 
 /* ── EMPTY CELL — pure dark recess, no glow ─────────────────────────────── */
 .file-cell-empty {
   cursor: default;
   pointer-events: none;
-  background:
-    linear-gradient(160deg, rgba(10, 6, 3, 0.0) 0%, rgba(4, 2, 1, 0.7) 100%),
-    #090603 !important;
+  background: var(--cell-bg-empty) !important;
   box-shadow:
     inset 6px 0 14px rgba(0, 0, 0, 0.85),
     inset -6px 0 14px rgba(0, 0, 0, 0.85),
@@ -165,7 +150,7 @@
   padding: 8px 9px 7px;
   opacity: 0;
   transition: opacity 0.18s ease;
-  background: linear-gradient(0deg, rgba(4, 2, 1, 0.82) 0%, transparent 55%);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.82) 0%, transparent 55%);
 }
 
 .file-cell:hover .file-cell-content,
@@ -177,8 +162,8 @@
 .spine-comment-form {
   grid-column: 1 / -1;
   margin-top: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(6, 4, 2, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(8, 8, 8, 0.96);
   border-radius: 0;
   padding: 10px;
   z-index: 3;
@@ -188,7 +173,7 @@
   font-family: var(--font-mono);
   font-size: 0.60rem;
   letter-spacing: 0.12em;
-  color: rgba(240, 237, 232, 0.55);
+  color: rgba(240, 237, 232, 0.45);
   margin-bottom: 6px;
   text-transform: uppercase;
 }
@@ -198,9 +183,9 @@
   box-sizing: border-box;
   resize: vertical;
   min-height: 72px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 0;
-  background: rgba(0, 0, 0, 0.42);
+  background: rgba(0, 0, 0, 0.5);
   color: rgba(240, 237, 232, 0.92);
   font-family: var(--font-mono);
   font-size: 0.70rem;
@@ -219,9 +204,9 @@
   min-height: 28px;
   padding: 0 10px;
   border-radius: 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(0, 0, 0, 0.5);
-  color: rgba(240, 237, 232, 0.72);
+  color: rgba(240, 237, 232, 0.65);
   font-family: var(--font-mono);
   font-size: 0.62rem;
   letter-spacing: 0.08em;
@@ -231,7 +216,7 @@
 
 .spine-comment-submit:hover {
   color: rgba(240, 237, 232, 0.95);
-  border-color: rgba(255, 255, 255, 0.38);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .spine-comment-submit:disabled {
@@ -243,7 +228,7 @@
   display: none;
 }
 
-/* ── VOICE HANDLE ────────────────────────────────────────────────────────────── */
+/* ── VOICE HANDLE ────────────────────────────────────────────────────────── */
 .file-cell-voice-handle {
   position: absolute;
   bottom: 6px;
@@ -251,8 +236,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: rgba(180, 60, 0, 0.5);
-  border: 1px solid rgba(255, 120, 30, 0.4);
+  background: rgba(240, 237, 232, 0.08);
+  border: 1px solid rgba(240, 237, 232, 0.20);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.18s ease;
@@ -260,7 +245,7 @@
   align-items: center;
   justify-content: center;
   font-size: 8px;
-  color: rgba(255, 200, 100, 0.9);
+  color: rgba(240, 237, 232, 0.55);
   z-index: 4;
 }
 
@@ -271,12 +256,12 @@
 }
 
 .file-cell-voice-handle.recording {
-  background: rgba(220, 0, 0, 0.7);
-  border-color: rgba(255, 60, 60, 0.8);
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
+  background: rgba(229, 32, 32, 0.65);
+  border-color: rgba(229, 32, 32, 0.90);
+  box-shadow: 0 0 8px rgba(229, 32, 32, 0.45);
 }
 
-/* ── WAVEFORM THUMBNAIL ─────────────────────────────────────────────────── */
+/* ── WAVEFORM THUMBNAIL ──────────────────────────────────────────────────── */
 .file-cell-waveform {
   position: absolute;
   bottom: 26px;
