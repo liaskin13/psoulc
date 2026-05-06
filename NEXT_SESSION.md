@@ -1,6 +1,6 @@
 # NEXT SESSION — START HERE. READ THIS BEFORE TOUCHING ANYTHING.
 
-## LAST UPDATED: 2026-05-06 (impeccable audit + ListenerShell rebuild + DPWallpaper extraction)
+## LAST UPDATED: 2026-05-06 (Serato-grade console redesign + upload pipeline restoration)
 
 ## CLAUDE BEHAVIOR RULES — NON-NEGOTIABLE
 - Read DESIGN.md in full before touching any CSS or JSX
@@ -12,98 +12,114 @@
 
 ---
 
-## CURRENT AUDIT SCORE: ~18/20 (Good)
-Last audit: 2026-05-06. All P0/P1 fixed. Remaining: P3 sort pill touch targets in vault.
+## WHAT SHIPPED THIS SESSION (2026-05-06 — phase-10)
+
+### Console Layout Fix (DONE)
+- Grid bug: `grid-template-rows` had 4 rows for 5 in-flow children → fixed to 5-row definition
+- `.arch-deck-zone` got `min-height:0; overflow:hidden` to prevent blowout
+- White bar bottom-right: `arch-vol-slider` track pseudo-elements added to kill browser default white
+
+### Dead Buttons Wired/Disabled (DONE)
+- RELOAD button wired: stops audio, reloads from `loadedTrack.audio_path`
+- Disabled buttons (opacity 0.22, pointer-events:none): loop controls, CUE ABCD, NEEDLE DROP/ZOOM, monitor EQ, BACK/FWD/FILES/CRATES
+- Fixed field name: `loadedTrack.storage_key` → `loadedTrack.audio_path`
+
+### Upload Pipeline Restoration (DONE — pending user's R2 public URL)
+- `src/lib/tracks.js` — COMPLETE REWRITE: reads from Worker API in production, localStorage only in dev
+- `src/config.js` — added `R2_PUBLIC_URL` from `VITE_R2_PUBLIC_URL` env var
+- `worker/upload-worker.js` — `file.stream()` → `await file.arrayBuffer()` (was silently hanging at 95%)
+- `ArchitectConsole.jsx` — vault tab counts now use `vaultTracksState` from SystemContext (not dead localStorage)
+- Worker needs redeployment: `cd worker && npx wrangler deploy`
+
+### $impeccable craft — Serato Console Redesign (DONE — CSS only)
+Applied to `src/console/ArchitectConsole.css`:
+- Waveform: 64px → **108px** height, bi-directional gradient bars, alternating thin sub-bars, center hairline
+- Transport keycaps: 4px physical depth, inset bottom shadow, 3px press travel
+- PLAY button: wider (28px pad), brighter glow, more presence
+- Hot cue buttons: 26×28 → **30×32px**, 3px depth
+- Monitor strip: flexible → **fixed 36px** status rail
+- Track rows: 9px padding → **5px + min-height 32px** (Serato density)
+- Column header: 4px padding, 24px min-height
+- Library search: fixed 32px height
+- Vault tabs: tightened to 8px vertical pad
+- Deck meta/tools: tightened gap and margin
 
 ---
 
-## WHAT SHIPPED THIS SESSION (2026-05-06)
-- impeccable audit run: 11/20 → 18/20
-- All focus ring fixes (outline:none → :focus:not(:focus-visible))
-- backdrop-filter eliminated everywhere
-- prefers-reduced-motion guards on all rAF/setInterval animation loops
-- Framer Motion blur transitions removed
-- Console mobile guard (Masters on iPhone → listener view, not dead end)
-- DPWallpaper extracted to src/components/DPWallpaper.jsx (shared by Entry, TheSignal, ListenerShell)
-- ListenerShell fully rebuilt: single-viewport, no scroll, living monogram canvas background,
-  bottom dock vault switcher, full-width OPEN CTA, SIGNAL banner, mobile-first 390px
-- public/ cleaned: 14 old design HTML variants deleted (were being served publicly)
-- skills/ zips deleted (blender.zip, frontend-design.zip, ui-ux-pro-max.zip)
-- Harden P2 fixes: inbox-close aria-label, CommentPanel #111 to var(--void), RecordShelf rgba to var(--error-text)
+## USER ACTION STILL REQUIRED (not code — you need to do this in Cloudflare)
+
+### R2 Public Access Setup
+1. Cloudflare dashboard → R2 → your bucket → **Settings** tab
+2. Under "Public Access" click **Allow Access** → ON
+3. Copy the `pub-xxx.r2.dev` URL that appears
+4. Add to `.env`: `VITE_R2_PUBLIC_URL=https://pub-xxx.r2.dev`
+5. Also confirm: `VITE_UPLOAD_SECRET=<your PSC_SECRET value from wrangler secrets>`
+6. `cd worker && npx wrangler deploy`
+7. `npm run build && npx wrangler pages deploy dist`
+
+Until this is done, uploads succeed at the Worker but tracks won't appear in the console (no public URL to play back from).
 
 ---
 
 ## ARCHITECTURE TRUTH — READ THIS
-The D console and L console are THE SAME COMPONENT: src/console/ArchitectConsole.jsx.
-- stage === "architect" renders ArchitectConsole for L (no viewer prop)
-- stage === "console" renders ArchitectConsole with viewer="D" prop
-- Identity: data-theme="d-soul" (green) vs data-theme="l-architect" (cyan) via --identity CSS var
-- D-specific CSS: .architect-console--d class in ArchitectConsole.css
+The D console and L console are THE SAME COMPONENT: `src/console/ArchitectConsole.jsx`.
+- `stage === "architect"` renders ArchitectConsole for L (no viewer prop)
+- `stage === "console"` renders ArchitectConsole with `viewer="D"` prop
+- `.architect-console--d` class (green identity) vs `.architect-console--l` class (cyan identity)
 - CONSEQUENCE: Any structural/layout fix to ArchitectConsole affects BOTH consoles.
 
 ---
 
 ## NEXT TASKS — IN ORDER
 
-### TASK 1: Console layout fix (BOTH consoles, one component)
-Problems reported by L:
-- Top half of console is mostly empty (wasted space)
-- Bottom half has content cut off / not accessible
-- Weird bright white bar bottom-left (likely BottomNav or scrollbar rendering on desktop)
-Approach: $impeccable craft — shape first, then implement.
-Reference: public/psc-p10-7-preview.html is the locked D console design reference.
-Fix once in ArchitectConsole.jsx/.css — applies to both D and L automatically.
-
-### TASK 2: Wire dead buttons in console
-Audit which buttons exist and have no handlers. Map gaps in ArchitectConsole.jsx.
-Do this in the same $impeccable craft session as Task 1.
-
-### TASK 3: Upload functionality restoration
-UploadModal is present and lazy-loaded. Worker endpoint exists. onIntake is wired in App.jsx.
-Test manually in browser first. Use $impeccable harden if UI has gaps; use /investigate if backend failing.
-
-### TASK 4: Cyan scope reduction on L's console
-NOT a color change — cyan stays as L's identity color.
-Problem: cyan appearing in more than 3 places (should only be: SIGNAL button, active track accent, BPM/Key).
-Audit ArchitectConsole.css for every --arch-accent / --arch-phosphor / --identity usage.
-Reduce to exactly 3 identity points. CSS-only change, safe targeted edit.
-
 ### TASK 5: D/L internal messaging (new feature)
-Private channel between D and L visible only in Master consoles.
-Requires shape brief first, then backend (D1 table) + console UI in both views.
-Slim implementation: message thread in console sidebar, similar to TheSignal chat architecture.
+Private channel between D and L visible only in their Master consoles.
+Needs shape brief first — ask L to describe the UX they want.
+Then: D1 table (`messages` with sender, content, created_at), Worker endpoint, console sidebar UI.
+Architecture reference: TheSignal chat — same D1 pattern.
 
 ### TASK 6: Guest vault interior on mobile
-ListenerShell lobby is done. The vault INTERIOR (TheVault, SaturnVault, MercuryStream)
-as seen by a guest on iPhone has not been audited.
-Run $impeccable audit targeting vault views at 390px.
-Fix: sort pill touch targets (P3 — min-height: 44px under pointer: coarse).
+ListenerShell lobby is done. Vault INTERIOR (TheVault, SaturnVault, MercuryStream)
+as seen by a guest on iPhone has not been audited at 390px.
+Run `$impeccable audit` targeting vault views at 390px.
+Fix: sort pill touch targets (P3 — `min-height: 44px` under `pointer: coarse`).
 
 ### TASK 7: Beta testing readiness for D
-Before D tests, verify:
-- Upload flow working end-to-end
-- All vault content visible and playable
-- THE SIGNAL button functional
-- No broken/dead buttons in D's view
-- D on iPhone lands in listener shell, not console
-- Deploy to psoulc.pages.dev and verify live
+Before D tests:
+- [ ] R2 setup complete (user action above)
+- [ ] Upload flow end-to-end working (upload → appears in console → plays)
+- [ ] All vault content visible and playable
+- [ ] THE SIGNAL button functional
+- [ ] No broken/dead buttons in D's view
+- [ ] D on iPhone lands in listener shell, not console
+- [ ] Deploy to psoulc.pages.dev and verify live
 
 ---
 
 ## KNOWN ISSUES (not blocking beta)
-- Sort pills in vault view sub-44px on mobile (P3)
-- public/psc-test.wav — test file, delete before production
-- public/three.min.js — check if used or can be removed
-- skills/ subfolders (blender-astro, frontend-design, psc-system, superpowers-main, ui-ux-pro-max)
-  audit if active, delete unused
+- Sort pills in vault view sub-44px on mobile (P3, Task 6)
+- public/psc-test.wav — delete before production
+- public/three.min.js — verify if used or remove
 
 ---
 
 ## KEY FILE LOCATIONS
-- Shared console: src/console/ArchitectConsole.jsx + src/console/ArchitectConsole.css
-- Console routing: src/App.jsx lines 98-113 (handleIgnite), 218-254 (architect), 286-344 (D console)
-- Listener shell: src/listener/ListenerShell.jsx (fully rebuilt this session)
-- DPWallpaper: src/components/DPWallpaper.jsx (shared — do not move again)
-- D console reference: public/psc-p10-7-preview.html (DO NOT DELETE)
-- Design law: DESIGN.md (read in full before any visual change)
-- Token system: src/variables.css
+- Shared console: `src/console/ArchitectConsole.jsx` + `src/console/ArchitectConsole.css`
+- Console routing: `src/App.jsx` lines ~98-113 (handleIgnite), ~218-254 (architect), ~286-344 (D console)
+- Track library: `src/lib/tracks.js` (rewritten — Worker API in prod, localStorage in dev)
+- Worker: `worker/upload-worker.js`
+- Listener shell: `src/listener/ListenerShell.jsx`
+- DPWallpaper: `src/components/DPWallpaper.jsx`
+- D console reference: `public/psc-p10-7-preview.html` (DO NOT DELETE)
+- Design law: `DESIGN.md` (read in full before any visual change)
+- Token system: `src/variables.css`
+- Config/env vars: `src/config.js`
+
+---
+
+## HOW TO START THE NEXT SESSION
+Open the window and type this exactly:
+
+> "Read NEXT_SESSION.md and DESIGN.md, then tell me what's next."
+
+That's it. The memory system carries everything else.
