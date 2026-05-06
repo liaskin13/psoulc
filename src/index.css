@@ -442,7 +442,7 @@ h3,
   left: 0;
   right: 0;
   background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-  border-top: 2px solid var(--burnished-copper);
+  border-top: 1px solid var(--border);
   padding: var(--space-lg);
   display: flex;
   justify-content: space-between;
@@ -506,10 +506,10 @@ h3,
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  background: var(--burnished-copper);
+  background: #505050;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(184, 115, 51, 0.5);
+  box-shadow: none;
 }
 
 .pitch-value {

@@ -60,12 +60,11 @@ function StuderTransportBar({
       <div className={`transport-readout ${activeTrack ? 'loaded' : 'idle'}`}>
         {activeTrack ? (
           <>
-            {/* Soul-chakra vinyl disc — spins at BPM, tinted by authorship color */}
+            {/* Strobe vinyl disc — spins at BPM */}
             <StrobeVinylCanvas
               bpm={activeBpm}
               pitchMultiplier={pitchMultiplier}
               size={52}
-              chakraColor={activeTrack.chakraColor || null}
             />
             <div className="readout-text">
               <div className="readout-track-line">

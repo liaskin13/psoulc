@@ -3,12 +3,11 @@ import { motion } from 'framer-motion';
 import RecordShelf from '../components/RecordShelf';
 import StuderTransportBar from '../components/StuderTransportBar';
 import TuneModal from '../components/TuneModal';
-import VaultWindow from '../components/VaultWindow';
 import VoidStreakOverlay from '../components/VoidStreakOverlay';
 import { useVaultVoid } from '../hooks/useVaultVoid';
 import { useVaultFileCells } from '../hooks/useVaultFileCells';
 import { ARTIST_LOCKBOXES } from '../data/saturn';
-import { D_CHAKRA_COLOR, MEMBER_CHAKRA_COLORS, VOID_CHAKRA_COLORS, LOCKBOX_PREFIX } from '../config';
+import { VOID_CHAKRA_COLORS, LOCKBOX_PREFIX } from '../config';
 import { useSystem } from '../state/SystemContext';
 import { canComment, canEdit } from '../utils/permissions';
 
@@ -44,7 +43,6 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
       sublabel: `${bpms[idx % bpms.length]} BPM · ${lockboxHz}Hz`,
       metadata: { bpm: bpms[idx % bpms.length], frequency: `${lockboxHz}Hz`, stem },
       createdBy: 'D',
-      chakraColor: MEMBER_CHAKRA_COLORS.D,
       ...LOCKBOX_SKIN,
     }));
 
@@ -54,7 +52,6 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
       sublabel: `${bpms[(idx + 1) % bpms.length] + 6} BPM · ${lockboxHz}Hz`,
       metadata: { bpm: bpms[(idx + 1) % bpms.length] + 6, frequency: `${lockboxHz}Hz`, stem },
       createdBy: 'D',
-      chakraColor: MEMBER_CHAKRA_COLORS.D,
       ...LOCKBOX_SKIN,
     }));
 
@@ -125,7 +122,6 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
   return (
     <motion.div
       className="vault-screen lockbox-vault"
-      style={{ '--vault-owner-glow': `${D_CHAKRA_COLOR}1a` }}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}

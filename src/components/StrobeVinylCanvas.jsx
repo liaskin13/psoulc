@@ -64,21 +64,21 @@ const VINYL_FRAG = /* glsl */ `
     float groove = fract(r * 40.0);
     float grooveShin  = smoothstep(0.05, 0.0, groove) + smoothstep(0.9, 1.0, groove);
 
-    // Groove reflection — warm amber glint, direction-dependent
+    // Groove reflection — chrome/silver glint, direction-dependent
     float glintAngle = mod(rotTheta, 6.2831853);
     float glint = pow(max(0.0, cos(glintAngle * 12.0)), 18.0) * grooveShin;
 
-    // Base vinyl color — very dark with warm tint
-    vec3 vinylBase = vec3(0.04, 0.035, 0.032);
-    vinylBase += glint * vec3(0.18, 0.13, 0.06);  // amber groove shimmer
+    // Base vinyl color — void black with chrome shimmer
+    vec3 vinylBase = vec3(0.04, 0.04, 0.04);
+    vinylBase += glint * vec3(0.20, 0.20, 0.20);  // chrome groove shimmer
 
     // ── Label area (inner circle r < 0.20) ───────────────────
-    // Amber/gold color with radial stripe pattern
+    // Achromatic dark steel with subtle lighter stripe pattern
     float isLabel    = 1.0 - step(0.21, r);
     float labelStripe = step(0.5, fract(rotTheta * 4.0 / 6.2831853));  // 4 stripes
-    vec3 labelAmber   = vec3(0.78, 0.50, 0.08);
-    vec3 labelDark    = vec3(0.45, 0.28, 0.04);
-    vec3 labelColor   = mix(labelDark, labelAmber, labelStripe * 0.4 + 0.6);
+    vec3 labelLight  = vec3(0.28, 0.28, 0.28);
+    vec3 labelDark   = vec3(0.12, 0.12, 0.12);
+    vec3 labelColor  = mix(labelDark, labelLight, labelStripe * 0.4 + 0.6);
 
     // Spindle hole
     float isSpindle  = step(r, 0.04);
@@ -91,10 +91,10 @@ const VINYL_FRAG = /* glsl */ `
     // When closed (strobe=0): record drops to ~8% brightness (still visible as dark disc)
     color = mix(color * 0.08, color, strobe);
 
-    // Honey Amber point light — rim highlight at top-left
+    // Chrome rim highlight — top-left
     float rimAngle = mod(theta - 2.4, 6.2831853);
     float rim = pow(max(0.0, 1.0 - abs(rimAngle - 3.14159) / 2.5), 2.5) * (1.0 - r);
-    color += rim * vec3(0.22, 0.14, 0.03) * strobe;
+    color += rim * vec3(0.22, 0.22, 0.22) * strobe;
 
     // Record boundary — sharp edge at r=0.49
     float isRecord = 1.0 - step(0.49, r);
@@ -142,12 +142,10 @@ function StrobeDisk({ bpm, pitchMultiplier }) {
 //   bpm             — track BPM
 //   pitchMultiplier — varispeed ratio (default 1.0)
 //   size            — canvas pixel size (square, default 160)
-//   chakraColor     — hex color for ownership soul-chakra overlay (optional)
 function StrobeVinylCanvas({
   bpm = 98,
   pitchMultiplier = 1.0,
   size = 160,
-  chakraColor = null,
 }) {
   return (
     <div
@@ -167,36 +165,19 @@ function StrobeVinylCanvas({
           camera.lookAt(0, 0, 0);
         }}
       >
-        {/* Honey Amber key light — upper-left, 70s studio lamp position */}
+        {/* Cool steel key light — upper-left */}
         <pointLight
           position={[-1.2, 2.5, 0.5]}
-          color="#d4830a"
+          color="#b0b8c0"
           intensity={3.5}
           distance={8}
           decay={1.5}
         />
-        <ambientLight color="#200e00" intensity={0.4} />
+        <ambientLight color="#080808" intensity={0.4} />
 
         <StrobeDisk bpm={bpm} pitchMultiplier={pitchMultiplier} />
       </Canvas>
 
-      {/* Soul-chakra color tint — ownership language overlay.
-          mix-blend-mode: screen lets the vinyl grooves show through
-          while the chakra hue bleeds into the label area. */}
-      {chakraColor && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "50%",
-            background: chakraColor,
-            opacity: 0.22,
-            mixBlendMode: "screen",
-            pointerEvents: "none",
-          }}
-        />
-      )}
     </div>
   );
 }

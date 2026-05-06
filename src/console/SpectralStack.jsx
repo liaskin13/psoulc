@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 
 // SpectralStack — The Helix
-// Renders tracks from the active vault as stacked amber sine-wave layers.
+// Renders tracks from the active vault as stacked achromatic sine-wave layers.
 // Waveforms are synthesized from BPM + index — no extra Supabase columns needed.
 // Lives behind the hero + tracklist in the MONITOR column (z-index: 1).
 
