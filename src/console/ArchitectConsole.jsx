@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSystem } from "../state/SystemContext";
 import "./ArchitectConsole.css";
-import ConduitSlider from "./ConduitSlider";
 import InboxPanel from "./InboxPanel";
 import CommentPanel from "./CommentPanel";
 import DirectLinePanel from "./DirectLinePanel";
@@ -1133,10 +1132,13 @@ function ArchitectConsole({
             INTAKE
           </button>
 
-          <ConduitSlider
-            onBroadcast={handleBroadcast}
-            isBroadcasting={isBroadcasting}
-          />
+          <button
+            className={`arch-signal-btn ${isBroadcasting ? 'is-live' : ''}`}
+            onClick={handleBroadcast}
+            aria-label="THE SIGNAL — go live"
+          >
+            <span className="arch-signal-dot">●</span> SIGNAL
+          </button>
 
           {unreadCountL > 0 && (
             <button

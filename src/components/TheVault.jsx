@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import RecordShelf from './RecordShelf';
 import StuderTransportBar from './StuderTransportBar';
 import TuneModal from './TuneModal';
-import VaultWindow from './VaultWindow';
 import VoidStreakOverlay from './VoidStreakOverlay';
 import DeckWaveform from './DeckWaveform';
 import { useVaultVoid } from '../hooks/useVaultVoid';
@@ -330,17 +329,6 @@ function TheVault({ vault, onBack, onExitSystem, onVoid, readOnly = false }) {
       )}
 
       <div className="vault-main-grid">
-        <div className="vault-top-band">
-          <VaultWindow
-            ref={vaultWindowRef}
-            inverseBloom={inverseBloom}
-            voidArmed={isVoidArmed}
-            armedLabel={armedVoidLabel}
-            onCancelVoid={cancelArmedVoid}
-            onConfirmVoid={confirmArmedVoid}
-            activeTrack={activeTrack}
-          />
-        </div>
 
         {/* Deck waveform — full width, shown when a track is active */}
         {activeId && (

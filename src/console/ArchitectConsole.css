@@ -327,6 +327,49 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+.arch-signal-btn {
+  background: transparent;
+  border: 1px solid rgba(229, 32, 32, 0.4);
+  color: #e52020;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0 10px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+
+.arch-signal-btn:hover {
+  border-color: #e52020;
+  box-shadow: 0 0 8px rgba(229, 32, 32, 0.25);
+}
+
+.arch-signal-dot {
+  font-size: 8px;
+  animation: none;
+}
+
+.arch-signal-btn.is-live .arch-signal-dot {
+  animation: signal-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes signal-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arch-signal-btn.is-live .arch-signal-dot {
+    animation: none;
+  }
+}
+
 .arch-exit-btn {
   border-color: rgba(var(--arch-muted-rgb), 0.12);
   color: rgba(var(--arch-muted-rgb), 0.35);
