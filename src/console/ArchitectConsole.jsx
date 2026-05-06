@@ -25,6 +25,7 @@ import {
   SERATO_COLORS,
 } from "../lib/waveformAnalyzer";
 import * as audioEngine from "../lib/audioEngine";
+import AudioAnalyzer from "./AudioAnalyzer";
 import AdminSettings from "../admin/AdminSettings";
 import PSCWordmark from "../components/PSCWordmark";
 
@@ -1466,17 +1467,7 @@ function ArchitectConsole({
       </div>
 
       <div className="arch-monitor-strip" role="group" aria-label="Monitoring">
-        <div className="arch-monitor-vu">
-          <span className="arch-monitor-label">VU</span>
-          <span className="arch-monitor-meter">
-            <i className="arch-vu-seg on" />
-            <i className="arch-vu-seg on" />
-            <i className="arch-vu-seg on" />
-            <i className="arch-vu-seg on" />
-            <i className="arch-vu-seg" />
-            <i className="arch-vu-seg" />
-          </span>
-        </div>
+        <AudioAnalyzer isPlaying={isPlaying} />
         <div className="arch-monitor-eq">
           <button className="arch-monitor-btn" disabled>EQ HI</button>
           <button className="arch-monitor-btn" disabled>EQ MID</button>

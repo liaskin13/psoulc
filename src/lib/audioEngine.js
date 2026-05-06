@@ -5,6 +5,35 @@ let audio = null;
 let _volume = 0.85;
 let stateListeners = [];
 
+// Web Audio analysis graph (created lazily on first play)
+let _audioCtx = null;
+let _analyser = null;
+let _sourceConnected = false;
+
+function ensureAudioGraph() {
+  if (_sourceConnected) return;
+  const a = getAudio();
+  if (!_audioCtx) {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    _analyser = _audioCtx.createAnalyser();
+    _analyser.fftSize = 512;
+    _analyser.smoothingTimeConstant = 0.8;
+    _analyser.connect(_audioCtx.destination);
+  }
+  const source = _audioCtx.createMediaElementSource(a);
+  source.connect(_analyser);
+  _sourceConnected = true;
+}
+
+export function getAnalyser() {
+  ensureAudioGraph();
+  return _analyser;
+}
+
+export function resumeAudioContext() {
+  if (_audioCtx?.state === 'suspended') _audioCtx.resume();
+}
+
 function getAudio() {
   if (!audio) {
     audio = new Audio();
@@ -73,6 +102,8 @@ export async function load(url) {
 export function play() {
   const a = getAudio();
   if (!a.src) return;
+  ensureAudioGraph();
+  resumeAudioContext();
   a.play().catch(() => {});
 }
 
