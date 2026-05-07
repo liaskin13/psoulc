@@ -49,7 +49,7 @@ export default {
       if (request.method === "GET" && url.pathname.startsWith("/tracks/")) {
         const vault = url.pathname.split("/")[2];
         const { results } = await env.PSC_DB.prepare(
-          "SELECT * FROM tracks WHERE vault = ? AND is_voided = 0 ORDER BY created_at DESC",
+          "SELECT id, vault, title, artist, bpm, bpm_display, musical_key, duration, audio_path, waveform_data, created_at FROM tracks WHERE vault = ? AND is_voided = 0 ORDER BY created_at DESC",
         )
           .bind(vault)
           .all();
@@ -62,12 +62,97 @@ export default {
       // GET /tracks
       if (request.method === "GET" && url.pathname === "/tracks") {
         const { results } = await env.PSC_DB.prepare(
-          "SELECT id, vault, title, artist, bpm, musical_key, duration, audio_path, created_at FROM tracks WHERE is_voided = 0 ORDER BY created_at DESC",
+          "SELECT id, vault, title, artist, bpm, bpm_display, musical_key, duration, audio_path, created_at FROM tracks WHERE is_voided = 0 ORDER BY created_at DESC",
         ).all();
 
         return new Response(JSON.stringify(results), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      // POST /upload-init  — start a multipart upload, return uploadId + key
+      if (request.method === "POST" && url.pathname === "/upload-init") {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const body = await request.json();
+        const { vault, filename, contentType } = body;
+        if (!vault || !filename) {
+          return new Response(JSON.stringify({ error: "Missing vault or filename" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const ext = filename.split(".").pop().toLowerCase();
+        const key = `${vault}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+        const mpu = await env.PSC_AUDIO.createMultipartUpload(key, {
+          httpMetadata: { contentType: contentType || "audio/mpeg" },
+        });
+        return new Response(
+          JSON.stringify({ uploadId: mpu.uploadId, key }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // PUT /upload-part?key=&uploadId=&partNumber=  — upload one chunk
+      if (request.method === "PUT" && url.pathname === "/upload-part") {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const key = url.searchParams.get("key");
+        const uploadId = url.searchParams.get("uploadId");
+        const partNumber = parseInt(url.searchParams.get("partNumber"), 10);
+        if (!key || !uploadId || !partNumber) {
+          return new Response(JSON.stringify({ error: "Missing key, uploadId or partNumber" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const mpu = env.PSC_AUDIO.resumeMultipartUpload(key, uploadId);
+        const data = await request.arrayBuffer();
+        const part = await mpu.uploadPart(partNumber, data);
+        return new Response(
+          JSON.stringify({ partNumber: part.partNumber, etag: part.etag }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // POST /upload-complete  — finish multipart upload, save track to D1
+      if (request.method === "POST" && url.pathname === "/upload-complete") {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const body = await request.json();
+        const { key, uploadId, parts, vault, title, artist, bpm, uploaded_by } = body;
+        if (!key || !uploadId || !parts || !vault || !title) {
+          return new Response(JSON.stringify({ error: "Missing required fields" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const mpu = env.PSC_AUDIO.resumeMultipartUpload(key, uploadId);
+        await mpu.complete(parts);
+        const result = await env.PSC_DB.prepare(
+          "INSERT INTO tracks (vault, title, artist, bpm, bpm_display, audio_path, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
+        )
+          .bind(vault, title, artist || null, bpm ? parseFloat(String(bpm).split("-")[0]) : null, bpm || null, key, uploaded_by)
+          .first();
+        if (!result) {
+          throw new Error(`Database insert failed: vault=${vault} title="${title}"`);
+        }
+        return new Response(
+          JSON.stringify({ success: true, id: result.id, audio_path: key }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
 
       // POST /upload
@@ -111,13 +196,14 @@ export default {
         });
 
         const result = await env.PSC_DB.prepare(
-          "INSERT INTO tracks (vault, title, artist, bpm, audio_path, uploaded_by) VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+          "INSERT INTO tracks (vault, title, artist, bpm, bpm_display, audio_path, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
         )
           .bind(
             vault,
             title,
             artist || null,
-            bpm ? parseFloat(bpm) : null,
+            bpm ? parseFloat(String(bpm).split("-")[0]) : null,
+            bpm || null,
             key,
             uploaded_by,
           )

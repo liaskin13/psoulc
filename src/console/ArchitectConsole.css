@@ -1524,6 +1524,7 @@
   letter-spacing: 0.18em;
   color: rgba(var(--arch-accent-rgb), 0.28);
   text-transform: uppercase;
+  text-align: center;
 }
 
 .arch-track-list-body {

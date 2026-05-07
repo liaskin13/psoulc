@@ -1218,7 +1218,7 @@ function ArchitectConsole({
           </div>
           <div className="arch-deck-stats">
             <span className="arch-stat">
-              BPM <strong>{loadedTrack?.bpm ? Math.round(loadedTrack.bpm) : "—"}</strong>
+              BPM <strong>{loadedTrack?.bpm_display || (loadedTrack?.bpm ? Math.round(loadedTrack.bpm) : "—")}</strong>
             </span>
             <span className="arch-stat">
               KEY <strong>{loadedTrack?.musical_key || "—"}</strong>
@@ -1308,11 +1308,11 @@ function ArchitectConsole({
                 <span className="arch-meta-artist">{loadedTrack.artist}</span>
               </>
             )}
-            {loadedTrack.bpm && (
+            {(loadedTrack.bpm_display || loadedTrack.bpm) && (
               <>
                 <span className="arch-meta-sep"> · </span>
                 <span className="arch-meta-bpm">
-                  {Math.round(loadedTrack.bpm)} BPM
+                  {loadedTrack.bpm_display || Math.round(loadedTrack.bpm)} BPM
                 </span>
               </>
             )}
@@ -1783,7 +1783,7 @@ function ArchitectConsole({
                         {t.artist || "—"}
                       </span>
                       <span className="arch-track-bpm" role="cell">
-                        {t.bpm ? Math.round(Number(t.bpm)) : "—"}
+                        {t.bpm_display || (t.bpm ? Math.round(Number(t.bpm)) : "—")}
                       </span>
                       <span className="arch-track-key" role="cell">
                         {t.musical_key || "—"}
