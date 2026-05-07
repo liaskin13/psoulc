@@ -138,7 +138,8 @@ function App() {
     setTimeout(() => setIsBroadcasting(false), BROADCAST_DURATION_MS);
   };
 
-  const handleArchitectExplore = (planetId) => {
+  const handleArchitectExplore = (planetRef) => {
+    const planetId = typeof planetRef === "string" ? planetRef : planetRef?.id;
     if (!planetId || !VAULT_IDS.has(planetId)) return;
     setActiveNode({ id: planetId });
   };
@@ -301,9 +302,7 @@ function App() {
           id="main-content"
           className="cockpit"
           initial={
-            prefersReduced
-              ? { opacity: 1 }
-              : { opacity: 0, scale: 1.04 }
+            prefersReduced ? { opacity: 1 } : { opacity: 0, scale: 1.04 }
           }
           animate={{ opacity: 1, scale: 1 }}
           transition={

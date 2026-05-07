@@ -74,6 +74,7 @@
   --dur-short: 120ms;
   --dur-medium: 200ms;
   --dur-long: 350ms;
+  --cmd-tracking: 0.14em;
 
   /* ═══════════════════════════════════════════════════
      BACKWARD-COMPAT ALIASES — migrate components
@@ -117,12 +118,18 @@
   --vault-resonance: rgba(255, 255, 255, 0.35);
 
   /* Spacing aliases — map legacy --space-* to canonical --sp-* */
-  --space-xs:  var(--sp-2);   /* 4px  */
-  --space-sm:  var(--sp-3);   /* 8px  */
-  --space-md:  var(--sp-5);   /* 16px */
-  --space-lg:  var(--sp-6);   /* 24px */
-  --space-xl:  var(--sp-8);   /* 48px */
-  --space-xxl: var(--sp-9);   /* 64px */
+  --space-xs: var(--sp-2);
+  /* 4px  */
+  --space-sm: var(--sp-3);
+  /* 8px  */
+  --space-md: var(--sp-5);
+  /* 16px */
+  --space-lg: var(--sp-6);
+  /* 24px */
+  --space-xl: var(--sp-8);
+  /* 48px */
+  --space-xxl: var(--sp-9);
+  /* 64px */
 
   /* Weight / kerning legacy tokens */
   --weight-light: 300;

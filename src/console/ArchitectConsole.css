@@ -467,7 +467,7 @@
   padding: 0 10px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.52rem;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--cmd-tracking);
   border-radius: 0;
   cursor: pointer;
   transition: box-shadow 60ms ease, transform 60ms ease, color 0.1s;
@@ -510,7 +510,7 @@
   width: 36%;
   background: linear-gradient(90deg, transparent 0%, rgba(var(--arch-accent-rgb), 0.34) 50%, transparent 100%);
   transform: translateX(-140%);
-  animation: arch-active-sheen 3.2s ease-in-out infinite;
+  animation: arch-active-sheen 2.4s ease-in-out infinite;
   pointer-events: none;
   mix-blend-mode: screen;
 }
@@ -875,7 +875,7 @@
   padding: 0 18px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.68rem;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--cmd-tracking);
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 0;
