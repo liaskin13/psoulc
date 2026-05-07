@@ -95,6 +95,12 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (isMobile && (stage === "console" || stage === "architect")) {
+      setStage("room");
+    }
+  }, [isMobile, stage]);
+
   const handleIgnite = (ownerVal, tier = "G") => {
     const meta = refreshSessionMeta();
     setOwner(ownerVal);
@@ -201,7 +207,6 @@ function App() {
 
   // ── CONSOLE MOBILE GUARD — safety net, routing handles this at login ─────
   if (isMobile && (stage === "console" || stage === "architect")) {
-    setStage("room");
     return null;
   }
 

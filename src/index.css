@@ -1810,6 +1810,157 @@ h3,
   background: var(--void);
 }
 
+/* ── Cohesion Pass: unified vault/listener drama ───────────────────────── */
+.vault-screen,
+.listener-shell,
+.listener-mainframe {
+  background:
+    radial-gradient(120% 90% at 8% 0%, rgba(240, 237, 232, 0.045) 0%, transparent 58%),
+    radial-gradient(110% 80% at 90% 100%, rgba(240, 237, 232, 0.03) 0%, transparent 62%),
+    linear-gradient(180deg, #060606 0%, #040404 100%);
+}
+
+.vault-screen::before,
+.listener-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0px, rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 4px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015), transparent 24%, transparent 76%, rgba(255, 255, 255, 0.015));
+  mix-blend-mode: screen;
+}
+
+.vault-screen>*,
+.listener-shell>* {
+  position: relative;
+  z-index: 2;
+}
+
+.vault-header h1,
+.listener-stage-title {
+  text-shadow: 0 0 32px rgba(240, 237, 232, 0.13);
+}
+
+.vault-commands .god-btn,
+.listener-stage-cta,
+.vault-sort-pill,
+.vault-search-input {
+  border-color: rgba(240, 237, 232, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.vault-commands {
+  position: relative;
+  padding: 8px 10px 12px;
+  margin: 0 0 18px;
+  border-top: 1px solid rgba(240, 237, 232, 0.12);
+  border-bottom: 1px solid rgba(240, 237, 232, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(0, 0, 0, 0.18) 100%);
+}
+
+.vault-commands .god-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+}
+
+.vault-library-controls {
+  border-top: 1px solid rgba(240, 237, 232, 0.1);
+  border-bottom: 1px solid rgba(240, 237, 232, 0.08);
+  background: rgba(0, 0, 0, 0.16);
+  padding: 10px 8px 9px;
+  margin-bottom: 6px;
+}
+
+.vault-search-input {
+  flex: 1.3;
+}
+
+.vault-sort-pills {
+  margin-left: auto;
+}
+
+.vault-commands .god-btn:hover,
+.listener-stage-cta:hover,
+.vault-sort-pill:hover,
+.vault-search-input:focus {
+  border-color: rgba(240, 237, 232, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 10px 30px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(240, 237, 232, 0.12);
+}
+
+.vault-deck-waveform {
+  border-top: 1px solid rgba(240, 237, 232, 0.15);
+  border-bottom: 1px solid rgba(240, 237, 232, 0.15);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.25) 100%),
+    #090909;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 26px rgba(0, 0, 0, 0.5);
+}
+
+.listener-stage-rule {
+  width: 56px;
+  background: linear-gradient(90deg, transparent 0%, rgba(240, 237, 232, 0.65) 50%, transparent 100%);
+}
+
+.listener-dock {
+  border-top-color: rgba(240, 237, 232, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.88) 100%),
+    #060606;
+}
+
+.listener-dock-btn {
+  position: relative;
+  border-right-color: rgba(240, 237, 232, 0.09);
+}
+
+.listener-dock-btn::before {
+  content: '';
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  top: 0;
+  height: 1px;
+  background: transparent;
+  transition: background 140ms, box-shadow 140ms;
+}
+
+.listener-dock-active {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.listener-dock-active::before {
+  background: rgba(240, 237, 232, 0.58);
+  box-shadow: 0 0 10px rgba(240, 237, 232, 0.2);
+}
+
+.listener-dock-label {
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.studer-transport {
+  border-top: 1px solid rgba(240, 237, 232, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.8) 100%),
+    #050505;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 /* ── TheSignal listening room ─── */
 .signal-shell {
   position: fixed;
@@ -2261,6 +2412,7 @@ h3,
 }
 
 @media (max-width: 640px) {
+
   /* Vault screen — full bleed, safe bottom padding */
   .vault-screen {
     padding: 16px 16px 32px;
@@ -2293,6 +2445,10 @@ h3,
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 4px;
+    padding-left: 0;
+    padding-right: 0;
+    border-top-color: rgba(240, 237, 232, 0.14);
+    border-bottom-color: rgba(240, 237, 232, 0.12);
   }
 
   .god-btn {
@@ -2341,7 +2497,9 @@ h3,
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
-    padding: 8px 0 6px;
+    padding: 8px 8px 6px;
+    border-top-color: rgba(240, 237, 232, 0.14);
+    border-bottom-color: rgba(240, 237, 232, 0.1);
   }
 
   .vault-search-input {
@@ -2354,6 +2512,7 @@ h3,
   .vault-sort-pills {
     gap: 6px;
     flex-wrap: nowrap;
+    margin-left: 0;
   }
 
   .vault-sort-pill {
@@ -2417,6 +2576,20 @@ h3,
   .transport-readout {
     width: 100%;
     order: -1;
+  }
+
+  .listener-dock {
+    height: 66px;
+  }
+
+  .listener-dock-btn {
+    gap: 5px;
+    padding: 0 6px;
+  }
+
+  .listener-dock-label {
+    font-size: 7px;
+    letter-spacing: 0.14em;
   }
 
   /* RecordShelf — full height on mobile (VaultWindow hidden) */

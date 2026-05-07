@@ -18,7 +18,10 @@
   --arch-error-solid: #dc5050;
   position: fixed;
   inset: 0;
-  background: #070a0d;
+  background:
+    radial-gradient(140% 90% at 0% 0%, rgba(var(--arch-accent-rgb), 0.085) 0%, transparent 58%),
+    radial-gradient(120% 100% at 100% 100%, rgba(var(--arch-accent-rgb), 0.06) 0%, transparent 62%),
+    #070a0d;
   display: grid;
   grid-template-rows: 40px auto auto auto 1fr;
   /* top-rail | deck | transport | monitor | lower-zone */
@@ -261,6 +264,7 @@
 
 .arch-vu-seg.on {
   background: rgba(var(--arch-accent-rgb), 0.78);
+  box-shadow: 0 0 8px rgba(var(--arch-accent-rgb), 0.45);
 }
 
 .arch-status-pill {
@@ -498,14 +502,23 @@
   align-items: stretch;
   gap: 6px;
   margin-bottom: 6px;
+  padding: 6px;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(0, 0, 0, 0.35) 100%),
+    rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
 .arch-vu-deck {
   display: block;
   flex-shrink: 0;
   image-rendering: pixelated;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
-  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.16);
+  background:
+    linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.08) 0%, rgba(0, 0, 0, 0.72) 100%);
   width: 40px;
   height: 108px;
 }
@@ -523,8 +536,9 @@
   width: 100%;
   height: 48px;
   image-rendering: pixelated;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
-  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.16);
+  background:
+    linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.08) 0%, rgba(0, 0, 0, 0.68) 100%);
 }
 
 /* ── WAVEFORM — Animation 2: Standing Wave ──────────────────────────────── */
@@ -556,6 +570,12 @@
   height: 108px;
   overflow: hidden;
   position: relative;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
+  background:
+    linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.06) 0%, rgba(0, 0, 0, 0.6) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 22px rgba(var(--arch-accent-rgb), 0.12);
 }
 
 .arch-deck-empty-state {
@@ -609,8 +629,9 @@
   flex-shrink: 0;
   transform-origin: center;
   will-change: transform;
-  animation: arch-standing-wave 2.8s ease-in-out infinite;
+  animation: arch-standing-wave 2.4s ease-in-out infinite;
   animation-delay: calc(var(--bar-i, 0) * -0.035s);
+  box-shadow: 0 0 6px rgba(var(--arch-accent-rgb), 0.2);
 }
 
 .arch-wave-bar:nth-child(4n) {
@@ -646,11 +667,56 @@
   align-items: flex-end;
   gap: 1px;
   height: 20px;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.15);
   border-radius: 0;
   padding: 2px 2px 0;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.3);
+  background: linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.06) 0%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+@media (max-width: 1100px) {
+  .arch-waveform-row {
+    padding: 5px;
+    gap: 5px;
+  }
+
+  .arch-vu-deck {
+    width: 34px;
+    height: 98px;
+  }
+
+  .arch-waveform-main {
+    height: 98px;
+  }
+
+  .arch-spectrum-deck {
+    height: 42px;
+  }
+}
+
+@media (max-width: 900px) {
+  .arch-waveform-row {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .arch-vu-deck {
+    width: 30px;
+    height: 90px;
+  }
+
+  .arch-waveform-main {
+    height: 90px;
+    gap: 1.2px;
+  }
+
+  .arch-spectrum-deck {
+    height: 36px;
+  }
+
+  .arch-waveform-overview {
+    height: 16px;
+  }
 }
 
 .arch-overview-bar {
@@ -1658,10 +1724,12 @@
 .arch-track-staged {
   background: var(--section-unreleased);
 }
+
 .arch-track-staged .arch-track-title span,
 .arch-track-staged .arch-track-artist span {
   opacity: 0.55;
 }
+
 .arch-track-live {
   background: var(--section-released);
 }
@@ -1673,6 +1741,7 @@
   justify-content: center;
   cursor: pointer;
 }
+
 .arch-track-checkbox {
   width: 10px;
   height: 10px;
@@ -1681,10 +1750,12 @@
   display: block;
   transition: border-color 0.1s, background 0.1s;
 }
+
 .arch-track-checkbox.is-checked {
   border-color: rgba(var(--arch-accent-rgb), 0.7);
   background: rgba(var(--arch-accent-rgb), 0.18);
 }
+
 .arch-track-row.checked {
   outline: 1px solid rgba(var(--arch-accent-rgb), 0.18);
   outline-offset: -1px;
@@ -1697,17 +1768,21 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
+
 .arch-pub-dot.is-staged {
   background: rgba(160, 160, 160, 0.3);
   border: 1px solid rgba(160, 160, 160, 0.4);
 }
+
 .arch-pub-dot.is-live {
   background: rgba(var(--arch-accent-rgb), 0.7);
   box-shadow: 0 0 5px rgba(var(--arch-accent-rgb), 0.35);
 }
+
 .arch-track-staged .arch-track-state {
   color: rgba(140, 140, 140, 0.5);
 }
+
 .arch-track-live .arch-track-state {
   color: rgba(var(--arch-accent-rgb), 0.75);
 }
@@ -1731,6 +1806,7 @@
   color: rgba(var(--arch-accent-rgb), 0.9);
   border-color: rgba(var(--arch-accent-rgb), 0.3);
 }
+
 .arch-retract-btn:not(:disabled) {
   color: rgba(160, 160, 160, 0.75);
   border-color: rgba(160, 160, 160, 0.25);
