@@ -730,6 +730,13 @@
   pointer-events: none;
 }
 
+.arch-deck-mini-btn.is-set,
+.arch-loop-btn.is-set {
+  border-color: rgba(var(--arch-accent-rgb), 0.55);
+  color: rgba(var(--arch-accent-rgb), 0.9);
+  box-shadow: 0 0 6px rgba(var(--arch-accent-rgb), 0.2), inset 0 1px 0 rgba(var(--arch-accent-rgb), 0.08);
+}
+
 /* ── TRANSPORT BAR ──────────────────────────────────────────────────────── */
 .arch-transport {
   position: relative;

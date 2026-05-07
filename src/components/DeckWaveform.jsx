@@ -27,6 +27,8 @@ export default function DeckWaveform({
   height = 120,
   hotCues = {},
   cueColors = [],
+  zoom = 1,
+  loopRegion = null,
 }) {
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
@@ -60,23 +62,43 @@ export default function DeckWaveform({
       }
 
       const barCount = peaks.length;
-      const barWidth = width / barCount;
-      const playheadX = (currentTime / duration) * width;
+      // Zoom: show a window of barCount/zoom bars centered on playhead
+      const visibleBars = Math.round(barCount / zoom);
+      const playheadFrac = duration > 0 ? currentTime / duration : 0;
+      const centerBar = Math.round(playheadFrac * barCount);
+      const startBar = Math.max(0, Math.min(centerBar - Math.round(visibleBars / 2), barCount - visibleBars));
+      const endBar = Math.min(barCount, startBar + visibleBars);
+      const barWidth = width / (endBar - startBar);
+      const playheadX = ((centerBar - startBar) / (endBar - startBar)) * width;
+
+      // Draw loop region highlight
+      if (loopRegion?.start !== null && loopRegion?.start !== undefined && duration > 0) {
+        const loopStartX = ((loopRegion.start / duration) * barCount - startBar) / (endBar - startBar) * width;
+        const loopEndX = loopRegion.end !== null
+          ? ((loopRegion.end / duration) * barCount - startBar) / (endBar - startBar) * width
+          : playheadX;
+        if (loopEndX > loopStartX) {
+          ctx.fillStyle = "rgba(255, 191, 0, 0.12)";
+          ctx.fillRect(Math.max(0, loopStartX), 0, Math.min(loopEndX - loopStartX, width), height);
+          ctx.strokeStyle = "rgba(255, 191, 0, 0.5)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(Math.max(0, loopStartX), 0); ctx.lineTo(Math.max(0, loopStartX), height); ctx.stroke();
+          if (loopRegion.end !== null) {
+            ctx.beginPath(); ctx.moveTo(Math.min(loopEndX, width), 0); ctx.lineTo(Math.min(loopEndX, width), height); ctx.stroke();
+          }
+        }
+      }
 
       // Draw waveform bars
-      peaks.forEach((data, i) => {
-        const x = i * barWidth;
+      for (let i = startBar; i < endBar; i++) {
+        const data = peaks[i];
+        const x = (i - startBar) * barWidth;
         const barHeight = data.peak * height;
-        const y = (height - barHeight) / 2; // center vertically
-
-        // Color: dimmed if past playhead, full intensity if not played yet
-        const isPast = x < playheadX;
-        ctx.fillStyle = isPast
-          ? data.freq + "40" // 25% opacity for played portion
-          : data.freq;
-
+        const y = (height - barHeight) / 2;
+        const isPast = (i - startBar) * barWidth < playheadX;
+        ctx.fillStyle = isPast ? data.freq + "40" : data.freq;
         ctx.fillRect(x, y, Math.max(barWidth - 1, 1), barHeight);
-      });
+      }
 
       // Draw playhead line
       ctx.strokeStyle = "rgba(255,255,255,0.9)";
@@ -172,16 +194,27 @@ export default function DeckWaveform({
     height,
     hotCues,
     cueColors,
+    zoom,
+    loopRegion,
   ]);
 
-  // Handle click to seek
+  // Handle click to seek — accounts for zoom window offset
   const handleClick = (e) => {
     if (!onSeek) return;
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const seekTime = (x / width) * duration;
-    onSeek(seekTime);
+    const frac = x / width;
+    if (zoom <= 1) {
+      onSeek(frac * duration);
+      return;
+    }
+    const totalBars = (waveformData && Array.isArray(waveformData)) ? waveformData.length : 1000;
+    const visibleBars = Math.round(totalBars / zoom);
+    const centerBar = Math.round((currentTime / duration) * totalBars);
+    const startBar = Math.max(0, Math.min(centerBar - Math.round(visibleBars / 2), totalBars - visibleBars));
+    const clickedBar = startBar + Math.round(frac * visibleBars);
+    onSeek(Math.max(0, Math.min((clickedBar / totalBars) * duration, duration)));
   };
 
   return (

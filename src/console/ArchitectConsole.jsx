@@ -245,6 +245,10 @@ function ArchitectConsole({
       return {};
     }
   });
+  const [waveformZoom, setWaveformZoom] = useState(1);
+  const [cueBankPoints, setCueBankPoints] = useState({A: null, B: null, C: null, D: null});
+  const [loopRegion, setLoopRegion] = useState({start: null, end: null});
+  const loopActiveRef = useRef(false);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
   const tabRefs = useRef([]);
@@ -871,6 +875,98 @@ function ArchitectConsole({
     announce(`Hot cue ${num} cleared.`);
   };
 
+  // Loop enforcement — seeks back to loopRegion.start when playhead passes loopRegion.end
+  useEffect(() => {
+    if (loopRegion.start === null || loopRegion.end === null) return;
+    loopActiveRef.current = true;
+    return audioEngine.onStateChange(({ currentTime: ct, isPlaying: playing }) => {
+      if (playing && loopActiveRef.current && ct >= loopRegion.end) {
+        audioEngine.seek(loopRegion.start);
+      }
+    });
+  }, [loopRegion]);
+
+  const handleCueBankClick = (bank) => {
+    if (!audioEngine.isLoaded()) return;
+    setCueBankPoints((prev) => {
+      if (prev[bank] === null) {
+        announce(`Cue ${bank} set at ${currentTime.toFixed(1)}s.`);
+        return { ...prev, [bank]: currentTime };
+      }
+      audioEngine.seek(prev[bank]);
+      announce(`Jump to cue ${bank}.`);
+      return prev;
+    });
+  };
+
+  const handleCueBankClear = (bank) => {
+    setCueBankPoints((prev) => ({ ...prev, [bank]: null }));
+    announce(`Cue ${bank} cleared.`);
+  };
+
+  const handleSetLoopStart = () => {
+    if (!audioEngine.isLoaded()) return;
+    setLoopRegion((prev) => ({ ...prev, start: currentTime }));
+    loopActiveRef.current = false;
+    announce(`Loop start: ${currentTime.toFixed(1)}s.`);
+  };
+
+  const handleSetLoopEnd = () => {
+    if (!audioEngine.isLoaded()) return;
+    setLoopRegion((prev) => {
+      if (prev.start === null || currentTime <= prev.start) return prev;
+      announce(`Loop end: ${currentTime.toFixed(1)}s.`);
+      return { ...prev, end: currentTime };
+    });
+  };
+
+  const handleClearLoop = () => {
+    setLoopRegion({ start: null, end: null });
+    loopActiveRef.current = false;
+    announce("Loop cleared.");
+  };
+
+  const handleReloop = () => {
+    if (loopRegion.start === null || loopRegion.end === null) return;
+    loopActiveRef.current = true;
+    audioEngine.seek(loopRegion.start);
+    announce("Loop reengaged.");
+  };
+
+  const handleAutoLoop = (beats) => {
+    if (!audioEngine.isLoaded()) return;
+    const bpm = loadedTrack?.bpm ? parseFloat(String(loadedTrack.bpm).split("-")[0]) : 120;
+    const loopLen = (beats * 60) / (bpm || 120);
+    const start = currentTime;
+    setLoopRegion({ start, end: start + loopLen });
+    loopActiveRef.current = true;
+    announce(`${beats}-beat loop.`);
+  };
+
+  const handleLoopHalve = () => {
+    setLoopRegion((prev) => {
+      if (prev.start === null || prev.end === null) return prev;
+      return { ...prev, end: prev.start + (prev.end - prev.start) / 2 };
+    });
+  };
+
+  const handleLoopDouble = () => {
+    setLoopRegion((prev) => {
+      if (prev.start === null || prev.end === null) return prev;
+      return { ...prev, end: prev.start + (prev.end - prev.start) * 2 };
+    });
+  };
+
+  const handleNeedleDrop = (e) => {
+    if (!audioEngine.isLoaded() || !audioDuration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    audioEngine.seek(Math.max(0, Math.min((x / rect.width) * audioDuration, audioDuration)));
+  };
+
+  const handleZoomIn = () => setWaveformZoom((prev) => Math.min(prev * 2, 8));
+  const handleZoomOut = () => setWaveformZoom((prev) => Math.max(prev / 2, 1));
+
   const filteredTracks = trackListData
     .filter((t) => t.vault === activeLibVault)
     .filter(
@@ -1289,6 +1385,8 @@ function ArchitectConsole({
                   height={108}
                   hotCues={hotCues[loadedTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
+                  zoom={waveformZoom}
+                  loopRegion={loopRegion}
                 />
               )}
             </div>
@@ -1328,7 +1426,12 @@ function ArchitectConsole({
         )}
 
         {/* Overview strip — low-res waveform */}
-        <div className="arch-waveform-overview" aria-hidden="true">
+        <div
+          className="arch-waveform-overview"
+          aria-hidden="true"
+          onClick={handleNeedleDrop}
+          style={{ cursor: loadedTrack && audioDuration ? "pointer" : "default" }}
+        >
           {(() => {
             const overviewData = loadedTrack?.waveform_data
               ? JSON.parse(loadedTrack.waveform_data).low
@@ -1369,21 +1472,27 @@ function ArchitectConsole({
         >
           <div className="arch-cue-markers">
             <span className="arch-cue-tag">CUE</span>
-            <button className="arch-deck-mini-btn" disabled>A</button>
-            <button className="arch-deck-mini-btn" disabled>B</button>
-            <button className="arch-deck-mini-btn" disabled>C</button>
-            <button className="arch-deck-mini-btn" disabled>D</button>
+            {["A","B","C","D"].map((bank) => (
+              <button
+                key={bank}
+                className={`arch-deck-mini-btn${cueBankPoints[bank] !== null ? " is-set" : ""}`}
+                disabled={!loadedTrack}
+                onClick={() => handleCueBankClick(bank)}
+                onContextMenu={(e) => { e.preventDefault(); handleCueBankClear(bank); }}
+                title={cueBankPoints[bank] !== null ? `${bank}: ${cueBankPoints[bank].toFixed(1)}s · right-click to clear` : `Set cue ${bank}`}
+              >{bank}</button>
+            ))}
           </div>
           <div className="arch-loop-region">
             <span className="arch-cue-tag">LOOP REGION</span>
-            <button className="arch-deck-mini-btn" disabled>SET START</button>
-            <button className="arch-deck-mini-btn" disabled>SET END</button>
-            <button className="arch-deck-mini-btn" disabled>CLEAR</button>
+            <button className="arch-deck-mini-btn" disabled={!loadedTrack} onClick={handleSetLoopStart}>SET START</button>
+            <button className="arch-deck-mini-btn" disabled={!loadedTrack || loopRegion.start === null} onClick={handleSetLoopEnd}>SET END</button>
+            <button className="arch-deck-mini-btn" disabled={loopRegion.start === null} onClick={handleClearLoop}>CLEAR</button>
           </div>
           <div className="arch-needle-zoom">
-            <button className="arch-deck-mini-btn" disabled>NEEDLE DROP</button>
-            <button className="arch-deck-mini-btn" disabled>ZOOM -</button>
-            <button className="arch-deck-mini-btn" disabled>ZOOM +</button>
+            <button className="arch-deck-mini-btn" disabled={!loadedTrack || !audioDuration} onClick={() => audioEngine.seek(audioDuration / 2)}>NEEDLE DROP</button>
+            <button className="arch-deck-mini-btn" disabled={waveformZoom <= 1} onClick={handleZoomOut}>ZOOM -</button>
+            <button className="arch-deck-mini-btn" disabled={waveformZoom >= 8} onClick={handleZoomIn}>ZOOM +</button>
           </div>
         </div>
       </section>
@@ -1461,12 +1570,12 @@ function ArchitectConsole({
           role="group"
           aria-label="Loop controls"
         >
-          <button className="arch-loop-btn" disabled>AUTO 8</button>
-          <button className="arch-loop-btn" disabled>½</button>
-          <button className="arch-loop-btn arch-loop-in" disabled>IN</button>
-          <button className="arch-loop-btn arch-loop-out" disabled>OUT</button>
-          <button className="arch-loop-btn" disabled>×2</button>
-          <button className="arch-loop-btn" disabled>RELOOP</button>
+          <button className="arch-loop-btn" disabled={!loadedTrack} onClick={() => handleAutoLoop(8)}>AUTO 8</button>
+          <button className="arch-loop-btn" disabled={loopRegion.start === null || loopRegion.end === null} onClick={handleLoopHalve}>½</button>
+          <button className={`arch-loop-btn arch-loop-in${loopRegion.start !== null ? " is-set" : ""}`} disabled={!loadedTrack} onClick={handleSetLoopStart}>IN</button>
+          <button className={`arch-loop-btn arch-loop-out${loopRegion.end !== null ? " is-set" : ""}`} disabled={loopRegion.start === null} onClick={handleSetLoopEnd}>OUT</button>
+          <button className="arch-loop-btn" disabled={loopRegion.start === null || loopRegion.end === null} onClick={handleLoopDouble}>×2</button>
+          <button className={`arch-loop-btn${loopRegion.start !== null && loopRegion.end !== null ? " is-set" : ""}`} disabled={loopRegion.start === null || loopRegion.end === null} onClick={handleReloop}>RELOOP</button>
         </div>
 
         <div className="arch-transport-spacer" />
