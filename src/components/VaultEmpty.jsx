@@ -18,8 +18,8 @@ function VaultEmpty({
         aria-hidden="true"
         style={{ background: chakraColor }}
       />
-      <div className="vault-empty-title">VAULT EMPTY</div>
-      <div className="vault-empty-sub">NO TRACKS HAVE BEEN LOADED</div>
+      <div className="vault-empty-title">THE ARCHIVE IS QUIET</div>
+      <div className="vault-empty-sub">NOTHING HAS BEEN COMMITTED TO THIS VAULT</div>
     </div>
   );
 }

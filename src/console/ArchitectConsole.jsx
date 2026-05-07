@@ -10,6 +10,8 @@ import {
   LOCKBOX_PREFIX,
   VAULT_DISPLAY_NAMES,
   VAULT_ACCENT_COLORS,
+  UPLOAD_WORKER_URL,
+  UPLOAD_SECRET,
 } from "../config";
 import {
   tierDefaultsForMember,
@@ -211,6 +213,10 @@ function ArchitectConsole({
   const [waveformDetail, setWaveformDetail] = useState("high");
   const [trackColorRows, setTrackColorRows] = useState(true);
   const [autoLoopDefault, setAutoLoopDefault] = useState(false);
+  const [selectedTrackIds, setSelectedTrackIds] = useState(new Set());
+  const [publishFilter, setPublishFilter] = useState("all");
+  const [editingTrackId, setEditingTrackId] = useState(null);
+  const [editingValues, setEditingValues] = useState({});
   const [rosterShowAdd, setRosterShowAdd] = useState(false);
   const [rosterName, setRosterName] = useState("");
   const [rosterPlanet, setRosterPlanet] = useState("");
@@ -734,6 +740,76 @@ function ArchitectConsole({
     loadAndPlay(track);
   };
 
+  const handleToggleTrackSelection = (e, trackId) => {
+    e.stopPropagation();
+    setSelectedTrackIds((prev) => {
+      const next = new Set(prev);
+      next.has(trackId) ? next.delete(trackId) : next.add(trackId);
+      return next;
+    });
+  };
+
+  const handlePublishSelected = async () => {
+    const ids = [...selectedTrackIds];
+    if (!ids.length) return;
+    await Promise.all(
+      ids.map((id) =>
+        fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/publish`, {
+          method: "PUT",
+          headers: { "PSC-Secret": UPLOAD_SECRET },
+        }),
+      ),
+    );
+    setTrackListData((prev) =>
+      prev.map((t) => selectedTrackIds.has(t.id) ? { ...t, is_published: 1 } : t),
+    );
+    setSelectedTrackIds(new Set());
+    announce(`${ids.length} track${ids.length > 1 ? "s" : ""} published to vault.`);
+  };
+
+  const handleRetractSelected = async () => {
+    const ids = [...selectedTrackIds];
+    if (!ids.length) return;
+    await Promise.all(
+      ids.map((id) =>
+        fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/retract`, {
+          method: "PUT",
+          headers: { "PSC-Secret": UPLOAD_SECRET },
+        }),
+      ),
+    );
+    setTrackListData((prev) =>
+      prev.map((t) => selectedTrackIds.has(t.id) ? { ...t, is_published: 0 } : t),
+    );
+    setSelectedTrackIds(new Set());
+    announce(`${ids.length} track${ids.length > 1 ? "s" : ""} retracted from vault.`);
+  };
+
+  const handleEditStart = (e, track) => {
+    e.stopPropagation();
+    setEditingTrackId(track.id);
+    setEditingValues({ title: track.title || "", artist: track.artist || "" });
+  };
+
+  const handleEditSave = async (trackId) => {
+    const vals = editingValues;
+    await fetch(`${UPLOAD_WORKER_URL}/tracks/${trackId}`, {
+      method: "PATCH",
+      headers: { "PSC-Secret": UPLOAD_SECRET, "Content-Type": "application/json" },
+      body: JSON.stringify(vals),
+    });
+    setTrackListData((prev) =>
+      prev.map((t) => t.id === trackId ? { ...t, ...vals } : t),
+    );
+    setEditingTrackId(null);
+    setEditingValues({});
+  };
+
+  const handleEditKeyDown = (e, trackId) => {
+    if (e.key === "Enter") { e.preventDefault(); handleEditSave(trackId); }
+    if (e.key === "Escape") { setEditingTrackId(null); setEditingValues({}); }
+  };
+
   const pushTrackHistory = (track) => {
     if (!historyEnabled) return;
     setTrackHistory((prev) => {
@@ -975,17 +1051,29 @@ function ArchitectConsole({
         t.title?.toLowerCase().includes(libSearch.toLowerCase()) ||
         t.artist?.toLowerCase().includes(libSearch.toLowerCase()),
     )
-    .filter((t) => !smartCrates || (Number(t.bpm) || 0) >= 120);
+    .filter((t) => !smartCrates || (Number(t.bpm) || 0) >= 120)
+    .filter((t) =>
+      publishFilter === "all" ? true :
+      publishFilter === "staged" ? !t.is_published :
+      Boolean(t.is_published),
+    );
 
   const visibleTracks = [...filteredTracks].sort((a, b) => {
     if (sortMode === "recent") {
-      return (
-        new Date(b.created_at || 0).getTime() -
-        new Date(a.created_at || 0).getTime()
-      );
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    }
+    if (sortMode === "status") {
+      return (b.is_published || 0) - (a.is_published || 0);
     }
     return (Number(b.bpm) || 0) - (Number(a.bpm) || 0);
   });
+
+  const selectionHasStaged = [...selectedTrackIds].some(
+    (id) => !trackListData.find((t) => t.id === id)?.is_published,
+  );
+  const selectionHasLive = [...selectedTrackIds].some(
+    (id) => Boolean(trackListData.find((t) => t.id === id)?.is_published),
+  );
 
   const handleExplore = () => {
     if (!activeVault) return;
@@ -1774,6 +1862,40 @@ function ArchitectConsole({
                 SORT: BPM
               </button>
               <button
+                className={`arch-browser-btn ${sortMode === "status" ? "active" : ""}`}
+                onClick={() => setSortMode("status")}
+              >
+                SORT: STATUS
+              </button>
+              <button
+                className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
+                onClick={() => setPublishFilter((p) => p === "staged" ? "all" : "staged")}
+              >
+                STAGED
+              </button>
+              <button
+                className={`arch-browser-btn ${publishFilter === "live" ? "active" : ""}`}
+                onClick={() => setPublishFilter((p) => p === "live" ? "all" : "live")}
+              >
+                LIVE
+              </button>
+              <button
+                className="arch-browser-btn arch-publish-btn"
+                onClick={handlePublishSelected}
+                disabled={!selectionHasStaged}
+                title="Publish selected tracks to listener vault"
+              >
+                PUBLISH {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
+              </button>
+              <button
+                className="arch-browser-btn arch-retract-btn"
+                onClick={handleRetractSelected}
+                disabled={!selectionHasLive}
+                title="Retract selected tracks from listener vault"
+              >
+                RETRACT {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
+              </button>
+              <button
                 className={`arch-browser-btn ${smartCrates ? "active" : ""}`}
                 onClick={() => setSmartCrates((prev) => !prev)}
               >
@@ -1824,6 +1946,7 @@ function ArchitectConsole({
           {/* Track list — phosphor scan animation (Animation 1) */}
           <div className="arch-track-list" role="table" aria-label="Track list">
             <div className="arch-track-list-head" role="row">
+              <span role="columnheader" className="arch-track-col-check" aria-label="Select" />
               <span role="columnheader">TITLE</span>
               <span role="columnheader">ARTIST</span>
               <span role="columnheader">BPM</span>
@@ -1831,7 +1954,7 @@ function ArchitectConsole({
               <span role="columnheader">LENGTH</span>
               <span role="columnheader">ADDED</span>
               <span role="columnheader">PLAYS</span>
-              <span role="columnheader">STATE</span>
+              <span role="columnheader">STATUS</span>
               <span role="columnheader">PREVIEW</span>
               <span role="columnheader">ACTIONS</span>
             </div>
@@ -1876,20 +1999,48 @@ function ArchitectConsole({
                       (h) => ({ peak: h / 100, freq: "#666666" }),
                     );
 
+                  const isLive = Boolean(t.is_published);
+                  const isEditing = editingTrackId === t.id;
                   return (
                     <div
                       key={t.id}
-                      className={`arch-track-row arch-track-row-${trackColorRows ? t.vault || "generic" : "generic"} ${selectedTrackId === t.id ? "selected" : ""} ${loadedDeckId === t.id ? "loaded" : ""}`}
+                      className={`arch-track-row arch-track-row-${trackColorRows ? t.vault || "generic" : "generic"} ${selectedTrackId === t.id ? "selected" : ""} ${loadedDeckId === t.id ? "loaded" : ""} ${selectedTrackIds.has(t.id) ? "checked" : ""} ${isLive ? "arch-track-live" : "arch-track-staged"}`}
                       role="row"
                       style={{ "--row-i": i }}
                       onClick={() => handleTrackSelect(t)}
                       onDoubleClick={() => handleTrackDoubleClick(t)}
                     >
+                      <span className="arch-track-col-check" role="cell" onClick={(e) => handleToggleTrackSelection(e, t.id)}>
+                        <span className={`arch-track-checkbox ${selectedTrackIds.has(t.id) ? "is-checked" : ""}`} aria-label={selectedTrackIds.has(t.id) ? "Deselect" : "Select"} />
+                      </span>
                       <span className="arch-track-title" role="cell">
-                        {t.title || "—"}
+                        {isEditing ? (
+                          <input
+                            className="arch-track-edit-input"
+                            value={editingValues.title ?? ""}
+                            onChange={(e) => setEditingValues((v) => ({ ...v, title: e.target.value }))}
+                            onKeyDown={(e) => handleEditKeyDown(e, t.id)}
+                            onBlur={() => handleEditSave(t.id)}
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : (
+                          <span onDoubleClick={(e) => handleEditStart(e, t)} title="Double-click to rename">{t.title || "—"}</span>
+                        )}
                       </span>
                       <span className="arch-track-artist" role="cell">
-                        {t.artist || "—"}
+                        {isEditing ? (
+                          <input
+                            className="arch-track-edit-input"
+                            value={editingValues.artist ?? ""}
+                            onChange={(e) => setEditingValues((v) => ({ ...v, artist: e.target.value }))}
+                            onKeyDown={(e) => handleEditKeyDown(e, t.id)}
+                            onBlur={() => handleEditSave(t.id)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : (
+                          <span onDoubleClick={(e) => handleEditStart(e, t)}>{t.artist || "—"}</span>
+                        )}
                       </span>
                       <span className="arch-track-bpm" role="cell">
                         {t.bpm_display || (t.bpm ? Math.round(Number(t.bpm)) : "—")}
@@ -1913,10 +2064,8 @@ function ArchitectConsole({
                         {trackPlayCounts[t.id] || 0}
                       </span>
                       <span className="arch-track-state" role="cell">
-                        <i className="arch-state-dot" />
-                        {(trackPlayCounts[t.id] || 0) > 0
-                          ? "PLAYED"
-                          : "UNPLAYED"}
+                        <i className={`arch-state-dot arch-pub-dot ${isLive ? "is-live" : "is-staged"}`} />
+                        {isLive ? "LIVE" : "STAGED"}
                       </span>
                       <span className="arch-track-preview" role="cell">
                         <span

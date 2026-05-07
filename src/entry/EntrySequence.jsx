@@ -176,7 +176,7 @@ function EntrySequence({ onIgnite }) {
           spellCheck="false"
         />
         <button type="button" className="entry-request-btn">
-          Request Access
+          REQUEST ACCESS
         </button>
       </div>
 

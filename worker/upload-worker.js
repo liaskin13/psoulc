@@ -48,8 +48,10 @@ export default {
       // GET /tracks/:vault
       if (request.method === "GET" && url.pathname.startsWith("/tracks/")) {
         const vault = url.pathname.split("/")[2];
+        // Authenticated (console) gets all tracks; unauthenticated (listener) gets published only
+        const publishClause = isAuthenticated ? "" : " AND is_published = 1";
         const { results } = await env.PSC_DB.prepare(
-          "SELECT id, vault, title, artist, bpm, bpm_display, musical_key, duration, audio_path, waveform_data, created_at FROM tracks WHERE vault = ? AND is_voided = 0 ORDER BY created_at DESC",
+          `SELECT id, vault, title, artist, bpm, bpm_display, musical_key, duration, audio_path, waveform_data, created_at, is_published FROM tracks WHERE vault = ? AND is_voided = 0${publishClause} ORDER BY created_at DESC`,
         )
           .bind(vault)
           .all();
@@ -62,12 +64,50 @@ export default {
       // GET /tracks
       if (request.method === "GET" && url.pathname === "/tracks") {
         const { results } = await env.PSC_DB.prepare(
-          "SELECT id, vault, title, artist, bpm, bpm_display, musical_key, duration, audio_path, created_at FROM tracks WHERE is_voided = 0 ORDER BY created_at DESC",
+          "SELECT id, vault, title, artist, bpm, bpm_display, musical_key, duration, audio_path, created_at, is_published FROM tracks WHERE is_voided = 0 ORDER BY created_at DESC",
         ).all();
 
         return new Response(JSON.stringify(results), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      // PUT /tracks/:id/publish
+      if (request.method === "PUT" && url.pathname.match(/^\/tracks\/[^/]+\/publish$/)) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const id = url.pathname.split("/")[2];
+        const { success } = await env.PSC_DB.prepare("UPDATE tracks SET is_published = 1 WHERE id = ?").bind(id).run();
+        return new Response(JSON.stringify({ success }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // PUT /tracks/:id/retract
+      if (request.method === "PUT" && url.pathname.match(/^\/tracks\/[^/]+\/retract$/)) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const id = url.pathname.split("/")[2];
+        const { success } = await env.PSC_DB.prepare("UPDATE tracks SET is_published = 0 WHERE id = ?").bind(id).run();
+        return new Response(JSON.stringify({ success }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // PATCH /tracks/:id — update metadata (title, artist, bpm, bpm_display, musical_key)
+      if (request.method === "PATCH" && url.pathname.match(/^\/tracks\/[^/]+$/) && !url.pathname.includes("/publish") && !url.pathname.includes("/retract")) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const id = url.pathname.split("/")[2];
+        const body = await request.json();
+        const allowed = ["title", "artist", "bpm", "bpm_display", "musical_key"];
+        const fields = Object.keys(body).filter(k => allowed.includes(k));
+        if (fields.length === 0) {
+          return new Response(JSON.stringify({ error: "No valid fields" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const setClauses = fields.map(f => `${f} = ?`).join(", ");
+        const values = fields.map(f => body[f]);
+        const { success } = await env.PSC_DB.prepare(`UPDATE tracks SET ${setClauses} WHERE id = ?`).bind(...values, id).run();
+        return new Response(JSON.stringify({ success }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       // POST /upload-init  — start a multipart upload, return uploadId + key

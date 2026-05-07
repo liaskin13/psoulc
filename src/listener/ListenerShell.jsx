@@ -98,8 +98,18 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
           transition={{ duration: 0.18 }}
           aria-hidden="true"
         >
-          <span className="listener-handoff-kicker">OPENING</span>
-          <span className="listener-handoff-label">{handoffLabel}</span>
+          <motion.span
+            className="listener-handoff-kicker"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            transition={{ duration: 0.15, delay: 0.04 }}
+          >OPENING</motion.span>
+          <motion.span
+            className="listener-handoff-label"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.1, ease: [0.25, 1, 0.5, 1] }}
+          >{handoffLabel}</motion.span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -174,10 +184,10 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
           <motion.div
             key={selectedVault.id}
             className="listener-stage-content"
-            initial={prefersReduced ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16 }}
+            initial={prefersReduced ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
           >
             <span className="listener-stage-kicker">VAULT</span>
             <h1 className="listener-stage-title">{selectedVault.label}</h1>

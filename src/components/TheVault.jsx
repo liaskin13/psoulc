@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import RecordShelf from './RecordShelf';
 import StuderTransportBar from './StuderTransportBar';
 import TuneModal from './TuneModal';
@@ -330,8 +330,16 @@ function TheVault({ vault, onBack, onExitSystem, onVoid, readOnly = false }) {
       <div className="vault-main-grid">
 
         {/* Deck waveform — full width, shown when a track is active */}
+        <AnimatePresence>
         {activeId && (
-          <div className="vault-deck-waveform">
+          <motion.div
+            className="vault-deck-waveform"
+            key="waveform-strip"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.38, ease: [0.25, 1, 0.5, 1] }}
+          >
             <div className="vault-deck-waveform-meta">
               <span className="vault-deck-time">{formatTime(currentTime)}</span>
               <span className="vault-deck-title">
@@ -374,8 +382,9 @@ function TheVault({ vault, onBack, onExitSystem, onVoid, readOnly = false }) {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
 
         <div className="vault-library-band">
           <div className="shelf-section">

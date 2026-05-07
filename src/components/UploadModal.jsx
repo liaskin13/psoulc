@@ -322,7 +322,7 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
     setFile(null);
     setTitle("");
     setArtist("");
-    setBpm("120.00");
+    setBpm("120");
     setError(null);
     setSuccess(null);
     setMetadataStatus("idle");

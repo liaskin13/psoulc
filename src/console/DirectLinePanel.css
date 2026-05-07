@@ -24,7 +24,7 @@
 .direct-line-badge {
   background: rgba(0, 229, 255, 0.15);
   color: #00e5ff;
-  border-radius: 10px;
+  border-radius: 9999px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.58rem;
   padding: 1px 5px;

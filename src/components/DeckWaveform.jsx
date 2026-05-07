@@ -78,9 +78,10 @@ export default function DeckWaveform({
           ? ((loopRegion.end / duration) * barCount - startBar) / (endBar - startBar) * width
           : playheadX;
         if (loopEndX > loopStartX) {
-          ctx.fillStyle = "rgba(255, 191, 0, 0.12)";
+          const LOOP_AMBER = "255, 191, 0";
+          ctx.fillStyle = `rgba(${LOOP_AMBER}, 0.12)`;
           ctx.fillRect(Math.max(0, loopStartX), 0, Math.min(loopEndX - loopStartX, width), height);
-          ctx.strokeStyle = "rgba(255, 191, 0, 0.5)";
+          ctx.strokeStyle = `rgba(${LOOP_AMBER}, 0.5)`;
           ctx.lineWidth = 1.5;
           ctx.beginPath(); ctx.moveTo(Math.max(0, loopStartX), 0); ctx.lineTo(Math.max(0, loopStartX), height); ctx.stroke();
           if (loopRegion.end !== null) {

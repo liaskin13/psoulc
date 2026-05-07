@@ -1742,6 +1742,18 @@ h3,
 .listener-dock-active .listener-dock-pip {
   background: var(--vault-color, rgba(240, 237, 232, 0.5));
   box-shadow: 0 0 7px var(--vault-color, rgba(240, 237, 232, 0.3));
+  animation: pip-breathe 3s ease-in-out infinite;
+}
+
+@keyframes pip-breathe {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listener-dock-active .listener-dock-pip {
+    animation: none;
+  }
 }
 
 .listener-dock-label {

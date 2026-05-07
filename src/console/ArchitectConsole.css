@@ -1519,7 +1519,7 @@
 
 .arch-track-list-head {
   display: grid;
-  grid-template-columns: 2fr 1.3fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.8fr 0.7fr;
+  grid-template-columns: 24px 2fr 1.3fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.8fr 0.7fr;
   padding: 4px 16px;
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
   align-items: center;
@@ -1566,7 +1566,7 @@
 
 .arch-track-row {
   display: grid;
-  grid-template-columns: 2fr 1.3fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.8fr 0.7fr;
+  grid-template-columns: 24px 2fr 1.3fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.8fr 0.7fr;
   padding: 5px 16px;
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.035);
   cursor: pointer;
@@ -1652,6 +1652,88 @@
   display: flex;
   justify-content: flex-end;
   gap: 6px;
+}
+
+/* ── Publish state — row backgrounds ──────────────────────────────────────── */
+.arch-track-staged {
+  background: var(--section-unreleased);
+}
+.arch-track-staged .arch-track-title span,
+.arch-track-staged .arch-track-artist span {
+  opacity: 0.55;
+}
+.arch-track-live {
+  background: var(--section-released);
+}
+
+/* ── Checkbox column ──────────────────────────────────────────────────────── */
+.arch-track-col-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.arch-track-checkbox {
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
+  background: transparent;
+  display: block;
+  transition: border-color 0.1s, background 0.1s;
+}
+.arch-track-checkbox.is-checked {
+  border-color: rgba(var(--arch-accent-rgb), 0.7);
+  background: rgba(var(--arch-accent-rgb), 0.18);
+}
+.arch-track-row.checked {
+  outline: 1px solid rgba(var(--arch-accent-rgb), 0.18);
+  outline-offset: -1px;
+}
+
+/* ── Publish status dot ───────────────────────────────────────────────────── */
+.arch-pub-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.arch-pub-dot.is-staged {
+  background: rgba(160, 160, 160, 0.3);
+  border: 1px solid rgba(160, 160, 160, 0.4);
+}
+.arch-pub-dot.is-live {
+  background: rgba(var(--arch-accent-rgb), 0.7);
+  box-shadow: 0 0 5px rgba(var(--arch-accent-rgb), 0.35);
+}
+.arch-track-staged .arch-track-state {
+  color: rgba(140, 140, 140, 0.5);
+}
+.arch-track-live .arch-track-state {
+  color: rgba(var(--arch-accent-rgb), 0.75);
+}
+
+/* ── Inline edit input ────────────────────────────────────────────────────── */
+.arch-track-edit-input {
+  background: rgba(var(--arch-accent-rgb), 0.06);
+  border: none;
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.4);
+  color: rgba(220, 230, 240, 0.9);
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  padding: 1px 4px;
+  width: 100%;
+  outline: none;
+}
+
+/* ── Publish / Retract button variants ───────────────────────────────────── */
+.arch-publish-btn:not(:disabled) {
+  color: rgba(var(--arch-accent-rgb), 0.9);
+  border-color: rgba(var(--arch-accent-rgb), 0.3);
+}
+.arch-retract-btn:not(:disabled) {
+  color: rgba(160, 160, 160, 0.75);
+  border-color: rgba(160, 160, 160, 0.25);
 }
 
 .arch-track-wave-mini {
@@ -1978,8 +2060,8 @@
 }
 
 .arch-cell-pending {
-  border-color: rgba(200, 200, 60, 0.45) !important;
-  color: rgba(220, 220, 60, 0.75) !important;
+  border-color: rgba(var(--arch-muted-rgb), 0.35) !important;
+  color: rgba(var(--arch-muted-rgb), 0.55) !important;
 }
 
 .arch-cell-locked {

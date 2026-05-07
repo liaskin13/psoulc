@@ -61,7 +61,7 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComm
 
   return (
     <div className="record-shelf" role="list" aria-label="Track archive">
-      {items.map(item => (
+      {items.map((item, index) => (
         <motion.div
           key={item.id}
           role="listitem"
@@ -75,9 +75,14 @@ function RecordShelf({ items, activeId, onSelect, onVoid, onComment, onVoiceComm
           tabIndex={0}
           aria-label={`${item.label}${item.sublabel ? ` — ${item.sublabel}` : ''}`}
           aria-pressed={activeId === item.id}
-          animate={activeId === item.id ? { y: -4 } : { y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, y: activeId === item.id ? -4 : 0 }}
           whileHover={hasHover ? { y: -3, filter: 'brightness(1.15)' } : undefined}
-          transition={{ duration: 0.16, ease: [0.2, 0, 0.3, 1] }}
+          transition={{
+            opacity: { duration: 0.3, delay: index * 0.025 },
+            y: { duration: 0.16, ease: [0.2, 0, 0.3, 1] },
+            filter: { duration: 0.12 },
+          }}
           onClick={() => onSelect(item)}
           onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') {
