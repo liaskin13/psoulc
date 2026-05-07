@@ -36,6 +36,7 @@
 }
 
 @media (pointer: coarse) {
+
   .architect-console,
   .architect-console * {
     cursor: auto !important;
@@ -364,8 +365,15 @@
 }
 
 @keyframes signal-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -444,8 +452,8 @@
 .arch-deck-tools {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 5px;
+  margin-bottom: 8px;
   flex-wrap: wrap;
 }
 
@@ -455,10 +463,11 @@
   border-bottom-color: #060606;
   box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.03);
   color: rgba(var(--arch-muted-rgb), 0.5);
-  padding: 4px 9px;
+  min-height: 26px;
+  padding: 0 10px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.56rem;
-  letter-spacing: 0.08em;
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
   border-radius: 0;
   cursor: pointer;
   transition: box-shadow 60ms ease, transform 60ms ease, color 0.1s;
@@ -768,7 +777,8 @@
   border-bottom-color: #050505;
   box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.025);
   color: rgba(var(--arch-muted-rgb), 0.4);
-  padding: 3px 6px;
+  min-height: 22px;
+  padding: 0 7px;
   font-size: 0.52rem;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.06em;
@@ -832,7 +842,8 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
     inset 0 -1px 0 rgba(0, 0, 0, 0.5);
   color: rgba(var(--arch-accent-rgb), 0.65);
-  padding: 8px 18px;
+  min-height: 34px;
+  padding: 0 18px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.68rem;
   letter-spacing: 0.14em;
