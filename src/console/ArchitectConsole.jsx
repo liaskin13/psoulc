@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSystem } from "../state/SystemContext";
 import "./ArchitectConsole.css";
@@ -252,7 +252,17 @@ function ArchitectConsole({
   const waveformBars = getWaveformBars("l-console-ambient", 80);
   const cursorRef = useRef(null);
   const cursorPos = useRef({ x: -200, y: -200 });
-  const { vuRef, specRef } = useAudioAnalyzer(isPlaying);
+  const waveformHighData = useMemo(() => {
+    if (!loadedTrack?.waveform_data) return null;
+    try { return JSON.parse(loadedTrack.waveform_data).high; } catch { return null; }
+  }, [loadedTrack?.waveform_data]);
+
+  const { vuRef, specRef } = useAudioAnalyzer({
+    isPlaying,
+    waveformData: waveformHighData,
+    currentTime,
+    duration: audioDuration,
+  });
 
   // Auto-load tracks on mount + listen for upload events
   useEffect(() => {
@@ -499,6 +509,16 @@ function ArchitectConsole({
       }));
       audioEngine.play();
       announce(`Playing ${track.title || "track"}.`);
+      if (!track.waveform_data) {
+        generateAndSaveWaveform(track.id, url)
+          .then(async () => {
+            const refreshed = await fetchAllTracks();
+            setTrackListData(refreshed);
+            const updated = refreshed.find((t) => t.id === track.id);
+            if (updated) setLoadedTrack(updated);
+          })
+          .catch(() => {});
+      }
     } catch (err) {
       console.error("[PSC] Audio load error:", err);
       setAudioError(err.message);
@@ -1260,7 +1280,7 @@ function ArchitectConsole({
                 <div className="arch-deck-empty-state">NO WAVEFORM · HIT WVF TO GENERATE</div>
               ) : (
                 <DeckWaveform
-                  waveformData={JSON.parse(loadedTrack.waveform_data).high}
+                  waveformData={waveformHighData}
                   currentTime={currentTime}
                   duration={audioDuration}
                   onSeek={handleSeek}

@@ -1,64 +1,14 @@
-// Streaming audio engine using HTMLAudioElement
-// Web Audio is a visual tap only — never blocks a.play()
+// Streaming audio engine using HTMLAudioElement — native playback only.
+// Web Audio API is NOT used for playback. No createMediaElementSource().
+// VU/spectrum meters are waveform-data-driven (see useAudioAnalyzer.js).
 
 let audio = null;
 let _volume = 0.85;
 let stateListeners = [];
 
-// Web Audio graph — created in gesture context, connected lazily after play
+// Kept for Safari compat — creates AudioContext in gesture scope but never
+// connects it to the audio element.
 let _audioCtx = null;
-let _analyser = null;
-let _sourceConnected = false;
-
-// Creates AudioContext + AnalyserNode only. No MediaElementSource yet.
-// Must be called inside a user-gesture handler (click/touch) for Safari compat.
-function ensureAudioContext() {
-  if (_audioCtx) return;
-  try {
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    _analyser = _audioCtx.createAnalyser();
-    _analyser.fftSize = 512;
-    _analyser.smoothingTimeConstant = 0.8;
-    _analyser.connect(_audioCtx.destination);
-  } catch (err) {
-    console.warn("[audioEngine] AudioContext unavailable:", err.message);
-  }
-}
-
-// Connects the audio element to the analyser graph.
-// Safe to call after audio is already playing (Chrome sticky-activation).
-// On Safari: AudioContext must already exist from prewarm().
-function ensureAudioGraph() {
-  if (_sourceConnected) return;
-  _sourceConnected = true; // prevent retry loops
-  if (!_audioCtx) ensureAudioContext();
-  if (!_audioCtx || !_analyser) { _analyser = null; return; }
-  const a = getAudio();
-  try {
-    const source = _audioCtx.createMediaElementSource(a);
-    source.connect(_analyser);
-  } catch (err) {
-    // CORS / SecurityError — audio still plays, meters unavailable
-    console.warn("[audioEngine] MediaElementSource failed:", err.message);
-    _analyser = null;
-  }
-}
-
-export function getAnalyser() {
-  ensureAudioGraph();
-  return _analyser;
-}
-
-export function resumeAudioContext() {
-  if (_audioCtx?.state === 'suspended') _audioCtx.resume();
-}
-
-// Call synchronously in any user-gesture handler before await.
-// Pre-creates AudioContext so Safari allows it; Chrome handles it lazily anyway.
-export function prewarm() {
-  ensureAudioContext();
-  resumeAudioContext();
-}
 
 function getAudio() {
   if (!audio) {
@@ -125,9 +75,7 @@ export async function load(url) {
 export function play() {
   const a = getAudio();
   if (!a.src) return;
-  // Web Audio graph is NOT touched here — getAnalyser() handles it lazily
-  // after isPlaying=true. This ensures a.play() is never blocked by AudioContext state.
-  resumeAudioContext();
+  if (_audioCtx?.state === 'suspended') _audioCtx.resume();
   a.play().catch((e) => console.warn("[audioEngine] play blocked:", e.message));
 }
 
@@ -160,4 +108,19 @@ export function getVolume() {
 
 export function isLoaded() {
   return !!(audio && audio.src && audio.readyState >= 1);
+}
+
+// No-op — kept so call sites in ArchitectConsole don't need updating.
+// AudioContext is created here for Safari autoplay compatibility only.
+export function prewarm() {
+  if (!_audioCtx) {
+    try {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (_) {}
+  }
+}
+
+// Not used — waveform-driven meters in useAudioAnalyzer.js don't need this.
+export function getAnalyser() {
+  return null;
 }

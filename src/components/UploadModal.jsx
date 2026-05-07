@@ -313,7 +313,7 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
       setBpm("");
       return;
     }
-    if (!/^\d+(\.\d{0,2})?$/.test(value)) return;
+    if (!/^(\d+(\.\d{0,2})?)(-\d*(\.\d{0,2})?)?$/.test(value)) return;
     const numeric = Number.parseFloat(value);
     if (!Number.isFinite(numeric)) return;
     if (numeric < 1 || numeric > 400) return;
