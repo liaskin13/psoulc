@@ -486,6 +486,35 @@
   box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.8), 0 0 6px rgba(var(--arch-accent-rgb), 0.2);
 }
 
+@keyframes arch-active-sheen {
+  0% {
+    transform: translateX(-140%);
+  }
+
+  100% {
+    transform: translateX(180%);
+  }
+}
+
+.arch-deck-tool-btn.active,
+.arch-transport-btn.active {
+  overflow: hidden;
+}
+
+.arch-deck-tool-btn.active::after,
+.arch-transport-btn.active::after {
+  content: '';
+  position: absolute;
+  top: -45%;
+  bottom: -45%;
+  width: 36%;
+  background: linear-gradient(90deg, transparent 0%, rgba(var(--arch-accent-rgb), 0.34) 50%, transparent 100%);
+  transform: translateX(-140%);
+  animation: arch-active-sheen 3.2s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
 .arch-stat {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
@@ -2564,6 +2593,12 @@
 @media (prefers-reduced-motion: reduce) {
   .arch-wave-bar {
     animation: none !important;
+  }
+
+  .arch-deck-tool-btn.active::after,
+  .arch-transport-btn.active::after {
+    animation: none !important;
+    opacity: 0.14;
   }
 
   .arch-track-list-body::before {

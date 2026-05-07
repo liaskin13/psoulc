@@ -1921,6 +1921,44 @@ h3,
   justify-content: center;
 }
 
+@keyframes cmd-active-sheen {
+  0% {
+    transform: translateX(-130%);
+  }
+
+  100% {
+    transform: translateX(180%);
+  }
+}
+
+.vault-sort-pill.is-active,
+.listener-dock-active {
+  position: relative;
+  overflow: hidden;
+}
+
+.vault-sort-pill.is-active::after,
+.listener-dock-active::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  width: 42%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.24) 50%, transparent 100%);
+  transform: translateX(-130%);
+  animation: cmd-active-sheen 2.8s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-sort-pill.is-active::after,
+  .listener-dock-active::after {
+    animation: none;
+    opacity: 0.12;
+  }
+}
+
 .vault-commands .god-btn:hover,
 .listener-stage-cta:hover,
 .vault-sort-pill:hover,
