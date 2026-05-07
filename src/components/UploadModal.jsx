@@ -107,6 +107,29 @@ async function readId3Tags(file) {
   return result;
 }
 
+function xhrUpload(url, formData, secret, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.setRequestHeader("PSC-Secret", secret);
+    xhr.timeout = 0; // no timeout — large files take as long as they take
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 95));
+    };
+    xhr.onload = () => {
+      try {
+        const res = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) resolve(res);
+        else reject(new Error(res.error || `HTTP ${xhr.status}`));
+      } catch {
+        reject(new Error(`HTTP ${xhr.status}`));
+      }
+    };
+    xhr.onerror = () => reject(new Error("UPLOAD FAILED — CHECK NETWORK"));
+    xhr.send(formData);
+  });
+}
+
 function withTimeout(promise, ms, label) {
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(() => {
@@ -165,31 +188,14 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
   const [success, setSuccess] = useState(null);
   const [metadataStatus, setMetadataStatus] = useState("idle");
   const fileRef = useRef(null);
-  const parsedBpm = Number.parseFloat(String(bpm));
-  const bpmNumeric =
-    Number.isFinite(parsedBpm) && parsedBpm > 0 ? parsedBpm : 120;
+  const bpmNumeric = parseFloat(String(bpm).split("-")[0]) || 120;
 
   useEffect(() => {
     if (!uploading) {
       setUploadProgress(0);
       setUploadPhase("idle");
-      return;
     }
-    setUploadProgress(10);
-    const timer = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (uploadPhase === "finalizing") {
-          if (prev >= 99) return 99;
-          return Math.min(99, prev + 1);
-        }
-        if (prev >= 95) return 95;
-        const next = prev + Math.max(1, (95 - prev) * 0.08);
-        return Math.min(95, next);
-      });
-    }, 180);
-
-    return () => clearInterval(timer);
-  }, [uploading, uploadPhase]);
+  }, [uploading]);
 
   const applyFile = async (f) => {
     if (!f) return;
@@ -272,20 +278,12 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
         formData.append("bpm", String(Math.round(bpmNumeric * 100) / 100));
         formData.append("uploaded_by", consoleOwner);
 
-        await withTimeout(
-          fetch(`${UPLOAD_WORKER_URL}/upload`, {
-            method: "POST",
-            headers: { "PSC-Secret": UPLOAD_SECRET },
-            body: formData,
-          }).then(async (res) => {
-            if (!res.ok) {
-              const body = await res.json().catch(() => ({}));
-              throw new Error(body.error || `HTTP ${res.status}`);
-            }
-            return res.json();
-          }),
-          300000,
-          "UPLOAD",
+        setUploadProgress(2);
+        await xhrUpload(
+          `${UPLOAD_WORKER_URL}/upload`,
+          formData,
+          UPLOAD_SECRET,
+          (pct) => setUploadProgress(pct),
         );
         setUploadPhase("finalizing");
         setUploadProgress(97);
@@ -456,12 +454,12 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
               <NixieDigits value={bpmNumeric} />
               <input
                 type="text"
-                inputMode="decimal"
+                inputMode="text"
                 className="tune-label-input tune-bpm-number"
                 value={bpm}
                 onChange={(e) => handleBpmChange(e.target.value)}
-                placeholder="ANY BPM (e.g. 127.43)"
-                maxLength={7}
+                placeholder="e.g. 73-119"
+                maxLength={14}
               />
             </div>
           </div>
