@@ -22,7 +22,7 @@
   - ✅ All existing command paths functional
   
   **⚠️ ACCESSIBILITY BASELINE (DEFERRED TO NEXT):**
-  - [ ] D-view console path: keyboard nav + focus + contrast audit
+  - [ ] AnalogConsole: keyboard nav + focus + contrast audit
   - [ ] ArchitectConsole: keyboard nav + focus + contrast audit
   - [ ] Entry sequence: keyboard input + focus verification
   
@@ -70,29 +70,10 @@
 - [ ] Additional backlog items that depend on unresolved command contract details.
 
 ### Release Gate (Before Marking Phase 9 Done)
-- [x] Run devex review only after NOW+NEXT tasks are complete, with pass criteria:
-  - [x] zero critical onboarding/runtime blockers
-  - [x] all high-severity findings either fixed or explicitly deferred with owner + reason
-  - [x] [tasks/plan.active.md](tasks/plan.active.md) updated with shipped delta and remaining risk
-
-## Phase 10 Planning Queue (Draft, 2026-04-26)
-
-### NOW (Kickoff)
-- [x] PR hygiene cleanup: remove generated artifacts from tracked diff (`.venv`, `dist`, `node_modules`) and tighten ignore policy.
-- [x] Re-cut a review-safe PR with product-intent files only.
-- [x] Lock merge checklist for phase-10 branch hygiene.
-
-### NEXT (Hardening)
-- [ ] Accessibility baseline: keyboard flow + focus-visible + contrast for entry and unified console paths (D/L viewer modes).
-  - ✅ Entry: keyboard focus semantics + lockout live-region messaging
-  - ✅ Console controls: stronger focus-visible treatment + ARIA state wiring
-  - [ ] Final contrast verification pass (D amber and L cyan themes)
-- [ ] Command matrix persistence and rollback-safe permission transitions.
-- [ ] Add local/CI design-law guardrail checks (Comfortaa whitelist + token policy).
-
-### LATER (Post-Hardening)
-- [ ] Performance tuning by route (entry, consoles, vault views).
-- [ ] Collaborator workflow expansion after permission model hardening is complete.
+- [ ] Run devex review only after NOW+NEXT tasks are complete, with pass criteria:
+  - [ ] zero critical onboarding/runtime blockers
+  - [ ] all high-severity findings either fixed or explicitly deferred with owner + reason
+  - [ ] [tasks/plan.active.md](tasks/plan.active.md) updated with shipped delta and remaining risk
 
 ---
 
@@ -608,42 +589,36 @@ No code until design exists. Goes to `/design-consultation` → `/design-shotgun
 ### Build Order
 
 ```
-P10-A (contrast audit)
-  → P10-B (matrix persistence)
-  → P10-C (design law CI)
-  → P10-2 (D7 collaborator wiring)
+P10-2 (D7 collaborator wiring)
   → P10-6 (moon vault access layer, depends on D7)
+  → P10-8 (pull cord surgery)
+  → P10-3 (Amethyst parity)
   → P10-5 (voice comments)
   → P10-4 (ID3 auto-read)
   → P10-1 (QA)
+  → P10-7 (design session)
 ```
 
 ---
 
 ### Tasks
 
-#### Hardening (complete Phase 10 exit criteria)
+- [ ] **P10-2** — D7 Collaborator object system: `src/data/collaborators.js` schema (`name, planet, tier, grantedVaults[], moonGrants: { moonId, grantedBy, grantedAt }[], activeSince`). Wire into SystemContext: `collaborators` state, `addCollaborator`, `canCollaboratorAccess`. Data layer only — no UI yet.
 
-- [x] **P10-A** — Contrast/focus baseline completed for active console paths and entry. Final visual QA can be run as a release check.
+- [ ] **P10-6** — Moon vault access layer (data only): double-key check in `canEnterVault` — moon vault requires `owner === 'D'` OR session matches the Muse OR explicit `moonGrants` entry. Locked-door placeholder render for denied access (no interior revealed). Depends on P10-2.
 
-- [x] **P10-B** — Matrix permission persistence complete: committed/history state persists and rollback restores previous snapshot.
+- [ ] **P10-8** — Pull cord surgery: strip `isProtected` from SystemContext, remove grayscale CSS from all surfaces, remove pull cord from ArchitectConsole (L). Move pull cord to D-only. Verify spaghettification still fires in MasterReel / AnalogConsole.
 
-- [x] **P10-C** — Design law check implemented (`scripts/check-design-law.sh`) and wired into preflight.
+- [ ] **P10-3** — Amethyst vault interior: replace bowl rings + session rows with file-cell cubby wall. Same dark recess interior, amber radial lighting, wood lattice dividers. Parity with Saturn / Venus / Earth — no design decisions.
 
-#### Feature depth
-
-- [x] **P10-2** — Collaborator object system and access helpers implemented in data/context layers.
-
-- [x] **P10-6** — Lockbox double-key access layer implemented in runtime authorization logic.
-
-- [x] **P10-8** — Deleted per directive. Pull-cord artifacts removed with old Analog surface cleanup.
-
-- [x] **P10-5** — MediaRecorder voice capture path implemented for comment flow; playback polish can be handled as follow-up.
+- [ ] **P10-5** — REC voice comments: MediaRecorder → audio blob per selected cell, stored in comment thread (`audioData` field already stubbed). Wire record/playback UI. Timed timestamp pins on track progress bar (Soundcloud-style).
   - *⚠ Open: access scope = full M³ (Masters + Members + Muses) or Masters + Members only?*
 
-- [x] **P10-4** — ID3 auto-read and metadata autofill implemented in upload flow.
+- [ ] **P10-4** — ID3 auto-read on upload: on audio file select in UploadModal, read ID3 metadata (`jsmediatags` or File API) and pre-fill title / artist / BPM. Add TAGS field (comma-delimited). Write access: Masters only.
 
-- [x] **P10-1** — QA sweep baseline complete; run final visual pass before next release tag.
+- [ ] **P10-1** — QA sweep: load dev server, confirm cubby wall renders correctly in Saturn / Venus / Earth vaults. Visual browser pass — do last before calling phase complete.
+
+- [ ] **P10-7** — D console design: run `/design-consultation` then `/design-shotgun`. No code written until design is locked. Inputs: UBC music production degree, 70s soul vibe, sovereign sanctum frame above.
 
 ---
 

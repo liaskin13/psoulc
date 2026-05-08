@@ -1,120 +1,3 @@
-## Unresolved Design Decisions (Phase 10)
-
-## Locked Decisions (2026-05-01 Recovery)
-
-- Locked entry is immutable. Do not edit `src/entry/EntrySequence.jsx`, `src/entry/DPWallpaper.jsx`, or `public/psc-entry-v2.html` unless Lisa explicitly asks.
-- Canonical source recovered from checkpoint: `/home/codespace/.gstack/projects/liaskin13-psoulc/checkpoints/20260501-111518-d-console-feature-audit-complete.md`.
-
-### D Console Approved Feature Contract
-
-Serato-derived keeps/modifications (single-deck adapted):
-- Top rail: mode, VU/master meters, record/broadcast controls, status, setup.
-- Deck core: title, artist, BPM, key, elapsed/remaining time, main frequency waveform, overview strip, playhead, cue markers, loop region, needle drop, zoom.
-- Transport core: play/pause, cue.
-- Performance modes retained: Hot Cue and Loop only.
-- Monitoring retained: VU, EQ Hi/Mid/Low, filter, gain, master gain, headphone gain.
-- Library model retained with PSC mapping: vaults replace crates, search, sort, smart crates, history, prepare queue.
-- Track list retained: title/artist/BPM/key/length/added/plays, played indicator, color rows, waveform preview, context actions.
-- Settings retained with PSC scope: display prefs, playback prefs, vault management.
-
-Serato sections dropped for D scope:
-- Pitch range/tempo slider/key lock/sync.
-- Crossfader and two-deck mix split behaviors.
-- FX rack/effect send stack.
-- SP-6 sampler.
-- iTunes integration, raw files browser, BPM tap.
-- DVS/timecode stack.
-- Hardware/MIDI/expansion-pack setup tabs.
-
-Video is kept for THE SIGNAL mode:
-- Video preview.
-- Source selection.
-- Text overlays.
-- Transitions.
-
-### PSC-Specific Features (34 Approved)
-
-Vault system (7):
-- Vaults replace crates with named content domains.
-- Add/remove/rename vaults.
-- Per-vault identity color dot.
-- Track count per vault.
-- Non-destructive void track.
-- Upload from console.
-- Reorder tracks in vault.
-
-Access control (3):
-- Per-track access tier assignment.
-- Upload does not auto-share.
-- Lockbox invitation status visibility.
-
-THE SIGNAL broadcast (6):
-- Broadcast toggle.
-- Live video feed.
-- Broadcast timer.
-- Live viewer count.
-- Text overlay.
-- Track transitions.
-
-Communication (6):
-- Message L.
-- Message Masters.
-- Message Muses.
-- Message Collaborators.
-- Voice comments per track.
-- Typed comments viewer.
-
-Analytics (4):
-- Play count per track.
-- Listener visibility by tier/time.
-- Download count.
-- Revenue/payment visibility.
-
-Identity/system (8):
-- M3 counts.
-- Session telemetry log.
-- dp watermark texture.
-- Aurora blobs behind monitor.
-- Gold foil hero title motion.
-- Amber cursor ball + spotlight.
-- Logout.
-- Profile block.
-
-| Decision Needed                | If Deferred, What Happens                |
-|-------------------------------|------------------------------------------|
-| What does empty state look like for new vaults? | Engineer ships generic "No items found." |
-| Mobile nav pattern for new consoles? | Desktop nav hides behind hamburger or breaks on small screens |
-| A11y for BottomNav and modals? | Keyboard/screen reader users blocked     |
-| Touch target sizing on mobile? | Users miss controls, fail to interact    |
-## Responsive & Accessibility (Phase 10)
-
-- All layouts must be intentionally designed for mobile, tablet, and desktop. No "stacked on mobile" defaults—each viewport gets a unique layout.
-- BottomNav: fixed, 44px min touch targets, glows on focus/hover, always visible on mobile.
-- Keyboard navigation: all interactive elements must be tabbable in logical order. Use :focus-visible for clear focus states.
-- ARIA: all modals, overlays, and nav landmarks must have correct ARIA roles and labels.
-- Color contrast: all text must meet WCAG AA (4.5:1) minimum contrast.
-- No placeholder-only labels in forms—visible labels required.
-## Design System Alignment (Phase 10)
-
-All plan changes must align with DESIGN.md. Any new components, tokens, or layout patterns introduced in implementation must be reviewed for DESIGN.md compliance before merging. No deviations from canonical font, color, or spacing law are permitted.
-## User Journey & Emotional Arc (Phase 10)
-
-| Step | User Does                | User Feels                | Plan Supports?                |
-|------|--------------------------|---------------------------|-------------------------------|
-| 1    | Lands on entry screen    | Intrigued, cinematic awe  | DPWallpaper, Comfortaa wordmark, black-on-black, no distractions |
-| 2    | Enters access code       | Anticipation, exclusivity | Minimal prompt, no branding until auth, error shake if wrong     |
-| 3    | Auth success             | Identity, belonging       | Theme floods in, D/L color logic, console UI animates in         |
-| 4    | Browses vault/console    | Empowered, in control     | Chakra Petch UI, clear nav, file-cell grid, BottomNav feedback    |
-| 5    | Encounters empty/error   | Reassured, not lost       | Warm empty states, clear error/retry, context for next action     |
-| 6    | Returns after days/months| Familiarity, trust        | Persistent design law, identity color, no onboarding friction     |
-## Interaction State Coverage (Phase 10)
-
-| Feature         | Loading                | Empty State                | Error State                | Success State             | Partial State           |
-|-----------------|------------------------|----------------------------|----------------------------|---------------------------|-------------------------|
-| Entry Screen    | Animated dp wallpaper, Comfortaa wordmark fades in | "Enter access code" prompt, no error | "Invalid code" message, shake animation | Auth success, theme floods in | N/A                     |
-| Vault Wall      | Spinner overlay, blurred file-cells | "No files yet" with warm context, upload CTA | "Failed to load files" with retry | File-cells animate in, ready | Some files load, others show error |
-| Console Shell   | Skeleton nav, shimmer on controls | "No vaults available" with context | "Console error" banner, reload CTA | Console controls active | Some controls disabled, partial data |
-| BottomNav       | Faded, non-interactive | N/A                        | "Nav error" toast         | Nav glows on hover        | Some nav items disabled |
 <!-- /autoplan restore point: /home/codespace/.gstack/projects/liaskin13-psoulc/phase-9-autoplan-restore-20260426-002852.md -->
 # Active Plan — Phase 9 Design System Migration
 
@@ -128,51 +11,9 @@ READ DESIGN.md BEFORE TOUCHING ANY CSS OR JSX.
 That file is law. Every settled decision lives there.
 ```
 
+---
 
 ## What is this project
-
-## Information Architecture (Phase 10)
-
-### Desktop Hierarchy
-
-1. Entry Screen (full-screen DPWallpaper, Comfortaa wordmark)
-2. Console Shell (D or L theme, Chakra Petch UI)
-3. Vault Wall (file-cell grid, chakra color rails)
-4. BottomNav (fixed, 70s chrome, 528Hz glow)
-5. Modal/Overlay (Upload, Lockbox, Voice Comment)
-
-### Mobile Hierarchy
-
-1. Entry Screen (same as desktop, responsive canvas)
-2. Console Shell (collapsible nav, single-column)
-3. Vault Wall (stacked file-cells, swipe to reveal details)
-4. BottomNav (fixed, larger touch targets)
-5. Modal/Overlay (full-screen, swipe to dismiss)
-
-### ASCII Diagram
-
-```
-Desktop:
-┌──────────────────────────────┐
-│        Entry Screen         │
-├──────────────────────────────┤
-│        Console Shell        │
-│ ┌────────────┬────────────┐ │
-│ │  Vault     │  Vault     │ │
-│ │  Wall      │  Wall      │ │
-│ └────────────┴────────────┘ │
-│        BottomNav           │
-└──────────────────────────────┘
-
-Mobile:
-┌──────────────────────────────┐
-│        Entry Screen         │
-├──────────────────────────────┤
-│        Console Shell        │
-│        Vault Wall           │
-│        BottomNav            │
-└──────────────────────────────┘
-```
 
 A cinematic, private music platform for D (primary) and L (co-architect). Not public.
 Not a streaming platform. A sovereign instrument for independent artists.
@@ -245,13 +86,13 @@ Everything else: Chakra Petch.
   **✅ CODE QUALITY & STALE REFERENCES (ALL PASS):**
   - ✅ ArchitectConsole: arch-viewscreen-zone already removed (no ENG-1 prep needed, scope reduced)
   - ✅ Zero deprecated class names in jsx/tsx (file-cell-inner-label, old-* patterns not found)
-  - ✅ Console wiring unified: D and L use ArchitectConsole with viewer-based identity overlays.
+  - ✅ Both consoles wired: AnalogConsole has MembersPanel + CommentPanel (4 refs), ArchitectConsole has MembersPanel + CommentPanel (2 refs)
   - ✅ SystemContext.jsx exports dispatchCommand; auth logic already in place (baseline safer than expected — no ENG-5 Phase 2 needed for existing auth, focus on extending contract)
   - ✅ Zero telemetry wired into dispatch (Phase 3 of ENG-5 still pending)
   - ✅ All existing command paths (BROADCAST, EXPLORE, VOID, etc.) functional
   
   **⚠️ ACCESSIBILITY BASELINE (DEFERRED TO NEXT PHASE):**
-  - [ ] D-view console path: keyboard nav + focus visible + contrast audit required
+  - [ ] AnalogConsole: keyboard nav + focus visible + contrast audit required (D theme: amber vs warm-black)
   - [ ] ArchitectConsole: keyboard nav + focus visible + contrast audit required (L theme: cyan vs cold-black)
   - [ ] Entry sequence: keyboard input + focus management verification required
   - *Note: Deferred to ENG work scope; verify in NEXT phase acceptance*
@@ -315,62 +156,6 @@ Pass criteria met:
 
 **Remaining risk:** None. All acceptance criteria green. Ready for production deployment.
 
-## Phase 10 Plan (Draft, 2026-04-26)
-
-### Artist Benefit Check
-
-Phase 10 protects artist sovereignty by improving reliability, permission clarity, and console accessibility before adding new feature surface area.
-
-### Objectives
-
-1. Ship clean repository hygiene and prevent generated-file regressions.
-2. Complete accessibility baseline for both consoles and entry flow.
-3. Harden command governance and observability for operator trust.
-4. Keep design law enforcement automated so visual drift does not return.
-
-### Scope (In)
-
-1. PR hygiene hardening: remove tracked artifact trees from git history going forward (`.venv`, `dist`, `node_modules`) and lock ignore policy.
-2. Accessibility baseline: keyboard-only flows, focus visibility, and contrast audit for D console, L console, and entry.
-3. Command governance: matrix state persistence + explicit rollback path for permission changes.
-4. Devex guardrails: add one-command project sanity check (`build + lint + targeted audit`).
-5. Design law checks: enforce Comfortaa whitelist and token policy in CI/local preflight.
-
-### Scope (Out)
-
-1. New vault feature expansion.
-2. Broad performance rewrites not tied to command or accessibility risk.
-3. New visual language changes that conflict with locked design law.
-
-### Execution Queue
-
-#### NOW (Phase 10 Kickoff)
-
-1. ✅ Clean PR hygiene branch and keep only product-intent diffs.
-2. ✅ Add `.gitignore` protection for generated artifacts and verify untracked behavior.
-3. ✅ Re-open a review-safe PR with focused file surface.
-
-#### NEXT (Engineering + UX Hardening)
-
-1. Accessibility baseline implementation and audit pass.
-  - Completed: entry keyboard semantics, lockout live region, console focus-visible/ARIA wiring.
-  - Remaining: final contrast audit pass for D/L themes.
-2. Matrix permission persistence with explicit commit/disarm state transitions.
-3. Command telemetry review dashboard hooks (local-first, no artist data leakage).
-
-#### LATER (Post-Phase 10)
-
-1. Performance tuning passes by console route.
-2. Expanded collaborator workflows once permission model is fully hardened.
-
-### Exit Criteria (Phase 10 Done)
-
-1. PR diff excludes generated artifacts by policy and verification.
-2. Keyboard-only path complete for entry + both consoles.
-3. Focus/contrast checks pass for D and L themes.
-4. Command matrix changes are persisted, reversible, and logged.
-5. CI/local audit catches non-whitelisted typography/token regressions.
-
 ---
 
 ## Key files
@@ -384,6 +169,7 @@ Phase 10 protects artist sovereignty by improving reliability, permission clarit
 | `src/entry/DPWallpaper.jsx` | Canvas wallpaper component. Do not change font — Comfortaa in canvas is intentional. |
 | `src/App.jsx` | Theme application (data-theme on body after auth). |
 | `src/state/SystemContext.jsx` | Global state, session management, command dispatch. |
+| `src/console/AnalogConsole.jsx` | D's console. |
 | `src/console/ArchitectConsole.jsx` | L's console. |
 | `psc-design-preview.html` | Visual reference. 4700+ line single-file preview. Not the source of app CSS. |
 | `tasks/plan.active.md` | **This file. Update it at end of every session.** |
@@ -568,13 +354,3 @@ Primary concerns to clear before heavy implementation:
 1. Resolve design-law drift (`tasks/plan.active.md` vs `DESIGN.md`).
 2. Add hard acceptance criteria for audit and phase completion.
 3. Stage dispatch/auth work with explicit rollback-safe increments.
-
----
-
-## Phase 10 Legacy Block — Archived
-
-The previous P10-7 AnalogConsole implementation plan has been retired.
-
-- Old Analog console path was deleted from runtime and source.
-- D and L now run the same ArchitectConsole chassis with viewer-based identity overlays.
-- Any remaining Phase 10 notes should target the unified console path only.

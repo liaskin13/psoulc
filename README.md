@@ -38,7 +38,7 @@ and audience management. All of it in their hands.
 ## Stack
 
 - **Frontend** — React, Three.js, Web Audio API
-- **Backend** —
+- **Backend** — Supabase (audio storage, track metadata, real-time presence)
 - **Task tracking** — `tasks/todo.md`, `tasks/lessons.md`, `tasks/plan.active.md`
 - **Workflow** — See `CLAUDE.md` for AI-assisted development conventions
 
