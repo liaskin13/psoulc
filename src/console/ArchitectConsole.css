@@ -1713,7 +1713,7 @@
 */
 @keyframes arch-scan-line {
   0% {
-    top: -2px;
+    transform: translateY(-100%);
     opacity: 1;
     box-shadow: 0 0 12px rgba(var(--arch-accent-rgb), 0.5);
   }
@@ -1724,7 +1724,7 @@
   }
 
   100% {
-    top: 100%;
+    transform: translateY(100%);
     opacity: 0;
     box-shadow: none;
   }
@@ -1788,6 +1788,7 @@
   position: absolute;
   left: 0;
   right: 0;
+  top: 0;
   height: 2px;
   background: linear-gradient(to right,
       transparent 0%,
@@ -1796,10 +1797,11 @@
       rgba(var(--arch-accent-rgb), 0.6) 70%,
       transparent 100%);
   box-shadow: 0 0 12px rgba(var(--arch-accent-rgb), 0.5);
+  transform: translateY(-100%);
   animation: arch-scan-line 1.2s ease-out forwards;
   pointer-events: none;
   z-index: 2;
-  will-change: top, opacity;
+  will-change: transform, opacity;
 }
 
 .arch-track-row {
