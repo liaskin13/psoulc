@@ -187,6 +187,12 @@
     transition: width 0.2s linear;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .upload-progress-fill {
+        transition: none;
+    }
+}
+
 .upload-progress-fill.is-finalizing {
     animation: intake-finalizing-pulse 1s ease-in-out infinite;
 }

@@ -6,6 +6,7 @@ import {
   UPLOAD_WORKER_URL,
   UPLOAD_SECRET,
 } from "../config";
+import { analyzeAudioFile, saveWaveform } from "../lib/waveformAnalyzer";
 import "./TuneModal.css";
 
 const VAULT_IDS = ["saturn", "venus", "mercury", "earth"];
@@ -114,7 +115,8 @@ function xhrUpload(url, formData, secret, onProgress) {
     xhr.setRequestHeader("PSC-Secret", secret);
     xhr.timeout = 0; // no timeout — large files take as long as they take
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 95));
+      if (e.lengthComputable)
+        onProgress(Math.round((e.loaded / e.total) * 100));
     };
     xhr.onload = () => {
       try {
@@ -148,6 +150,74 @@ function withTimeout(promise, ms, label) {
   });
 }
 
+async function saveWaveformWithRetry(trackId, waveformData, duration) {
+  try {
+    return await saveWaveform(trackId, waveformData, duration);
+  } catch (err) {
+    console.warn("[UPLOAD] WAVEFORM SAVE FAILED, RETRYING", err);
+    return saveWaveform(trackId, waveformData, duration);
+  }
+}
+
+const MULTIPART_THRESHOLD = 50 * 1024 * 1024;
+const PART_SIZE = 50 * 1024 * 1024;
+
+async function multipartUpload(
+  file,
+  { vault, title, artist, bpm, uploadedBy },
+  secret,
+  onProgress,
+) {
+  const initRes = await fetch(`${UPLOAD_WORKER_URL}/upload-init`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "PSC-Secret": secret },
+    body: JSON.stringify({
+      vault,
+      filename: file.name,
+      contentType: file.type || "audio/wav",
+    }),
+  });
+  if (!initRes.ok) throw new Error(`Upload init failed: ${initRes.status}`);
+  const { uploadId, key } = await initRes.json();
+
+  const totalParts = Math.ceil(file.size / PART_SIZE);
+  const parts = [];
+  for (let i = 0; i < totalParts; i++) {
+    const start = i * PART_SIZE;
+    const chunk = file.slice(start, Math.min(start + PART_SIZE, file.size));
+    const partRes = await fetch(
+      `${UPLOAD_WORKER_URL}/upload-part?key=${encodeURIComponent(key)}&uploadId=${encodeURIComponent(uploadId)}&partNumber=${i + 1}`,
+      { method: "PUT", headers: { "PSC-Secret": secret }, body: chunk },
+    );
+    if (!partRes.ok) throw new Error(`Part ${i + 1} failed: ${partRes.status}`);
+    const part = await partRes.json();
+    parts.push({ partNumber: part.partNumber, etag: part.etag });
+    if (onProgress) onProgress(Math.round(((i + 1) / totalParts) * 100));
+  }
+
+  const completeRes = await fetch(`${UPLOAD_WORKER_URL}/upload-complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "PSC-Secret": secret },
+    body: JSON.stringify({
+      key,
+      uploadId,
+      parts,
+      vault,
+      title,
+      artist,
+      bpm,
+      uploaded_by: uploadedBy,
+    }),
+  });
+  if (!completeRes.ok) {
+    const err = await completeRes.json().catch(() => ({}));
+    throw new Error(
+      err.error || `Upload complete failed: ${completeRes.status}`,
+    );
+  }
+  return completeRes.json();
+}
+
 function NixieDigits({ value }) {
   const str = String(Math.round(value)).padStart(3, "0");
   return (
@@ -169,7 +239,7 @@ function isAudioFileCandidate(file) {
   return Boolean(ext && AUDIO_EXTENSIONS.has(ext));
 }
 
-const isDevMode = UPLOAD_WORKER_URL.includes("localhost");
+const isDevMode = import.meta.env.DEV;
 
 function UploadModal({ onClose, defaultVault = "saturn" }) {
   const { consoleOwner, sessionMeta, loadVaultTracks, dispatchCommand } =
@@ -270,29 +340,77 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
         setSuccess({ title: title.trim(), vault });
       } else {
         // Production mode: use worker
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("vault", vault);
-        formData.append("title", title.trim());
-        formData.append("artist", artist.trim() || "");
-        formData.append("bpm", String(Math.round(bpmNumeric * 100) / 100));
-        formData.append("uploaded_by", consoleOwner);
-
-        setUploadProgress(2);
-        await xhrUpload(
-          `${UPLOAD_WORKER_URL}/upload`,
-          formData,
-          UPLOAD_SECRET,
-          (pct) => setUploadProgress(pct),
-        );
+        const bpmStr = String(Math.round(bpmNumeric * 100) / 100);
+        const progressMapper = (pct) =>
+          setUploadProgress(1 + Math.round(pct * 0.69));
+        setUploadProgress(1);
+        let uploadResult;
+        if (file.size >= MULTIPART_THRESHOLD) {
+          uploadResult = await multipartUpload(
+            file,
+            {
+              vault,
+              title: title.trim(),
+              artist: artist.trim() || "",
+              bpm: bpmStr,
+              uploadedBy: consoleOwner,
+            },
+            UPLOAD_SECRET,
+            progressMapper,
+          );
+        } else {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("vault", vault);
+          formData.append("title", title.trim());
+          formData.append("artist", artist.trim() || "");
+          formData.append("bpm", bpmStr);
+          formData.append("uploaded_by", consoleOwner);
+          uploadResult = await xhrUpload(
+            `${UPLOAD_WORKER_URL}/upload`,
+            formData,
+            UPLOAD_SECRET,
+            progressMapper,
+          );
+        }
+        if (uploadResult?.id) {
+          try {
+            setUploadPhase("analyzing");
+            setUploadProgress(70);
+            const waveformData = await analyzeAudioFile(
+              file,
+              1000,
+              80,
+              // chunk progress 0-100% → bar 70-95% (25pt real range)
+              (pct) => setUploadProgress(70 + Math.round((pct / 100) * 25)),
+            );
+            setUploadProgress(95);
+            await saveWaveformWithRetry(
+              uploadResult.id,
+              { high: waveformData.high, low: waveformData.low },
+              waveformData.duration,
+            );
+          } catch (err) {
+            console.warn("[UPLOAD] WAVEFORM ANALYSIS SKIPPED", err);
+          }
+        } else {
+          console.warn(
+            "[UPLOAD] MISSING TRACK ID IN UPLOAD RESPONSE",
+            uploadResult,
+          );
+        }
         setUploadPhase("finalizing");
         setUploadProgress(97);
         dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
-        await withTimeout(
-          Promise.all(VAULT_IDS.map((id) => loadVaultTracks(id))),
-          25000,
-          "LIBRARY REFRESH",
-        );
+        try {
+          await withTimeout(
+            Promise.all(VAULT_IDS.map((id) => loadVaultTracks(id))),
+            25000,
+            "LIBRARY REFRESH",
+          );
+        } catch (err) {
+          console.warn("[UPLOAD] LIBRARY REFRESH FAILED", err);
+        }
         setUploadProgress(100);
         setSuccess({ title: title.trim(), vault });
       }
@@ -304,7 +422,11 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
   };
 
   const uploadStatusText =
-    uploadPhase === "finalizing" ? "FINALIZING INDEX" : "TRANSMITTING";
+    uploadPhase === "analyzing"
+      ? "ANALYZING WAVEFORM"
+      : uploadPhase === "finalizing"
+        ? "FINALIZING INDEX"
+        : "TRANSMITTING";
 
   const handleBpmChange = (value) => {
     if (value === "") {
@@ -322,7 +444,7 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
     setFile(null);
     setTitle("");
     setArtist("");
-    setBpm("120");
+    setBpm("120.00");
     setError(null);
     setSuccess(null);
     setMetadataStatus("idle");
@@ -388,6 +510,12 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileRef.current?.click()}
+              onKeyDown={(e) =>
+                (e.key === "Enter" || e.key === " ") && fileRef.current?.click()
+              }
+              role="button"
+              tabIndex={0}
+              aria-label="Drop audio file or press Enter to browse"
             >
               <input
                 ref={fileRef}

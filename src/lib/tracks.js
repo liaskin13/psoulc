@@ -52,8 +52,17 @@ export async function fetchAllTracks() {
   if (IS_DEV) {
     return loadFromStorage()
       .filter((t) => !t.is_voided)
-      .map(({ id, vault, title, artist, bpm, musical_key, duration, audio_path, created_at }) => ({
-        id, vault, title, artist, bpm, musical_key, duration, audio_path, created_at,
+      .map(({ id, vault, title, artist, bpm, musical_key, duration, audio_path, waveform_data, created_at }) => ({
+        id,
+        vault,
+        title,
+        artist,
+        bpm,
+        musical_key,
+        duration,
+        audio_path,
+        waveform_data,
+        created_at,
       }));
   }
   const results = await workerGet("/tracks");
