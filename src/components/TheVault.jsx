@@ -293,8 +293,12 @@ function TheVault({ vault, onBack, onExitSystem, onVoid, readOnly = false }) {
       </div>
 
       <div className="vault-commands">
-        <button className="god-btn" onClick={onBack}>SEAL VAULT</button>
-        <button className="god-btn" onClick={onExitSystem}>EXIT SYSTEM</button>
+        {typeof onBack === 'function' && (
+          <button className="god-btn" onClick={onBack}>SEAL VAULT</button>
+        )}
+        {typeof onExitSystem === 'function' && (
+          <button className="god-btn" onClick={onExitSystem}>EXIT SYSTEM</button>
+        )}
         {!readOnly && (
           <>
             <button className="god-btn" onClick={handleTune} disabled={!activeId} style={{ opacity: activeId ? 1 : 0.4 }}>TUNE</button>
@@ -431,24 +435,26 @@ function TheVault({ vault, onBack, onExitSystem, onVoid, readOnly = false }) {
             )}
           </div>
 
-          <StuderTransportBar
-            activeTrack={activeTrack}
-            transportState={isPlaying ? 'play' : transportState}
-            pitchMultiplier={pitchMultiplier}
-            onPlay={handlePlay}
-            onStop={handleStop}
-            onRewind={handleRewind}
-            onFastForward={handleFastForward}
-            onPause={handlePause}
-            onRecord={() => setTransport('record')}
-            showAdminCommands={!readOnly}
-            isAdmin={canAdmin}
-            onAdminArm={()     => activeId && handleVoidButton(findCellById(activeId))}
-            onAdminCommit={confirmArmedVoid}
-            onAdminSeal={()    => { cancelArmedVoid(); handleStop(); }}
-            onAdminClear={clearSelection}
-            onPitchChange={setPitchMultiplier}
-          />
+          {!readOnly && (
+            <StuderTransportBar
+              activeTrack={activeTrack}
+              transportState={isPlaying ? 'play' : transportState}
+              pitchMultiplier={pitchMultiplier}
+              onPlay={handlePlay}
+              onStop={handleStop}
+              onRewind={handleRewind}
+              onFastForward={handleFastForward}
+              onPause={handlePause}
+              onRecord={() => setTransport('record')}
+              showAdminCommands={!readOnly}
+              isAdmin={canAdmin}
+              onAdminArm={()     => activeId && handleVoidButton(findCellById(activeId))}
+              onAdminCommit={confirmArmedVoid}
+              onAdminSeal={()    => { cancelArmedVoid(); handleStop(); }}
+              onAdminClear={clearSelection}
+              onPitchChange={setPitchMultiplier}
+            />
+          )}
 
           {voidLog.length > 0 && (
             <div className="void-log">

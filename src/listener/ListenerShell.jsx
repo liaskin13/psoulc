@@ -134,7 +134,12 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
           <div className="glitter-grain" />
           <div className="receded-logo">dp</div>
           <Suspense fallback={<VaultSkeleton />}>
-            <TheVault vault={activeVault} readOnly onBack={handleVaultBack} />
+            <TheVault
+              vault={activeVault}
+              readOnly
+              onBack={handleVaultBack}
+              onExitSystem={onPowerDown}
+            />
           </Suspense>
         </div>
         {handoffOverlay}
