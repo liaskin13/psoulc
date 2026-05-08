@@ -7,6 +7,7 @@ import {
   UPLOAD_SECRET,
 } from "../config";
 import { analyzeAudioFile, saveWaveform } from "../lib/waveformAnalyzer";
+import { uploadTrack } from "../lib/tracks";
 import "./TuneModal.css";
 
 const VAULT_IDS = ["saturn", "venus", "mercury", "earth"];
@@ -311,25 +312,13 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
         setUploadPhase("finalizing");
         setUploadProgress(97);
 
-        // Store in localStorage (tracks.js will handle it)
-        const newTrack = {
-          id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        const newTrack = await uploadTrack(file, {
           vault,
           title: title.trim(),
           artist: artist.trim() || null,
           bpm: String(Math.round(bpmNumeric * 100) / 100),
           uploaded_by: consoleOwner,
-          is_voided: false,
-          created_at: new Date().toISOString(),
-          audio_path: `dev/${vault}/${file.name}`,
-          waveform_data: null, // Generated on playback if needed
-        };
-
-        const existing = JSON.parse(
-          localStorage.getItem("psc_dev_tracks") || "[]",
-        );
-        existing.push(newTrack);
-        localStorage.setItem("psc_dev_tracks", JSON.stringify(existing));
+        });
 
         dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
         window.dispatchEvent(

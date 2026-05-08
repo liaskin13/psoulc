@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { LOCKBOX_CODES, VAULT_DISPLAY_NAMES } from "../config";
+import { VAULT_DISPLAY_NAMES } from "../config";
 import PSCWordmark from "../components/PSCWordmark";
 import "./AdminSettings.css";
 
 const SECTIONS = [
   { id: "system",  label: "SYSTEM" },
   { id: "members", label: "MEMBERS" },
-  { id: "lockbox", label: "LOCKBOX" },
 ];
 
 function SectionSystem({ waveformDetail, setWaveformDetail, trackColorRows, setTrackColorRows, quantizeEnabled, handleQuantizeToggle, autoLoopDefault, setAutoLoopDefault, smartCrates, setSmartCrates, historyEnabled, setHistoryEnabled }) {
@@ -143,61 +142,6 @@ function SectionMembers({ members }) {
   );
 }
 
-function SectionLockbox() {
-  const [reveal, setReveal] = useState(null);
-  const entries = Object.entries(LOCKBOX_CODES);
-
-  return (
-    <div className="adm-section-body">
-      <div className="adm-group">
-        <div className="adm-group-label">MUSE ACCESS CODES</div>
-        <p className="adm-group-note">
-          Transmit each code to the corresponding Muse directly. Do not publish.
-        </p>
-        <table className="adm-table">
-          <thead>
-            <tr>
-              <th>MUSE</th>
-              <th>LOCKBOX</th>
-              <th>CODE</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map(([key, code]) => {
-              const handle = key.replace("lockbox_", "").toUpperCase();
-              return (
-                <tr key={key}>
-                  <td>{handle}</td>
-                  <td className="adm-cell-muted">{key}</td>
-                  <td
-                    className="adm-cell-code"
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Lockbox code for ${handle}`}
-                    onMouseEnter={() => setReveal(key)}
-                    onMouseLeave={() => setReveal(null)}
-                    onFocus={() => setReveal(key)}
-                    onBlur={() => setReveal(null)}
-                    onKeyDown={e => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setReveal(p => p === key ? null : key);
-                      }
-                      if (e.key === "Escape") setReveal(null);
-                    }}
-                  >
-                    {reveal === key ? code : "••••"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 export default function AdminSettings({ onClose, members, waveformDetail, setWaveformDetail, trackColorRows, setTrackColorRows, quantizeEnabled, handleQuantizeToggle, autoLoopDefault, setAutoLoopDefault, smartCrates, setSmartCrates, historyEnabled, setHistoryEnabled }) {
   const [active, setActive] = useState("system");
 
@@ -247,7 +191,6 @@ export default function AdminSettings({ onClose, members, waveformDetail, setWav
             />
           )}
           {active === "members" && <SectionMembers members={members} />}
-          {active === "lockbox" && <SectionLockbox />}
         </main>
 
       </div>

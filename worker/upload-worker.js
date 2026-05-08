@@ -33,6 +33,34 @@ export default {
     );
 
     try {
+      // POST /validate-code — no PSC-Secret required, this IS the auth
+      if (request.method === "POST" && url.pathname === "/validate-code") {
+        const body = await request.json().catch(() => ({}));
+        const { code } = body;
+        if (!code) {
+          return new Response(JSON.stringify({ error: "Missing code" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const REGISTRY = [
+          { code: env.CODE_D || "0528",    name: "D",     tier: "A", vaultId: "saturn",    residentId: 1   },
+          { code: env.CODE_L || "7677",    name: "L",     tier: "A", vaultId: "architect", residentId: 2   },
+          { code: env.CODE_GUEST || "0000", name: "guest", tier: "G", vaultId: null,        residentId: 999 },
+        ];
+        const match = REGISTRY.find((r) => timingSafeEqual(r.code, code));
+        if (!match) {
+          return new Response(JSON.stringify({ error: "ACCESS DENIED" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { code: _stripped, ...safe } = match;
+        return new Response(JSON.stringify(safe), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // GET /health
       if (request.method === "GET" && url.pathname === "/health") {
         let dbOk = false;

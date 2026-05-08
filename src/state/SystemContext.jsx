@@ -16,7 +16,6 @@ import { fetchVaultTracks, fetchAllTracks } from "../lib/tracks";
 import { getResidencySplit, isMaintenanceDue } from "../utils/sovereignFinance";
 import {
   RESIDENT_REGISTRY,
-  findResidentByCode,
 } from "../data/residentBlueprint";
 import {
   COLLABORATORS_KEY,

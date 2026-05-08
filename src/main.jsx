@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { SystemProvider } from "./state/SystemContext.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import "./variables.css";
 import "./index.css";
 import "./styles/identity.css";
@@ -36,9 +37,11 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   const root = createRoot(rootElement);
   root.render(
-    <SystemProvider>
-      <App />
-    </SystemProvider>,
+    <ErrorBoundary>
+      <SystemProvider>
+        <App />
+      </SystemProvider>
+    </ErrorBoundary>,
   );
 } else {
   console.error("✗ Root element NOT found");

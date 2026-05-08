@@ -1,8 +1,5 @@
 // System Constants — Single source of truth.
 
-export const ENTRY_CODE = "0528";
-export const BLACK_STAR_CODE = "7677";
-export const LISTENER_CODE = "0000";
 export const ENTRY_FLYBY_DURATION_MS = 3000;
 
 // Console keys
@@ -65,13 +62,6 @@ export const D_IDENTITY_COLOR = "#14dc14"; // Green — D's identity (locked 202
 export const D_CHAKRA_COLOR = "#14dc14"; // Green — D's personal identity colour
 export const BROADCAST_DURATION_MS = 5000;
 export const LOCKBOX_PREFIX = "lockbox_";
-
-export const LOCKBOX_CODES = {
-  lockbox_janet: "J528",
-  lockbox_erikah: "E432",
-  lockbox_larry: "L396",
-  lockbox_drake: "D741",
-};
 
 export const VAULT_DISPLAY_NAMES = {
   venus: "MIXES",

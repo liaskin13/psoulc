@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { findResidentByCode } from "../data/residentBlueprint";
 import {
   SESSION_KEY,
   SESSION_TTL_MS,
   GATE_LOCK_KEY,
   GATE_MAX_ATTEMPTS,
   GATE_LOCKOUT_MS,
+  UPLOAD_WORKER_URL,
 } from "../config";
 import DPWallpaper from "../components/DPWallpaper";
 
@@ -70,7 +70,7 @@ function EntrySequence({ onIgnite }) {
   }, [lockoutRemaining]);
 
   const attempt = useCallback(
-    (code) => {
+    async (code) => {
       const lock = readLock();
       if (lock.lockedUntil > Date.now()) {
         setDigits("");
@@ -78,8 +78,17 @@ function EntrySequence({ onIgnite }) {
         return;
       }
 
-      const res = findResidentByCode(code);
-      if (res) {
+      let res = null;
+      try {
+        const response = await fetch(`${UPLOAD_WORKER_URL}/validate-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        if (response.ok) res = await response.json();
+      } catch (_) {}
+
+      if (res && res.name) {
         clearLock();
         setCellState("correct");
         setUnlocked(true);
