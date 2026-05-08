@@ -1,9 +1,14 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSystem } from "../state/SystemContext";
 import "./ArchitectConsole.css";
 import InboxPanel from "./InboxPanel";
-import CommentPanel from "./CommentPanel";
 import DirectLinePanel from "./DirectLinePanel";
 import DeckWaveform from "../components/DeckWaveform";
 import {
@@ -26,10 +31,53 @@ import { generateAndSaveWaveform } from "../lib/waveformAnalyzer";
 
 // Bank 1: Serato canonical · Bank 2: Extended palette (outlined style)
 const ALL_CUE_COLORS = [
-  "#e52020", "#e56020", "#e5a020", "#14dc14",
-  "#00c8dc", "#1464dc", "#8c14dc", "#e5e5e5",
-  "#ff2d78", "#ff7700", "#e8ff14", "#00ff66",
-  "#0099ff", "#cc00ff", "#ff88bb", "#44ffee",
+  "#e52020",
+  "#e56020",
+  "#e5a020",
+  "#14dc14",
+  "#00c8dc",
+  "#1464dc",
+  "#8c14dc",
+  "#e5e5e5",
+  "#ff2d78",
+  "#ff7700",
+  "#e8ff14",
+  "#00ff66",
+  "#0099ff",
+  "#cc00ff",
+  "#ff88bb",
+  "#44ffee",
+];
+
+const LOOP_LENGTH_OPTIONS = [
+  { id: "1-32", label: "1/32", type: "note", denominator: 32 },
+  { id: "1-16", label: "1/16", type: "note", denominator: 16 },
+  {
+    id: "1-16-d",
+    label: "1/16 D",
+    type: "note",
+    denominator: 16,
+    dotted: true,
+  },
+  {
+    id: "1-16-t",
+    label: "1/16 T",
+    type: "note",
+    denominator: 16,
+    triplet: true,
+  },
+  { id: "1-8", label: "1/8", type: "note", denominator: 8 },
+  { id: "1-8-d", label: "1/8 D", type: "note", denominator: 8, dotted: true },
+  { id: "1-8-t", label: "1/8 T", type: "note", denominator: 8, triplet: true },
+  { id: "1-4", label: "1/4", type: "note", denominator: 4 },
+  { id: "1-4-d", label: "1/4 D", type: "note", denominator: 4, dotted: true },
+  { id: "1-4-t", label: "1/4 T", type: "note", denominator: 4, triplet: true },
+  { id: "1-2", label: "1/2", type: "note", denominator: 2 },
+  { id: "0-bar", label: "0 BAR", type: "beats", beats: 4 },
+  { id: "1-bar", label: "1 BAR", type: "bars", bars: 1 },
+  { id: "2-bars", label: "2 BARS", type: "bars", bars: 2 },
+  { id: "4-bars", label: "4 BARS", type: "bars", bars: 4 },
+  { id: "8-bars", label: "8 BARS", type: "bars", bars: 8 },
 ];
 import * as audioEngine from "../lib/audioEngine";
 import useAudioAnalyzer from "./useAudioAnalyzer";
@@ -71,6 +119,17 @@ function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function parseWaveformData(rawWaveform) {
+  if (!rawWaveform) return null;
+  try {
+    return typeof rawWaveform === "string"
+      ? JSON.parse(rawWaveform)
+      : rawWaveform;
+  } catch {
+    return null;
+  }
 }
 
 const SR_ONLY_STYLE = {
@@ -176,7 +235,6 @@ function ArchitectConsole({
     restoreItem,
     unreadCountL,
     members,
-    unreadCommentCount,
     voidItem,
     addMember,
     tracks: vaultTracksState,
@@ -188,7 +246,6 @@ function ArchitectConsole({
   const [showArchive, setShowArchive] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const [activeVault, setActiveVault] = useState(null);
   const [activeLibVault, setActiveLibVault] = useState(VAULT_ROUTES[0].id);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -199,9 +256,6 @@ function ArchitectConsole({
   const [trackListData, setTrackListData] = useState([]);
   const [trackListLoading, setTrackListLoading] = useState(false);
   const [trackLoadError, setTrackLoadError] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [quantizeEnabled, setQuantizeEnabled] = useState(true);
-  const [activePerfMode, setActivePerfMode] = useState("hotcue");
   const [sortMode, setSortMode] = useState("bpm");
   const [smartCrates, setSmartCrates] = useState(false);
   const [historyEnabled, setHistoryEnabled] = useState(true);
@@ -252,24 +306,52 @@ function ArchitectConsole({
     }
   });
   const [waveformZoom, setWaveformZoom] = useState(1);
-  const [cueBankPoints, setCueBankPoints] = useState({A: null, B: null, C: null, D: null});
-  const [loopRegion, setLoopRegion] = useState({start: null, end: null});
+  const [cueBankPoints, setCueBankPoints] = useState({
+    A: null,
+    B: null,
+    C: null,
+    D: null,
+  });
+  const [loopRegion, setLoopRegion] = useState({ start: null, end: null });
+  const [showLoopMenu, setShowLoopMenu] = useState(false);
+  const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
   const loopActiveRef = useRef(false);
+  const loopMenuRef = useRef(null);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
   const tabRefs = useRef([]);
   const gliderRef = useRef(null);
-  const waveformBars = getWaveformBars("l-console-ambient", 80);
   const cursorRef = useRef(null);
   const cursorPos = useRef({ x: -200, y: -200 });
-  const waveformHighData = useMemo(() => {
-    if (!loadedTrack?.waveform_data) return null;
-    try { return JSON.parse(loadedTrack.waveform_data).high; } catch { return null; }
-  }, [loadedTrack?.waveform_data]);
+  const selectedTrack = useMemo(
+    () => trackListData.find((t) => t.id === selectedTrackId) || null,
+    [trackListData, selectedTrackId],
+  );
+  const deckTrack = selectedTrack || loadedTrack;
+  const loadedWaveform = useMemo(
+    () => parseWaveformData(loadedTrack?.waveform_data),
+    [loadedTrack?.waveform_data],
+  );
+  const deckWaveform = useMemo(
+    () => parseWaveformData(deckTrack?.waveform_data),
+    [deckTrack?.waveform_data],
+  );
+  const loadedWaveformHighData = loadedWaveform?.high || null;
+  const deckWaveformHighData = deckWaveform?.high || null;
+  const deckWaveformLowData = deckWaveform?.low || null;
+  const deckTrackHasWaveform =
+    Array.isArray(deckWaveformHighData) && deckWaveformHighData.length > 0;
+  const deckIsGenerating = !!(deckTrack && regeneratingWaveforms[deckTrack.id]);
+  const deckCanSeek = !!(
+    loadedTrack &&
+    deckTrack &&
+    loadedTrack.id === deckTrack.id &&
+    audioDuration > 0
+  );
 
   const { vuRef, specRef } = useAudioAnalyzer({
     isPlaying,
-    waveformData: waveformHighData,
+    waveformData: loadedWaveformHighData,
     currentTime,
     duration: audioDuration,
   });
@@ -376,8 +458,6 @@ function ArchitectConsole({
         if (prefs.waveformDetail) setWaveformDetail(prefs.waveformDetail);
         if (typeof prefs.trackColorRows === "boolean")
           setTrackColorRows(prefs.trackColorRows);
-        if (typeof prefs.quantizeEnabled === "boolean")
-          setQuantizeEnabled(prefs.quantizeEnabled);
         if (typeof prefs.autoLoopDefault === "boolean")
           setAutoLoopDefault(prefs.autoLoopDefault);
         if (typeof prefs.smartCrates === "boolean")
@@ -421,7 +501,6 @@ function ArchitectConsole({
         JSON.stringify({
           waveformDetail,
           trackColorRows,
-          quantizeEnabled,
           autoLoopDefault,
           smartCrates,
           historyEnabled,
@@ -431,11 +510,21 @@ function ArchitectConsole({
   }, [
     autoLoopDefault,
     historyEnabled,
-    quantizeEnabled,
     smartCrates,
     trackColorRows,
     waveformDetail,
   ]);
+
+  useEffect(() => {
+    if (!showLoopMenu) return;
+    const onPointerDown = (e) => {
+      if (!loopMenuRef.current?.contains(e.target)) {
+        setShowLoopMenu(false);
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [showLoopMenu]);
 
   useEffect(() => {
     try {
@@ -510,6 +599,7 @@ function ArchitectConsole({
     announce(`Loading ${track.title || "track"}…`);
     try {
       await audioEngine.load(url);
+      setSelectedTrackId(track.id);
       setLoadedTrack(track);
       setLoadedDeckId(track.id);
       pushTrackHistory(track);
@@ -519,16 +609,7 @@ function ArchitectConsole({
       }));
       audioEngine.play();
       announce(`Playing ${track.title || "track"}.`);
-      if (!track.waveform_data) {
-        generateAndSaveWaveform(track.id, url)
-          .then(async () => {
-            const refreshed = await fetchAllTracks();
-            setTrackListData(refreshed);
-            const updated = refreshed.find((t) => t.id === track.id);
-            if (updated) setLoadedTrack(updated);
-          })
-          .catch(() => {});
-      }
+      if (!track.waveform_data) ensureWaveformForTrack(track);
     } catch (err) {
       console.error("[PSC] Audio load error:", err);
       setAudioError(err.message);
@@ -551,6 +632,7 @@ function ArchitectConsole({
     try {
       audioEngine.stop();
       await audioEngine.load(url);
+      setSelectedTrackId(track.id);
       setLoadedTrack(track);
       setLoadedDeckId(track.id);
       announce(`${track.title || "Track"} loaded to deck. Press PLAY.`);
@@ -580,6 +662,9 @@ function ArchitectConsole({
     } else {
       audioEngine.play();
       announce(`Playing ${loadedTrack?.title || "track"}.`);
+      if (loadedTrack && !loadedTrack.waveform_data) {
+        ensureWaveformForTrack(loadedTrack);
+      }
     }
   };
 
@@ -616,7 +701,7 @@ function ArchitectConsole({
   const toggleInbox = () => {
     setShowInbox((prev) => {
       const next = !prev;
-      announce(`Vetting Queue ${next ? "opened" : "closed"}.`);
+      announce(`Vetting inbox ${next ? "opened" : "closed"}.`);
       return next;
     });
   };
@@ -633,14 +718,6 @@ function ArchitectConsole({
     setShowMatrix((prev) => {
       const next = !prev;
       announce(`Command matrix ${next ? "opened" : "closed"}.`);
-      return next;
-    });
-  };
-
-  const toggleComments = () => {
-    setShowComments((prev) => {
-      const next = !prev;
-      announce(`Transmissions ${next ? "opened" : "closed"}.`);
       return next;
     });
   };
@@ -712,26 +789,52 @@ function ArchitectConsole({
 
   const handleBroadcast = () => setShowSignalPanel(true);
 
-  const handleRecordToggle = () => {
-    setIsRecording((prev) => {
-      const next = !prev;
-      announce(`Record ${next ? "armed" : "stopped"}.`);
-      return next;
-    });
-  };
+  const ensureWaveformForTrack = async (track, shouldAnnounce = false) => {
+    if (!track || track.waveform_data || regeneratingWaveforms[track.id])
+      return;
+    const url = getAudioUrl(track.audio_path);
+    if (!url) return;
 
-  const handleQuantizeToggle = () => {
-    setQuantizeEnabled((prev) => {
-      const next = !prev;
-      announce(`Quantize ${next ? "enabled" : "disabled"}.`);
-      return next;
-    });
+    setRegeneratingWaveforms((prev) => ({ ...prev, [track.id]: true }));
+    if (shouldAnnounce) {
+      announce(`Analyzing waveform for ${track.title || "track"}…`);
+    }
+
+    try {
+      await generateAndSaveWaveform(track.id, url);
+      const refreshed = await fetchAllTracks();
+      setTrackListData(refreshed);
+      const updated = refreshed.find((t) => t.id === track.id);
+      if (updated && loadedDeckId === track.id) {
+        setLoadedTrack(updated);
+      }
+      if (shouldAnnounce) {
+        announce(`Waveform generated for ${track.title || "track"}.`);
+      }
+    } catch (err) {
+      if (shouldAnnounce) {
+        announce(`Waveform generation failed: ${err.message}`);
+      }
+    } finally {
+      setRegeneratingWaveforms((prev) => {
+        const next = { ...prev };
+        delete next[track.id];
+        return next;
+      });
+    }
   };
 
   const handleTrackSelect = (track) => {
     setSelectedTrackId(track.id);
     setActiveVault(track.vault || null);
     announce(`${track.title || "Track"} selected.`);
+  };
+
+  const handleTrackRowKeyDown = (event, track) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleTrackSelect(track);
+    }
   };
 
   const handleTrackDoubleClick = (track) => {
@@ -761,10 +864,14 @@ function ArchitectConsole({
       ),
     );
     setTrackListData((prev) =>
-      prev.map((t) => selectedTrackIds.has(t.id) ? { ...t, is_published: 1 } : t),
+      prev.map((t) =>
+        selectedTrackIds.has(t.id) ? { ...t, is_published: 1 } : t,
+      ),
     );
     setSelectedTrackIds(new Set());
-    announce(`${ids.length} track${ids.length > 1 ? "s" : ""} published to vault.`);
+    announce(
+      `${ids.length} track${ids.length > 1 ? "s" : ""} published to vault.`,
+    );
   };
 
   const handleRetractSelected = async () => {
@@ -779,10 +886,14 @@ function ArchitectConsole({
       ),
     );
     setTrackListData((prev) =>
-      prev.map((t) => selectedTrackIds.has(t.id) ? { ...t, is_published: 0 } : t),
+      prev.map((t) =>
+        selectedTrackIds.has(t.id) ? { ...t, is_published: 0 } : t,
+      ),
     );
     setSelectedTrackIds(new Set());
-    announce(`${ids.length} track${ids.length > 1 ? "s" : ""} retracted from vault.`);
+    announce(
+      `${ids.length} track${ids.length > 1 ? "s" : ""} retracted from vault.`,
+    );
   };
 
   const handleEditStart = (e, track) => {
@@ -795,19 +906,28 @@ function ArchitectConsole({
     const vals = editingValues;
     await fetch(`${UPLOAD_WORKER_URL}/tracks/${trackId}`, {
       method: "PATCH",
-      headers: { "PSC-Secret": UPLOAD_SECRET, "Content-Type": "application/json" },
+      headers: {
+        "PSC-Secret": UPLOAD_SECRET,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(vals),
     });
     setTrackListData((prev) =>
-      prev.map((t) => t.id === trackId ? { ...t, ...vals } : t),
+      prev.map((t) => (t.id === trackId ? { ...t, ...vals } : t)),
     );
     setEditingTrackId(null);
     setEditingValues({});
   };
 
   const handleEditKeyDown = (e, trackId) => {
-    if (e.key === "Enter") { e.preventDefault(); handleEditSave(trackId); }
-    if (e.key === "Escape") { setEditingTrackId(null); setEditingValues({}); }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleEditSave(trackId);
+    }
+    if (e.key === "Escape") {
+      setEditingTrackId(null);
+      setEditingValues({});
+    }
   };
 
   const pushTrackHistory = (track) => {
@@ -857,32 +977,7 @@ function ArchitectConsole({
   };
 
   const handleRegenerateWaveform = async (track) => {
-    if (regeneratingWaveforms[track.id]) return;
-    const url = getAudioUrl(track.audio_path);
-    if (!url) {
-      announce("No audio file for this track.");
-      return;
-    }
-    setRegeneratingWaveforms((prev) => ({ ...prev, [track.id]: true }));
-    announce(`Analyzing waveform for ${track.title || "track"}…`);
-    try {
-      await generateAndSaveWaveform(track.id, url);
-      const refreshed = await fetchAllTracks();
-      setTrackListData(refreshed);
-      if (loadedDeckId === track.id) {
-        const updated = refreshed.find((t) => t.id === track.id);
-        if (updated) setLoadedTrack(updated);
-      }
-      announce(`Waveform generated for ${track.title || "track"}.`);
-    } catch (err) {
-      announce(`Waveform generation failed: ${err.message}`);
-    } finally {
-      setRegeneratingWaveforms((prev) => {
-        const next = { ...prev };
-        delete next[track.id];
-        return next;
-      });
-    }
+    await ensureWaveformForTrack(track, true);
   };
 
   const handleNext = () => {
@@ -955,11 +1050,13 @@ function ArchitectConsole({
   useEffect(() => {
     if (loopRegion.start === null || loopRegion.end === null) return;
     loopActiveRef.current = true;
-    return audioEngine.onStateChange(({ currentTime: ct, isPlaying: playing }) => {
-      if (playing && loopActiveRef.current && ct >= loopRegion.end) {
-        audioEngine.seek(loopRegion.start);
-      }
-    });
+    return audioEngine.onStateChange(
+      ({ currentTime: ct, isPlaying: playing }) => {
+        if (playing && loopActiveRef.current && ct >= loopRegion.end) {
+          audioEngine.seek(loopRegion.start);
+        }
+      },
+    );
   }, [loopRegion]);
 
   const handleCueBankClick = (bank) => {
@@ -980,20 +1077,23 @@ function ArchitectConsole({
     announce(`Cue ${bank} cleared.`);
   };
 
-  const handleSetLoopStart = () => {
-    if (!audioEngine.isLoaded()) return;
-    setLoopRegion((prev) => ({ ...prev, start: currentTime }));
-    loopActiveRef.current = false;
-    announce(`Loop start: ${currentTime.toFixed(1)}s.`);
-  };
+  const handleClearAllCues = () => {
+    setCueBankPoints({ A: null, B: null, C: null, D: null });
 
-  const handleSetLoopEnd = () => {
-    if (!audioEngine.isLoaded()) return;
-    setLoopRegion((prev) => {
-      if (prev.start === null || currentTime <= prev.start) return prev;
-      announce(`Loop end: ${currentTime.toFixed(1)}s.`);
-      return { ...prev, end: currentTime };
-    });
+    if (!loadedTrack) {
+      announce("All cue markers cleared.");
+      return;
+    }
+
+    const trackId = loadedTrack.id;
+    const trackCues = hotCues[trackId] || {};
+    if (Object.keys(trackCues).length > 0) {
+      const updated = { ...hotCues, [trackId]: {} };
+      setHotCues(updated);
+      localStorage.setItem("psc_hotcues", JSON.stringify(updated));
+    }
+
+    announce("All cues cleared.");
   };
 
   const handleClearLoop = () => {
@@ -1002,42 +1102,42 @@ function ArchitectConsole({
     announce("Loop cleared.");
   };
 
-  const handleReloop = () => {
-    if (loopRegion.start === null || loopRegion.end === null) return;
-    loopActiveRef.current = true;
-    audioEngine.seek(loopRegion.start);
-    announce("Loop reengaged.");
+  const resolveTrackBpm = (track) => {
+    const source = track?.bpm_display || track?.bpm;
+    const parsed = parseFloat(String(source || "").split("-")[0]);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   };
 
-  const handleAutoLoop = (beats) => {
-    if (!audioEngine.isLoaded()) return;
-    const bpm = loadedTrack?.bpm ? parseFloat(String(loadedTrack.bpm).split("-")[0]) : 120;
-    const loopLen = (beats * 60) / (bpm || 120);
+  const resolveLoopBeats = (option) => {
+    if (option.type === "bars") return (option.bars || 0) * 4;
+    if (option.type === "beats") return option.beats || 0;
+    let beats = 4 / option.denominator;
+    if (option.dotted) beats *= 1.5;
+    if (option.triplet) beats *= 2 / 3;
+    return beats;
+  };
+
+  const handleApplyLoopLength = (option) => {
+    if (!audioEngine.isLoaded() || !loadedTrack) return;
+    const bpm = resolveTrackBpm(loadedTrack);
+    if (!bpm) {
+      announce("BPM unavailable for loop length.");
+      setShowLoopMenu(false);
+      return;
+    }
+    const beats = resolveLoopBeats(option);
+    if (!beats) {
+      setShowLoopMenu(false);
+      return;
+    }
+    const beatSeconds = 60 / bpm;
     const start = currentTime;
-    setLoopRegion({ start, end: start + loopLen });
+    const end = start + beats * beatSeconds;
+    setLoopRegion({ start, end });
     loopActiveRef.current = true;
-    announce(`${beats}-beat loop.`);
-  };
-
-  const handleLoopHalve = () => {
-    setLoopRegion((prev) => {
-      if (prev.start === null || prev.end === null) return prev;
-      return { ...prev, end: prev.start + (prev.end - prev.start) / 2 };
-    });
-  };
-
-  const handleLoopDouble = () => {
-    setLoopRegion((prev) => {
-      if (prev.start === null || prev.end === null) return prev;
-      return { ...prev, end: prev.start + (prev.end - prev.start) * 2 };
-    });
-  };
-
-  const handleNeedleDrop = (e) => {
-    if (!audioEngine.isLoaded() || !audioDuration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    audioEngine.seek(Math.max(0, Math.min((x / rect.width) * audioDuration, audioDuration)));
+    setSelectedLoopLengthId(option.id);
+    setShowLoopMenu(false);
+    announce(`Loop ${option.label}.`);
   };
 
   const handleZoomIn = () => setWaveformZoom((prev) => Math.min(prev * 2, 8));
@@ -1053,14 +1153,19 @@ function ArchitectConsole({
     )
     .filter((t) => !smartCrates || (Number(t.bpm) || 0) >= 120)
     .filter((t) =>
-      publishFilter === "all" ? true :
-      publishFilter === "staged" ? !t.is_published :
-      Boolean(t.is_published),
+      publishFilter === "all"
+        ? true
+        : publishFilter === "staged"
+          ? !t.is_published
+          : Boolean(t.is_published),
     );
 
   const visibleTracks = [...filteredTracks].sort((a, b) => {
     if (sortMode === "recent") {
-      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      return (
+        new Date(b.created_at || 0).getTime() -
+        new Date(a.created_at || 0).getTime()
+      );
     }
     if (sortMode === "status") {
       return (b.is_published || 0) - (a.is_published || 0);
@@ -1068,24 +1173,40 @@ function ArchitectConsole({
     return (Number(b.bpm) || 0) - (Number(a.bpm) || 0);
   });
 
+  const hasCueBankPoints = Object.values(cueBankPoints).some(
+    (value) => value !== null,
+  );
+  const hasHotCuesForLoadedTrack = !!(
+    loadedTrack && Object.keys(hotCues[loadedTrack.id] || {}).length
+  );
+
   const selectionHasStaged = [...selectedTrackIds].some(
     (id) => !trackListData.find((t) => t.id === id)?.is_published,
   );
-  const selectionHasLive = [...selectedTrackIds].some(
-    (id) => Boolean(trackListData.find((t) => t.id === id)?.is_published),
+  const selectionHasLive = [...selectedTrackIds].some((id) =>
+    Boolean(trackListData.find((t) => t.id === id)?.is_published),
   );
 
+  const mixLoudness =
+    deckTrack?.lufs_integrated ?? deckTrack?.lufs ?? deckTrack?.loudness_lufs;
+  const mixPeak =
+    deckTrack?.true_peak_dbtp ?? deckTrack?.peak_db ?? deckTrack?.peak;
+  const mixRange =
+    deckTrack?.dynamic_range ?? deckTrack?.dr ?? deckTrack?.crest_factor;
+
+  const commandVaultId = activeVault || activeLibVault;
+
   const handleExplore = () => {
-    if (!activeVault) return;
-    onExplorePlanet?.(activeVault);
-    announce(`Opening ${vaultLabel(activeVault)}.`);
+    if (!commandVaultId) return;
+    onExplorePlanet?.(commandVaultId);
+    announce(`Opening ${vaultLabel(commandVaultId)}.`);
   };
 
   const handleVoidProtocol = () => {
-    if (!activeVault) return;
+    if (!commandVaultId) return;
     setShowVoidConfirm(true);
     announce(
-      `Void protocol confirmation opened for ${vaultLabel(activeVault)}.`,
+      `Void protocol confirmation opened for ${vaultLabel(commandVaultId)}.`,
     );
   };
 
@@ -1209,6 +1330,16 @@ function ArchitectConsole({
     announce("Power down confirmation opened.");
   };
 
+  const handleExitToVaultView = () => {
+    setShowPowerConfirm(false);
+    if (!commandVaultId) {
+      announce("No vault selected.");
+      return;
+    }
+    onExplorePlanet?.(commandVaultId);
+    announce(`Opening ${vaultLabel(commandVaultId)}.`);
+  };
+
   const confirmPowerDown = () => {
     announce("Powering down Architect terminal.");
     onPowerDown?.();
@@ -1234,12 +1365,7 @@ function ArchitectConsole({
       }
       if (showInbox) {
         setShowInbox(false);
-        announce("Vetting Queue closed.");
-        return;
-      }
-      if (showComments) {
-        setShowComments(false);
-        announce("Transmissions closed.");
+        announce("Vetting inbox closed.");
         return;
       }
       if (showMatrix) {
@@ -1267,7 +1393,6 @@ function ArchitectConsole({
     return () => window.removeEventListener("keydown", onEscape);
   }, [
     showArchive,
-    showComments,
     showInbox,
     showMatrix,
     showPowerConfirm,
@@ -1303,90 +1428,24 @@ function ArchitectConsole({
         <div className="arch-top-identity">
           <span className="arch-top-dot" />
           <span className="arch-top-name">
-            {viewer} · {viewer === "D" ? "SOVEREIGN" : "ARCHITECT"}
+            {viewer === "D" ? "D · GOD MODE" : "L · GOD MODE PLUS"}
           </span>
-          {viewer !== "D" && (
-            <span className="arch-top-tier">GOD MODE PLUS</span>
-          )}
-        </div>
-
-        <div className="arch-top-system" aria-label="System status">
-          <span className="arch-mode-tag">PERFORMANCE MODE</span>
-          <div className="arch-vu-block" aria-label="Master meter">
-            <span className="arch-vu-label">MASTER</span>
-            <span className="arch-vu-meter">
-              <i className="arch-vu-seg on" />
-              <i className="arch-vu-seg on" />
-              <i className="arch-vu-seg on" />
-              <i className="arch-vu-seg" />
-              <i className="arch-vu-seg" />
-              <i className="arch-vu-seg" />
-            </span>
-          </div>
-          <span className="arch-status-pill">SYSTEM LOCK: SECURE</span>
         </div>
 
         <nav className="arch-top-actions" aria-label="Architect controls">
           <button
-            className={`arch-rail-btn ${isRecording ? "active" : ""}`}
-            aria-label="Record"
-            onClick={handleRecordToggle}
-          >
-            REC
-          </button>
-          <DirectLinePanel
-            viewer={viewer}
-            variant={viewer === "D" ? "d-mode" : "architect"}
-          />
-          <button
-            className="arch-rail-btn arch-intake-btn"
-            onClick={onIntake}
-            aria-label="Upload tracks to vault"
-          >
-            INTAKE
-          </button>
-
-          <button
-            className={`arch-signal-btn ${isBroadcasting ? 'is-live' : ''}`}
+            className={`arch-signal-btn ${isBroadcasting ? "is-live" : ""}`}
             onClick={handleBroadcast}
             aria-label="THE SIGNAL — go live"
           >
             <span className="arch-signal-dot">●</span> SIGNAL
           </button>
 
-          {unreadCountL > 0 && (
-            <button
-              className="arch-rail-btn arch-badge-btn"
-              onClick={toggleInbox}
-              aria-expanded={showInbox}
-            >
-              QUEUE <span className="arch-badge">{unreadCountL}</span>
-            </button>
-          )}
-
-          {unreadCommentCount > 0 && (
-            <button
-              className="arch-rail-btn arch-badge-btn"
-              onClick={toggleComments}
-              aria-expanded={showComments}
-            >
-              TRANSMISSIONS{" "}
-              <span className="arch-badge">{unreadCommentCount}</span>
-            </button>
-          )}
-
           <button
             className="arch-rail-btn arch-exit-btn"
             onClick={handlePowerDown}
           >
-            EXIT SYSTEM
-          </button>
-          <button
-            className="arch-rail-btn"
-            onClick={toggleSettings}
-            aria-expanded={showSettings}
-          >
-            SETUP
+            EXIT
           </button>
         </nav>
       </header>
@@ -1395,28 +1454,31 @@ function ArchitectConsole({
       <section className="arch-deck-zone" aria-label="Deck">
         <div className="arch-deck-meta">
           <div className="arch-deck-title">
-            {loadedTrack ? loadedTrack.title : "—"}
+            {deckTrack ? deckTrack.title : "NO OBJECT LOADED"}
           </div>
           <div className="arch-deck-artist">
-            {loadedTrack ? loadedTrack.artist || "—" : "—"}
+            {deckTrack
+              ? deckTrack.artist || "METADATA READY"
+              : "SELECT AN OBJECT"}
           </div>
           <div className="arch-deck-stats">
             <span className="arch-stat">
-              BPM <strong>{loadedTrack?.bpm_display || (loadedTrack?.bpm ? Math.round(loadedTrack.bpm) : "—")}</strong>
-            </span>
-            <span className="arch-stat">
-              KEY <strong>{loadedTrack?.musical_key || "—"}</strong>
+              BPM{" "}
+              <strong>
+                {deckTrack?.bpm_display ||
+                  (deckTrack?.bpm ? Math.round(deckTrack.bpm) : "--")}
+              </strong>
             </span>
             <span
               className={`arch-stat arch-elapsed${isPlaying ? " arch-elapsed--playing" : ""}`}
             >
-              {formatTime(currentTime)}
+              {formatTime(deckCanSeek ? currentTime : 0)}
             </span>
             <span className="arch-stat-sep">/</span>
             <span className="arch-stat arch-remaining">
-              {audioDuration > 0
+              {deckCanSeek
                 ? `-${formatTime(audioDuration - currentTime)}`
-                : "—:——"}
+                : "READY"}
             </span>
             {audioLoading && (
               <span className="arch-stat arch-loading-tag">LOADING…</span>
@@ -1429,103 +1491,63 @@ function ArchitectConsole({
           </div>
         </div>
 
-        <div
-          className="arch-deck-tools"
-          role="group"
-          aria-label="Deck state controls"
-        >
-          <button
-            className={`arch-deck-tool-btn ${quantizeEnabled ? "active" : ""}`}
-            onClick={handleQuantizeToggle}
-          >
-            QUANTIZE
-          </button>
-          <button
-            className="arch-deck-tool-btn"
-            disabled={!loadedTrack}
-            onClick={() => {
-              if (!loadedTrack) return;
-              audioEngine.stop();
-              audioEngine.load(getAudioUrl(loadedTrack.audio_path));
-            }}
-          >
-            RELOAD
-          </button>
-        </div>
-
         {/* Waveform row — VU left, waveform + spectrum right */}
         <div className="arch-waveform-row" aria-hidden="true">
-          <canvas ref={vuRef} className="arch-vu-deck" width={40} height={108} />
+          <canvas
+            ref={vuRef}
+            className="arch-vu-deck"
+            width={220}
+            height={140}
+          />
           <div className="arch-waveform-col">
             <div className="arch-waveform-main">
-              {!loadedTrack ? (
-                <div className="arch-deck-empty-state">SELECT A TRACK TO BEGIN</div>
-              ) : !loadedTrack.waveform_data ? (
-                <div className="arch-deck-empty-state">NO WAVEFORM · HIT WVF TO GENERATE</div>
+              {!deckTrack ? (
+                <div className="arch-deck-empty-state">SELECT AN OBJECT</div>
+              ) : deckIsGenerating ? (
+                <div className="arch-deck-empty-state">
+                  GENERATING WAVEFORM…
+                </div>
+              ) : !deckTrackHasWaveform ? (
+                <div className="arch-deck-empty-state">
+                  NO WAVEFORM FOR SELECTED OBJECT
+                </div>
               ) : (
                 <DeckWaveform
-                  waveformData={waveformHighData}
-                  currentTime={currentTime}
-                  duration={audioDuration}
-                  onSeek={handleSeek}
-                  trackId={loadedTrack.id}
+                  waveformData={deckWaveformHighData}
+                  currentTime={deckCanSeek ? currentTime : 0}
+                  duration={
+                    deckCanSeek ? audioDuration : deckTrack.duration || 1
+                  }
+                  onSeek={deckCanSeek ? handleSeek : null}
+                  trackId={deckTrack.id}
                   width={800}
                   height={108}
-                  hotCues={hotCues[loadedTrack.id] || {}}
+                  hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
                   zoom={waveformZoom}
                   loopRegion={loopRegion}
                 />
               )}
             </div>
-            <canvas ref={specRef} className="arch-spectrum-deck" width={800} height={48} />
+            <canvas
+              ref={specRef}
+              className="arch-spectrum-deck"
+              width={800}
+              height={64}
+            />
           </div>
         </div>
-
-        {/* Track metadata display */}
-        {loadedTrack && (
-          <div className="arch-deck-metadata">
-            <span className="arch-meta-title">
-              {loadedTrack.title || "UNTITLED"}
-            </span>
-            {loadedTrack.artist && (
-              <>
-                <span className="arch-meta-sep"> · </span>
-                <span className="arch-meta-artist">{loadedTrack.artist}</span>
-              </>
-            )}
-            {(loadedTrack.bpm_display || loadedTrack.bpm) && (
-              <>
-                <span className="arch-meta-sep"> · </span>
-                <span className="arch-meta-bpm">
-                  {loadedTrack.bpm_display || Math.round(loadedTrack.bpm)} BPM
-                </span>
-              </>
-            )}
-            {loadedTrack.uploaded_by && (
-              <>
-                <span className="arch-meta-sep"> · </span>
-                <span className="arch-meta-uploader">
-                  UPLOADED BY {loadedTrack.uploaded_by}
-                </span>
-              </>
-            )}
-          </div>
-        )}
 
         {/* Overview strip — low-res waveform */}
         <div
           className="arch-waveform-overview"
           aria-hidden="true"
-          onClick={handleNeedleDrop}
-          style={{ cursor: loadedTrack && audioDuration ? "pointer" : "default" }}
+          style={{ cursor: "default" }}
         >
-          {(() => {
-            const overviewData = loadedTrack?.waveform_data
-              ? JSON.parse(loadedTrack.waveform_data).low
-              : null;
-            if (overviewData && Array.isArray(overviewData)) {
-              return overviewData.map((d, i) => (
+          {Array.isArray(deckWaveformLowData) &&
+          deckWaveformLowData.length > 0 ? (
+            <>
+              {deckWaveformLowData.map((d, i) => (
                 <span
                   key={i}
                   className="arch-overview-bar"
@@ -1534,23 +1556,21 @@ function ArchitectConsole({
                     backgroundColor: d.freq,
                   }}
                 />
-              ));
-            }
-            // Fallback to placeholder
-            return waveformBars.map((h, i) => (
-              <span
-                key={i}
-                className="arch-overview-bar"
-                style={{ "--bar-h": `${h}%` }}
-              />
-            ));
-          })()}
-          <div
-            className="arch-playhead"
-            style={{
-              left: `${audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0}%`,
-            }}
-          />
+              ))}
+              {deckCanSeek && (
+                <div
+                  className="arch-playhead"
+                  style={{
+                    left: `${audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0}%`,
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            <div className="arch-overview-empty">
+              NO REAL WAVEFORM AVAILABLE
+            </div>
+          )}
         </div>
 
         <div
@@ -1560,27 +1580,64 @@ function ArchitectConsole({
         >
           <div className="arch-cue-markers">
             <span className="arch-cue-tag">CUE</span>
-            {["A","B","C","D"].map((bank) => (
+            {["A", "B", "C", "D"].map((bank) => (
               <button
                 key={bank}
                 className={`arch-deck-mini-btn${cueBankPoints[bank] !== null ? " is-set" : ""}`}
                 disabled={!loadedTrack}
                 onClick={() => handleCueBankClick(bank)}
-                onContextMenu={(e) => { e.preventDefault(); handleCueBankClear(bank); }}
-                title={cueBankPoints[bank] !== null ? `${bank}: ${cueBankPoints[bank].toFixed(1)}s · right-click to clear` : `Set cue ${bank}`}
-              >{bank}</button>
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  handleCueBankClear(bank);
+                }}
+                title={
+                  cueBankPoints[bank] !== null
+                    ? `${bank}: ${cueBankPoints[bank].toFixed(1)}s · right-click to clear`
+                    : `Set cue ${bank}`
+                }
+              >
+                {bank}
+              </button>
             ))}
+            <button
+              className="arch-deck-mini-btn"
+              disabled={!hasCueBankPoints && !hasHotCuesForLoadedTrack}
+              onClick={handleClearAllCues}
+              title="Clear all cue markers and hot cues for loaded track"
+            >
+              CLEAR CUES
+            </button>
           </div>
           <div className="arch-loop-region">
             <span className="arch-cue-tag">LOOP REGION</span>
-            <button className="arch-deck-mini-btn" disabled={!loadedTrack} onClick={handleSetLoopStart}>SET START</button>
-            <button className="arch-deck-mini-btn" disabled={!loadedTrack || loopRegion.start === null} onClick={handleSetLoopEnd}>SET END</button>
-            <button className="arch-deck-mini-btn" disabled={loopRegion.start === null} onClick={handleClearLoop}>CLEAR</button>
+            <span className="arch-loop-readout">
+              {loopRegion.start !== null && loopRegion.end !== null
+                ? `${loopRegion.start.toFixed(1)}s → ${loopRegion.end.toFixed(1)}s`
+                : "NONE"}
+            </span>
+            <button
+              className="arch-deck-mini-btn"
+              disabled={loopRegion.start === null}
+              onClick={handleClearLoop}
+            >
+              CLEAR
+            </button>
           </div>
           <div className="arch-needle-zoom">
-            <button className="arch-deck-mini-btn" disabled={!loadedTrack || !audioDuration} onClick={() => audioEngine.seek(audioDuration / 2)}>NEEDLE DROP</button>
-            <button className="arch-deck-mini-btn" disabled={waveformZoom <= 1} onClick={handleZoomOut}>ZOOM -</button>
-            <button className="arch-deck-mini-btn" disabled={waveformZoom >= 8} onClick={handleZoomIn}>ZOOM +</button>
+            <button
+              className="arch-deck-mini-btn"
+              disabled={waveformZoom <= 1}
+              onClick={handleZoomOut}
+            >
+              ZOOM -
+            </button>
+            <button
+              className="arch-deck-mini-btn"
+              disabled={waveformZoom >= 8}
+              onClick={handleZoomIn}
+            >
+              ZOOM +
+            </button>
           </div>
         </div>
       </section>
@@ -1642,9 +1699,14 @@ function ArchitectConsole({
               <button
                 key={n}
                 className={`arch-hotcue${isB2 ? " arch-hotcue--b2" : ""}${cue ? " has-cue" : ""}`}
-                aria-label={cue ? `Hot cue ${n} — double-click to clear` : `Hot cue ${n}`}
+                aria-label={
+                  cue ? `Hot cue ${n} — double-click to clear` : `Hot cue ${n}`
+                }
                 onClick={() => handleHotCueClick(n)}
-                onDoubleClick={(e) => { e.stopPropagation(); clearHotCue(n, e); }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  clearHotCue(n, e);
+                }}
                 style={{ "--cue-color": color }}
               >
                 {n}
@@ -1658,45 +1720,58 @@ function ArchitectConsole({
           role="group"
           aria-label="Loop controls"
         >
-          <button className="arch-loop-btn" disabled={!loadedTrack} onClick={() => handleAutoLoop(8)}>AUTO 8</button>
-          <button className="arch-loop-btn" disabled={loopRegion.start === null || loopRegion.end === null} onClick={handleLoopHalve}>½</button>
-          <button className={`arch-loop-btn arch-loop-in${loopRegion.start !== null ? " is-set" : ""}`} disabled={!loadedTrack} onClick={handleSetLoopStart}>IN</button>
-          <button className={`arch-loop-btn arch-loop-out${loopRegion.end !== null ? " is-set" : ""}`} disabled={loopRegion.start === null} onClick={handleSetLoopEnd}>OUT</button>
-          <button className="arch-loop-btn" disabled={loopRegion.start === null || loopRegion.end === null} onClick={handleLoopDouble}>×2</button>
-          <button className={`arch-loop-btn${loopRegion.start !== null && loopRegion.end !== null ? " is-set" : ""}`} disabled={loopRegion.start === null || loopRegion.end === null} onClick={handleReloop}>RELOOP</button>
+          <div className="arch-loop-menu-wrap" ref={loopMenuRef}>
+            <button
+              className="arch-loop-btn arch-loop-trigger"
+              disabled={!loadedTrack}
+              onClick={() => setShowLoopMenu((prev) => !prev)}
+            >
+              LOOP{" "}
+              {LOOP_LENGTH_OPTIONS.find((o) => o.id === selectedLoopLengthId)
+                ?.label || "1/4"}
+            </button>
+            {showLoopMenu && (
+              <div
+                className="arch-loop-menu"
+                role="menu"
+                aria-label="Loop length"
+              >
+                {LOOP_LENGTH_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`arch-loop-menu-item ${selectedLoopLengthId === option.id ? "active" : ""}`}
+                    onClick={() => handleApplyLoopLength(option)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            className="arch-loop-btn"
+            disabled={loopRegion.start === null}
+            onClick={handleClearLoop}
+          >
+            CLEAR
+          </button>
         </div>
 
         <div className="arch-transport-spacer" />
-
-        <div
-          className="arch-transport-cluster"
-          role="group"
-          aria-label="Performance modes"
-        >
-          <button
-            className={`arch-mode-btn ${activePerfMode === "hotcue" ? "active" : ""}`}
-            onClick={() => setActivePerfMode("hotcue")}
-          >
-            HOT CUE
-          </button>
-          <button
-            className={`arch-mode-btn ${activePerfMode === "loop" ? "active" : ""}`}
-            onClick={() => setActivePerfMode("loop")}
-          >
-            LOOP
-          </button>
-        </div>
       </div>
 
       <div className="arch-monitor-strip" role="group" aria-label="Monitoring">
-        <div className="arch-monitor-eq">
-          <button className="arch-monitor-btn" disabled>EQ HI</button>
-          <button className="arch-monitor-btn" disabled>EQ MID</button>
-          <button className="arch-monitor-btn" disabled>EQ LOW</button>
-          <button className="arch-monitor-btn" disabled>FILTER</button>
-          <button className="arch-monitor-btn" disabled>GAIN</button>
-          <button className="arch-monitor-btn" disabled>MASTER</button>
-          <button className="arch-monitor-btn" disabled>HEADPHONE</button>
+        <div className="arch-monitor-eq" aria-label="Mix stats">
+          <span className="arch-monitor-btn">
+            LOUDNESS {mixLoudness ?? "N/A"}
+          </span>
+          <span className="arch-monitor-btn">PEAK {mixPeak ?? "N/A"}</span>
+          <span className="arch-monitor-btn">RANGE {mixRange ?? "N/A"}</span>
+          <span className="arch-monitor-btn">
+            BPM{" "}
+            {deckTrack?.bpm_display ||
+              (deckTrack?.bpm ? Math.round(deckTrack.bpm) : "N/A")}
+          </span>
         </div>
         <div className="arch-monitor-vol" role="group" aria-label="Volume">
           <span className="arch-monitor-label">VOL</span>
@@ -1718,6 +1793,30 @@ function ArchitectConsole({
       <div className="arch-lower-zone">
         {/* ARCHITECT RAIL — sovereign controls */}
         <aside className="arch-rail" aria-label="Architect controls">
+          <div className="arch-ops-stack">
+            <div className="arch-ops-box" aria-label="Direct line">
+              <div className="arch-rail-section-label">DIRECT LINE</div>
+              <div className="arch-ops-body">
+                <DirectLinePanel
+                  viewer={viewer}
+                  variant={viewer === "D" ? "d-mode" : "architect"}
+                />
+              </div>
+            </div>
+            <div className="arch-ops-box" aria-label="Settings">
+              <div className="arch-rail-section-label">SETUP</div>
+              <button
+                className={`arch-rail-toggle arch-ops-toggle ${showSettings ? "active" : ""}`}
+                onClick={toggleSettings}
+                aria-expanded={showSettings}
+              >
+                <span className="arch-rail-icon">◌</span>
+                SYSTEM SETTINGS
+              </button>
+            </div>
+          </div>
+
+          <div className="arch-rail-divider" />
           <div className="arch-rail-section-label">SOVEREIGN</div>
 
           <button
@@ -1759,7 +1858,7 @@ function ArchitectConsole({
             aria-expanded={showInbox}
           >
             <span className="arch-rail-icon">◈</span>
-            VETTING QUEUE
+            VETTING INBOX
             {unreadCountL > 0 && (
               <span className="arch-badge">{unreadCountL}</span>
             )}
@@ -1783,16 +1882,12 @@ function ArchitectConsole({
           <div className="arch-rail-divider" />
           <div className="arch-rail-section-label">COMMAND</div>
 
-          <button
-            className="arch-rail-cmd"
-            disabled={!activeVault}
-            onClick={handleExplore}
-          >
-            OPEN {activeVault ? `→ ${vaultLabel(activeVault)}` : "VAULT"}
+          <button className="arch-rail-cmd" onClick={handleExplore}>
+            OPEN {commandVaultId ? `→ ${vaultLabel(commandVaultId)}` : "VAULT"}
           </button>
           <button
             className="arch-rail-cmd arch-rail-void"
-            disabled={!activeVault}
+            disabled={!commandVaultId}
             onClick={handleVoidProtocol}
           >
             VOID PROTOCOL
@@ -1813,7 +1908,9 @@ function ArchitectConsole({
               aria-hidden="true"
             />
             {VAULT_ROUTES.map((v, i) => {
-              const count = (vaultTracksState?.[v.id] || []).filter(t => !t.is_voided).length;
+              const count = (vaultTracksState?.[v.id] || []).filter(
+                (t) => !t.is_voided,
+              ).length;
               return (
                 <button
                   key={v.id}
@@ -1823,8 +1920,9 @@ function ArchitectConsole({
                   style={{ "--vault-color": v.color }}
                   aria-selected={activeLibVault === v.id}
                   onClick={() => {
-                    onExplorePlanet?.({ id: v.id });
-                    announce(`Opening ${v.label}.`);
+                    setActiveLibVault(v.id);
+                    setActiveVault(v.id);
+                    announce(`Vault folder ${v.label}.`);
                   }}
                   onMouseEnter={() => hoverGlider(i)}
                   onMouseLeave={() =>
@@ -1848,12 +1946,13 @@ function ArchitectConsole({
             role="toolbar"
             aria-label="Library controls"
           >
-            <div className="arch-browser-group">
-              <button className="arch-browser-btn" disabled>BACK</button>
-              <button className="arch-browser-btn" disabled>FWD</button>
-              <button className="arch-browser-btn" disabled>FILES</button>
-              <button className="arch-browser-btn active" disabled>CRATES</button>
-            </div>
+            <button
+              className="arch-browser-btn arch-intake-btn"
+              onClick={() => onIntake?.()}
+              aria-label="Upload files and objects to vault"
+            >
+              INTAKE
+            </button>
             <div className="arch-browser-group">
               <button
                 className={`arch-browser-btn ${sortMode === "bpm" ? "active" : ""}`}
@@ -1869,13 +1968,17 @@ function ArchitectConsole({
               </button>
               <button
                 className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
-                onClick={() => setPublishFilter((p) => p === "staged" ? "all" : "staged")}
+                onClick={() =>
+                  setPublishFilter((p) => (p === "staged" ? "all" : "staged"))
+                }
               >
                 STAGED
               </button>
               <button
                 className={`arch-browser-btn ${publishFilter === "live" ? "active" : ""}`}
-                onClick={() => setPublishFilter((p) => p === "live" ? "all" : "live")}
+                onClick={() =>
+                  setPublishFilter((p) => (p === "live" ? "all" : "live"))
+                }
               >
                 LIVE
               </button>
@@ -1885,7 +1988,8 @@ function ArchitectConsole({
                 disabled={!selectionHasStaged}
                 title="Publish selected tracks to listener vault"
               >
-                PUBLISH {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
+                PUBLISH{" "}
+                {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
               </button>
               <button
                 className="arch-browser-btn arch-retract-btn"
@@ -1893,7 +1997,8 @@ function ArchitectConsole({
                 disabled={!selectionHasLive}
                 title="Retract selected tracks from listener vault"
               >
-                RETRACT {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
+                RETRACT{" "}
+                {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
               </button>
               <button
                 className={`arch-browser-btn ${smartCrates ? "active" : ""}`}
@@ -1946,7 +2051,11 @@ function ArchitectConsole({
           {/* Track list — phosphor scan animation (Animation 1) */}
           <div className="arch-track-list" role="table" aria-label="Track list">
             <div className="arch-track-list-head" role="row">
-              <span role="columnheader" className="arch-track-col-check" aria-label="Select" />
+              <span
+                role="columnheader"
+                className="arch-track-col-check"
+                aria-label="Select"
+              />
               <span role="columnheader">TITLE</span>
               <span role="columnheader">ARTIST</span>
               <span role="columnheader">BPM</span>
@@ -2006,26 +2115,56 @@ function ArchitectConsole({
                       key={t.id}
                       className={`arch-track-row arch-track-row-${trackColorRows ? t.vault || "generic" : "generic"} ${selectedTrackId === t.id ? "selected" : ""} ${loadedDeckId === t.id ? "loaded" : ""} ${selectedTrackIds.has(t.id) ? "checked" : ""} ${isLive ? "arch-track-live" : "arch-track-staged"}`}
                       role="row"
+                      tabIndex={0}
+                      aria-selected={selectedTrackId === t.id}
                       style={{ "--row-i": i }}
                       onClick={() => handleTrackSelect(t)}
                       onDoubleClick={() => handleTrackDoubleClick(t)}
+                      onKeyDown={(event) => handleTrackRowKeyDown(event, t)}
                     >
-                      <span className="arch-track-col-check" role="cell" onClick={(e) => handleToggleTrackSelection(e, t.id)}>
-                        <span className={`arch-track-checkbox ${selectedTrackIds.has(t.id) ? "is-checked" : ""}`} aria-label={selectedTrackIds.has(t.id) ? "Deselect" : "Select"} />
+                      <span
+                        className="arch-track-col-check"
+                        role="cell"
+                        onClick={(e) => handleToggleTrackSelection(e, t.id)}
+                      >
+                        <span
+                          className={`arch-track-checkbox ${selectedTrackIds.has(t.id) ? "is-checked" : ""}`}
+                          role="checkbox"
+                          tabIndex={0}
+                          aria-checked={selectedTrackIds.has(t.id)}
+                          aria-label={
+                            selectedTrackIds.has(t.id) ? "Deselect" : "Select"
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              handleToggleTrackSelection(event, t.id);
+                            }
+                          }}
+                        />
                       </span>
                       <span className="arch-track-title" role="cell">
                         {isEditing ? (
                           <input
                             className="arch-track-edit-input"
                             value={editingValues.title ?? ""}
-                            onChange={(e) => setEditingValues((v) => ({ ...v, title: e.target.value }))}
+                            onChange={(e) =>
+                              setEditingValues((v) => ({
+                                ...v,
+                                title: e.target.value,
+                              }))
+                            }
                             onKeyDown={(e) => handleEditKeyDown(e, t.id)}
                             onBlur={() => handleEditSave(t.id)}
                             autoFocus
                             onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
-                          <span onDoubleClick={(e) => handleEditStart(e, t)} title="Double-click to rename">{t.title || "—"}</span>
+                          <span
+                            onDoubleClick={(e) => handleEditStart(e, t)}
+                            title="Double-click to rename"
+                          >
+                            {t.title || "—"}
+                          </span>
                         )}
                       </span>
                       <span className="arch-track-artist" role="cell">
@@ -2033,17 +2172,25 @@ function ArchitectConsole({
                           <input
                             className="arch-track-edit-input"
                             value={editingValues.artist ?? ""}
-                            onChange={(e) => setEditingValues((v) => ({ ...v, artist: e.target.value }))}
+                            onChange={(e) =>
+                              setEditingValues((v) => ({
+                                ...v,
+                                artist: e.target.value,
+                              }))
+                            }
                             onKeyDown={(e) => handleEditKeyDown(e, t.id)}
                             onBlur={() => handleEditSave(t.id)}
                             onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
-                          <span onDoubleClick={(e) => handleEditStart(e, t)}>{t.artist || "—"}</span>
+                          <span onDoubleClick={(e) => handleEditStart(e, t)}>
+                            {t.artist || "—"}
+                          </span>
                         )}
                       </span>
                       <span className="arch-track-bpm" role="cell">
-                        {t.bpm_display || (t.bpm ? Math.round(Number(t.bpm)) : "—")}
+                        {t.bpm_display ||
+                          (t.bpm ? Math.round(Number(t.bpm)) : "—")}
                       </span>
                       <span className="arch-track-key" role="cell">
                         {t.musical_key || "—"}
@@ -2064,7 +2211,9 @@ function ArchitectConsole({
                         {trackPlayCounts[t.id] || 0}
                       </span>
                       <span className="arch-track-state" role="cell">
-                        <i className={`arch-state-dot arch-pub-dot ${isLive ? "is-live" : "is-staged"}`} />
+                        <i
+                          className={`arch-state-dot arch-pub-dot ${isLive ? "is-live" : "is-staged"}`}
+                        />
                         {isLive ? "LIVE" : "STAGED"}
                       </span>
                       <span className="arch-track-preview" role="cell">
@@ -2470,12 +2619,8 @@ function ArchitectConsole({
           <AdminSettings
             onClose={toggleSettings}
             members={members}
-            waveformDetail={waveformDetail}
-            setWaveformDetail={setWaveformDetail}
             trackColorRows={trackColorRows}
             setTrackColorRows={setTrackColorRows}
-            quantizeEnabled={quantizeEnabled}
-            handleQuantizeToggle={handleQuantizeToggle}
             autoLoopDefault={autoLoopDefault}
             setAutoLoopDefault={setAutoLoopDefault}
             smartCrates={smartCrates}
@@ -2510,17 +2655,6 @@ function ArchitectConsole({
               <section className="arch-settings-section">
                 <h4 className="arch-settings-title">DISPLAY</h4>
                 <div className="arch-settings-row">
-                  <span>Waveform Detail</span>
-                  <button
-                    className={`arch-settings-toggle ${waveformDetail === "high" ? "active" : ""}`}
-                    onClick={() =>
-                      setWaveformDetail((p) => (p === "high" ? "low" : "high"))
-                    }
-                  >
-                    {waveformDetail.toUpperCase()}
-                  </button>
-                </div>
-                <div className="arch-settings-row">
                   <span>Track Color Rows</span>
                   <button
                     className={`arch-settings-toggle ${trackColorRows ? "active" : ""}`}
@@ -2532,15 +2666,6 @@ function ArchitectConsole({
               </section>
               <section className="arch-settings-section">
                 <h4 className="arch-settings-title">PLAYBACK</h4>
-                <div className="arch-settings-row">
-                  <span>Quantize Default</span>
-                  <button
-                    className={`arch-settings-toggle ${quantizeEnabled ? "active" : ""}`}
-                    onClick={handleQuantizeToggle}
-                  >
-                    {quantizeEnabled ? "ON" : "OFF"}
-                  </button>
-                </div>
                 <div className="arch-settings-row">
                   <span>Auto Loop Default</span>
                   <button
@@ -2594,14 +2719,6 @@ function ArchitectConsole({
         {showInbox && (
           <div id="arch-inbox-panel">
             <InboxPanel viewer={viewer} onClose={() => setShowInbox(false)} />
-          </div>
-        )}
-        {showComments && (
-          <div id="arch-comments-panel">
-            <CommentPanel
-              viewer={viewer}
-              onClose={() => setShowComments(false)}
-            />
           </div>
         )}
       </AnimatePresence>
@@ -2769,14 +2886,20 @@ function ArchitectConsole({
               aria-describedby="arch-power-msg"
             >
               <div id="arch-power-title" className="arch-confirm-title">
-                POWER DOWN ARCHITECT TERMINAL?
+                EXIT OPTIONS
               </div>
               <div id="arch-power-msg" className="arch-confirm-msg">
-                Return to Gate. Sovereign lock will hold.
+                Choose a destination for this session.
               </div>
               <div className="arch-confirm-btns">
+                <button
+                  className="arch-confirm-no"
+                  onClick={handleExitToVaultView}
+                >
+                  VAULT VIEW
+                </button>
                 <button className="arch-confirm-yes" onClick={confirmPowerDown}>
-                  CONFIRM
+                  EXIT SYSTEM
                 </button>
                 <button
                   className="arch-confirm-no"
