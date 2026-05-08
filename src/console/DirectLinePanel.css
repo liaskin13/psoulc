@@ -2,7 +2,9 @@
 .direct-line-panel {
   --dl-accent-rgb: var(--arch-identity-rgb, 0, 229, 255);
   --dl-muted-rgb: var(--arch-muted-rgb, 180, 200, 210);
-  --dl-fg-rgb: 240, 237, 232;
+  --dl-fg-rgb: var(--arch-fg-rgb, 240, 237, 232);
+  --dl-surface-panel: var(--arch-surface-panel, #050b10);
+  --dl-surface-alt: var(--arch-surface-alt, #080808);
 }
 
 .direct-line-trigger {
@@ -22,8 +24,8 @@
 }
 
 .direct-line-trigger.d-mode {
-  border-color: rgba(240, 237, 232, 0.18);
-  color: rgba(240, 237, 232, 0.85);
+  border-color: rgba(var(--dl-fg-rgb), 0.18);
+  color: rgba(var(--dl-fg-rgb), 0.85);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 10px rgba(255, 255, 255, 0.06);
 }
@@ -50,16 +52,16 @@
   width: min(560px, 92vw);
   max-height: min(82vh, 760px);
   border: 1px solid rgba(var(--dl-accent-rgb), 0.24);
-  background: #050b10;
+  background: var(--dl-surface-panel);
   display: grid;
   grid-template-rows: auto 1fr auto;
 }
 
 .direct-line-panel.d-mode {
-  border-color: rgba(240, 237, 232, 0.15);
+  border-color: rgba(var(--dl-fg-rgb), 0.15);
   background:
     radial-gradient(circle at 50% -30%, rgba(255, 255, 255, 0.05) 0%, transparent 55%),
-    #080808;
+    var(--dl-surface-alt);
   box-shadow: 0 0 28px rgba(0, 0, 0, 0.5);
 }
 
@@ -72,7 +74,7 @@
 }
 
 .direct-line-panel.d-mode .direct-line-head {
-  border-bottom-color: rgba(240, 237, 232, 0.10);
+  border-bottom-color: rgba(var(--dl-fg-rgb), 0.10);
 }
 
 .direct-line-title {
@@ -83,7 +85,7 @@
 }
 
 .direct-line-panel.d-mode .direct-line-title {
-  color: rgba(240, 237, 232, 0.92);
+  color: rgba(var(--dl-fg-rgb), 0.92);
   text-shadow: none;
 }
 
@@ -138,7 +140,7 @@
 }
 
 .direct-line-panel.d-mode .direct-line-meta {
-  color: rgba(240, 237, 232, 0.55);
+  color: rgba(var(--dl-fg-rgb), 0.55);
 }
 
 .direct-line-body {
@@ -214,8 +216,8 @@
 
 .direct-line-panel.d-mode .direct-line-rec,
 .direct-line-panel.d-mode .direct-line-clear-voice {
-  border-color: rgba(240, 237, 232, 0.2);
-  color: rgba(240, 237, 232, 0.82);
+  border-color: rgba(var(--dl-fg-rgb), 0.2);
+  color: rgba(var(--dl-fg-rgb), 0.82);
 }
 
 .direct-line-audio {
@@ -229,12 +231,13 @@
 }
 
 .direct-line-panel.d-mode .direct-line-send {
-  border-color: rgba(240, 237, 232, 0.28);
-  color: rgba(240, 237, 232, 0.85);
+  border-color: rgba(var(--dl-fg-rgb), 0.28);
+  color: rgba(var(--dl-fg-rgb), 0.85);
   box-shadow: none;
 }
 
 @media (pointer: coarse) {
+
   .direct-line-trigger,
   .direct-line-close,
   .direct-line-send,

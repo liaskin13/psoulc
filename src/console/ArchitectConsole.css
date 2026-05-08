@@ -14,6 +14,10 @@
   --arch-neutral: rgb(210, 220, 225);
   --arch-muted: rgba(165, 175, 180, 0.5);
   --arch-muted-rgb: 165, 175, 180;
+  --arch-fg-rgb: 240, 237, 232;
+  --arch-cool-muted-rgb: 160, 180, 190;
+  --arch-surface-panel: #050b10;
+  --arch-surface-alt: #080808;
   --arch-error: rgba(220, 80, 80, 0.7);
   --arch-error-solid: #dc5050;
   position: fixed;
@@ -284,7 +288,7 @@
 .arch-rail-btn {
   background: linear-gradient(180deg, #1c1c1c 0%, #111 100%);
   border: 1px solid #2a2a2a;
-  border-bottom-color: #080808;
+  border-bottom-color: var(--arch-surface-alt);
   box-shadow:
     0 2px 0 #000,
     0 4px 8px rgba(0, 0, 0, 0.7),
@@ -1121,7 +1125,7 @@
 .arch-loop-btn {
   background: linear-gradient(180deg, #353535 0%, #171717 100%);
   border: 1px solid #5a5a5a;
-  border-bottom-color: #080808;
+  border-bottom-color: var(--arch-surface-alt);
   box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.045);
   color: rgba(240, 237, 232, 0.98);
   padding: 6px 10px;
@@ -1512,7 +1516,7 @@
   display: flex;
   align-items: stretch;
   border-bottom: 1px solid #111;
-  background: #080808;
+  background: var(--arch-surface-alt);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -2012,6 +2016,7 @@
 }
 
 @media (pointer: coarse) {
+
   .arch-signal-btn,
   .arch-exit-btn,
   .arch-rail-toggle,
@@ -2039,6 +2044,7 @@
 }
 
 @media (max-width: 1280px) {
+
   .arch-track-list-head,
   .arch-track-row {
     grid-template-columns: 24px 2fr 1.3fr 0.6fr 0.6fr 0.8fr 0.9fr 0.9fr;
@@ -2047,14 +2053,15 @@
   .arch-track-list-head span:nth-child(7),
   .arch-track-list-head span:nth-child(8),
   .arch-track-list-head span:nth-child(10),
-  .arch-track-row > span:nth-child(7),
-  .arch-track-row > span:nth-child(8),
-  .arch-track-row > span:nth-child(10) {
+  .arch-track-row>span:nth-child(7),
+  .arch-track-row>span:nth-child(8),
+  .arch-track-row>span:nth-child(10) {
     display: none;
   }
 }
 
 @media (max-width: 1024px) {
+
   .arch-track-list-head,
   .arch-track-row {
     grid-template-columns: 24px 2.2fr 1.4fr 0.6fr 0.9fr 1fr;
@@ -2062,8 +2069,8 @@
 
   .arch-track-list-head span:nth-child(5),
   .arch-track-list-head span:nth-child(6),
-  .arch-track-row > span:nth-child(5),
-  .arch-track-row > span:nth-child(6) {
+  .arch-track-row>span:nth-child(5),
+  .arch-track-row>span:nth-child(6) {
     display: none;
   }
 }
@@ -2121,7 +2128,7 @@
   right: 0;
   bottom: 0;
   width: min(620px, 90vw);
-  background: #050b10;
+  background: var(--arch-surface-panel);
   border-left: 1px solid rgba(var(--arch-accent-rgb), 0.18);
   display: flex;
   flex-direction: column;
@@ -2205,7 +2212,7 @@
 .arch-data-table thead {
   position: sticky;
   top: 0;
-  background: #050b10;
+  background: var(--arch-surface-panel);
   z-index: 1;
 }
 
@@ -2270,7 +2277,7 @@
 }
 
 .arch-cell-date {
-  color: rgba(160, 180, 190, 0.3);
+  color: rgba(var(--arch-cool-muted-rgb), 0.3);
   font-size: 0.6rem;
   white-space: nowrap;
 }
@@ -2546,7 +2553,7 @@
   right: 0;
   bottom: 0;
   width: min(520px, 90vw);
-  background: #050b10;
+  background: var(--arch-surface-panel);
   border-left: 1px solid rgba(var(--arch-accent-rgb), 0.18);
   display: flex;
   flex-direction: column;
@@ -2607,7 +2614,7 @@
 .arch-entry-time {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.56rem;
-  color: rgba(160, 180, 190, 0.3);
+  color: rgba(var(--arch-cool-muted-rgb), 0.3);
 }
 
 .arch-restore-btn {
@@ -2684,7 +2691,7 @@
 }
 
 .arch-confirm-dialog {
-  background: #050b10;
+  background: var(--arch-surface-panel);
   border: 1px solid rgba(var(--arch-accent-rgb), 0.22);
   padding: 40px 48px;
   min-width: 340px;
