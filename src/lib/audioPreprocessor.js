@@ -2,8 +2,8 @@
 // Analyzes audio file client-side to avoid post-upload download lag
 
 const FREQ_BANDS = {
-  low:  { color: "#1464dc" }, // bass — blue
-  mid:  { color: "#14dc14" }, // mids — green
+  low: { color: "#1464dc" }, // bass — blue
+  mid: { color: "#14dc14" }, // mids — green
   high: { color: "#e56020" }, // treble — orange
 };
 
@@ -22,8 +22,8 @@ function getFreqColor(samples) {
   energy = Math.sqrt(energy / samples.length);
   if (energy < 0.001) return FREQ_BANDS.mid.color;
   const normRoughness = Math.sqrt(roughness / (samples.length - 1)) / energy;
-  if (normRoughness < 0.6)  return FREQ_BANDS.low.color;
-  if (normRoughness > 1.4)  return FREQ_BANDS.high.color;
+  if (normRoughness < 0.6) return FREQ_BANDS.low.color;
+  if (normRoughness > 1.4) return FREQ_BANDS.high.color;
   return FREQ_BANDS.mid.color;
 }
 
@@ -38,14 +38,19 @@ export async function preprocessAudio(file, onProgress = null) {
 
   const arrayBuffer = await file.arrayBuffer();
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  audioContext.close();
+  // We REMOVE 'await' here so the code keeps moving to the upload!
+  audioContext
+    .decodeAudioData(arrayBuffer)
+    .then((buffer) => {
+      console.log("Background analysis complete.");
+    })
+    .catch((err) => console.error("Waveform glitch:", err));
 
   if (onProgress) onProgress(60);
 
   const waveformData = {
     high: generateWaveformData(audioBuffer, 1000),
-    low:  generateWaveformData(audioBuffer, 80),
+    low: generateWaveformData(audioBuffer, 80),
   };
 
   if (onProgress) onProgress(100);
@@ -80,7 +85,7 @@ export async function reanalyzeFromUrl(url, onProgress = null) {
 
   const waveformData = {
     high: generateWaveformData(audioBuffer, 1000),
-    low:  generateWaveformData(audioBuffer, 80),
+    low: generateWaveformData(audioBuffer, 80),
   };
 
   if (onProgress) onProgress(100);

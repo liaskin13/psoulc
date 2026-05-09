@@ -1,0 +1,22 @@
+# Query: decodeAudioData
+# ContextLines: 1
+
+4 results - 3 files
+
+public/three.min.js:
+  5   */
+  6: ⟪ 307796 characters skipped ⟫(t)}n.setResponseType("arraybuffer"),n.setPath(this.path),n.setRequestHeader(this.requestHeader),n.setWithCredentials(this.withCredentials),n.load(t,function(t){try{const i=t.slice(0);wu.getContext().decodeAudioData(i,function(t){e(t)}).catch(a)}catch(t){a(t)}},i,s)}}const Su=new $s,_u=new $s,Au=new $s;class Tu{constructor(){this.type="StereoCamera",this.aspect=1,this.eyeSep=.064,this.cameraL=new Qc,this.cameraL.layers.enable(1),this.cameraL.matrixAutoUpdate=!1,this.cameraR=new Qc,this.cameraR.layers.enable(2),this.cameraR.matrixAutoUpdate=!1,this._cache={focus:null,fov:null,aspect:null,near:null,far:null,zoom:null,eyeSep:null}}update(t){const e=this._cache;if(e.focus!==t.focus||e.fov!==t.fov||e.aspect!==t.aspect*this.aspect||e.near!==t.near||e.far!==t.far||e.zoom!==t.zoom||e.eyeSep!==this.eyeSep){e.focus=t.focus,e.fov=t.fov,e.aspect=t.aspect*this.aspect,e.near=t.near,e.far=t.far,e.zoom=t.zoom,e.eyeSep=this.eyeSep,Au.copy(t.projectionMatrix);const i=e.eyeSep/2,s=i*e.near/e.focus,r=e.near*Math.tan(ms*e.fov*.5)/e.zoom;let n,a;_u.elements[12]=-i,Su.elements[12]=i,n=-r*e.aspect+s,a=r*e.aspect+s,Au.elements[0]=2*e.near/(a-n),Au.elements[8]=(a+n)/(a-n),this.cameraL.projectionMatrix.copy(
+
+src/lib/audioPreprocessor.js:
+  40    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  41:   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  42    audioContext.close();
+
+  75    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  76:   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  77    audioContext.close();
+
+src/lib/waveformAnalyzer.js:
+  54    try {
+  55:     return await audioContext.decodeAudioData(arrayBuffer);
+  56    } finally {
