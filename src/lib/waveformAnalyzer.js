@@ -52,7 +52,16 @@ function createDecodeAudioContext() {
 async function decodeAudioBuffer(arrayBuffer) {
   const audioContext = createDecodeAudioContext();
   try {
-    return await audioContext.decodeAudioData(arrayBuffer);
+    console.log(
+      "PSC Waveform: Attempting to decode...",
+      arrayBuffer?.byteLength,
+    );
+    const decodedData = await audioContext.decodeAudioData(arrayBuffer);
+    console.log("PSC Waveform: Decode successful");
+    return decodedData;
+  } catch (err) {
+    console.error("PSC Waveform: Decode failed", err);
+    return null;
   } finally {
     if (typeof audioContext.close === "function") {
       try {
