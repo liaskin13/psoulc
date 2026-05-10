@@ -15,7 +15,7 @@ fi
 
 # 1) Comfortaa quarantine: only allowed in four locked locations.
 allowed_paths=(
-  "src/entry/DPWallpaper.jsx"
+  "src/components/DPWallpaper.jsx"
   "src/components/RecordShelf.css"
   "src/components/PSCWordmark.css"
   "src/styles/identity.css"
