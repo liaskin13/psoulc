@@ -1,0 +1,19 @@
+# Cloudflare Worker configuration for PSC audio upload + database proxy
+name = "psc-upload-worker"
+main = "upload-worker.js"
+compatibility_date = "2024-01-01"
+
+# D1 database binding
+[[d1_databases]]
+binding = "PSC_DB"
+database_name = "psc-tracks"
+database_id = "1babb698-2162-449d-a36e-c8476f85fc91"
+
+# R2 bucket binding
+[[r2_buckets]]
+binding = "PSC_AUDIO"
+bucket_name = "psc-audio"
+
+# Environment variables
+[vars]
+# R2_PUBLIC_URL will be set as a secret
