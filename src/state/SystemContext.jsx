@@ -215,7 +215,7 @@ export function SystemProvider({ children }) {
     earth: [],
   });
 
-  // D7: Eager-load all tracks from Supabase when a session is authenticated
+  // D7: Eager-load all tracks from the library API when a session is authenticated
   useEffect(() => {
     if (!consoleOwner) return;
     fetchAllTracks().then((data) => {
@@ -580,7 +580,7 @@ export function SystemProvider({ children }) {
     return tuneOverrides?.[vaultId]?.[itemId] || null;
   };
 
-  // A3: Load vault tracks from Supabase
+  // A3: Load vault tracks from worker-backed library API
   const loadVaultTracks = useCallback(async (vault) => {
     const data = await fetchVaultTracks(vault);
     setTracks((prev) => ({ ...prev, [vault]: data }));

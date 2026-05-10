@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 
 // SpectralStack — The Helix
 // Renders tracks from the active vault as stacked achromatic sine-wave layers.
-// Waveforms are synthesized from BPM + index — no extra Supabase columns needed.
+// Waveforms are synthesized from BPM + index so transport visuals stay deterministic.
 // Lives behind the hero + tracklist in the MONITOR column (z-index: 1).
 
 const FALLBACK_BPMS = [88, 93, 104];
@@ -68,7 +68,9 @@ export default function SpectralStack({ tracks = [] }) {
       rafRef.current = requestAnimationFrame(draw);
     }
 
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (!prefersReduced) {
       rafRef.current = requestAnimationFrame(draw);
     } else {

@@ -1,65 +1,130 @@
-import { supabase } from './supabase';
+import { UPLOAD_WORKER_URL, UPLOAD_SECRET, R2_PUBLIC_URL } from "../config";
 
-// Fetch all active (non-voided) tracks for a given vault
-export async function fetchVaultTracks(vault) {
-  const { data, error } = await supabase
-    .from('tracks')
-    .select('*')
-    .eq('vault', vault)
-    .eq('is_voided', false)
-    .order('created_at', { ascending: false });
+const IS_DEV = UPLOAD_WORKER_URL.includes("localhost");
+const TRACKS_STORAGE_KEY = "psc_dev_tracks";
 
-  if (error) {
-    console.error('[PSC] fetchVaultTracks error:', error.message);
+function loadFromStorage() {
+  try {
+    return JSON.parse(localStorage.getItem(TRACKS_STORAGE_KEY) || "[]");
+  } catch {
     return [];
   }
-  return data;
 }
 
-// Upload an audio file + insert track record
-// metadata: { vault, title, artist?, bpm?, frequency_hz?, uploaded_by }
-export async function uploadTrack(file, metadata) {
-  const ext = file.name.split('.').pop();
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const path = `${metadata.vault}/${filename}`;
-
-  const { error: storageError } = await supabase.storage
-    .from('audio')
-    .upload(path, file, { contentType: file.type });
-
-  if (storageError) throw new Error(storageError.message);
-
-  const { data, error } = await supabase
-    .from('tracks')
-    .insert({
-      vault:        metadata.vault,
-      title:        metadata.title,
-      artist:       metadata.artist || null,
-      bpm:          metadata.bpm   || null,
-      frequency_hz: metadata.frequency_hz || null,
-      audio_path:   path,
-      uploaded_by:  metadata.uploaded_by,
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error(error.message);
-  return data;
+function saveToStorage(tracks) {
+  try {
+    localStorage.setItem(TRACKS_STORAGE_KEY, JSON.stringify(tracks));
+  } catch (e) {
+    console.warn("[PSC] localStorage save failed:", e);
+  }
 }
 
-// Mark a track as voided (non-destructive — stays in DB)
-export async function voidTrack(id) {
-  const { error } = await supabase
-    .from('tracks')
-    .update({ is_voided: true })
-    .eq('id', id);
-
-  if (error) throw new Error(error.message);
+async function workerGet(path) {
+  const res = await fetch(`${UPLOAD_WORKER_URL}${path}`, {
+    headers: UPLOAD_SECRET ? { "PSC-Secret": UPLOAD_SECRET } : {},
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `HTTP ${res.status}`);
+  }
+  return res.json();
 }
 
-// Get the public URL for a stored audio file (synchronous)
+export async function fetchVaultTracks(vault) {
+  if (IS_DEV) {
+    return loadFromStorage().filter((t) => t.vault === vault && !t.is_voided);
+  }
+  const results = await workerGet(`/tracks/${vault}`);
+  return Array.isArray(results) ? results : [];
+}
+
+export async function fetchAllTracks() {
+  if (IS_DEV) {
+    return loadFromStorage()
+      .filter((t) => !t.is_voided)
+      .map(
+        ({
+          id,
+          vault,
+          title,
+          artist,
+          bpm,
+          musical_key,
+          duration,
+          audio_path,
+          created_at,
+        }) => ({
+          id,
+          vault,
+          title,
+          artist,
+          bpm,
+          musical_key,
+          duration,
+          audio_path,
+          created_at,
+        }),
+      );
+  }
+  const results = await workerGet("/tracks");
+  return Array.isArray(results) ? results : [];
+}
+
 export function getAudioUrl(audio_path) {
   if (!audio_path) return null;
-  const { data } = supabase.storage.from('audio').getPublicUrl(audio_path);
-  return data.publicUrl;
+  if (IS_DEV) return null;
+  if (!R2_PUBLIC_URL) return null;
+  return `${R2_PUBLIC_URL}/${audio_path}`;
+}
+
+export function countVaultTracks(vault) {
+  return loadFromStorage().filter((t) => t.vault === vault && !t.is_voided)
+    .length;
+}
+
+export async function uploadTrack(file, metadata) {
+  if (!IS_DEV) return null;
+  const allTracks = loadFromStorage();
+  const newTrack = {
+    id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    vault: metadata.vault,
+    title: metadata.title,
+    artist: metadata.artist || null,
+    bpm: metadata.bpm || null,
+    audio_path: `pending/${metadata.vault}/${file.name}`,
+    uploaded_by: metadata.uploaded_by,
+    is_voided: false,
+    created_at: new Date().toISOString(),
+  };
+  allTracks.push(newTrack);
+  saveToStorage(allTracks);
+  return newTrack;
+}
+
+export async function voidTrack(id) {
+  if (!IS_DEV) return;
+  const allTracks = loadFromStorage();
+  const track = allTracks.find((t) => t.id === id);
+  if (track) {
+    track.is_voided = true;
+    saveToStorage(allTracks);
+  }
+}
+
+export async function saveTrackHotCues(id, hotCues) {
+  const allTracks = loadFromStorage();
+  const track = allTracks.find((t) => t.id === id);
+  if (track) {
+    track.hot_cues = JSON.stringify(hotCues);
+    saveToStorage(allTracks);
+  }
+}
+
+export async function saveTrackWaveform(id, waveformData) {
+  const allTracks = loadFromStorage();
+  const track = allTracks.find((t) => t.id === id);
+  if (track) {
+    track.waveform_data = JSON.stringify(waveformData);
+    saveToStorage(allTracks);
+  }
 }
