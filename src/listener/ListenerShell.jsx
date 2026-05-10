@@ -149,6 +149,10 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
       <PSCWordmark />
 
       <header className="listener-header">
+        <div className="listener-header-id" aria-hidden="true">
+          <span className="listener-header-kicker">LISTENING ROOM</span>
+          <span className="listener-header-owner">CURATED BY D</span>
+        </div>
         <button
           className="listener-exit"
           onClick={onPowerDown}
@@ -189,7 +193,15 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
             exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
             transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
           >
-            <span className="listener-stage-kicker">VAULT</span>
+            <div className="listener-stage-meta">
+              <span className="listener-stage-kicker">VAULT</span>
+              <span
+                className="listener-stage-color"
+                style={{ "--vault-color": selectedVault.color }}
+              >
+                {selectedVault.id.toUpperCase()}
+              </span>
+            </div>
             <h1 className="listener-stage-title">{selectedVault.label}</h1>
             <div className="listener-stage-rule" aria-hidden="true" />
             <p className="listener-stage-copy">{selectedVault.copy}</p>

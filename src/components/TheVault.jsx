@@ -339,6 +339,14 @@ function TheVault({ vault, onBack, onExitSystem, onVoid, readOnly = false }) {
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
     >
       <div className="vault-header">
+        <div className="vault-header-meta">
+          <span className="vault-header-kicker">CURATED LIBRARY</span>
+          <span className="vault-header-count">
+            {loading
+              ? "SYNCING"
+              : `${displayItems.length}${searchQuery ? `/${trackItems.length}` : ""} FILES`}
+          </span>
+        </div>
         <h1 className="vault-title">{vaultLabel}</h1>
         <p className="vault-subtitle">{vaultSubLabel}</p>
       </div>

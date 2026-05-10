@@ -188,12 +188,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 22px 0 80px;
-  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.1);
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.18);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.58) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.7) 100%),
     rgba(0, 0, 0, 0.66);
   height: 46px;
   flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .arch-top-identity {
@@ -217,6 +218,8 @@
   letter-spacing: 0.2em;
   color: rgba(240, 237, 232, 0.86);
   text-transform: uppercase;
+  font-size: 0.66rem;
+  font-weight: 600;
 }
 
 .arch-top-tier {
@@ -1556,8 +1559,10 @@
   position: relative;
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid #111;
-  background: var(--arch-surface-alt);
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(0, 0, 0, 0.42) 100%),
+    var(--arch-surface-alt);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -1619,8 +1624,10 @@
   justify-content: flex-start;
   gap: 8px;
   padding: 7px 10px;
-  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.08);
-  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(0, 0, 0, 0.34) 100%),
+    rgba(0, 0, 0, 0.3);
 }
 
 .arch-browser-utility>.arch-intake-btn {
@@ -1796,15 +1803,16 @@
   display: grid;
   grid-template-columns: 24px 2fr 1.3fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.8fr 0.7fr;
   padding: 4px 16px;
-  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
+  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.14);
   align-items: center;
   min-height: 24px;
+  background: rgba(var(--arch-accent-rgb), 0.03);
 }
 
 .arch-track-list-head span {
   font-size: 0.55rem;
   letter-spacing: 0.18em;
-  color: rgba(var(--arch-accent-rgb), 0.5);
+  color: rgba(var(--arch-accent-rgb), 0.64);
   text-transform: uppercase;
   text-align: left;
 }
