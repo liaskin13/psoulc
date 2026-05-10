@@ -138,6 +138,40 @@ Captures patterns, mistakes, and corrections to prevent "Shadow Gaps" from repea
 
 - **Lesson**: Two parallel Explore agents covering the entire src/ took < 2 minutes and returned a complete audit. Sequential reading of 35 files would have consumed the context window and taken 10+ minutes.
 - **Rule**: For an unknown or not-recently-read codebase, always launch 2-3 parallel Explore agents with different focus areas before writing a single line.
+
+---
+
+### Session: Phase-10 Reconciliation (May 10, 2026)
+
+#### Never Use `git add -A` — Use `git rm` or `git add <specific-path>` Only
+
+- **Root Cause**: `git add -A` swept up `.gitnexus/`, `.vercel/`, `interface-design/` (embedded repo), `node_modules/` changes, and dist/ — 138 files in a commit meant to delete one file.
+- **Rule**: Never use `git add -A` in this repo. Always stage by exact path: `git rm <file>` for deletions, `git add <path>` for additions. One concern = one commit, one path = one add.
+- **How to apply**: Before every `git commit`, run `git diff --cached --stat` and verify every file in the staged list is intentional. If anything unexpected appears, unstage it with `git restore --staged <path>`.
+
+#### `git restore dist` After Every Build — Without Exception
+
+- **Root Cause**: `npm run build` regenerates tracked `dist/` files. Forgetting to restore them after a build validation causes chunk hash churn to appear in diffs and commits.
+- **Rule**: After every `npm run build`, immediately run `git restore dist`. Make it muscle memory. Preflight should always end with dist/ clean.
+- **How to apply**: Alias: build → build → restore. Never commit without checking `git status` for dist/ changes.
+
+#### Design-Law Script Whitelist Paths Must Track File Moves
+
+- **Root Cause**: `check-design-law.sh` had `src/entry/DPWallpaper.jsx` in the Comfortaa whitelist. File moved to `src/components/DPWallpaper.jsx` in phase-10. Script failed on a false positive.
+- **Rule**: Whenever a whitelisted file is moved or renamed, update the whitelist path in `scripts/check-design-law.sh` in the same commit.
+- **How to apply**: After any file move, grep `scripts/check-design-law.sh` for the old path and update it before committing.
+
+#### Orphaned Duplicates Hide Behind Successful Builds
+
+- **Root Cause**: `src/entry/DPWallpaper.jsx` (old static version) coexisted with `src/components/DPWallpaper.jsx` (new animated version). Nothing imported the old one. Build passed. Design law caught it only because the whitelist check failed.
+- **Rule**: When porting files from another branch, grep for existing copies of the same component name before assuming a file is new. Dead duplicates cause confusion and whitelist drift.
+- **How to apply**: After any forward-port, run `find src/ -name "ComponentName*"` to check for dupes. If two exist, confirm which is imported and delete the orphan.
+
+#### Worktree `npm run` Commands Need Explicit `--prefix`
+
+- **Root Cause**: Running `npm run preflight` from inside the `/workspaces/psoulc-reconcile` worktree hits the worktree's `package.json`, not the main repo's. Scripts added to `/workspaces/psoulc/package.json` aren't visible.
+- **Rule**: When working from a git worktree, always use `npm --prefix /workspaces/psoulc run <script>` to target the main repo, or `cd` into it explicitly.
+- **How to apply**: If `npm run <script>` returns "Missing script", check which worktree you're in with `pwd` and add `--prefix` accordingly.
 - **How to apply**: The question to ask is: "Do I know the current state of this code well enough to change it without breaking it?" If the answer is "partially" — spawn agents.
 
 #### Don't Create a New File Without Checking If the Import Target Exists
