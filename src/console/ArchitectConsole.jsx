@@ -256,7 +256,7 @@ function ArchitectConsole({
   const [trackListData, setTrackListData] = useState([]);
   const [trackListLoading, setTrackListLoading] = useState(false);
   const [trackLoadError, setTrackLoadError] = useState(null);
-  const [sortMode, setSortMode] = useState("bpm");
+  const [sortMode, setSortMode] = useState("recent");
   const [smartCrates, setSmartCrates] = useState(false);
   const [historyEnabled, setHistoryEnabled] = useState(true);
   const [prepareQueue, setPrepareQueue] = useState([]);
@@ -1183,7 +1183,6 @@ function ArchitectConsole({
         t.title?.toLowerCase().includes(libSearch.toLowerCase()) ||
         t.artist?.toLowerCase().includes(libSearch.toLowerCase()),
     )
-    .filter((t) => !smartCrates || (Number(t.bpm) || 0) >= 120)
     .filter((t) =>
       publishFilter === "all"
         ? true
@@ -1199,10 +1198,7 @@ function ArchitectConsole({
         new Date(a.created_at || 0).getTime()
       );
     }
-    if (sortMode === "status") {
-      return (b.is_published || 0) - (a.is_published || 0);
-    }
-    return (Number(b.bpm) || 0) - (Number(a.bpm) || 0);
+    return (resolveTrackBpm(b) || 0) - (resolveTrackBpm(a) || 0);
   });
 
   const hasCueBankPoints = Object.values(cueBankPoints).some(
@@ -2010,12 +2006,6 @@ function ArchitectConsole({
                 SORT: BPM
               </button>
               <button
-                className={`arch-browser-btn ${sortMode === "status" ? "active" : ""}`}
-                onClick={() => setSortMode("status")}
-              >
-                SORT: STATUS
-              </button>
-              <button
                 className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
                 onClick={() =>
                   setPublishFilter((p) => (p === "staged" ? "all" : "staged"))
@@ -2048,12 +2038,6 @@ function ArchitectConsole({
               >
                 RETRACT{" "}
                 {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
-              </button>
-              <button
-                className={`arch-browser-btn ${smartCrates ? "active" : ""}`}
-                onClick={() => setSmartCrates((prev) => !prev)}
-              >
-                SMART CRATES
               </button>
               <button
                 className={`arch-browser-btn ${historyEnabled ? "active" : ""}`}
