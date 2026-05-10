@@ -1259,6 +1259,46 @@ h3,
   color: #000;
 }
 
+/* Upload progress telemetry */
+.upload-progress {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.upload-progress-head {
+  display: flex;
+  justify-content: space-between;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.upload-progress-bar {
+  height: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.upload-progress-fill {
+  display: block;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.28);
+  transition: width 140ms linear;
+}
+
+.upload-progress-detail {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+}
+
 /* ── Vault layout ────────────────────────────────────────────────────────────── */
 .vault-commands {
   display: flex;

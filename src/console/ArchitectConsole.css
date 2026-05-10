@@ -567,12 +567,12 @@
 
 .arch-vu-deck {
   display: block;
-  flex: 0 0 33.5%;
+  flex: 0 0 36%;
   image-rendering: pixelated;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.24);
   background:
     linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.12) 0%, rgba(0, 0, 0, 0.78) 100%);
-  width: clamp(190px, 33.5%, 420px);
+  width: clamp(210px, 36%, 460px);
   height: 156px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -837,10 +837,14 @@
 }
 
 .arch-deck-mini-btn {
-  background: linear-gradient(180deg, #252525 0%, #131313 100%);
-  border: 1px solid #3a3a3a;
-  border-bottom-color: #050505;
-  box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  background: linear-gradient(180deg, #2a2a2a 0%, #111 100%);
+  border: 1px solid #454545;
+  border-bottom-color: #060606;
+  box-shadow:
+    0 3px 0 #000,
+    0 6px 10px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55);
   color: rgba(240, 237, 232, 0.82);
   min-height: 22px;
   padding: 0 7px;
@@ -852,8 +856,11 @@
 }
 
 .arch-deck-mini-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.9);
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 #000,
+    inset 2px 2px 7px rgba(0, 0, 0, 0.92),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.03);
 }
 
 .arch-deck-mini-btn:hover {
@@ -898,14 +905,14 @@
 }
 
 .arch-transport-btn {
-  background: linear-gradient(180deg, #303030 0%, #171717 100%);
-  border: 1px solid #4a4a4a;
+  background: linear-gradient(180deg, #363636 0%, #181818 100%);
+  border: 1px solid #575757;
   border-bottom-color: #050505;
   box-shadow:
-    0 4px 0 #000,
-    0 6px 14px rgba(0, 0, 0, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+    0 5px 0 #000,
+    0 9px 16px rgba(0, 0, 0, 0.88),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55);
   color: rgba(240, 237, 232, 0.92);
   min-height: 34px;
   padding: 0 18px;
@@ -955,29 +962,86 @@
 }
 
 .arch-transport-btn:active {
-  transform: translateY(3px);
+  transform: translateY(4px);
   box-shadow:
     0 1px 0 #000,
     inset 2px 2px 10px rgba(0, 0, 0, 0.95),
     inset -1px -1px 4px rgba(0, 0, 0, 0.7);
 }
 
+.arch-hotcues-cluster {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.arch-cue-bank-selector {
+  display: flex;
+  gap: 2px;
+}
+
+.arch-bank-btn {
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(180deg, #1f1f1f 0%, #0a0a0a 100%);
+  border: 1px solid #2a2a2a;
+  border-bottom-color: #000;
+  box-shadow:
+    0 2px 0 #000,
+    0 4px 6px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: rgba(var(--arch-muted-rgb), 0.45);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 0;
+  transition: all 60ms ease;
+}
+
+.arch-bank-btn:hover {
+  border-color: rgba(var(--arch-accent-rgb), 0.4);
+  box-shadow:
+    0 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.7),
+    0 0 6px 1px color-mix(in srgb, var(--arch-accent) 25%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.arch-bank-btn.active {
+  background: linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.25) 0%, rgba(var(--arch-accent-rgb), 0.08) 100%);
+  border-color: var(--arch-accent);
+  color: var(--arch-accent);
+  font-weight: 700;
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.9),
+    0 0 8px 1.5px color-mix(in srgb, var(--arch-accent) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.arch-bank-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 #000,
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    inset 1px 1px 4px rgba(0, 0, 0, 0.9);
+}
+
 .arch-hotcues {
   display: grid;
   grid-template-columns: repeat(8, 26px);
   gap: 3px;
-  margin-left: 10px;
 }
 
 .arch-hotcue {
-  background: linear-gradient(180deg, #222 0%, #111 100%);
+  background: linear-gradient(180deg, #2d2d2d 0%, #121212 100%);
   border: 1px solid var(--cue-color, #2e2e2e);
   border-bottom-color: #060606;
   box-shadow:
-    0 2px 0 #000,
-    0 4px 8px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+    0 4px 0 #000,
+    0 7px 10px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.52);
   color: rgba(var(--arch-muted-rgb), 0.4);
   width: 26px;
   height: 26px;
@@ -989,45 +1053,12 @@
   transition: box-shadow 60ms ease, transform 60ms ease;
 }
 
-/* Bank 2 — neutral dashed border, no color bleed until cue is set */
-.arch-hotcue--b2 {
-  border-color: #282828;
-  border-style: dashed;
-  background: linear-gradient(180deg, #161616 0%, #0e0e0e 100%);
-  color: rgba(var(--arch-muted-rgb), 0.28);
-}
-
-/* Bank 2 — outlined when cue is set (inverse of bank 1 solid fill) */
-.arch-hotcue--b2.has-cue {
-  background: transparent !important;
-  color: var(--cue-color) !important;
-  border-color: var(--cue-color) !important;
-  border-style: solid !important;
-  font-weight: 700;
-  box-shadow:
-    0 0 0 #000,
-    0 0 8px 1px color-mix(in srgb, var(--cue-color) 35%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.arch-hotcue--b2.has-cue:hover {
-  filter: brightness(1.25);
-  box-shadow:
-    0 0 0 #000,
-    0 0 14px 3px color-mix(in srgb, var(--cue-color) 50%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.arch-hotcue--b2.has-cue:active {
-  transform: translateY(1px);
-  box-shadow:
-    0 0 0 #000,
-    0 0 6px 1px color-mix(in srgb, var(--cue-color) 25%, transparent);
-}
-
 .arch-hotcue:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #000, inset 2px 2px 8px rgba(0, 0, 0, 0.95);
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 #000,
+    inset 2px 2px 8px rgba(0, 0, 0, 0.95),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.03);
 }
 
 .arch-hotcue:hover {
@@ -1123,10 +1154,14 @@
 }
 
 .arch-loop-btn {
-  background: linear-gradient(180deg, #353535 0%, #171717 100%);
-  border: 1px solid #5a5a5a;
+  background: linear-gradient(180deg, #343434 0%, #171717 100%);
+  border: 1px solid #5d5d5d;
   border-bottom-color: var(--arch-surface-alt);
-  box-shadow: 0 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  box-shadow:
+    0 3px 0 #000,
+    0 6px 11px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55);
   color: rgba(240, 237, 232, 0.98);
   padding: 6px 10px;
   font-family: 'JetBrains Mono', monospace;
@@ -1138,8 +1173,14 @@
 }
 
 .arch-loop-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.9);
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #000, inset 2px 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.arch-loop-intake-btn {
+  border-color: rgba(var(--arch-accent-rgb), 0.52);
+  color: rgba(var(--arch-accent-rgb), 0.95);
+  min-width: 86px;
 }
 
 .arch-loop-btn:hover {
@@ -1575,7 +1616,7 @@
 .arch-browser-utility {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   padding: 7px 10px;
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.08);
@@ -1590,6 +1631,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .arch-browser-btn {

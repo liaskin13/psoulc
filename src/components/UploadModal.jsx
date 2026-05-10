@@ -106,8 +106,26 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
   const [frequencyHz, setFrequencyHz] = useState(528);
   const [vault, setVault] = useState(defaultVault);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState(null);
   const [error, setError] = useState(null);
   const fileRef = useRef(null);
+
+  const stageLabel = (stage) => {
+    switch (stage) {
+      case "init":
+        return "INIT";
+      case "chunking":
+        return "CHUNK";
+      case "finalize":
+        return "FINALIZE";
+      case "db-write":
+        return "DB WRITE";
+      case "done":
+        return "COMPLETE";
+      default:
+        return "WORKING";
+    }
+  };
 
   const applyFile = async (f) => {
     if (!f || !f.type.startsWith("audio/")) return;
@@ -134,20 +152,34 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
   const handleSubmit = async () => {
     if (!file || !title.trim()) return;
     setUploading(true);
+    setUploadStatus({ stage: "init", percent: 0, detail: "Initializing" });
     setError(null);
     try {
-      await uploadTrack(file, {
-        vault,
-        title: title.trim(),
-        bpm: parseInt(bpm),
-        frequency_hz: parseInt(frequencyHz),
-        uploaded_by: consoleOwner,
-      });
+      await uploadTrack(
+        file,
+        {
+          vault,
+          title: title.trim(),
+          bpm: parseInt(bpm),
+          frequency_hz: parseInt(frequencyHz),
+          uploaded_by: consoleOwner,
+        },
+        (next) => setUploadStatus(next),
+      );
       dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
       await loadVaultTracks(vault);
       onClose();
     } catch (err) {
       setError(err.message || "UPLOAD FAILED — CHECK SIGNAL");
+      setUploadStatus((prev) =>
+        prev
+          ? {
+              ...prev,
+              stage: "error",
+              detail: err.message || "Upload failed",
+            }
+          : null,
+      );
     } finally {
       setUploading(false);
     }
@@ -271,6 +303,26 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
           </div>
 
           {error && <div className="upload-error">{error}</div>}
+
+          {uploadStatus && (
+            <div className="upload-progress" role="status" aria-live="polite">
+              <div className="upload-progress-head">
+                <span>{stageLabel(uploadStatus.stage)}</span>
+                <span>{Math.max(0, Math.min(100, Math.round(uploadStatus.percent || 0)))}%</span>
+              </div>
+              <div className="upload-progress-bar" aria-hidden="true">
+                <span
+                  className="upload-progress-fill"
+                  style={{
+                    width: `${Math.max(0, Math.min(100, Math.round(uploadStatus.percent || 0)))}%`,
+                  }}
+                />
+              </div>
+              <div className="upload-progress-detail">
+                {uploadStatus.detail || "Processing"}
+              </div>
+            </div>
+          )}
 
           <div className="tune-modal-actions">
             <button

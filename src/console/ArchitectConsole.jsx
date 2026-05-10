@@ -305,7 +305,7 @@ function ArchitectConsole({
       return {};
     }
   });
-  const [waveformZoom, setWaveformZoom] = useState(1);
+  const [activeCueBank, setActiveCueBank] = useState("A");
   const [cueBankPoints, setCueBankPoints] = useState({
     A: null,
     B: null,
@@ -1001,19 +1001,22 @@ function ArchitectConsole({
     announce(`Loading ${prev.title || "previous track"}.`);
   };
 
-  const handleHotCueClick = (num) => {
+  const bankIndex = { A: 0, B: 1, C: 2, D: 3 }[activeCueBank];
+
+  const handleHotCueClick = (displayNum) => {
     if (!loadedTrack) {
       announce("Load a track before setting hot cues.");
       return;
     }
     const trackId = loadedTrack.id;
     const trackCues = hotCues[trackId] || {};
-    const existingCue = trackCues[num];
+    const internalNum = bankIndex * 8 + displayNum;
+    const existingCue = trackCues[internalNum];
 
     if (existingCue) {
       // Jump to existing cue
       handleSeek(existingCue.time);
-      announce(`Jumped to hot cue ${num}.`);
+      announce(`Jumped to hot cue ${displayNum}.`);
     } else {
       // Set new cue at current time
       const time = currentTime;
@@ -1021,29 +1024,40 @@ function ArchitectConsole({
         ...hotCues,
         [trackId]: {
           ...trackCues,
-          [num]: { time },
+          [internalNum]: { time },
         },
       };
       setHotCues(updated);
       localStorage.setItem("psc_hotcues", JSON.stringify(updated));
       announce(
-        `Hot cue ${num} set at ${Math.floor(time / 60)}:${String(Math.floor(time % 60)).padStart(2, "0")}.`,
+        `Hot cue ${displayNum} set at ${Math.floor(time / 60)}:${String(Math.floor(time % 60)).padStart(2, "0")}.`,
       );
+
+      // Auto-cycle bank if all 8 cues filled
+      const newCues = updated[trackId];
+      const filledInBank = Array.from({ length: 8 }, (_, i) => newCues[bankIndex * 8 + i + 1]).filter(Boolean).length;
+      if (filledInBank === 8) {
+        const banks = ["A", "B", "C", "D"];
+        const nextBank = banks[(bankIndex + 1) % 4];
+        setActiveCueBank(nextBank);
+        announce(`Bank full. Advanced to bank ${nextBank}.`);
+      }
     }
   };
 
-  const clearHotCue = (num, e) => {
+  const clearHotCue = (displayNum, e) => {
     e.stopPropagation();
     if (!loadedTrack) return;
     const trackId = loadedTrack.id;
     const trackCues = hotCues[trackId] || {};
-    if (!trackCues[num]) return;
+    const internalNum = bankIndex * 8 + displayNum;
+    if (!trackCues[internalNum]) return;
 
-    const { [num]: removed, ...remaining } = trackCues;
+    const { [internalNum]: removed, ...remaining } = trackCues;
     const updated = { ...hotCues, [trackId]: remaining };
     setHotCues(updated);
     localStorage.setItem("psc_hotcues", JSON.stringify(updated));
-    announce(`Hot cue ${num} cleared.`);
+    announce(`Hot cue ${displayNum} cleared.`);
   };
 
   // Loop enforcement — seeks back to loopRegion.start when playhead passes loopRegion.end
@@ -1087,13 +1101,25 @@ function ArchitectConsole({
 
     const trackId = loadedTrack.id;
     const trackCues = hotCues[trackId] || {};
-    if (Object.keys(trackCues).length > 0) {
-      const updated = { ...hotCues, [trackId]: {} };
-      setHotCues(updated);
-      localStorage.setItem("psc_hotcues", JSON.stringify(updated));
-    }
+    
+    // Clear all cues in current bank only
+    const cuesToClear = Array.from({ length: 8 }, (_, i) => bankIndex * 8 + i + 1);
+    let hasChanges = false;
+    const updated = { ...trackCues };
+    cuesToClear.forEach((num) => {
+      if (updated[num]) {
+        delete updated[num];
+        hasChanges = true;
+      }
+    });
 
-    announce("All cues cleared.");
+    if (hasChanges) {
+      setHotCues({ ...hotCues, [trackId]: updated });
+      localStorage.setItem("psc_hotcues", JSON.stringify({ ...hotCues, [trackId]: updated }));
+      announce(`All cues in bank ${activeCueBank} cleared.`);
+    } else {
+      announce(`No cues to clear in bank ${activeCueBank}.`);
+    }
   };
 
   const handleClearLoop = () => {
@@ -1140,9 +1166,6 @@ function ArchitectConsole({
     announce(`Loop ${option.label}.`);
   };
 
-  const handleZoomIn = () => setWaveformZoom((prev) => Math.min(prev * 2, 8));
-  const handleZoomOut = () => setWaveformZoom((prev) => Math.max(prev / 2, 1));
-
   const filteredTracks = trackListData
     .filter((t) => t.vault === activeLibVault)
     .filter(
@@ -1178,6 +1201,10 @@ function ArchitectConsole({
   );
   const hasHotCuesForLoadedTrack = !!(
     loadedTrack && Object.keys(hotCues[loadedTrack.id] || {}).length
+  );
+  const hasCuesInCurrentBank = !!(
+    loadedTrack &&
+    Array.from({ length: 8 }, (_, i) => hotCues[loadedTrack.id]?.[bankIndex * 8 + i + 1]).some(Boolean)
   );
 
   const selectionHasStaged = [...selectedTrackIds].some(
@@ -1497,7 +1524,7 @@ function ArchitectConsole({
             ref={vuRef}
             className="arch-vu-deck"
             width={220}
-            height={140}
+            height={156}
           />
           <div className="arch-waveform-col">
             <div className="arch-waveform-main">
@@ -1524,7 +1551,7 @@ function ArchitectConsole({
                   height={108}
                   hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
-                  zoom={waveformZoom}
+                  zoom={1}
                   loopRegion={loopRegion}
                 />
               )}
@@ -1623,22 +1650,6 @@ function ArchitectConsole({
               CLEAR
             </button>
           </div>
-          <div className="arch-needle-zoom">
-            <button
-              className="arch-deck-mini-btn"
-              disabled={waveformZoom <= 1}
-              onClick={handleZoomOut}
-            >
-              ZOOM -
-            </button>
-            <button
-              className="arch-deck-mini-btn"
-              disabled={waveformZoom >= 8}
-              onClick={handleZoomIn}
-            >
-              ZOOM +
-            </button>
-          </div>
         </div>
       </section>
 
@@ -1689,30 +1700,45 @@ function ArchitectConsole({
           </button>
         </div>
 
-        <div className="arch-hotcues" role="group" aria-label="Hot cues">
-          {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => {
-            const trackCues = loadedTrack ? hotCues[loadedTrack.id] || {} : {};
-            const cue = trackCues[n];
-            const color = ALL_CUE_COLORS[n - 1];
-            const isB2 = n > 8;
-            return (
+        <div className="arch-hotcues-cluster" role="group" aria-label="Hot cues">
+          <div className="arch-cue-bank-selector">
+            {["A", "B", "C", "D"].map((bank) => (
               <button
-                key={n}
-                className={`arch-hotcue${isB2 ? " arch-hotcue--b2" : ""}${cue ? " has-cue" : ""}`}
-                aria-label={
-                  cue ? `Hot cue ${n} — double-click to clear` : `Hot cue ${n}`
-                }
-                onClick={() => handleHotCueClick(n)}
-                onDoubleClick={(e) => {
-                  e.stopPropagation();
-                  clearHotCue(n, e);
-                }}
-                style={{ "--cue-color": color }}
+                key={bank}
+                className={`arch-bank-btn${activeCueBank === bank ? " active" : ""}`}
+                onClick={() => setActiveCueBank(bank)}
+                aria-label={`Switch to cue bank ${bank}`}
+                aria-pressed={activeCueBank === bank}
               >
-                {n}
+                {bank}
               </button>
-            );
-          })}
+            ))}
+          </div>
+          <div className="arch-hotcues" role="group" aria-label={`Hot cues bank ${activeCueBank}`}>
+            {Array.from({ length: 8 }, (_, i) => i + 1).map((displayNum) => {
+              const trackCues = loadedTrack ? hotCues[loadedTrack.id] || {} : {};
+              const internalNum = bankIndex * 8 + displayNum;
+              const cue = trackCues[internalNum];
+              const color = ALL_CUE_COLORS[internalNum - 1];
+              return (
+                <button
+                  key={displayNum}
+                  className={`arch-hotcue${cue ? " has-cue" : ""}`}
+                  aria-label={
+                    cue ? `Hot cue ${displayNum} — double-click to clear` : `Hot cue ${displayNum}`
+                  }
+                  onClick={() => handleHotCueClick(displayNum)}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    clearHotCue(displayNum, e);
+                  }}
+                  style={{ "--cue-color": color }}
+                >
+                  {displayNum}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div
@@ -1754,6 +1780,13 @@ function ArchitectConsole({
             onClick={handleClearLoop}
           >
             CLEAR
+          </button>
+          <button
+            className="arch-loop-btn arch-loop-intake-btn"
+            onClick={() => onIntake?.()}
+            aria-label="Open intake upload"
+          >
+            INTAKE
           </button>
         </div>
 
@@ -1946,13 +1979,6 @@ function ArchitectConsole({
             role="toolbar"
             aria-label="Library controls"
           >
-            <button
-              className="arch-browser-btn arch-intake-btn"
-              onClick={() => onIntake?.()}
-              aria-label="Upload files and objects to vault"
-            >
-              INTAKE
-            </button>
             <div className="arch-browser-group">
               <button
                 className={`arch-browser-btn ${sortMode === "bpm" ? "active" : ""}`}

@@ -2,6 +2,26 @@ import { UPLOAD_WORKER_URL, UPLOAD_SECRET, R2_PUBLIC_URL } from "../config";
 
 const IS_DEV = UPLOAD_WORKER_URL.includes("localhost");
 const TRACKS_STORAGE_KEY = "psc_dev_tracks";
+const CHUNK_SIZE_BYTES = 50 * 1024 * 1024;
+
+function authHeaders(extra = {}) {
+  if (!UPLOAD_SECRET) return { ...extra };
+  return {
+    ...extra,
+    "PSC-Secret": UPLOAD_SECRET,
+  };
+}
+
+async function readWorkerError(res) {
+  let body = null;
+  try {
+    body = await res.json();
+  } catch {
+    body = null;
+  }
+  if (body?.error) return body.error;
+  return `HTTP ${res.status}`;
+}
 
 function loadFromStorage() {
   try {
@@ -21,11 +41,10 @@ function saveToStorage(tracks) {
 
 async function workerGet(path) {
   const res = await fetch(`${UPLOAD_WORKER_URL}${path}`, {
-    headers: UPLOAD_SECRET ? { "PSC-Secret": UPLOAD_SECRET } : {},
+    headers: authHeaders(),
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `HTTP ${res.status}`);
+    throw new Error(await readWorkerError(res));
   }
   return res.json();
 }
@@ -42,29 +61,7 @@ export async function fetchAllTracks() {
   if (IS_DEV) {
     return loadFromStorage()
       .filter((t) => !t.is_voided)
-      .map(
-        ({
-          id,
-          vault,
-          title,
-          artist,
-          bpm,
-          musical_key,
-          duration,
-          audio_path,
-          created_at,
-        }) => ({
-          id,
-          vault,
-          title,
-          artist,
-          bpm,
-          musical_key,
-          duration,
-          audio_path,
-          created_at,
-        }),
-      );
+      .map((t) => ({ ...t }));
   }
   const results = await workerGet("/tracks");
   return Array.isArray(results) ? results : [];
@@ -82,8 +79,100 @@ export function countVaultTracks(vault) {
     .length;
 }
 
-export async function uploadTrack(file, metadata) {
-  if (!IS_DEV) return null;
+export async function uploadTrack(file, metadata, onProgress) {
+  const reportProgress = (stage, percent, detail = "") => {
+    if (!onProgress) return;
+    onProgress({ stage, percent, detail });
+  };
+
+  if (!IS_DEV) {
+    reportProgress("init", 5, "Initializing upload session");
+
+    const initRes = await fetch(`${UPLOAD_WORKER_URL}/upload-init`, {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        vault: metadata.vault,
+        filename: file.name,
+        contentType: file.type || "audio/mpeg",
+      }),
+    });
+
+    if (!initRes.ok) {
+      throw new Error(await readWorkerError(initRes));
+    }
+
+    const { uploadId, key } = await initRes.json();
+    if (!uploadId || !key) {
+      throw new Error("Upload initialization failed: missing uploadId/key");
+    }
+
+    const totalParts = Math.max(1, Math.ceil(file.size / CHUNK_SIZE_BYTES));
+    const parts = [];
+
+    for (let partNumber = 1; partNumber <= totalParts; partNumber += 1) {
+      const start = (partNumber - 1) * CHUNK_SIZE_BYTES;
+      const end = Math.min(start + CHUNK_SIZE_BYTES, file.size);
+      const chunk = file.slice(start, end);
+
+      reportProgress(
+        "chunking",
+        Math.round((partNumber / totalParts) * 85),
+        `Uploading chunk ${partNumber}/${totalParts}`,
+      );
+
+      const partRes = await fetch(
+        `${UPLOAD_WORKER_URL}/upload-part?key=${encodeURIComponent(key)}&uploadId=${encodeURIComponent(uploadId)}&partNumber=${partNumber}`,
+        {
+          method: "PUT",
+          headers: authHeaders({
+            "Content-Type": "application/octet-stream",
+          }),
+          body: chunk,
+        },
+      );
+
+      if (!partRes.ok) {
+        throw new Error(await readWorkerError(partRes));
+      }
+
+      const part = await partRes.json();
+      if (!part?.etag) {
+        throw new Error(`Upload chunk ${partNumber} failed: missing etag`);
+      }
+      parts.push({ partNumber, etag: part.etag });
+    }
+
+    reportProgress("finalize", 90, "Finalizing multipart upload");
+    reportProgress("db-write", 95, "Writing track metadata");
+
+    const completeRes = await fetch(`${UPLOAD_WORKER_URL}/upload-complete`, {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        key,
+        uploadId,
+        parts,
+        vault: metadata.vault,
+        title: metadata.title,
+        artist: metadata.artist || null,
+        bpm: metadata.bpm || null,
+        uploaded_by: metadata.uploaded_by,
+      }),
+    });
+
+    if (!completeRes.ok) {
+      throw new Error(await readWorkerError(completeRes));
+    }
+
+    const completed = await completeRes.json();
+    reportProgress("done", 100, "Upload complete");
+
+    window.dispatchEvent(new CustomEvent("psc:track-uploaded"));
+    return completed;
+  }
+
+  reportProgress("db-write", 95, "Saving local track entry");
   const allTracks = loadFromStorage();
   const newTrack = {
     id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -98,6 +187,8 @@ export async function uploadTrack(file, metadata) {
   };
   allTracks.push(newTrack);
   saveToStorage(allTracks);
+  reportProgress("done", 100, "Upload complete");
+  window.dispatchEvent(new CustomEvent("psc:track-uploaded"));
   return newTrack;
 }
 
