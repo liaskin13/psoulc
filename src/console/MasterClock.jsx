@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSystem } from '../state/SystemContext';
 
 function MasterClock() {
-  const { isProtected } = useSystem();
   const [time, setTime] = useState(() => new Date());
   const [phase, setPhase] = useState(0);
 
@@ -12,6 +10,8 @@ function MasterClock() {
   }, []);
 
   useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
     const ticker = setInterval(() => setPhase((p) => p + 0.35), 80);
     return () => clearInterval(ticker);
   }, []);
@@ -26,8 +26,7 @@ function MasterClock() {
   const polyline = points.join(' ');
 
   return (
-    <div className={`master-clock ${isProtected ? 'protected' : 'create'}`}>
-      <div className="clock-frequency">528Hz</div>
+    <div className="master-clock">
       <svg className="clock-oscilloscope" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
         <polyline points={polyline} />
       </svg>

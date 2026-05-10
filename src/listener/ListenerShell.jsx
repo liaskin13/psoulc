@@ -1,172 +1,224 @@
-import React, { useState, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import SpaceWindow from '../three/SpaceWindow';
-import VaultSkeleton from '../components/VaultSkeleton';
-import { getWaveformBars } from '../utils/waveform';
+import React, {
+  useState,
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import VaultSkeleton from "../components/VaultSkeleton";
+import DPWallpaper from "../components/DPWallpaper";
+import TheSignal from "../signal/TheSignal";
+import { VAULT_ACCENT_COLORS, UPLOAD_WORKER_URL } from "../config";
+import PSCWordmark from "../components/PSCWordmark";
 
-function ListenerWatermark() {
-  const bars = getWaveformBars('listener-ambient', 48);
-  const barW = 4, gap = 3, H = 80;
-  const W = bars.length * (barW + gap) - gap;
-  return (
-    <svg
-      className="listener-waveform-watermark"
-      aria-hidden="true"
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {bars.map((pct, i) => {
-        const h = (pct / 100) * H;
-        return (
-          <rect
-            key={i}
-            x={i * (barW + gap)}
-            y={H - h}
-            width={barW}
-            height={h}
-            rx="1"
-            fill="rgba(255,191,0,0.12)"
-          />
-        );
-      })}
-    </svg>
-  );
-}
+const WORKER_URL = UPLOAD_WORKER_URL;
+const SIGNAL_POLL_MS = 10000;
 
-const PlanetApproach = lazy(() => import('../three/PlanetApproach'));
-const SaturnVault    = lazy(() => import('../saturn/SaturnVault'));
-const VenusArchive   = lazy(() => import('../venus/VenusArchive'));
-const EarthSafe      = lazy(() => import('../earth/EarthSafe'));
-const MercuryStream  = lazy(() => import('../mercury/MercuryStream'));
-const AmethystVault  = lazy(() => import('../amethyst/AmethystVault'));
-const MarsVault      = lazy(() => import('../mars/MarsVault'));
+const TheVault = lazy(() => import("../components/TheVault"));
 
-// Active vaults only — in launch priority order.
-// Crystal (Amethyst) and Mars excluded: no content to upload yet.
-// Earth (Sonic Architecture) exists but is not a listener priority yet.
 const LISTENER_VAULTS = [
-  { id: 'venus',   label: 'MIXES',          color: '#d2691e' },
-  { id: 'saturn',  label: 'ORIGINAL MUSIC', color: '#b8860b' },
-  { id: 'mercury', label: 'LIVE SETS',      color: '#b8a68f' },
+  {
+    id: "venus",
+    label: "MIXES",
+    color: VAULT_ACCENT_COLORS.venus,
+    copy: "EXTENDED SETS · FULL SEQUENCES · NO INTERRUPTIONS",
+  },
+  {
+    id: "saturn",
+    label: "ORIGINAL MUSIC",
+    color: VAULT_ACCENT_COLORS.saturn,
+    copy: "STUDIO RECORDINGS · STEMS · UNRELEASED CUTS",
+  },
+  {
+    id: "mercury",
+    label: "LIVE SETS",
+    color: VAULT_ACCENT_COLORS.mercury,
+    copy: "RAW FROM THE ROOM · CAPTURED · MASTERED FOR THE ARCHIVE",
+  },
 ];
 
-function renderVault(id, onBack) {
-  switch (id) {
-    case 'saturn':   return <SaturnVault   readOnly onBack={onBack} />;
-    case 'venus':    return <VenusArchive  readOnly onBack={onBack} />;
-    case 'earth':    return <EarthSafe     readOnly onBack={onBack} />;
-    case 'mercury':  return <MercuryStream readOnly onBack={onBack} />;
-    case 'amethyst': return <AmethystVault readOnly onBack={onBack} />;
-    case 'mars':     return <MarsVault     readOnly onBack={onBack} />;
-    default:         return null;
-  }
-}
+function ListenerShell({ onPowerDown, sessionMeta }) {
+  const [selectedVault, setSelectedVault] = useState(LISTENER_VAULTS[0]);
+  const [activeVault, setActiveVault] = useState(null);
+  const [inSignal, setInSignal] = useState(false);
+  const [signalState, setSignalState] = useState({ is_live: 0, title: null });
+  const [isHandoff, setIsHandoff] = useState(false);
+  const [handoffLabel, setHandoffLabel] = useState("");
+  const handoffTimerRef = useRef(null);
+  const prefersReduced = useReducedMotion();
 
-function ListenerShell({ onPowerDown }) {
-  const [pendingPlanet, setPendingPlanet] = useState(null);
-  const [activeVault,   setActiveVault]   = useState(null);
-  const [lastPlayed,    setLastPlayed]    = useState(null);
+  const fetchSignal = useCallback(async () => {
+    try {
+      const res = await fetch(`${WORKER_URL}/signal`);
+      if (res.ok) setSignalState(await res.json());
+    } catch (_) {}
+  }, []);
 
-  const handlePlanetSelect = (id) => {
-    setPendingPlanet(id);
-  };
+  useEffect(() => {
+    fetchSignal();
+    const poll = setInterval(fetchSignal, SIGNAL_POLL_MS);
+    return () => clearInterval(poll);
+  }, [fetchSignal]);
 
-  const handleApproachComplete = () => {
-    setActiveVault(pendingPlanet);
-    setPendingPlanet(null);
+  useEffect(() => () => window.clearTimeout(handoffTimerRef.current), []);
+
+  const openVault = (vault) => {
+    const delay = prefersReduced ? 0 : 300;
+    setHandoffLabel(vault.label);
+    setIsHandoff(delay > 0);
+    window.clearTimeout(handoffTimerRef.current);
+    handoffTimerRef.current = window.setTimeout(() => {
+      setActiveVault(vault.id);
+      setIsHandoff(false);
+    }, delay);
   };
 
   const handleVaultBack = () => {
-    setLastPlayed(activeVault);
-    setActiveVault(null);
+    const delay = prefersReduced ? 0 : 240;
+    if (delay === 0) { setActiveVault(null); return; }
+    setHandoffLabel("LISTENING ROOM");
+    setIsHandoff(true);
+    window.clearTimeout(handoffTimerRef.current);
+    handoffTimerRef.current = window.setTimeout(() => {
+      setActiveVault(null);
+      setIsHandoff(false);
+    }, delay);
   };
 
-  // ── PLANET APPROACH ──────────────────────────────────────────────
-  if (pendingPlanet) {
+  const handoffOverlay = (
+    <AnimatePresence>
+      {isHandoff && (
+        <motion.div
+          className="listener-handoff"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          aria-hidden="true"
+        >
+          <motion.span
+            className="listener-handoff-kicker"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            transition={{ duration: 0.15, delay: 0.04 }}
+          >OPENING</motion.span>
+          <motion.span
+            className="listener-handoff-label"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.1, ease: [0.25, 1, 0.5, 1] }}
+          >{handoffLabel}</motion.span>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  // ── SIGNAL ROOM ──────────────────────────────────────────────────
+  if (inSignal) {
     return (
-      <Suspense fallback={<VaultSkeleton />}>
-        <PlanetApproach
-          planetId={pendingPlanet}
-          onComplete={handleApproachComplete}
-        />
-      </Suspense>
+      <TheSignal
+        signalTitle={signalState.title}
+        onBack={() => setInSignal(false)}
+        sessionMeta={sessionMeta}
+      />
     );
   }
 
   // ── VAULT VIEW ───────────────────────────────────────────────────
   if (activeVault) {
     return (
-      <div className="universe listener-mainframe">
-        <div className="glitter-grain" />
-        <div className="receded-logo">dp</div>
-        <Suspense fallback={<VaultSkeleton />}>
-          {renderVault(activeVault, handleVaultBack)}
-        </Suspense>
-      </div>
+      <>
+        <div className="universe listener-mainframe">
+          <div className="glitter-grain" />
+          <div className="receded-logo">dp</div>
+          <Suspense fallback={<VaultSkeleton />}>
+            <TheVault vault={activeVault} readOnly onBack={handleVaultBack} />
+          </Suspense>
+        </div>
+        {handoffOverlay}
+      </>
     );
   }
 
-  const lastVaultMeta = lastPlayed
-    ? LISTENER_VAULTS.find(v => v.id === lastPlayed)
-    : null;
-
-  // ── MAIN LISTENER SHELL ─────────────────────────────────────────
+  // ── MAIN SHELL ───────────────────────────────────────────────────
   return (
     <div className="listener-shell">
-      {/* 3D Solar System — ambient, non-clickable */}
-      <div className="listener-space">
-        <SpaceWindow onPlanetClick={undefined} />
-      </div>
+      <DPWallpaper opacity={1} />
+      <PSCWordmark />
 
-      {/* Top bar */}
-      <div className="listener-topbar">
-        <button className="listener-powerdown" onClick={onPowerDown}>
-          EXIT SYSTEM
+      <header className="listener-header">
+        <button
+          className="listener-exit"
+          onClick={onPowerDown}
+          aria-label="Exit system"
+        >
+          EXIT
         </button>
-        <span className="listener-title">PSC · LISTENER</span>
-      </div>
+      </header>
 
-      {/* Background waveform watermark */}
-      <ListenerWatermark />
-
-      {/* Now playing strip — shown after leaving a vault */}
       <AnimatePresence>
-        {lastVaultMeta && (
-          <motion.div
-            className="listener-now-playing"
-            initial={{ opacity: 0, y: 12 }}
+        {signalState.is_live === 1 && (
+          <motion.button
+            className="listener-signal-banner"
+            onClick={() => setInSignal(true)}
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.28 }}
+            aria-label="Enter The Signal — D is live"
           >
-            <span
-              className="listener-np-dot"
-              style={{ background: lastVaultMeta.color }}
-              aria-hidden="true"
-            />
-            <span className="listener-np-label">{lastVaultMeta.label}</span>
-            <span className="listener-np-status">LISTENING</span>
-          </motion.div>
+            <span className="listener-signal-dot" aria-hidden="true" />
+            <span className="listener-signal-text">
+              {signalState.title || "THE SIGNAL"}
+            </span>
+            <span className="listener-signal-live">D IS LIVE</span>
+            <span className="listener-signal-enter" aria-hidden="true">ENTER →</span>
+          </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Bottom vault dock */}
-      <div className="listener-dock">
-        {LISTENER_VAULTS.map(vault => (
-          <motion.button
-            key={vault.id}
-            className={`listener-vault-btn ${lastPlayed === vault.id ? 'listener-vault-active' : ''}`}
-            style={{ '--vault-color': vault.color }}
-            onClick={() => handlePlanetSelect(vault.id)}
-            whileHover={{ scale: 1.08, y: -3 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
+      <main className="listener-stage" id="main-content">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedVault.id}
+            className="listener-stage-content"
+            initial={prefersReduced ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
           >
-            <span className="listener-vault-pip" aria-hidden="true" />
-            <span className="listener-vault-label">{vault.label}</span>
-          </motion.button>
+            <span className="listener-stage-kicker">VAULT</span>
+            <h1 className="listener-stage-title">{selectedVault.label}</h1>
+            <div className="listener-stage-rule" aria-hidden="true" />
+            <p className="listener-stage-copy">{selectedVault.copy}</p>
+            <button
+              className="listener-stage-cta"
+              onClick={() => openVault(selectedVault)}
+            >
+              OPEN {selectedVault.label}
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      <nav className="listener-dock" aria-label="Vault navigation">
+        {LISTENER_VAULTS.map((vault) => (
+          <button
+            key={vault.id}
+            className={`listener-dock-btn${selectedVault.id === vault.id ? " listener-dock-active" : ""}`}
+            style={{ "--vault-color": vault.color }}
+            onClick={() => setSelectedVault(vault)}
+            aria-pressed={selectedVault.id === vault.id}
+          >
+            <span className="listener-dock-pip" aria-hidden="true" />
+            <span className="listener-dock-label">{vault.label}</span>
+          </button>
         ))}
-      </div>
+      </nav>
+
+      {handoffOverlay}
     </div>
   );
 }

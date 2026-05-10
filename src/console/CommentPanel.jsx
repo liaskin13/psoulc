@@ -1,18 +1,24 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useSystem } from '../state/SystemContext';
+import { VAULT_DISPLAY_NAMES } from '../config';
+
+function formatPin(isoString) {
+  const d = new Date(isoString);
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
 
 // ── COMMENT PANEL — D + L Console ─────────────────────────────────────────
 // Shows all comments from Tier B members across all vaults.
 // Grouped chronologically. Mark-read on open.
 
 const PLANET_COLORS = {
-  mercury:  '#a0c4ff',
-  venus:    '#ffb7b7',
-  earth:    '#87ceeb',
-  mars:     '#c1440e',
-  saturn:   '#c5a059',
-  amethyst: '#9d65c9',
+  mercury:  'rgba(160, 196, 255, 0.9)',
+  venus:    'rgba(255, 183, 183, 0.9)',
+  earth:    'rgba(135, 206, 235, 0.9)',
+  saturn:   'rgba(197, 160, 89, 0.9)',
 };
 
 function CommentPanel({ onClose, viewer = 'D' }) {
@@ -53,9 +59,9 @@ function CommentPanel({ onClose, viewer = 'D' }) {
               <div className="inbox-card-header">
                 <span
                   className="inbox-type-badge"
-                  style={{ backgroundColor: PLANET_COLORS[c.planetId] || '#888', color: '#111' }}
+                  style={{ backgroundColor: PLANET_COLORS[c.planetId] || '#888', color: 'var(--void)' }}
                 >
-                  {c.planetId?.toUpperCase() || 'SYSTEM'}
+                  {VAULT_DISPLAY_NAMES[c.planetId] ?? c.planetId?.toUpperCase() ?? 'SYSTEM'}
                 </span>
                 {!c.read && <span className="inbox-unread-dot" />}
                 <span className="inbox-timestamp">
@@ -68,12 +74,15 @@ function CommentPanel({ onClose, viewer = 'D' }) {
               <div className="comment-track-name">{c.trackName}</div>
               {c.body && <div className="comment-body">{c.body}</div>}
               {c.audioData && (
-                <audio
-                  controls
-                  src={c.audioData}
-                  className="comment-voice-player"
-                  aria-label={`Voice transmission from ${c.from}`}
-                />
+                <div className="comment-voice-pin">
+                  <span className="comment-pin-anchor">⏺ {formatPin(c.timestamp)}</span>
+                  <audio
+                    controls
+                    src={c.audioData}
+                    className="comment-voice-player"
+                    aria-label={`Voice transmission from ${c.from} at ${formatPin(c.timestamp)}`}
+                  />
+                </div>
               )}
             </div>
           ))
