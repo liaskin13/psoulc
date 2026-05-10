@@ -131,6 +131,15 @@ export default function DirectLinePanel({ viewer, variant = "architect" }) {
     ).length;
   }, [messages, viewer]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   const sendMessage = () => {
     const body = draft.trim();
     if (!body && !voiceDraft) return;
@@ -214,9 +223,11 @@ export default function DirectLinePanel({ viewer, variant = "architect" }) {
           role="dialog"
           aria-modal="true"
           aria-label="Direct line"
+          onClick={() => setOpen(false)}
         >
           <div
             className={`direct-line-panel ${variant === "architect" ? "architect" : "d-mode"}`}
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="direct-line-head">
               <span className="direct-line-title">

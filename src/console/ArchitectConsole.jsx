@@ -1035,7 +1035,10 @@ function ArchitectConsole({
 
       // Auto-cycle bank if all 8 cues filled
       const newCues = updated[trackId];
-      const filledInBank = Array.from({ length: 8 }, (_, i) => newCues[bankIndex * 8 + i + 1]).filter(Boolean).length;
+      const filledInBank = Array.from(
+        { length: 8 },
+        (_, i) => newCues[bankIndex * 8 + i + 1],
+      ).filter(Boolean).length;
       if (filledInBank === 8) {
         const banks = ["A", "B", "C", "D"];
         const nextBank = banks[(bankIndex + 1) % 4];
@@ -1101,9 +1104,12 @@ function ArchitectConsole({
 
     const trackId = loadedTrack.id;
     const trackCues = hotCues[trackId] || {};
-    
+
     // Clear all cues in current bank only
-    const cuesToClear = Array.from({ length: 8 }, (_, i) => bankIndex * 8 + i + 1);
+    const cuesToClear = Array.from(
+      { length: 8 },
+      (_, i) => bankIndex * 8 + i + 1,
+    );
     let hasChanges = false;
     const updated = { ...trackCues };
     cuesToClear.forEach((num) => {
@@ -1115,7 +1121,10 @@ function ArchitectConsole({
 
     if (hasChanges) {
       setHotCues({ ...hotCues, [trackId]: updated });
-      localStorage.setItem("psc_hotcues", JSON.stringify({ ...hotCues, [trackId]: updated }));
+      localStorage.setItem(
+        "psc_hotcues",
+        JSON.stringify({ ...hotCues, [trackId]: updated }),
+      );
       announce(`All cues in bank ${activeCueBank} cleared.`);
     } else {
       announce(`No cues to clear in bank ${activeCueBank}.`);
@@ -1204,7 +1213,10 @@ function ArchitectConsole({
   );
   const hasCuesInCurrentBank = !!(
     loadedTrack &&
-    Array.from({ length: 8 }, (_, i) => hotCues[loadedTrack.id]?.[bankIndex * 8 + i + 1]).some(Boolean)
+    Array.from(
+      { length: 8 },
+      (_, i) => hotCues[loadedTrack.id]?.[bankIndex * 8 + i + 1],
+    ).some(Boolean)
   );
 
   const selectionHasStaged = [...selectedTrackIds].some(
@@ -1700,7 +1712,11 @@ function ArchitectConsole({
           </button>
         </div>
 
-        <div className="arch-hotcues-cluster" role="group" aria-label="Hot cues">
+        <div
+          className="arch-hotcues-cluster"
+          role="group"
+          aria-label="Hot cues"
+        >
           <div className="arch-cue-bank-selector">
             {["A", "B", "C", "D"].map((bank) => (
               <button
@@ -1714,9 +1730,15 @@ function ArchitectConsole({
               </button>
             ))}
           </div>
-          <div className="arch-hotcues" role="group" aria-label={`Hot cues bank ${activeCueBank}`}>
+          <div
+            className="arch-hotcues"
+            role="group"
+            aria-label={`Hot cues bank ${activeCueBank}`}
+          >
             {Array.from({ length: 8 }, (_, i) => i + 1).map((displayNum) => {
-              const trackCues = loadedTrack ? hotCues[loadedTrack.id] || {} : {};
+              const trackCues = loadedTrack
+                ? hotCues[loadedTrack.id] || {}
+                : {};
               const internalNum = bankIndex * 8 + displayNum;
               const cue = trackCues[internalNum];
               const color = ALL_CUE_COLORS[internalNum - 1];
@@ -1725,7 +1747,9 @@ function ArchitectConsole({
                   key={displayNum}
                   className={`arch-hotcue${cue ? " has-cue" : ""}`}
                   aria-label={
-                    cue ? `Hot cue ${displayNum} — double-click to clear` : `Hot cue ${displayNum}`
+                    cue
+                      ? `Hot cue ${displayNum} — double-click to clear`
+                      : `Hot cue ${displayNum}`
                   }
                   onClick={() => handleHotCueClick(displayNum)}
                   onDoubleClick={(e) => {
@@ -1828,7 +1852,6 @@ function ArchitectConsole({
         <aside className="arch-rail" aria-label="Architect controls">
           <div className="arch-ops-stack">
             <div className="arch-ops-box" aria-label="Direct line">
-              <div className="arch-rail-section-label">DIRECT LINE</div>
               <div className="arch-ops-body">
                 <DirectLinePanel
                   viewer={viewer}

@@ -12,6 +12,7 @@
   border: 1px solid rgba(var(--dl-accent-rgb), 0.18);
   color: rgba(var(--dl-accent-rgb), 0.62);
   padding: 5px 12px;
+  min-height: 30px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.12em;
@@ -42,7 +43,7 @@
 .direct-line-overlay {
   position: fixed;
   inset: 0;
-  z-index: 70;
+  z-index: 2200;
   background: rgba(0, 0, 0, 0.68);
   display: grid;
   place-items: center;
@@ -94,6 +95,8 @@
   border: none;
   color: rgba(var(--dl-muted-rgb), 0.58);
   cursor: pointer;
+  min-height: 30px;
+  min-width: 30px;
 }
 
 .direct-line-thread {
@@ -182,6 +185,7 @@
   border: 1px solid rgba(var(--dl-accent-rgb), 0.4);
   color: rgb(var(--dl-accent-rgb));
   padding: 8px 12px;
+  min-height: 34px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.12em;
@@ -207,6 +211,7 @@
   border: 1px solid rgba(var(--dl-accent-rgb), 0.28);
   color: rgba(var(--dl-fg-rgb), 0.86);
   padding: 8px 10px;
+  min-height: 34px;
   font-family: 'Chakra Petch', sans-serif;
   font-size: 0.58rem;
   letter-spacing: 0.1em;
