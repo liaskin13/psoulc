@@ -1,61 +1,116 @@
 // System Constants — Single source of truth.
 
-export const ENTRY_CODE        = '0528';
-export const BLACK_STAR_CODE   = '7677';
-export const AMETHYST_CODE     = '4096'; // Resonance Chamber
-export const MARS_CODE         = '1984'; // Mars Vault
-export const LISTENER_CODE     = '0000';
+export const ENTRY_CODE = "0528";
+export const BLACK_STAR_CODE = "7677";
+export const LISTENER_CODE = "0000";
 export const ENTRY_FLYBY_DURATION_MS = 3000;
 
 // Console keys
-export const INBOX_KEY         = 'psc_inbox_requests';
-export const MEMBERS_KEY       = 'psc_members';
-export const LISTENERS_KEY     = 'psc_listeners';
-export const COMMENTS_KEY      = 'psc_comments';
-export const SESSION_KEY      = 'psc_session';
-export const SESSION_TTL_MS   = 4 * 60 * 60 * 1000;
-export const GATE_LOCK_KEY    = 'psc_gate_lock';
+export const INBOX_KEY = "psc_inbox_requests";
+export const MEMBERS_KEY = "psc_members";
+export const LISTENERS_KEY = "psc_listeners";
+export const COMMENTS_KEY = "psc_comments";
+export const SESSION_KEY = "psc_session";
+export const SESSION_TTL_MS = 4 * 60 * 60 * 1000;
+export const GATE_LOCK_KEY = "psc_gate_lock";
 export const GATE_MAX_ATTEMPTS = 3;
-export const GATE_LOCKOUT_MS  = 30 * 1000;
+export const GATE_LOCKOUT_MS = 30 * 1000;
 
 // Industrial Identity Colors
-export const STUDER_COPPER = '#B87333';
-export const STUDER_SILVER = '#C0C0C0';
-export const STUDER_AMBER  = '#ffbf00';
-export const AGED_STONE    = '#8B7355';
+export const STUDER_COPPER = "#B87333";
+export const STUDER_SILVER = "#C0C0C0";
+// STUDER_AMBER retired — amber is permanently banned from all surfaces
+export const AGED_STONE = "#8B7355";
 
-// Registry Colors (Replaces Chakra system)
-export const VAULT_COLORS = {
-  saturn:   '#B87333', // Copper — Master Tracks
-  venus:    '#C0C0C0', // Silver — Curated Registry
-  mercury:  '#ffbf00', // Amber  — Live Resonance
-  earth:    '#8B7355', // Stone  — Sonic Architecture
-  mars:     '#7c1212', // Iron Red — Dedicated
-  amethyst: '#6600cc', // Indigo — Resonance Chamber (Legacy Indigo preserved)
+// ── SERATO PALETTE — full 8-color system ────────────────────────────────
+// Each color is a functional signal, not an identity color.
+// Hotcues, waveform markers, vault tabs, lockbox accents — all pull from here.
+export const SERATO = {
+  red: "#e52020", // THE SIGNAL — live broadcast
+  orange: "#e56020", // Future artist slot A
+  yellow: "#e5a020", // Future artist slot B
+  green: "#14dc14", // earth — Sonic Architecture
+  cyan: "#00c8dc", // mercury — Live Sets
+  blue: "#1464dc", // saturn — Original Music
+  purple: "#8c14dc", // venus — Mixes
+  white: "#e5e5e5", // Future artist slot C
 };
 
-export const D_IDENTITY_COLOR = '#B87333'; // Copper
-export const D_CHAKRA_COLOR   = '#B87333'; // Copper — D's personal chakra
+export const SIGNAL_COLOR = SERATO.red; // THE SIGNAL is always red
+
+// Vault tabs — Serato color per vault
+export const VAULT_ACCENT_COLORS = {
+  saturn: SERATO.blue,
+  venus: SERATO.purple,
+  mercury: SERATO.cyan,
+  earth: SERATO.green,
+};
+
+// Future artist lockboxes — Serato color reserved, name TBD by D
+export const FUTURE_LOCKBOX_COLORS = {
+  future_a: SERATO.orange, // "Who does D invite next?"
+  future_b: SERATO.yellow, // Slot reserved
+  future_c: SERATO.white, // Slot reserved
+};
+
+// Registry Colors
+export const VAULT_COLORS = {
+  saturn: "#B87333", // Copper — Master Tracks
+  venus: "#C0C0C0", // Silver — Curated Registry
+  mercury: "#00c8dc", // Cyan   — Live Sets
+  earth: "#8B7355", // Stone  — Sonic Architecture
+};
+
+export const D_IDENTITY_COLOR = "#14dc14"; // Green — D's identity (locked 2026-05-04)
+export const D_CHAKRA_COLOR = "#14dc14"; // Green — D's personal identity colour
 export const BROADCAST_DURATION_MS = 5000;
-export const MOON_PREFIX = 'moon_';
+export const LOCKBOX_PREFIX = "lockbox_";
+
+export const LOCKBOX_CODES = {
+  lockbox_janet: "J528",
+  lockbox_erikah: "E432",
+  lockbox_larry: "L396",
+  lockbox_drake: "D741",
+};
+
+export const VAULT_DISPLAY_NAMES = {
+  venus: "MIXES",
+  saturn: "ORIGINAL MUSIC",
+  mercury: "LIVE SETS",
+  earth: "SONIC ARCH",
+};
+
+// Cloudflare Stream HLS URL for The Signal live broadcast
+export const SIGNAL_HLS_URL = import.meta.env.VITE_SIGNAL_HLS_URL || "";
+
+// Cloudflare R2 Upload Worker
+// Set this to your deployed worker URL after running: cd worker && wrangler deploy
+// Local dev: http://localhost:8787
+// Production: https://psc-upload-worker.{your-account}.workers.dev
+export const UPLOAD_WORKER_URL =
+  import.meta.env.VITE_UPLOAD_WORKER_URL || "http://localhost:8787";
+
+export const UPLOAD_SECRET = import.meta.env.VITE_UPLOAD_SECRET || "";
+
+// R2 public base URL for audio playback (no trailing slash)
+// Format: https://pub-{hash}.r2.dev  OR your custom domain
+export const R2_PUBLIC_URL =
+  (import.meta.env.VITE_R2_PUBLIC_URL || "").replace(/\/$/, "");
 
 // True spectrum chakra colors — void events (distinct from ambient earth tones)
 export const VOID_CHAKRA_COLORS = {
-  saturn:   '#cc4400', // Scarlet
-  venus:    '#ff8800', // Orange
-  mercury:  '#ffbf00', // Amber
-  earth:    '#00aa44', // Green
-  mars:     '#cc0033', // Crimson
-  amethyst: '#6600cc', // Violet/Indigo
-  moon:     '#00b4d8', // Cyan (default for moon vaults)
+  saturn: "#cc4400", // Scarlet
+  venus: "#ff8800", // Orange
+  mercury: "#00c8dc", // Cyan
+  earth: "#00aa44", // Green
+  moon: "#00b4d8", // Cyan (default for moon vaults)
 };
 
 // Member chakra colors — identity tones per collective role
 export const MEMBER_CHAKRA_COLORS = {
-  D:        '#B87333', // Copper
-  L:        '#00e5ff', // Cyan
-  B:        '#ffbf00', // Amber
-  C:        '#6600cc', // Indigo
-  default:  '#8B7355', // Stone
+  D: "#B87333", // Copper
+  L: "#00e5ff", // Cyan
+  B: "#c8c8c8", // Silver
+  C: "#6600cc", // Indigo
+  default: "#8B7355", // Stone
 };
-

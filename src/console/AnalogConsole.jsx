@@ -4,18 +4,13 @@ import { useSystem } from '../state/SystemContext';
 import { SATURN_TRACKS } from '../data/saturn';
 import { VENUS_MIXES } from '../data/venus';
 import { EARTH_DOCUMENTS } from '../data/earth';
-import { MARS_TRACKS } from '../data/mars';
 import { MERCURY_TRACKS } from '../data/mercury';
-import { AMETHYST_BOWLS, AMETHYST_SESSIONS } from '../data/amethyst';
 
 const TOTAL_TRACKS =
   SATURN_TRACKS.length +
   VENUS_MIXES.length +
   EARTH_DOCUMENTS.length +
-  MARS_TRACKS.length +
-  MERCURY_TRACKS.length +
-  AMETHYST_BOWLS.length +
-  AMETHYST_SESSIONS.length;
+  MERCURY_TRACKS.length;
 import GodModePullCord from './GodModePullCord';
 import MasterClock from './MasterClock';
 import ReadoutNavigator from './ReadoutNavigator';
@@ -29,12 +24,10 @@ import CommentPanel from './CommentPanel';
 // ── Vault pad bank — left AKAI zone ────────────────────────────────────────
 // Each pad maps to a planet vault. Chakra-lit when active.
 const VAULT_PADS = [
-  { id: 'venus',    abbr: 'MIX',  label: 'MIXES',          color: '#ff7c00' },
-  { id: 'saturn',   abbr: 'OG',   label: 'ORIGINAL MUSIC', color: '#9b59b6' },
-  { id: 'mercury',  abbr: 'LST',  label: 'LIVE SETS',      color: '#8B0000' },
-  { id: 'earth',    abbr: 'ARC',  label: 'SONIC ARCH',     color: '#00cc44' },
-  { id: 'mars',     abbr: 'JB',   label: 'JESS B',         color: '#c1440e' },
-  { id: 'amethyst', abbr: 'AGI',  label: 'ANGI',           color: '#6600cc' },
+  { id: 'venus',   abbr: 'MIX', label: 'MIXES',          color: '#ff7c00' },
+  { id: 'saturn',  abbr: 'OG',  label: 'ORIGINAL MUSIC', color: '#9b59b6' },
+  { id: 'mercury', abbr: 'LST', label: 'LIVE SETS',      color: '#8B0000' },
+  { id: 'earth',   abbr: 'ARC', label: 'SONIC ARCH',     color: '#00cc44' },
 ];
 
 // ── LED meter strip — Neve-style visual indicator ────────────────────────────
