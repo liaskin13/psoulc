@@ -143,6 +143,13 @@ Captures patterns, mistakes, and corrections to prevent "Shadow Gaps" from repea
 
 ### Session: Phase-10 Reconciliation (May 10, 2026)
 
+#### Verify Cloudflare Pages Deployment Mode First (Git-Connected vs Direct Upload)
+
+- **Root Cause**: Production looked stale even after valid commits because the active Cloudflare Pages project was operating in Direct Upload mode (prompted for drag-and-drop), not Git-connected auto-build mode.
+- **Symptom**: Dashboard showed old deployment age, no normal retry flow for Git commits, and production continued serving old bundle hashes despite fresh source commits.
+- **Rule**: Before diagnosing cache, CSS, or build issues, check deployment mode in Cloudflare first. If UI asks for manual upload, Git auto-deploy is not active.
+- **How to apply**: At session start for any production mismatch, open Cloudflare Pages project and confirm it is Git-connected to `liaskin13/psoulc` on branch `main` with build command `npm run build` and output `dist`.
+
 #### Never Use `git add -A` — Use `git rm` or `git add <specific-path>` Only
 
 - **Root Cause**: `git add -A` swept up `.gitnexus/`, `.vercel/`, `interface-design/` (embedded repo), `node_modules/` changes, and dist/ — 138 files in a commit meant to delete one file.
