@@ -2531,7 +2531,7 @@ h3,
     white-space: nowrap;
   }
 
-  /* VaultWindow decoration — hidden on mobile (saves 200px+) */
+  /* Vault top-band decoration — hidden on mobile (saves 200px+) */
   .vault-top-band {
     display: none;
   }
@@ -2663,7 +2663,7 @@ h3,
     letter-spacing: 0.14em;
   }
 
-  /* RecordShelf — full height on mobile (VaultWindow hidden) */
+  /* RecordShelf — full height on mobile (top-band hidden) */
   .record-shelf {
     min-height: 40svh;
     max-height: 52svh;

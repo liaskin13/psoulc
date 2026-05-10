@@ -1,48 +1,58 @@
-import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import RecordShelf from '../components/RecordShelf';
-import StuderTransportBar from '../components/StuderTransportBar';
-import TuneModal from '../components/TuneModal';
-import VoidStreakOverlay from '../components/VoidStreakOverlay';
-import { useVaultVoid } from '../hooks/useVaultVoid';
-import { useVaultFileCells } from '../hooks/useVaultFileCells';
-import { ARTIST_LOCKBOXES } from '../data/saturn';
-import { VOID_CHAKRA_COLORS, LOCKBOX_PREFIX } from '../config';
-import { useSystem } from '../state/SystemContext';
-import { canComment, canEdit } from '../utils/permissions';
+import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import RecordShelf from "../components/RecordShelf";
+import StuderTransportBar from "../components/StuderTransportBar";
+import TuneModal from "../components/TuneModal";
+import { useVaultVoid } from "../hooks/useVaultVoid";
+import { useVaultFileCells } from "../hooks/useVaultFileCells";
+import { ARTIST_LOCKBOXES } from "../data/saturn";
+import { VOID_CHAKRA_COLORS, LOCKBOX_PREFIX } from "../config";
+import { useSystem } from "../state/SystemContext";
+import { canComment, canEdit } from "../utils/permissions";
 
 const LOCKBOX_SKIN = {
-  highlight: '#f5ddff',
-  base: '#6f3f9c',
-  shadow: '#1b0728',
-  glow: 'rgba(137, 79, 193, 0.65)',
+  highlight: "#f5ddff",
+  base: "#6f3f9c",
+  shadow: "#1b0728",
+  glow: "rgba(137, 79, 193, 0.65)",
 };
 
 function titleFromLockboxId(lockboxId) {
-  if (!lockboxId) return 'LOCKBOX';
-  return lockboxId.replace(LOCKBOX_PREFIX, '').replace(/_/g, ' ').toUpperCase();
+  if (!lockboxId) return "LOCKBOX";
+  return lockboxId.replace(LOCKBOX_PREFIX, "").replace(/_/g, " ").toUpperCase();
 }
 
-function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = false }) {
+function LockboxVault({
+  lockboxId,
+  onBack,
+  onExitSystem,
+  onVoid,
+  readOnly = false,
+}) {
   const [pitchMultiplier, setPitchMultiplier] = useState(1.0);
   const [tuneItem, setTuneItem] = useState(null);
   const [voidLog, setVoidLog] = useState([]);
-  const { addComment, sessionMeta, getTuneOverride, saveTuneOverride } = useSystem();
+  const { addComment, sessionMeta, getTuneOverride, saveTuneOverride } =
+    useSystem();
 
-  const lockboxKey = (lockboxId || '').replace(LOCKBOX_PREFIX, '');
+  const lockboxKey = (lockboxId || "").replace(LOCKBOX_PREFIX, "");
   const lockboxData = ARTIST_LOCKBOXES.find((m) => m.id === lockboxKey);
   const lockboxName = lockboxData?.name || titleFromLockboxId(lockboxId);
   const lockboxHz = lockboxData?.frequency || 528;
 
   const baseItems = useMemo(() => {
-    const stems = lockboxData?.stems || ['VOCAL', 'MUSIC', 'ALT'];
+    const stems = lockboxData?.stems || ["VOCAL", "MUSIC", "ALT"];
     const bpms = [112, 124, 98];
     const base = stems.map((stem, idx) => ({
       id: `lockbox-${lockboxKey}-${idx + 1}`,
       label: `${lockboxName} ${stem} CUT ${idx + 1}`,
       sublabel: `${bpms[idx % bpms.length]} BPM · ${lockboxHz}Hz`,
-      metadata: { bpm: bpms[idx % bpms.length], frequency: `${lockboxHz}Hz`, stem },
-      createdBy: 'D',
+      metadata: {
+        bpm: bpms[idx % bpms.length],
+        frequency: `${lockboxHz}Hz`,
+        stem,
+      },
+      createdBy: "D",
       ...LOCKBOX_SKIN,
     }));
 
@@ -50,8 +60,12 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
       id: `lockbox-${lockboxKey}-rx-${idx + 1}`,
       label: `${lockboxName} ${stem} REMIX ${idx + 1}`,
       sublabel: `${bpms[(idx + 1) % bpms.length] + 6} BPM · ${lockboxHz}Hz`,
-      metadata: { bpm: bpms[(idx + 1) % bpms.length] + 6, frequency: `${lockboxHz}Hz`, stem },
-      createdBy: 'D',
+      metadata: {
+        bpm: bpms[(idx + 1) % bpms.length] + 6,
+        frequency: `${lockboxHz}Hz`,
+        stem,
+      },
+      createdBy: "D",
       ...LOCKBOX_SKIN,
     }));
 
@@ -86,7 +100,6 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
   } = useVaultFileCells(initialItems);
 
   const {
-    vaultWindowRef,
     voidProps,
     inverseBloom,
     isVoidArmed,
@@ -105,8 +118,23 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
   });
 
   const canAdmin = canEdit(sessionMeta, lockboxId);
-  const handleComment = (item, body) => addComment(lockboxId, item.id, item.label, sessionMeta?.owner || 'member', body);
-  const handleVoiceComment = (item, audioData) => addComment(lockboxId, item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
+  const handleComment = (item, body) =>
+    addComment(
+      lockboxId,
+      item.id,
+      item.label,
+      sessionMeta?.owner || "member",
+      body,
+    );
+  const handleVoiceComment = (item, audioData) =>
+    addComment(
+      lockboxId,
+      item.id,
+      item.label,
+      sessionMeta?.owner || "member",
+      null,
+      audioData,
+    );
 
   const handleTuneSave = (updates) => {
     saveTuneOverride(lockboxId, tuneItem.id, updates);
@@ -114,7 +142,11 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
       ...cell,
       label: updates.label,
       sublabel: `${updates.bpm} BPM · ${updates.frequency}Hz`,
-      metadata: { ...cell.metadata, bpm: updates.bpm, frequency: `${updates.frequency}Hz` },
+      metadata: {
+        ...cell.metadata,
+        bpm: updates.bpm,
+        frequency: `${updates.frequency}Hz`,
+      },
     }));
     setTuneItem(null);
   };
@@ -132,14 +164,30 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
       </div>
 
       <div className="vault-commands">
-        <button className="god-btn" onClick={onBack}>SEAL VAULT</button>
-        <button className="god-btn" onClick={onExitSystem}>EXIT SYSTEM</button>
+        <button className="god-btn" onClick={onBack}>
+          SEAL VAULT
+        </button>
+        <button className="god-btn" onClick={onExitSystem}>
+          EXIT SYSTEM
+        </button>
         {!readOnly && (
           <>
-            <button className="god-btn" onClick={() => activeId && setTuneItem(findCellById(activeId))} disabled={!activeId} style={{ opacity: activeId ? 1 : 0.4 }}>
+            <button
+              className="god-btn"
+              onClick={() => activeId && setTuneItem(findCellById(activeId))}
+              disabled={!activeId}
+              style={{ opacity: activeId ? 1 : 0.4 }}
+            >
               TUNE
             </button>
-            <button className="god-btn" onClick={() => activeId && handleVoidButton(findCellById(activeId))} disabled={!activeId} style={{ opacity: activeId ? 1 : 0.4 }}>
+            <button
+              className="god-btn"
+              onClick={() =>
+                activeId && handleVoidButton(findCellById(activeId))
+              }
+              disabled={!activeId}
+              style={{ opacity: activeId ? 1 : 0.4 }}
+            >
               VOID
             </button>
           </>
@@ -148,23 +196,18 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
 
       {tuneItem && (
         <TuneModal
-          item={{ label: tuneItem.label, bpm: tuneItem.metadata?.bpm, frequency: parseInt(tuneItem.metadata?.frequency, 10) || lockboxHz }}
+          item={{
+            label: tuneItem.label,
+            bpm: tuneItem.metadata?.bpm,
+            frequency: parseInt(tuneItem.metadata?.frequency, 10) || lockboxHz,
+          }}
           onSave={handleTuneSave}
           onClose={() => setTuneItem(null)}
         />
       )}
 
       <div className="vault-main-grid">
-        <div className="vault-top-band">
-          <VaultWindow
-            ref={vaultWindowRef}
-            inverseBloom={inverseBloom}
-            voidArmed={isVoidArmed}
-            armedLabel={armedVoidLabel}
-            onCancelVoid={cancelArmedVoid}
-            onConfirmVoid={confirmArmedVoid}
-          />
-        </div>
+        <div className="vault-top-band" />
 
         <div className="vault-library-band">
           <div className="shelf-section">
@@ -175,7 +218,9 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
               onSelect={selectCell}
               onVoid={readOnly ? undefined : handleShelfVoid}
               onComment={canComment(sessionMeta) ? handleComment : undefined}
-              onVoiceComment={canComment(sessionMeta) ? handleVoiceComment : undefined}
+              onVoiceComment={
+                canComment(sessionMeta) ? handleVoiceComment : undefined
+              }
             />
           </div>
 
@@ -183,17 +228,22 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
             activeTrack={activeTrack}
             transportState={transportState}
             pitchMultiplier={pitchMultiplier}
-            onPlay={() => setTransport('play')}
-            onStop={() => setTransport('stop')}
-            onRewind={() => setTransport('rewind')}
-            onFastForward={() => setTransport('ff')}
-            onPause={() => setTransport('pause')}
-            onRecord={() => setTransport('record')}
+            onPlay={() => setTransport("play")}
+            onStop={() => setTransport("stop")}
+            onRewind={() => setTransport("rewind")}
+            onFastForward={() => setTransport("ff")}
+            onPause={() => setTransport("pause")}
+            onRecord={() => setTransport("record")}
             showAdminCommands={!readOnly}
             isAdmin={canAdmin}
-            onAdminArm={() => activeId && handleVoidButton(findCellById(activeId))}
+            onAdminArm={() =>
+              activeId && handleVoidButton(findCellById(activeId))
+            }
             onAdminCommit={confirmArmedVoid}
-            onAdminSeal={() => { cancelArmedVoid(); setTransport('stop'); }}
+            onAdminSeal={() => {
+              cancelArmedVoid();
+              setTransport("stop");
+            }}
             onAdminClear={clearSelection}
             onPitchChange={setPitchMultiplier}
           />
@@ -209,8 +259,6 @@ function LockboxVault({ lockboxId, onBack, onExitSystem, onVoid, readOnly = fals
           )}
         </div>
       </div>
-
-      {!readOnly && <VoidStreakOverlay {...voidProps} />}
     </motion.div>
   );
 }

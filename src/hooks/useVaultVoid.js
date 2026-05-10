@@ -1,39 +1,39 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from "react";
 // ── useVaultVoid ───────────────────────────────────────────────────────────
 // Shared void animation state for all vaults.
 // Handles spaghettification animation, inverse bloom, and archive callback.
 //
 // Usage:
-//   const { vaultWindowRef, voidProps, handleShelfVoid, handleVoidButton } =
+//   const { voidProps, handleShelfVoid, handleVoidButton } =
 //     useVaultVoid({ onVoid, voidColor });
 //
-// vaultWindowRef → pass to <VaultWindow ref={vaultWindowRef} />
-// voidProps      → spread onto <VoidStreakOverlay {...voidProps} />
+// voidProps      → animation payload for void transitions
 // handleShelfVoid(item, sourcePos) → pass as RecordShelf onVoid
 // handleVoidButton(item)          → call from VOID button click
 
 export function useVaultVoid({ onVoid, voidColor }) {
-  const vaultWindowRef = useRef();
-
-  const [voidActive,   setVoidActive]   = useState(false);
-  const [voidSource,   setVoidSource]   = useState(null);
-  const [voidTarget,   setVoidTarget]   = useState(null);
+  const [voidActive, setVoidActive] = useState(false);
+  const [voidSource, setVoidSource] = useState(null);
+  const [voidTarget, setVoidTarget] = useState(null);
   const [inverseBloom, setInverseBloom] = useState(false);
-  const [pendingVoid,  setPendingVoid]  = useState(null);
-  const [armedVoid,    setArmedVoid]    = useState(null);
+  const [pendingVoid, setPendingVoid] = useState(null);
+  const [armedVoid, setArmedVoid] = useState(null);
 
-  const getTarget = () =>
-    vaultWindowRef.current?.getBlackStarTarget() ??
-    { x: window.innerWidth - 128, y: window.innerHeight - 180 };
+  const getTarget = () => ({
+    x: window.innerWidth * 0.5,
+    y: window.innerHeight * 0.28,
+  });
 
   const triggerVoidAnimation = useCallback((item, sourcePos) => {
-    const source = sourcePos ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const source = sourcePos ?? {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    };
     const target = getTarget();
     setPendingVoid(item);
     setVoidSource(source);
     setVoidTarget(target);
     setVoidActive(true);
-
   }, []);
 
   const handleShelfVoid = useCallback((item, sourcePos) => {
@@ -68,19 +68,18 @@ export function useVaultVoid({ onVoid, voidColor }) {
   }, [pendingVoid, onVoid]);
 
   const voidProps = {
-    active:     voidActive,
-    source:     voidSource,
-    target:     voidTarget,
-    color:      voidColor,
+    active: voidActive,
+    source: voidSource,
+    target: voidTarget,
+    color: voidColor,
     onComplete: handleVoidComplete,
   };
 
   return {
-    vaultWindowRef,
     voidProps,
     inverseBloom,
     isVoidArmed: Boolean(armedVoid),
-    armedVoidLabel: armedVoid?.item?.label || 'SELECTED FILE',
+    armedVoidLabel: armedVoid?.item?.label || "SELECTED FILE",
     cancelArmedVoid,
     confirmArmedVoid,
     handleShelfVoid,

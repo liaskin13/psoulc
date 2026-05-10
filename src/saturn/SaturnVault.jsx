@@ -1,32 +1,40 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import RecordShelf from '../components/RecordShelf';
-import StuderTransportBar from '../components/StuderTransportBar';
-import TuneModal from '../components/TuneModal';
-import VaultWindow from '../components/VaultWindow';
-import VoidStreakOverlay from '../components/VoidStreakOverlay';
-import { useVaultVoid } from '../hooks/useVaultVoid';
-import { useVaultFileCells } from '../hooks/useVaultFileCells';
-import { SATURN_TRACKS } from '../data/saturn';
-import { VOID_CHAKRA_COLORS, MEMBER_CHAKRA_COLORS, D_CHAKRA_COLOR } from '../config';
-import { useSystem } from '../state/SystemContext';
-import { canComment, canEdit } from '../utils/permissions';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import RecordShelf from "../components/RecordShelf";
+import StuderTransportBar from "../components/StuderTransportBar";
+import TuneModal from "../components/TuneModal";
+import { useVaultVoid } from "../hooks/useVaultVoid";
+import { useVaultFileCells } from "../hooks/useVaultFileCells";
+import { SATURN_TRACKS } from "../data/saturn";
+import {
+  VOID_CHAKRA_COLORS,
+  MEMBER_CHAKRA_COLORS,
+  D_CHAKRA_COLOR,
+} from "../config";
+import { useSystem } from "../state/SystemContext";
+import { canComment, canEdit } from "../utils/permissions";
 
 // Saturn spine palette — metallic gold, warm light from the left (Sun).
-const GOLD = { highlight: '#fff0b0', base: '#c89030', shadow: '#3a1e00', glow: 'rgba(220,160,40,0.7)' };
+const GOLD = {
+  highlight: "#fff0b0",
+  base: "#c89030",
+  shadow: "#3a1e00",
+  glow: "rgba(220,160,40,0.7)",
+};
 
-const TRACK_ITEMS = SATURN_TRACKS.map(t => ({
-  id: `track-${t.id}`, label: t.name,
+const TRACK_ITEMS = SATURN_TRACKS.map((t) => ({
+  id: `track-${t.id}`,
+  label: t.name,
   sublabel: `${t.bpm} BPM · ${t.frequency}`,
   metadata: t,
-  createdBy: t.createdBy || 'D',
+  createdBy: t.createdBy || "D",
   chakraColor: MEMBER_CHAKRA_COLORS[t.createdBy] || MEMBER_CHAKRA_COLORS.D,
   ...GOLD,
 }));
 
 const parseFrequency = (value) => {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
     const m = value.match(/(\d+)/);
     return m ? parseInt(m[1], 10) : 528;
   }
@@ -35,15 +43,17 @@ const parseFrequency = (value) => {
 
 function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
   const [pitchMultiplier, setPitchMultiplier] = useState(1.0);
-  const [voidLog,         setVoidLog]    = useState([]);
-  const [tuneItem,        setTuneItem]   = useState(null);
-  const { addComment, sessionMeta, getTuneOverride, saveTuneOverride } = useSystem();
+  const [voidLog, setVoidLog] = useState([]);
+  const [tuneItem, setTuneItem] = useState(null);
+  const { addComment, sessionMeta, getTuneOverride, saveTuneOverride } =
+    useSystem();
 
   const initialTrackItems = TRACK_ITEMS.map((item) => {
-    const override = getTuneOverride('saturn', item.id);
+    const override = getTuneOverride("saturn", item.id);
     if (!override) return item;
     const bpm = override.bpm ?? item.metadata?.bpm ?? 120;
-    const frequency = override.frequency ?? parseFrequency(item.metadata?.frequency);
+    const frequency =
+      override.frequency ?? parseFrequency(item.metadata?.frequency);
     return {
       ...item,
       label: override.label ?? item.label,
@@ -65,7 +75,6 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
   } = useVaultFileCells(initialTrackItems);
 
   const {
-    vaultWindowRef,
     voidProps,
     inverseBloom,
     isVoidArmed,
@@ -74,21 +83,35 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
     confirmArmedVoid,
     handleShelfVoid,
     handleVoidButton,
-  } =
-    useVaultVoid({
-      voidColor: VOID_CHAKRA_COLORS.saturn,
-      onVoid: (item) => {
-        setVoidLog(prev => [...prev, item]);
-        if (activeId === item.id) clearSelection();
-        onVoid?.(item);
-      },
-    });
+  } = useVaultVoid({
+    voidColor: VOID_CHAKRA_COLORS.saturn,
+    onVoid: (item) => {
+      setVoidLog((prev) => [...prev, item]);
+      if (activeId === item.id) clearSelection();
+      onVoid?.(item);
+    },
+  });
 
-  const handleComment = (item, body) => addComment('saturn', item.id, item.label, sessionMeta?.owner || 'member', body);
-  const handleVoiceComment = (item, audioData) => addComment('saturn', item.id, item.label, sessionMeta?.owner || 'member', null, audioData);
-  const canAdmin = canEdit(sessionMeta, 'saturn');
+  const handleComment = (item, body) =>
+    addComment(
+      "saturn",
+      item.id,
+      item.label,
+      sessionMeta?.owner || "member",
+      body,
+    );
+  const handleVoiceComment = (item, audioData) =>
+    addComment(
+      "saturn",
+      item.id,
+      item.label,
+      sessionMeta?.owner || "member",
+      null,
+      audioData,
+    );
+  const canAdmin = canEdit(sessionMeta, "saturn");
 
-  const handleSelect = item => {
+  const handleSelect = (item) => {
     selectCell(item);
   };
 
@@ -99,12 +122,16 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
   };
 
   const handleTuneSave = (updates) => {
-    saveTuneOverride('saturn', tuneItem.id, updates);
+    saveTuneOverride("saturn", tuneItem.id, updates);
     updateCell(tuneItem.id, (cell) => ({
       ...cell,
       label: updates.label,
       sublabel: `${updates.bpm} BPM · ${updates.frequency}Hz`,
-      metadata: { ...cell.metadata, bpm: updates.bpm, frequency: `${updates.frequency}Hz` },
+      metadata: {
+        ...cell.metadata,
+        bpm: updates.bpm,
+        frequency: `${updates.frequency}Hz`,
+      },
     }));
     setTuneItem(null);
   };
@@ -112,7 +139,7 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
   return (
     <motion.div
       className="vault-screen saturn-vault"
-      style={{ '--vault-owner-glow': `${D_CHAKRA_COLOR}1a` }}
+      style={{ "--vault-owner-glow": `${D_CHAKRA_COLOR}1a` }}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.7, ease: [0.08, 0, 0.3, 1] }}
@@ -123,14 +150,27 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
       </div>
 
       <div className="vault-commands">
-        <button className="god-btn" onClick={onBack}>SEAL VAULT</button>
-        <button className="god-btn" onClick={onExitSystem}>EXIT SYSTEM</button>
+        <button className="god-btn" onClick={onBack}>
+          SEAL VAULT
+        </button>
+        <button className="god-btn" onClick={onExitSystem}>
+          EXIT SYSTEM
+        </button>
         {!readOnly && (
           <>
-            <button className="god-btn" onClick={handleTune} disabled={!activeId} style={{ opacity: activeId ? 1 : 0.4 }}>TUNE</button>
             <button
               className="god-btn"
-              onClick={() => activeId && handleVoidButton(findCellById(activeId))}
+              onClick={handleTune}
+              disabled={!activeId}
+              style={{ opacity: activeId ? 1 : 0.4 }}
+            >
+              TUNE
+            </button>
+            <button
+              className="god-btn"
+              onClick={() =>
+                activeId && handleVoidButton(findCellById(activeId))
+              }
               disabled={!activeId}
               style={{ opacity: activeId ? 1 : 0.4 }}
             >
@@ -142,24 +182,18 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
 
       {tuneItem && (
         <TuneModal
-          item={{ label: tuneItem.label, bpm: tuneItem.metadata?.bpm, frequency: parseInt(tuneItem.metadata?.frequency) || 528 }}
+          item={{
+            label: tuneItem.label,
+            bpm: tuneItem.metadata?.bpm,
+            frequency: parseInt(tuneItem.metadata?.frequency) || 528,
+          }}
           onSave={handleTuneSave}
           onClose={() => setTuneItem(null)}
         />
       )}
 
       <div className="vault-main-grid">
-        <div className="vault-top-band">
-          <VaultWindow
-            ref={vaultWindowRef}
-            inverseBloom={inverseBloom}
-            voidArmed={isVoidArmed}
-            armedLabel={armedVoidLabel}
-            onCancelVoid={cancelArmedVoid}
-            onConfirmVoid={confirmArmedVoid}
-            activeTrack={activeTrack}
-          />
-        </div>
+        <div className="vault-top-band" />
 
         <div className="vault-library-band">
           <div className="shelf-section">
@@ -170,7 +204,9 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
               onSelect={handleSelect}
               onVoid={readOnly ? undefined : handleShelfVoid}
               onComment={canComment(sessionMeta) ? handleComment : undefined}
-              onVoiceComment={canComment(sessionMeta) ? handleVoiceComment : undefined}
+              onVoiceComment={
+                canComment(sessionMeta) ? handleVoiceComment : undefined
+              }
             />
           </div>
 
@@ -178,17 +214,22 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
             activeTrack={activeTrack}
             transportState={transportState}
             pitchMultiplier={pitchMultiplier}
-            onPlay={()   => setTransport('play')}
-            onStop={()   => setTransport('stop')}
-            onRewind={()  => setTransport('rewind')}
-            onFastForward={() => setTransport('ff')}
-            onPause={()  => setTransport('pause')}
-            onRecord={()  => setTransport('record')}
+            onPlay={() => setTransport("play")}
+            onStop={() => setTransport("stop")}
+            onRewind={() => setTransport("rewind")}
+            onFastForward={() => setTransport("ff")}
+            onPause={() => setTransport("pause")}
+            onRecord={() => setTransport("record")}
             showAdminCommands={!readOnly}
             isAdmin={canAdmin}
-            onAdminArm={()    => activeId && handleVoidButton(findCellById(activeId))}
+            onAdminArm={() =>
+              activeId && handleVoidButton(findCellById(activeId))
+            }
             onAdminCommit={confirmArmedVoid}
-            onAdminSeal={()   => { cancelArmedVoid(); setTransport('stop'); }}
+            onAdminSeal={() => {
+              cancelArmedVoid();
+              setTransport("stop");
+            }}
             onAdminClear={clearSelection}
             onPitchChange={setPitchMultiplier}
           />
@@ -204,8 +245,6 @@ function SaturnVault({ onVoid, onBack, onExitSystem, readOnly = false }) {
           )}
         </div>
       </div>
-
-      {!readOnly && <VoidStreakOverlay {...voidProps} />}
     </motion.div>
   );
 }

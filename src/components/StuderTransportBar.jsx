@@ -1,15 +1,19 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import StrobeVinylCanvas from './StrobeVinylCanvas';
+import React from "react";
+import { motion } from "framer-motion";
 
 // Studer Transport Bar — 1974 A-807 style.
 // Transport: REW / PLAY / STOP / PAUSE / FF
 // Special: REC = voice-note transmission capture (arms recording on selected file).
 // Admin row (optional): ARM / COMMIT / SEAL / CLEAR — role-gated.
 function StuderTransportBar({
-  onPlay, onStop, onRewind, onFastForward, onPause,
+  onPlay,
+  onStop,
+  onRewind,
+  onFastForward,
+  onPause,
   onRecord,
-  onPitchChange, pitchMultiplier = 1.0,
+  onPitchChange,
+  pitchMultiplier = 1.0,
   activeTrack,
   transportState,
   showAdminCommands = false,
@@ -26,10 +30,18 @@ function StuderTransportBar({
     return match ? parseInt(match[1], 10) : 98;
   })();
 
-  const handlePlay = () => { onPlay?.(); };
-  const handleStop = () => { onStop?.(); };
-  const handleRewind = () => { onRewind?.(); };
-  const handleFastForward = () => { onFastForward?.(); };
+  const handlePlay = () => {
+    onPlay?.();
+  };
+  const handleStop = () => {
+    onStop?.();
+  };
+  const handleRewind = () => {
+    onRewind?.();
+  };
+  const handleFastForward = () => {
+    onFastForward?.();
+  };
 
   const handlePause = () => {
     onPause?.();
@@ -39,14 +51,16 @@ function StuderTransportBar({
     onRecord?.();
   };
 
-  const handlePitchChange = (val) => { onPitchChange?.(val); };
+  const handlePitchChange = (val) => {
+    onPitchChange?.(val);
+  };
 
   const transportButtons = [
-    { id: 'rewind', symbol: '◀◀', label: 'REW',   action: handleRewind      },
-    { id: 'play',   symbol: '▶',  label: 'PLAY',  action: handlePlay        },
-    { id: 'stop',   symbol: '■',  label: 'STOP',  action: handleStop        },
-    { id: 'pause',  symbol: '▮▮', label: 'PAUSE', action: handlePause       },
-    { id: 'ff',     symbol: '▶▶', label: 'FF',    action: handleFastForward },
+    { id: "rewind", symbol: "◀◀", label: "REW", action: handleRewind },
+    { id: "play", symbol: "▶", label: "PLAY", action: handlePlay },
+    { id: "stop", symbol: "■", label: "STOP", action: handleStop },
+    { id: "pause", symbol: "▮▮", label: "PAUSE", action: handlePause },
+    { id: "ff", symbol: "▶▶", label: "FF", action: handleFastForward },
   ];
 
   return (
@@ -54,18 +68,24 @@ function StuderTransportBar({
       className="studer-transport"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      transition={{ type: 'spring', stiffness: 100, damping: 18 }}
+      transition={{ type: "spring", stiffness: 100, damping: 18 }}
     >
       {/* Amber phosphor track readout */}
-      <div className={`transport-readout ${activeTrack ? 'loaded' : 'idle'}`}>
+      <div className={`transport-readout ${activeTrack ? "loaded" : "idle"}`}>
         {activeTrack ? (
           <>
-            {/* Soul-chakra vinyl disc — spins at BPM, tinted by authorship color */}
-            <StrobeVinylCanvas
-              bpm={activeBpm}
-              pitchMultiplier={pitchMultiplier}
-              size={52}
-              chakraColor={activeTrack.chakraColor || null}
+            <div
+              aria-hidden="true"
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: "50%",
+                border: "1px solid rgba(255,191,0,0.45)",
+                background: activeTrack.chakraColor
+                  ? `radial-gradient(circle at 50% 50%, ${activeTrack.chakraColor}88 0 20%, rgba(25,25,25,0.95) 20% 100%)`
+                  : "radial-gradient(circle at 50% 50%, rgba(120,82,20,0.92) 0 20%, rgba(16,16,16,0.98) 20% 100%)",
+                boxShadow: "inset 0 0 18px rgba(0,0,0,0.85)",
+              }}
             />
             <div className="readout-text">
               <div className="readout-track-line">
@@ -77,9 +97,11 @@ function StuderTransportBar({
               )}
               {transportState && (
                 <span className={`readout-state state-${transportState}`}>
-                  {transportState === 'pause'  ? '▮▮ PAUSE'
-                   : transportState === 'record' ? '● VOICE NOTE ARMED'
-                   : transportState.toUpperCase()}
+                  {transportState === "pause"
+                    ? "▮▮ PAUSE"
+                    : transportState === "record"
+                      ? "● VOICE NOTE ARMED"
+                      : transportState.toUpperCase()}
                 </span>
               )}
             </div>
@@ -91,10 +113,10 @@ function StuderTransportBar({
 
       {/* Chrome transport buttons */}
       <div className="transport-controls">
-        {transportButtons.map(btn => (
+        {transportButtons.map((btn) => (
           <button
             key={btn.id}
-            className={`transport-btn btn-${btn.id} ${transportState === btn.id ? 'transport-active' : ''}`}
+            className={`transport-btn btn-${btn.id} ${transportState === btn.id ? "transport-active" : ""}`}
             onClick={btn.action}
             title={btn.label}
           >
@@ -105,7 +127,7 @@ function StuderTransportBar({
 
         {/* REC — voice-note transmissions: arms recording on selected file */}
         <button
-          className={`transport-btn btn-record voice-rec-btn ${transportState === 'record' ? 'transport-active' : ''}`}
+          className={`transport-btn btn-record voice-rec-btn ${transportState === "record" ? "transport-active" : ""}`}
           onClick={handleRecord}
           disabled={!activeTrack}
           title="Voice Transmission — record a note onto this file"
@@ -118,11 +140,43 @@ function StuderTransportBar({
 
       {/* Admin command row — role-gated, only when showAdminCommands=true */}
       {showAdminCommands && (
-        <div className="transport-admin" role="group" aria-label="Admin commands">
-          <button className="transport-admin-btn" onClick={onAdminArm}    disabled={!isAdmin || !activeTrack} title="Arm void on selected file">ARM</button>
-          <button className="transport-admin-btn" onClick={onAdminCommit} disabled={!isAdmin}               title="Commit armed void">COMMIT</button>
-          <button className="transport-admin-btn" onClick={onAdminSeal}   disabled={!isAdmin}               title="Seal and cancel pending actions">SEAL</button>
-          <button className="transport-admin-btn" onClick={onAdminClear}  disabled={!isAdmin}               title="Clear selection and reset">CLEAR</button>
+        <div
+          className="transport-admin"
+          role="group"
+          aria-label="Admin commands"
+        >
+          <button
+            className="transport-admin-btn"
+            onClick={onAdminArm}
+            disabled={!isAdmin || !activeTrack}
+            title="Arm void on selected file"
+          >
+            ARM
+          </button>
+          <button
+            className="transport-admin-btn"
+            onClick={onAdminCommit}
+            disabled={!isAdmin}
+            title="Commit armed void"
+          >
+            COMMIT
+          </button>
+          <button
+            className="transport-admin-btn"
+            onClick={onAdminSeal}
+            disabled={!isAdmin}
+            title="Seal and cancel pending actions"
+          >
+            SEAL
+          </button>
+          <button
+            className="transport-admin-btn"
+            onClick={onAdminClear}
+            disabled={!isAdmin}
+            title="Clear selection and reset"
+          >
+            CLEAR
+          </button>
         </div>
       )}
 
@@ -131,9 +185,11 @@ function StuderTransportBar({
         <span className="pitch-label">VARISPEED</span>
         <input
           type="range"
-          min="0.5" max="2.0" step="0.05"
+          min="0.5"
+          max="2.0"
+          step="0.05"
           value={pitchMultiplier}
-          onChange={e => handlePitchChange(parseFloat(e.target.value))}
+          onChange={(e) => handlePitchChange(parseFloat(e.target.value))}
           className="pitch-slider"
         />
         <span className="pitch-value">{pitchMultiplier.toFixed(2)}×</span>

@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { uploadTrack } from '../lib/tracks';
-import { useSystem, CMD } from '../state/SystemContext';
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { uploadTrack } from "../lib/tracks";
+import { useSystem, CMD } from "../state/SystemContext";
 
 const FREQ_OPTIONS = [396, 432, 528, 741, 852];
 
@@ -10,19 +10,30 @@ const FREQ_OPTIONS = [396, 432, 528, 741, 852];
 // Operates on the first 16KB of the file — enough for any typical ID3 header.
 
 function syncsafeToInt(bytes, offset) {
-  return ((bytes[offset] & 0x7f) << 21)
-       | ((bytes[offset+1] & 0x7f) << 14)
-       | ((bytes[offset+2] & 0x7f) <<  7)
-       |  (bytes[offset+3] & 0x7f);
+  return (
+    ((bytes[offset] & 0x7f) << 21) |
+    ((bytes[offset + 1] & 0x7f) << 14) |
+    ((bytes[offset + 2] & 0x7f) << 7) |
+    (bytes[offset + 3] & 0x7f)
+  );
 }
 
 function readId3Frame(bytes, offset, version) {
-  const id = String.fromCharCode(bytes[offset], bytes[offset+1], bytes[offset+2], bytes[offset+3]);
-  const size = version >= 4
-    ? syncsafeToInt(bytes, offset + 4)
-    : (bytes[offset+4] << 24) | (bytes[offset+5] << 16) | (bytes[offset+6] << 8) | bytes[offset+7];
+  const id = String.fromCharCode(
+    bytes[offset],
+    bytes[offset + 1],
+    bytes[offset + 2],
+    bytes[offset + 3],
+  );
+  const size =
+    version >= 4
+      ? syncsafeToInt(bytes, offset + 4)
+      : (bytes[offset + 4] << 24) |
+        (bytes[offset + 5] << 16) |
+        (bytes[offset + 6] << 8) |
+        bytes[offset + 7];
   const dataStart = offset + 10;
-  const dataEnd   = dataStart + size;
+  const dataEnd = dataStart + size;
   return { id, size, dataStart, dataEnd };
 }
 
@@ -30,8 +41,8 @@ function decodeTextFrame(bytes, start, end) {
   const enc = bytes[start];
   const raw = bytes.slice(start + 1, end);
   try {
-    if (enc === 1 || enc === 2) return new TextDecoder('utf-16').decode(raw);
-    return new TextDecoder('utf-8').decode(raw);
+    if (enc === 1 || enc === 2) return new TextDecoder("utf-16").decode(raw);
+    return new TextDecoder("utf-8").decode(raw);
   } catch (_) {
     return null;
   }
@@ -48,20 +59,24 @@ async function readId3Tags(file) {
   if (version < 2 || version > 4) return {};
 
   const tagSize = syncsafeToInt(bytes, 6) + 10;
-  const result  = {};
-  let offset    = 10;
+  const result = {};
+  let offset = 10;
 
   while (offset + 10 < tagSize && offset + 10 < bytes.length) {
     if (bytes[offset] === 0) break;
     const frame = readId3Frame(bytes, offset, version);
     if (frame.size <= 0 || frame.dataEnd > bytes.length) break;
 
-    if (frame.id === 'TIT2') {
-      result.title = decodeTextFrame(bytes, frame.dataStart, frame.dataEnd)
-        ?.replace(/\0/g, '').trim() || null;
+    if (frame.id === "TIT2") {
+      result.title =
+        decodeTextFrame(bytes, frame.dataStart, frame.dataEnd)
+          ?.replace(/\0/g, "")
+          .trim() || null;
     }
-    if (frame.id === 'TBPM') {
-      const raw = decodeTextFrame(bytes, frame.dataStart, frame.dataEnd)?.replace(/\0/g, '').trim();
+    if (frame.id === "TBPM") {
+      const raw = decodeTextFrame(bytes, frame.dataStart, frame.dataEnd)
+        ?.replace(/\0/g, "")
+        .trim();
       const bpm = parseInt(raw, 10);
       if (bpm > 0 && bpm <= 300) result.bpm = bpm;
     }
@@ -71,34 +86,40 @@ async function readId3Tags(file) {
 }
 
 function NixieDigits({ value }) {
-  const str = String(Math.round(value)).padStart(3, '0');
+  const str = String(Math.round(value)).padStart(3, "0");
   return (
     <div className="nixie-digits">
-      {str.split('').map((d, i) => (
-        <span key={i} className="nixie-digit">{d}</span>
+      {str.split("").map((d, i) => (
+        <span key={i} className="nixie-digit">
+          {d}
+        </span>
       ))}
     </div>
   );
 }
 
-function UploadModal({ onClose, defaultVault = 'saturn' }) {
+function UploadModal({ onClose, defaultVault = "saturn" }) {
   const { consoleOwner, loadVaultTracks, dispatchCommand } = useSystem();
-  const [file,        setFile]        = useState(null);
-  const [title,       setTitle]       = useState('');
-  const [bpm,         setBpm]         = useState(120);
+  const [file, setFile] = useState(null);
+  const [title, setTitle] = useState("");
+  const [bpm, setBpm] = useState(120);
   const [frequencyHz, setFrequencyHz] = useState(528);
-  const [vault,       setVault]       = useState(defaultVault);
-  const [uploading,   setUploading]   = useState(false);
-  const [error,       setError]       = useState(null);
+  const [vault, setVault] = useState(defaultVault);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
   const fileRef = useRef(null);
 
   const applyFile = async (f) => {
-    if (!f || !f.type.startsWith('audio/')) return;
+    if (!f || !f.type.startsWith("audio/")) return;
     setFile(f);
-    const fallbackTitle = f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').toUpperCase();
+    const fallbackTitle = f.name
+      .replace(/\.[^.]+$/, "")
+      .replace(/[-_]/g, " ")
+      .toUpperCase();
     try {
       const tags = await readId3Tags(f);
-      if (!title) setTitle(tags.title ? tags.title.toUpperCase() : fallbackTitle);
+      if (!title)
+        setTitle(tags.title ? tags.title.toUpperCase() : fallbackTitle);
       if (tags.bpm) setBpm(tags.bpm);
     } catch (_) {
       if (!title) setTitle(fallbackTitle);
@@ -117,16 +138,16 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
     try {
       await uploadTrack(file, {
         vault,
-        title:        title.trim(),
-        bpm:          parseInt(bpm),
+        title: title.trim(),
+        bpm: parseInt(bpm),
         frequency_hz: parseInt(frequencyHz),
-        uploaded_by:  consoleOwner,
+        uploaded_by: consoleOwner,
       });
       dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
       await loadVaultTracks(vault);
       onClose();
     } catch (err) {
-      setError(err.message || 'UPLOAD FAILED — CHECK SIGNAL');
+      setError(err.message || "UPLOAD FAILED — CHECK SIGNAL");
     } finally {
       setUploading(false);
     }
@@ -140,28 +161,38 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.25 }}
-        onClick={(e) => { if (e.target === e.currentTarget && !uploading) onClose(); }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget && !uploading) onClose();
+        }}
       >
         <motion.div
           className="tune-modal upload-modal"
           initial={{ scale: 0.88, opacity: 0, y: 24 }}
-          animate={{ scale: 1,    opacity: 1, y: 0  }}
-          exit={{    scale: 0.88, opacity: 0, y: 24 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.88, opacity: 0, y: 24 }}
           transition={{ duration: 0.3, ease: [0.12, 0, 0.2, 1] }}
         >
           <div className="tune-modal-header">
             <span className="tune-modal-title">INTAKE</span>
-            <span className="tune-modal-sub">ASSET UPLOAD · VAULT INGESTION PROTOCOL</span>
+            <span className="tune-modal-sub">
+              ASSET UPLOAD · VAULT INGESTION PROTOCOL
+            </span>
           </div>
 
           {/* Vault selector */}
           <div className="tune-field">
             <label className="tune-field-label">DESTINATION VAULT</label>
             <div className="upload-vault-toggle">
-              <button className={`upload-vault-btn ${vault === 'saturn' ? 'active' : ''}`} onClick={() => setVault('saturn')}>
+              <button
+                className={`upload-vault-btn ${vault === "saturn" ? "active" : ""}`}
+                onClick={() => setVault("saturn")}
+              >
                 SATURN
               </button>
-              <button className={`upload-vault-btn ${vault === 'venus' ? 'active' : ''}`} onClick={() => setVault('venus')}>
+              <button
+                className={`upload-vault-btn ${vault === "venus" ? "active" : ""}`}
+                onClick={() => setVault("venus")}
+              >
                 VENUS
               </button>
             </div>
@@ -171,7 +202,7 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
           <div className="tune-field">
             <label className="tune-field-label">AUDIO FILE</label>
             <div
-              className={`upload-dropzone ${file ? 'has-file' : ''}`}
+              className={`upload-dropzone ${file ? "has-file" : ""}`}
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileRef.current?.click()}
@@ -180,13 +211,16 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
                 ref={fileRef}
                 type="file"
                 accept="audio/*"
-                style={{ display: 'none' }}
+                style={{ display: "none" }}
                 onChange={(e) => applyFile(e.target.files[0])}
               />
-              {file
-                ? <span className="upload-filename">{file.name}</span>
-                : <span className="upload-drop-hint">DROP AUDIO FILE · OR CLICK TO SELECT</span>
-              }
+              {file ? (
+                <span className="upload-filename">{file.name}</span>
+              ) : (
+                <span className="upload-drop-hint">
+                  DROP AUDIO FILE · OR CLICK TO SELECT
+                </span>
+              )}
             </div>
           </div>
 
@@ -211,7 +245,9 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
               <input
                 type="range"
                 className="tune-slider"
-                min="60" max="200" step="1"
+                min="60"
+                max="200"
+                step="1"
                 value={bpm}
                 onChange={(e) => setBpm(e.target.value)}
               />
@@ -222,12 +258,14 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
           <div className="tune-field">
             <label className="tune-field-label">FREQUENCY (Hz)</label>
             <div className="upload-freq-options">
-              {FREQ_OPTIONS.map(hz => (
+              {FREQ_OPTIONS.map((hz) => (
                 <button
                   key={hz}
-                  className={`upload-freq-btn ${frequencyHz === hz ? 'active' : ''}`}
+                  className={`upload-freq-btn ${frequencyHz === hz ? "active" : ""}`}
                   onClick={() => setFrequencyHz(hz)}
-                >{hz}</button>
+                >
+                  {hz}
+                </button>
               ))}
             </div>
           </div>
@@ -235,7 +273,11 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
           {error && <div className="upload-error">{error}</div>}
 
           <div className="tune-modal-actions">
-            <button className="tune-btn tune-btn-cancel" onClick={onClose} disabled={uploading}>
+            <button
+              className="tune-btn tune-btn-cancel"
+              onClick={onClose}
+              disabled={uploading}
+            >
               CANCEL
             </button>
             <button
@@ -243,7 +285,7 @@ function UploadModal({ onClose, defaultVault = 'saturn' }) {
               onClick={handleSubmit}
               disabled={!file || !title.trim() || uploading}
             >
-              {uploading ? 'TRANSMITTING…' : 'COMMIT TO VAULT'}
+              {uploading ? "TRANSMITTING…" : "COMMIT TO VAULT"}
             </button>
           </div>
         </motion.div>
