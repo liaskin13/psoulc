@@ -16,8 +16,6 @@ import PSCWordmark from "../components/PSCWordmark";
 const WORKER_URL = UPLOAD_WORKER_URL;
 const SIGNAL_POLL_MS = 10000;
 
-const TheVault = lazy(() => import("../components/TheVault"));
-
 const LISTENER_VAULTS = [
   {
     id: "venus",
@@ -77,7 +75,10 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
 
   const handleVaultBack = () => {
     const delay = prefersReduced ? 0 : 240;
-    if (delay === 0) { setActiveVault(null); return; }
+    if (delay === 0) {
+      setActiveVault(null);
+      return;
+    }
     setHandoffLabel("LISTENING ROOM");
     setIsHandoff(true);
     window.clearTimeout(handoffTimerRef.current);
@@ -103,13 +104,17 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
             transition={{ duration: 0.15, delay: 0.04 }}
-          >OPENING</motion.span>
+          >
+            OPENING
+          </motion.span>
           <motion.span
             className="listener-handoff-label"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.1, ease: [0.25, 1, 0.5, 1] }}
-          >{handoffLabel}</motion.span>
+          >
+            {handoffLabel}
+          </motion.span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -123,22 +128,6 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
         onBack={() => setInSignal(false)}
         sessionMeta={sessionMeta}
       />
-    );
-  }
-
-  // ── VAULT VIEW ───────────────────────────────────────────────────
-  if (activeVault) {
-    return (
-      <>
-        <div className="universe listener-mainframe">
-          <div className="glitter-grain" />
-          <div className="receded-logo">dp</div>
-          <Suspense fallback={<VaultSkeleton />}>
-            <TheVault vault={activeVault} readOnly onBack={handleVaultBack} />
-          </Suspense>
-        </div>
-        {handoffOverlay}
-      </>
     );
   }
 
@@ -178,7 +167,9 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
               {signalState.title || "THE SIGNAL"}
             </span>
             <span className="listener-signal-live">D IS LIVE</span>
-            <span className="listener-signal-enter" aria-hidden="true">ENTER →</span>
+            <span className="listener-signal-enter" aria-hidden="true">
+              ENTER →
+            </span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -199,7 +190,7 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
                 className="listener-stage-color"
                 style={{ "--vault-color": selectedVault.color }}
               >
-                {selectedVault.id.toUpperCase()}
+                {selectedVault.label}
               </span>
             </div>
             <h1 className="listener-stage-title">{selectedVault.label}</h1>

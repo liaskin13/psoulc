@@ -7,14 +7,14 @@ const WORKER_URL = UPLOAD_WORKER_URL;
 
 // Serato cue color palette (exact)
 export const SERATO_COLORS = [
-  "#e52020", // red
-  "#e56020", // orange
-  "#e5a020", // yellow/amber
-  "#14dc14", // green
-  "#00c8dc", // cyan
-  "#1464dc", // blue
-  "#8c14dc", // purple
-  "#e5e5e5", // white/grey
+  "#CC0000", // red (Serato #1)
+  "#CC8800", // orange-brown (Serato #3)
+  "#CCCC00", // yellow (Serato #4)
+  "#00CC00", // green (Serato #7)
+  "#00CCCC", // cyan (Serato #10)
+  "#0044CC", // blue (Serato #12)
+  "#8800CC", // purple (Serato #15)
+  "#E5E5E5", // white/grey
 ];
 
 // Frequency bands for Serato-style coloring

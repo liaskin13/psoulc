@@ -143,6 +143,13 @@ Captures patterns, mistakes, and corrections to prevent "Shadow Gaps" from repea
 
 ### Session: Phase-10 Reconciliation (May 10, 2026)
 
+#### Never Act On Assumptions After User Undo/Reset
+
+- **Root Cause**: Edits were applied based on stale assumptions from earlier turns instead of re-reading the current file state after user undo/reset events.
+- **Symptom**: Repeated claims about components/files that were already removed or no longer routed, causing trust breaks and churn.
+- **Rule**: After any user message indicating undo/reset/deletion, stop and re-read the live source-of-truth files (`App.jsx`, active imports/routes, and the target file) before proposing or applying edits.
+- **How to apply**: Run a quick three-check gate before editing: (1) `git status -sb`, (2) open the current target file, (3) grep imports/usages from `App.jsx` to verify what is active now.
+
 #### Verify Cloudflare Pages Deployment Mode First (Git-Connected vs Direct Upload)
 
 - **Root Cause**: Production looked stale even after valid commits because the active Cloudflare Pages project was operating in Direct Upload mode (prompted for drag-and-drop), not Git-connected auto-build mode.

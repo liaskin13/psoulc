@@ -66,26 +66,53 @@ export default function DeckWaveform({
       const visibleBars = Math.round(barCount / zoom);
       const playheadFrac = duration > 0 ? currentTime / duration : 0;
       const centerBar = Math.round(playheadFrac * barCount);
-      const startBar = Math.max(0, Math.min(centerBar - Math.round(visibleBars / 2), barCount - visibleBars));
+      const startBar = Math.max(
+        0,
+        Math.min(
+          centerBar - Math.round(visibleBars / 2),
+          barCount - visibleBars,
+        ),
+      );
       const endBar = Math.min(barCount, startBar + visibleBars);
       const barWidth = width / (endBar - startBar);
       const playheadX = ((centerBar - startBar) / (endBar - startBar)) * width;
 
       // Draw loop region highlight
-      if (loopRegion?.start !== null && loopRegion?.start !== undefined && duration > 0) {
-        const loopStartX = ((loopRegion.start / duration) * barCount - startBar) / (endBar - startBar) * width;
-        const loopEndX = loopRegion.end !== null
-          ? ((loopRegion.end / duration) * barCount - startBar) / (endBar - startBar) * width
-          : playheadX;
+      if (
+        loopRegion?.start !== null &&
+        loopRegion?.start !== undefined &&
+        duration > 0
+      ) {
+        const loopStartX =
+          (((loopRegion.start / duration) * barCount - startBar) /
+            (endBar - startBar)) *
+          width;
+        const loopEndX =
+          loopRegion.end !== null
+            ? (((loopRegion.end / duration) * barCount - startBar) /
+                (endBar - startBar)) *
+              width
+            : playheadX;
         if (loopEndX > loopStartX) {
-          const LOOP_AMBER = "255, 191, 0";
-          ctx.fillStyle = `rgba(${LOOP_AMBER}, 0.12)`;
-          ctx.fillRect(Math.max(0, loopStartX), 0, Math.min(loopEndX - loopStartX, width), height);
-          ctx.strokeStyle = `rgba(${LOOP_AMBER}, 0.5)`;
+          const LOOP_CYAN = "0, 204, 204";
+          ctx.fillStyle = `rgba(${LOOP_CYAN}, 0.12)`;
+          ctx.fillRect(
+            Math.max(0, loopStartX),
+            0,
+            Math.min(loopEndX - loopStartX, width),
+            height,
+          );
+          ctx.strokeStyle = `rgba(${LOOP_CYAN}, 0.5)`;
           ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.moveTo(Math.max(0, loopStartX), 0); ctx.lineTo(Math.max(0, loopStartX), height); ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(Math.max(0, loopStartX), 0);
+          ctx.lineTo(Math.max(0, loopStartX), height);
+          ctx.stroke();
           if (loopRegion.end !== null) {
-            ctx.beginPath(); ctx.moveTo(Math.min(loopEndX, width), 0); ctx.lineTo(Math.min(loopEndX, width), height); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(Math.min(loopEndX, width), 0);
+            ctx.lineTo(Math.min(loopEndX, width), height);
+            ctx.stroke();
           }
         }
       }
@@ -176,7 +203,9 @@ export default function DeckWaveform({
       animFrameRef.current = requestAnimationFrame(animate);
     }
 
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (currentTime > 0 && !prefersReduced) {
       animate();
     }
@@ -210,12 +239,21 @@ export default function DeckWaveform({
       onSeek(frac * duration);
       return;
     }
-    const totalBars = (waveformData && Array.isArray(waveformData)) ? waveformData.length : 1000;
+    const totalBars =
+      waveformData && Array.isArray(waveformData) ? waveformData.length : 1000;
     const visibleBars = Math.round(totalBars / zoom);
     const centerBar = Math.round((currentTime / duration) * totalBars);
-    const startBar = Math.max(0, Math.min(centerBar - Math.round(visibleBars / 2), totalBars - visibleBars));
+    const startBar = Math.max(
+      0,
+      Math.min(
+        centerBar - Math.round(visibleBars / 2),
+        totalBars - visibleBars,
+      ),
+    );
     const clickedBar = startBar + Math.round(frac * visibleBars);
-    onSeek(Math.max(0, Math.min((clickedBar / totalBars) * duration, duration)));
+    onSeek(
+      Math.max(0, Math.min((clickedBar / totalBars) * duration, duration)),
+    );
   };
 
   return (

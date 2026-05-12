@@ -20,17 +20,6 @@
 - Untracked `dist/` artifacts from git (`dist` remains ignored in `.gitignore`).
 - Cleaned local formatting-only drift in `src/listener/ListenerShell.jsx`.
 
-## Immediate Priority (Do This First)
-
-Recreate or reconnect Cloudflare Pages as a Git-connected project so deploys come from `main` source builds:
-
-1. Cloudflare Dashboard -> Workers & Pages -> Create project -> Connect to Git.
-2. Select repo `liaskin13/psoulc`, branch `main`.
-3. Build command: `npm run build`.
-4. Build output directory: `dist`.
-5. Deploy and verify latest commit hash includes Phase 1-6 work.
-6. Point `pasoulc.pages.dev`/custom domain to this Git-connected project and archive old Direct Upload project.
-
 ## Validation Checklist After Deploy
 
 - Listener header shows: `LISTENING ROOM / CURATED BY D`.

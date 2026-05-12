@@ -3,8 +3,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import "./App.css";
 
 import { useSystem } from "./state/SystemContext";
-import { SESSION_KEY, LOCKBOX_PREFIX } from "./config";
-import { canVoid, canEdit } from "./utils/permissions";
+import { SESSION_KEY } from "./config";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useBreakpoint } from "./hooks/useBreakpoint";
 
@@ -15,25 +14,11 @@ import EntrySequence from "./entry/EntrySequence";
 const ArchitectConsole = lazy(() => import("./console/ArchitectConsole"));
 const ListenerShell = lazy(() => import("./listener/ListenerShell"));
 
-const TheVault = lazy(() => import("./components/TheVault"));
-const LockboxVault = lazy(() => import("./lockbox/LockboxVault"));
-const LockedDoor = lazy(() => import("./lockbox/LockedDoor"));
 const UploadModal = lazy(() => import("./components/UploadModal"));
 
-// ── SHARED UI ────────────────────────────────────────────────────────────────
-import VaultSkeleton from "./components/VaultSkeleton";
 import BottomNav from "./components/BottomNav";
 
 import { BROADCAST_DURATION_MS } from "./config";
-
-const VAULT_IDS = new Set(["saturn", "mercury", "venus", "earth"]);
-
-function isVaultId(id) {
-  return (
-    VAULT_IDS.has(id) ||
-    (typeof id === "string" && id.startsWith(LOCKBOX_PREFIX))
-  );
-}
 
 function refreshSessionMeta() {
   try {
@@ -54,13 +39,7 @@ function refreshSessionMeta() {
 
 // Stages: 'entry' | 'console' | 'architect' | 'room'
 function App() {
-  const {
-    setConsoleOwner,
-    voidItem,
-    sessionMeta,
-    setSessionMeta,
-    canEnterLockbox,
-  } = useSystem();
+  const { setConsoleOwner, sessionMeta, setSessionMeta } = useSystem();
   const online = useNetworkStatus();
   const { isMobile } = useBreakpoint();
   const prefersReduced = useReducedMotion();
@@ -118,13 +97,6 @@ function App() {
     }
   };
 
-  const closeVault = () => {
-    setActiveNode(null);
-    if (owner === "D") setStage("console");
-    else if (owner === "L") setStage("architect");
-    else setStage("room");
-  };
-
   const handlePowerDown = () => {
     try {
       localStorage.removeItem(SESSION_KEY);
@@ -140,37 +112,8 @@ function App() {
 
   const handleArchitectExplore = (planetRef) => {
     const planetId = typeof planetRef === "string" ? planetRef : planetRef?.id;
-    if (!planetId || !VAULT_IDS.has(planetId)) return;
+    if (!planetId) return;
     setActiveNode({ id: planetId });
-  };
-
-  const handleVoid = (item, planet) => {
-    voidItem(item, planet);
-  };
-
-  const renderVault = (id) => {
-    const rOnly = !canEdit(sessionMeta, id);
-    const vAllowed = canVoid(sessionMeta, id);
-    const shared = {
-      onBack: closeVault,
-      onExitSystem: handlePowerDown,
-      readOnly: rOnly,
-      voidAllowed: vAllowed,
-    };
-    const onVoid = (planet) => (item) => handleVoid(item, planet);
-
-    let vault = null;
-    if (VAULT_IDS.has(id)) {
-      vault = <TheVault vault={id} {...shared} onVoid={onVoid(id)} />;
-    }
-    if (!vault && typeof id === "string" && id.startsWith(LOCKBOX_PREFIX)) {
-      if (canEnterLockbox(sessionMeta, id)) {
-        vault = <LockboxVault {...shared} lockboxId={id} onVoid={onVoid(id)} />;
-      } else {
-        vault = <LockedDoor lockboxId={id} onBack={closeVault} />;
-      }
-    }
-    return <Suspense fallback={<VaultSkeleton />}>{vault}</Suspense>;
   };
 
   const offlineBanner = !online && (
@@ -195,7 +138,7 @@ function App() {
   }
 
   // ── LISTENER SHELL — guest / member listening room ───────────────────────
-  if (stage === "room" && !activeNode) {
+  if (stage === "room") {
     return (
       <Suspense fallback={null}>
         <ListenerShell
@@ -246,35 +189,6 @@ function App() {
             PLEASANT SOUL COLLECTIVE
           </div>
         </div>
-      </>
-    );
-  }
-
-  // ── VAULT TAKEOVER ───────────────────────────────────────────────────────
-  if (activeNode && isVaultId(activeNode.id)) {
-    return (
-      <>
-        {offlineBanner}
-        <motion.div
-          className="universe god-mode-mainframe state-create"
-          id="main-content"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="glitter-grain" />
-          <div className="receded-logo">dp</div>
-          {renderVault(activeNode.id)}
-          {isMobile && (
-            <BottomNav
-              activeId={activeNode.id}
-              onSelect={(id) => setActiveNode({ id })}
-            />
-          )}
-          <div className="psc-wordmark-footer" aria-hidden="true">
-            PLEASANT SOUL COLLECTIVE
-          </div>
-        </motion.div>
       </>
     );
   }
