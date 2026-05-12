@@ -9,6 +9,7 @@ import { useBreakpoint } from "./hooks/useBreakpoint";
 
 // ── STATIC IMPORTS ───────────────────────────────────────────────────────────
 import EntrySequence from "./entry/EntrySequence";
+import CommandPalette from "./components/CommandPalette";
 
 // ── LAZY IMPORTS ─────────────────────────────────────────────────────────────
 const ArchitectConsole = lazy(() => import("./console/ArchitectConsole"));
@@ -79,6 +80,16 @@ function App() {
       setStage("room");
     }
   }, [isMobile, stage]);
+
+  useEffect(() => {
+    const handleOpenUploadModal = () => setShowUploadModal(true);
+    window.addEventListener("psc:open-upload-modal", handleOpenUploadModal);
+    return () =>
+      window.removeEventListener(
+        "psc:open-upload-modal",
+        handleOpenUploadModal,
+      );
+  }, []);
 
   const handleIgnite = (ownerVal, tier = "G") => {
     const meta = refreshSessionMeta();
@@ -166,6 +177,7 @@ function App() {
           className="universe god-mode-mainframe state-create"
           id="main-content"
         >
+          <CommandPalette />
           <div className="glitter-grain" />
           {isBroadcasting && (
             <div className="system-broadcast-pulse" aria-live="polite">
@@ -201,6 +213,7 @@ function App() {
         Skip to archive
       </a>
       <div className="universe god-mode-mainframe state-create">
+        <CommandPalette />
         <div className="glitter-grain" />
         <div className="receded-logo">dp</div>
         <div className="psc-wordmark-footer" aria-hidden="true">

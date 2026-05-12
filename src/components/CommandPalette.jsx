@@ -108,6 +108,9 @@ export default function CommandPalette() {
 
   const handleDispatch = useCallback((cmd) => {
     dispatchCommand(cmd.id, cmd.payload);
+    if (cmd.id === CMD.INTAKE_ASSET || cmd.id === CMD.UPLOAD_TRACK) {
+      window.dispatchEvent(new CustomEvent('psc:open-upload-modal'));
+    }
     setOpen(false);
     setQuery('');
   }, [dispatchCommand]);
