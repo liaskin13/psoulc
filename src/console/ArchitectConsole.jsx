@@ -29,24 +29,19 @@ import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { getWaveformBars } from "../utils/waveform";
 import { generateAndSaveWaveform } from "../lib/waveformAnalyzer";
 
-// Bank 1: Serato canonical · Bank 2: Extended palette (outlined style)
 const ALL_CUE_COLORS = [
-  "#e52020",
-  "#e56020",
-  "#e5a020",
-  "#14dc14",
-  "#00c8dc",
-  "#1464dc",
-  "#8c14dc",
-  "#e5e5e5",
-  "#ff2d78",
-  "#ff7700",
-  "#e8ff14",
-  "#00ff66",
-  "#0099ff",
-  "#cc00ff",
-  "#ff88bb",
-  "#44ffee",
+  // Bank A (1–8) — Serato canonical
+  "#e52020", "#e56020", "#e5a020", "#14dc14",
+  "#00c8dc", "#1464dc", "#8c14dc", "#e5e5e5",
+  // Bank B (9–16) — Extended palette
+  "#ff2d78", "#ff7700", "#e8ff14", "#00ff66",
+  "#0099ff", "#cc00ff", "#ff88bb", "#44ffee",
+  // Bank C (17–24)
+  "#ff4444", "#ff8844", "#ffcc44", "#44ff88",
+  "#44ccff", "#4488ff", "#aa44ff", "#ffffff",
+  // Bank D (25–32)
+  "#cc1111", "#cc5511", "#cc9911", "#11cc55",
+  "#11aacc", "#1155cc", "#7711cc", "#aaaaaa",
 ];
 
 const LOOP_LENGTH_OPTIONS = [
@@ -306,12 +301,6 @@ function ArchitectConsole({
     }
   });
   const [activeCueBank, setActiveCueBank] = useState("A");
-  const [cueBankPoints, setCueBankPoints] = useState({
-    A: null,
-    B: null,
-    C: null,
-    D: null,
-  });
   const [loopRegion, setLoopRegion] = useState({ start: null, end: null });
   const [showLoopMenu, setShowLoopMenu] = useState(false);
   const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
@@ -1076,40 +1065,15 @@ function ArchitectConsole({
     );
   }, [loopRegion]);
 
-  const handleCueBankClick = (bank) => {
-    if (!audioEngine.isLoaded()) return;
-    setCueBankPoints((prev) => {
-      if (prev[bank] === null) {
-        announce(`Cue ${bank} set at ${currentTime.toFixed(1)}s.`);
-        return { ...prev, [bank]: currentTime };
-      }
-      audioEngine.seek(prev[bank]);
-      announce(`Jump to cue ${bank}.`);
-      return prev;
-    });
-  };
-
-  const handleCueBankClear = (bank) => {
-    setCueBankPoints((prev) => ({ ...prev, [bank]: null }));
-    announce(`Cue ${bank} cleared.`);
-  };
-
-  const handleClearAllCues = () => {
-    setCueBankPoints({ A: null, B: null, C: null, D: null });
-
+  const handleClearBankCues = () => {
     if (!loadedTrack) {
-      announce("All cue markers cleared.");
+      announce(`No cues to clear in bank ${activeCueBank}.`);
       return;
     }
 
     const trackId = loadedTrack.id;
     const trackCues = hotCues[trackId] || {};
-
-    // Clear all cues in current bank only
-    const cuesToClear = Array.from(
-      { length: 8 },
-      (_, i) => bankIndex * 8 + i + 1,
-    );
+    const cuesToClear = Array.from({ length: 8 }, (_, i) => bankIndex * 8 + i + 1);
     let hasChanges = false;
     const updated = { ...trackCues };
     cuesToClear.forEach((num) => {
@@ -1121,13 +1085,10 @@ function ArchitectConsole({
 
     if (hasChanges) {
       setHotCues({ ...hotCues, [trackId]: updated });
-      localStorage.setItem(
-        "psc_hotcues",
-        JSON.stringify({ ...hotCues, [trackId]: updated }),
-      );
-      announce(`All cues in bank ${activeCueBank} cleared.`);
+      localStorage.setItem("psc_hotcues", JSON.stringify({ ...hotCues, [trackId]: updated }));
+      announce(`Bank ${activeCueBank} cleared.`);
     } else {
-      announce(`No cues to clear in bank ${activeCueBank}.`);
+      announce(`No cues in bank ${activeCueBank}.`);
     }
   };
 
@@ -1201,9 +1162,6 @@ function ArchitectConsole({
     return (resolveTrackBpm(b) || 0) - (resolveTrackBpm(a) || 0);
   });
 
-  const hasCueBankPoints = Object.values(cueBankPoints).some(
-    (value) => value !== null,
-  );
   const hasHotCuesForLoadedTrack = !!(
     loadedTrack && Object.keys(hotCues[loadedTrack.id] || {}).length
   );
@@ -1608,43 +1566,9 @@ function ArchitectConsole({
           )}
         </div>
 
-        <div
-          className="arch-deck-edit"
-          role="group"
-          aria-label="Waveform edit controls"
-        >
-          <div className="arch-cue-markers">
-            <span className="arch-cue-tag">CUE</span>
-            {["A", "B", "C", "D"].map((bank) => (
-              <button
-                key={bank}
-                className={`arch-deck-mini-btn${cueBankPoints[bank] !== null ? " is-set" : ""}`}
-                disabled={!loadedTrack}
-                onClick={() => handleCueBankClick(bank)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  handleCueBankClear(bank);
-                }}
-                title={
-                  cueBankPoints[bank] !== null
-                    ? `${bank}: ${cueBankPoints[bank].toFixed(1)}s · right-click to clear`
-                    : `Set cue ${bank}`
-                }
-              >
-                {bank}
-              </button>
-            ))}
-            <button
-              className="arch-deck-mini-btn"
-              disabled={!hasCueBankPoints && !hasHotCuesForLoadedTrack}
-              onClick={handleClearAllCues}
-              title="Clear all cue markers and hot cues for loaded track"
-            >
-              CLEAR CUES
-            </button>
-          </div>
+        <div className="arch-deck-edit" role="group" aria-label="Waveform edit controls">
           <div className="arch-loop-region">
-            <span className="arch-cue-tag">LOOP REGION</span>
+            <span className="arch-cue-tag">LOOP</span>
             <span className="arch-loop-readout">
               {loopRegion.start !== null && loopRegion.end !== null
                 ? `${loopRegion.start.toFixed(1)}s → ${loopRegion.end.toFixed(1)}s`
@@ -1667,6 +1591,10 @@ function ArchitectConsole({
         role="toolbar"
         aria-label="Transport controls"
       >
+        {/* Left spacer — balances the right side to keep playback centered */}
+        <div className="arch-transport-left" aria-hidden="true" />
+
+        {/* Center: playback controls */}
         <div
           className="arch-transport-cluster"
           role="group"
@@ -1708,105 +1636,114 @@ function ArchitectConsole({
           </button>
         </div>
 
-        <div
-          className="arch-hotcues-cluster"
-          role="group"
-          aria-label="Hot cues"
-        >
-          <div className="arch-bank-selector-wrap">
-            <span className="arch-cue-tag">BANK</span>
-            <div className="arch-cue-bank-selector">
-              {["A", "B", "C", "D"].map((bank) => (
-                <button
-                  key={bank}
-                  className={`arch-bank-btn${activeCueBank === bank ? " active" : ""}`}
-                  onClick={() => setActiveCueBank(bank)}
-                  aria-label={`Switch to cue bank ${bank}`}
-                  aria-pressed={activeCueBank === bank}
-                >
-                  {bank}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Right: hot cues + loop */}
+        <div className="arch-transport-right">
           <div
-            className="arch-hotcues"
+            className="arch-hotcues-cluster"
             role="group"
-            aria-label={`Hot cues bank ${activeCueBank}`}
+            aria-label="Hot cues"
           >
-            {Array.from({ length: 8 }, (_, i) => i + 1).map((displayNum) => {
-              const trackCues = loadedTrack
-                ? hotCues[loadedTrack.id] || {}
-                : {};
-              const internalNum = bankIndex * 8 + displayNum;
-              const cue = trackCues[internalNum];
-              const color = ALL_CUE_COLORS[internalNum - 1];
-              return (
-                <button
-                  key={displayNum}
-                  className={`arch-hotcue${cue ? " has-cue" : ""}`}
-                  aria-label={
-                    cue
-                      ? `Hot cue ${displayNum} — double-click to clear`
-                      : `Hot cue ${displayNum}`
-                  }
-                  onClick={() => handleHotCueClick(displayNum)}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    clearHotCue(displayNum, e);
-                  }}
-                  style={{ "--cue-color": color }}
-                >
-                  {displayNum}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div
-          className="arch-loop-controls"
-          role="group"
-          aria-label="Loop controls"
-        >
-          <div className="arch-loop-menu-wrap" ref={loopMenuRef}>
-            <button
-              className="arch-loop-btn arch-loop-trigger"
-              disabled={!loadedTrack}
-              onClick={() => setShowLoopMenu((prev) => !prev)}
-            >
-              LOOP{" "}
-              {LOOP_LENGTH_OPTIONS.find((o) => o.id === selectedLoopLengthId)
-                ?.label || "1/4"}
-            </button>
-            {showLoopMenu && (
-              <div
-                className="arch-loop-menu"
-                role="menu"
-                aria-label="Loop length"
-              >
-                {LOOP_LENGTH_OPTIONS.map((option) => (
+            <div className="arch-bank-selector-wrap">
+              <span className="arch-cue-tag">BANK</span>
+              <div className="arch-cue-bank-selector">
+                {["A", "B", "C", "D"].map((bank) => (
                   <button
-                    key={option.id}
-                    className={`arch-loop-menu-item ${selectedLoopLengthId === option.id ? "active" : ""}`}
-                    onClick={() => handleApplyLoopLength(option)}
+                    key={bank}
+                    className={`arch-bank-btn${activeCueBank === bank ? " active" : ""}`}
+                    onClick={() => setActiveCueBank(bank)}
+                    aria-label={`Switch to cue bank ${bank}`}
+                    aria-pressed={activeCueBank === bank}
                   >
-                    {option.label}
+                    {bank}
                   </button>
                 ))}
               </div>
-            )}
+              <button
+                className="arch-clr-bank-btn"
+                disabled={!hasCuesInCurrentBank}
+                onClick={handleClearBankCues}
+                title={`Clear all hot cues in bank ${activeCueBank}`}
+              >
+                CLR
+              </button>
+            </div>
+            <div
+              className="arch-hotcues"
+              role="group"
+              aria-label={`Hot cues bank ${activeCueBank}`}
+            >
+              {Array.from({ length: 8 }, (_, i) => i + 1).map((displayNum) => {
+                const trackCues = loadedTrack
+                  ? hotCues[loadedTrack.id] || {}
+                  : {};
+                const internalNum = bankIndex * 8 + displayNum;
+                const cue = trackCues[internalNum];
+                const color = ALL_CUE_COLORS[internalNum - 1];
+                return (
+                  <button
+                    key={displayNum}
+                    className={`arch-hotcue${cue ? " has-cue" : ""}`}
+                    aria-label={
+                      cue
+                        ? `Hot cue ${displayNum} — double-click to clear`
+                        : `Hot cue ${displayNum}`
+                    }
+                    onClick={() => handleHotCueClick(displayNum)}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      clearHotCue(displayNum, e);
+                    }}
+                    style={{ "--cue-color": color }}
+                  >
+                    {displayNum}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <button
-            className="arch-loop-btn"
-            disabled={loopRegion.start === null}
-            onClick={handleClearLoop}
-          >
-            CLEAR
-          </button>
-        </div>
 
-        <div className="arch-transport-spacer" />
+          <div
+            className="arch-loop-controls"
+            role="group"
+            aria-label="Loop controls"
+          >
+            <div className="arch-loop-menu-wrap" ref={loopMenuRef}>
+              <button
+                className="arch-loop-btn arch-loop-trigger"
+                disabled={!loadedTrack}
+                onClick={() => setShowLoopMenu((prev) => !prev)}
+              >
+                LOOP{" "}
+                {LOOP_LENGTH_OPTIONS.find((o) => o.id === selectedLoopLengthId)
+                  ?.label || "1/4"}
+              </button>
+              {showLoopMenu && (
+                <div
+                  className="arch-loop-menu"
+                  role="menu"
+                  aria-label="Loop length"
+                >
+                  {LOOP_LENGTH_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`arch-loop-menu-item ${selectedLoopLengthId === option.id ? "active" : ""}`}
+                      onClick={() => handleApplyLoopLength(option)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              className="arch-loop-btn"
+              disabled={loopRegion.start === null}
+              onClick={handleClearLoop}
+            >
+              CLEAR
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="arch-monitor-strip" role="group" aria-label="Monitoring">

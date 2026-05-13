@@ -818,7 +818,6 @@
   border-top: 1px solid rgba(var(--arch-accent-rgb), 0.06);
 }
 
-.arch-cue-markers,
 .arch-loop-region,
 .arch-needle-zoom {
   display: flex;
@@ -1089,8 +1088,38 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.arch-transport-spacer {
+.arch-transport-left {
   flex: 1;
+}
+
+.arch-transport-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.arch-clr-bank-btn {
+  background: none;
+  border: none;
+  color: rgba(var(--arch-muted-rgb), 0.3);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 80ms;
+}
+
+.arch-clr-bank-btn:hover {
+  color: rgba(var(--arch-accent-rgb), 0.7);
+}
+
+.arch-clr-bank-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .arch-loop-controls {
