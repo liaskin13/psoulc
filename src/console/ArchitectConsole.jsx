@@ -1591,53 +1591,8 @@ function ArchitectConsole({
         role="toolbar"
         aria-label="Transport controls"
       >
-        {/* Left spacer — balances the right side to keep playback centered */}
-        <div className="arch-transport-left" aria-hidden="true" />
-
-        {/* Center: playback controls */}
-        <div
-          className="arch-transport-cluster"
-          role="group"
-          aria-label="Playback"
-        >
-          <button
-            className="arch-transport-btn arch-skip-btn"
-            aria-label="Previous track"
-            onClick={handlePrev}
-            disabled={!visibleTracks.length}
-          >
-            ⏮ PREV
-          </button>
-          <button
-            className={`arch-transport-btn arch-play-btn${isPlaying ? " active" : ""}${audioLoading ? " loading" : ""}`}
-            aria-label={isPlaying ? "Pause" : "Play"}
-            aria-pressed={isPlaying}
-            onClick={handlePlayPause}
-            disabled={audioLoading}
-          >
-            <span className="arch-play-icon">{isPlaying ? "⏸" : "▶"}</span>{" "}
-            {isPlaying ? "PAUSE" : "PLAY"}
-          </button>
-          <button
-            className="arch-transport-btn arch-cue-btn"
-            aria-label="Cue"
-            onClick={handleCue}
-            disabled={audioLoading || !audioEngine.isLoaded()}
-          >
-            ■ CUE
-          </button>
-          <button
-            className="arch-transport-btn arch-skip-btn"
-            aria-label="Next track"
-            onClick={handleNext}
-            disabled={!visibleTracks.length}
-          >
-            NEXT ⏭
-          </button>
-        </div>
-
-        {/* Right: hot cues + loop */}
-        <div className="arch-transport-right">
+        {/* Left: hot cues (Serato standard position) */}
+        <div className="arch-transport-left">
           <div
             className="arch-hotcues-cluster"
             role="group"
@@ -1701,7 +1656,52 @@ function ArchitectConsole({
               })}
             </div>
           </div>
+        </div>
 
+        {/* Center: playback controls */}
+        <div
+          className="arch-transport-cluster"
+          role="group"
+          aria-label="Playback"
+        >
+          <button
+            className="arch-transport-btn arch-skip-btn"
+            aria-label="Previous track"
+            onClick={handlePrev}
+            disabled={!visibleTracks.length}
+          >
+            ⏮ PREV
+          </button>
+          <button
+            className={`arch-transport-btn arch-play-btn${isPlaying ? " active" : ""}${audioLoading ? " loading" : ""}`}
+            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-pressed={isPlaying}
+            onClick={handlePlayPause}
+            disabled={audioLoading}
+          >
+            <span className="arch-play-icon">{isPlaying ? "⏸" : "▶"}</span>{" "}
+            {isPlaying ? "PAUSE" : "PLAY"}
+          </button>
+          <button
+            className="arch-transport-btn arch-cue-btn"
+            aria-label="Cue"
+            onClick={handleCue}
+            disabled={audioLoading || !audioEngine.isLoaded()}
+          >
+            ■ CUE
+          </button>
+          <button
+            className="arch-transport-btn arch-skip-btn"
+            aria-label="Next track"
+            onClick={handleNext}
+            disabled={!visibleTracks.length}
+          >
+            NEXT ⏭
+          </button>
+        </div>
+
+        {/* Right: loop controls */}
+        <div className="arch-transport-right">
           <div
             className="arch-loop-controls"
             role="group"
