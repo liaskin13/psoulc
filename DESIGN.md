@@ -219,7 +219,7 @@ Visual metaphor: Studer A800 tape deck. Hardware readout. Post-auth surface.
 
 ## Intake (Upload Modal)
 
-INTAKE is a console-level action. The button lives in the top rail (`arch-top-actions`) alongside EXIT and SIGNAL — not buried in transport or loop controls.
+INTAKE is a console-level action. The button lives in the browser utility bar (`arch-browser-utility`) alongside PUBLISH / RETRACT / LOAD DECK — not in the top rail (deliberately clean) and not buried in loop controls.
 
 - **Modal overlay:** `position: fixed; inset: 0; z-index: 1200; background: rgba(0,0,0,0.88)`. The high z-index ensures it clears all console surfaces. NOTE: the UploadModal must be rendered OUTSIDE any `motion.div` that applies a CSS transform — transforms create stacking contexts that trap fixed-position children.
 - **Modal container:** `--surface` background, `border: 1px solid --border`, 0px border-radius.
@@ -253,7 +253,8 @@ INTAKE is a console-level action. The button lives in the top rail (`arch-top-ac
 | 2026-04-24 | Comfortaa quarantined to logo/dp mark only | Comfortaa = the brand mark. Every functional element gets Chakra Petch. |
 | 2026-04-24 | 0px border-radius everywhere | Hard edges = hardware language. Anodized aluminum, not rounded plastic. |
 | 2026-04-24 | DPWallpaper canvas on entry | Canvas-rendered half-drop tessellation. Comfortaa in canvas = correct (it's the logo). |
-| 2026-04-24 | D's theme = 70s soul (warm amber #ffb347, cream text, warm surfaces) | First theme. Personal. Amber stays. |
+| 2026-04-24 | D's theme initial concept = 70s soul (warm amber #ffb347) | First theme. Superseded — see 2026-05-04. |
+| 2026-05-04 | D's theme = Serato green `--identity: #14dc14`. Amber fully removed. | Locked. variables.css is source of truth. The identity IS the Serato cue green. |
 | 2026-04-24 | Theme system via data-theme on body + CSS custom property overrides | `--identity` / `--identity-dim` / `--identity-glow` are the three core theme tokens. |
 | 2026-04-24 | Pre-auth entry accent = copper #B87333, not D's amber | Entry is before identity. Copper hints at the premium without committing to D's world. |
 | 2026-04-25 | Vault dp wallpaper via CSS ::before at 2.2% white opacity | CSS vars can't go in SVG data URIs. White at near-zero opacity reads as luxury texture against dark identity backgrounds. |
@@ -263,6 +264,6 @@ INTAKE is a console-level action. The button lives in the top rail (`arch-top-ac
 | 2026-05-13 | god-btn documented as canonical vault/console control | Shared pattern across all admin surfaces. Needed spec to prevent drift. |
 | 2026-05-13 | Space Mono valid in 3 surfaces: transport readout, BPM nixie, telemetry timestamps | All three are numeric data readouts. Everything else: Chakra Petch. |
 | 2026-05-13 | UploadModal must render outside any CSS-transform ancestor | CSS transforms create stacking contexts that trap fixed-position modals. Modal moved to sibling of cockpit motion.div. |
-| 2026-05-13 | INTAKE button moved to top rail (arch-top-actions) | It is a global console action, not a loop control. Top rail alongside EXIT and SIGNAL is the correct location. |
+| 2026-05-13 | INTAKE button moved to arch-browser-utility bar alongside PUBLISH / RETRACT / LOAD DECK | Top rail is deliberately clean — no functional controls. Loop controls were wrong too. Browser utility bar is correct. |
 | 2026-05-13 | Vault selector in INTAKE shows friendly names only | MIXES / ORIGINAL MUSIC / LIVE SETS / SONIC ARCH. Venus/saturn/mercury/earth are internal IDs — never surface them in UI. |
 | 2026-05-13 | tune-modal CSS added back to index.css with design system tokens | CSS was deleted in May 10 reconciliation (had banned amber colors). Rewritten with --surface, --border, --identity, 0px border-radius. |
