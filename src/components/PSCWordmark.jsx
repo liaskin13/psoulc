@@ -1,20 +1,22 @@
 import React, { useState, useCallback } from "react";
 import "./PSCWordmark.css";
 
-export default function PSCWordmark() {
+export default function PSCWordmark({ onToggle, railOpen }) {
   const [pulsing, setPulsing] = useState(false);
 
   const handleClick = useCallback(() => {
     if (pulsing) return;
     setPulsing(true);
     window.setTimeout(() => setPulsing(false), 900);
-  }, [pulsing]);
+    onToggle?.();
+  }, [pulsing, onToggle]);
 
   return (
     <button
-      className={`psc-wordmark${pulsing ? " psc-wordmark--pulse" : ""}`}
+      className={`psc-wordmark${pulsing ? " psc-wordmark--pulse" : ""}${railOpen ? " psc-wordmark--open" : ""}`}
       onClick={handleClick}
-      aria-label="Pleasant Soul Collective"
+      aria-label={railOpen ? "Close architect rail" : "Open architect rail"}
+      aria-expanded={railOpen}
       tabIndex={0}
     >
       dp

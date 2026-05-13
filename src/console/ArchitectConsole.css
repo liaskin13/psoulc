@@ -334,6 +334,74 @@
     0 0 8px rgba(var(--arch-accent-rgb), 0.25);
 }
 
+/* ── REACH (top rail) ───────────────────────────────────────────────────── */
+
+.arch-reach-wrap {
+  position: relative;
+}
+
+.arch-reach-btn {
+  background: none;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.22);
+  color: rgba(var(--arch-accent-rgb), 0.65);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 120ms, color 120ms;
+}
+
+.arch-reach-btn:hover,
+.arch-reach-btn.active {
+  border-color: rgba(var(--arch-accent-rgb), 0.6);
+  color: var(--arch-accent);
+}
+
+.arch-reach-badge {
+  background: var(--arch-accent);
+  color: #000;
+  font-size: 0.48rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  min-width: 16px;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.arch-reach-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+.arch-reach-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: var(--arch-surface, #0a0a0a);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+  z-index: 91;
+  padding: 12px;
+}
+
+/* ── RAIL slide ─────────────────────────────────────────────────────────── */
+/* Rail is hidden by default — PSC wordmark toggles it open */
+
+/* ── WORDMARK open state ────────────────────────────────────────────────── */
+.psc-wordmark--open {
+  color: var(--identity, #14dc14) !important;
+  opacity: 1 !important;
+}
+
 .arch-intake-btn {
   border-color: rgba(var(--arch-accent-rgb), 0.35);
   color: rgba(var(--arch-accent-rgb), 0.9);
@@ -1428,11 +1496,24 @@
 .arch-rail {
   display: flex;
   flex-direction: column;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border-right: none;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  transition: width 220ms cubic-bezier(0.25, 1, 0.5, 1),
+              padding 220ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.arch-rail--open {
+  width: 180px;
+  min-width: 180px;
   padding: 12px 0;
   border-right: 1px solid rgba(var(--arch-accent-rgb), 0.08);
-  background: rgba(0, 0, 0, 0.35);
   overflow-y: auto;
-  scrollbar-width: none;
 }
 
 .arch-rail::-webkit-scrollbar {

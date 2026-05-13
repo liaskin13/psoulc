@@ -241,6 +241,8 @@ function ArchitectConsole({
   const [showArchive, setShowArchive] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
+  const [showReach, setShowReach] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
   const [activeVault, setActiveVault] = useState(null);
   const [activeLibVault, setActiveLibVault] = useState(VAULT_ROUTES[0].id);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -1405,7 +1407,7 @@ function ArchitectConsole({
       transition={{ duration: 1.8, ease: [0.05, 0.9, 0.2, 1] }}
     >
       <div className="arch-grain-layer" />
-      <PSCWordmark />
+      <PSCWordmark onToggle={() => setRailOpen((v) => !v)} railOpen={railOpen} />
       <div className="arch-cursor-ball" ref={cursorRef} aria-hidden="true" />
       <div
         style={SR_ONLY_STYLE}
@@ -1433,6 +1435,32 @@ function ArchitectConsole({
           >
             <span className="arch-signal-dot">●</span> SIGNAL
           </button>
+
+          <div className="arch-reach-wrap">
+            <button
+              className={`arch-reach-btn${showReach ? " active" : ""}`}
+              onClick={() => setShowReach((v) => !v)}
+              aria-label="Reach — direct line"
+              aria-expanded={showReach}
+            >
+              REACH
+              {unreadCountL > 0 && (
+                <span className="arch-reach-badge">{unreadCountL}</span>
+              )}
+            </button>
+            {showReach && (
+              <>
+                <div
+                  className="arch-reach-backdrop"
+                  onClick={() => setShowReach(false)}
+                  aria-hidden="true"
+                />
+                <div className="arch-reach-panel">
+                  <DirectLinePanel viewer={viewer} variant={viewer === "D" ? "d-mode" : "architect"} />
+                </div>
+              </>
+            )}
+          </div>
 
           <button
             className="arch-rail-btn arch-exit-btn"
@@ -1777,17 +1805,9 @@ function ArchitectConsole({
 
       {/* ── LOWER ZONE ──────────────────────────────────────────────── */}
       <div className="arch-lower-zone">
-        {/* ARCHITECT RAIL — sovereign controls */}
-        <aside className="arch-rail" aria-label="Architect controls">
+        {/* ARCHITECT RAIL — sovereign controls, toggled by PSC wordmark */}
+        <aside className={`arch-rail${railOpen ? " arch-rail--open" : ""}`} aria-label="Architect controls" aria-hidden={!railOpen}>
           <div className="arch-ops-stack">
-            <div className="arch-ops-box" aria-label="Direct line">
-              <div className="arch-ops-body">
-                <DirectLinePanel
-                  viewer={viewer}
-                  variant={viewer === "D" ? "d-mode" : "architect"}
-                />
-              </div>
-            </div>
             <div className="arch-ops-box" aria-label="Settings">
               <div className="arch-rail-section-label">SETUP</div>
               <button
