@@ -1,4 +1,4 @@
-// SATURN MODULE DATA — Moons (child processes) and Master Vault tracks.
+// SATURN — ORIGINAL MUSIC vault. Artist access entries below; live tracks fetched from worker.
 
 export const ARTIST_LOCKBOXES = [
   {
@@ -32,11 +32,3 @@ export const ARTIST_LOCKBOXES = [
 ];
 
 
-export const SATURN_TRACKS = [
-  { id: 1, name: 'Cosmic Drift',    bpm: 128, frequency: '528Hz', createdBy: 'D' },
-  { id: 2, name: 'Void Echoes',     bpm: 140, frequency: '432Hz', createdBy: 'D' },
-  { id: 3, name: 'Stellar Pulse',   bpm: 120, frequency: '528Hz', createdBy: 'D' },
-  { id: 4, name: 'Quantum Flow',    bpm: 110, frequency: '396Hz', createdBy: 'D' },
-  { id: 5, name: 'Nebula Dance',    bpm: 135, frequency: '528Hz', createdBy: 'D' },
-  { id: 6, name: 'Galactic Rhythm', bpm: 125, frequency: '741Hz', createdBy: 'D' }
-];

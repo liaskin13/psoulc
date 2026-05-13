@@ -983,51 +983,41 @@
   gap: 2px;
 }
 
+.arch-bank-selector-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
 .arch-bank-btn {
   width: 22px;
   height: 22px;
-  background: linear-gradient(180deg, #1f1f1f 0%, #0a0a0a 100%);
-  border: 1px solid #2a2a2a;
-  border-bottom-color: #000;
-  box-shadow:
-    0 2px 0 #000,
-    0 4px 6px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
   color: rgba(var(--arch-muted-rgb), 0.45);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 0.58rem;
   font-weight: 600;
   cursor: pointer;
   border-radius: 0;
-  transition: all 60ms ease;
+  transition: color 80ms, border-color 80ms;
+  letter-spacing: 0.06em;
 }
 
 .arch-bank-btn:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.4);
-  box-shadow:
-    0 2px 0 #000,
-    0 4px 8px rgba(0, 0, 0, 0.7),
-    0 0 6px 1px color-mix(in srgb, var(--arch-accent) 25%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: rgba(var(--arch-accent-rgb), 0.8);
+  border-bottom-color: rgba(var(--arch-accent-rgb), 0.35);
 }
 
 .arch-bank-btn.active {
-  background: linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.25) 0%, rgba(var(--arch-accent-rgb), 0.08) 100%);
-  border-color: var(--arch-accent);
   color: var(--arch-accent);
+  border-bottom-color: var(--arch-accent);
   font-weight: 700;
-  box-shadow:
-    0 2px 0 rgba(0, 0, 0, 0.9),
-    0 0 8px 1.5px color-mix(in srgb, var(--arch-accent) 40%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .arch-bank-btn:active {
-  transform: translateY(2px);
-  box-shadow:
-    0 1px 0 #000,
-    0 2px 4px rgba(0, 0, 0, 0.8),
-    inset 1px 1px 4px rgba(0, 0, 0, 0.9);
+  opacity: 0.7;
 }
 
 .arch-hotcues {

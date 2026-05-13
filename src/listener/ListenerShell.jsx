@@ -7,9 +7,10 @@ import React, {
   useCallback,
 } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import VaultSkeleton from "../components/VaultSkeleton";
 import DPWallpaper from "../components/DPWallpaper";
 import TheSignal from "../signal/TheSignal";
+import VaultView from "../components/VaultView";
+import "../components/VaultView.css";
 import { VAULT_ACCENT_COLORS, UPLOAD_WORKER_URL } from "../config";
 import PSCWordmark from "../components/PSCWordmark";
 
@@ -63,7 +64,7 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
   useEffect(() => () => window.clearTimeout(handoffTimerRef.current), []);
 
   const openVault = (vault) => {
-    const delay = prefersReduced ? 0 : 300;
+    const delay = prefersReduced ? 0 : 220;
     setHandoffLabel(vault.label);
     setIsHandoff(delay > 0);
     window.clearTimeout(handoffTimerRef.current);
@@ -74,18 +75,7 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
   };
 
   const handleVaultBack = () => {
-    const delay = prefersReduced ? 0 : 240;
-    if (delay === 0) {
-      setActiveVault(null);
-      return;
-    }
-    setHandoffLabel("LISTENING ROOM");
-    setIsHandoff(true);
-    window.clearTimeout(handoffTimerRef.current);
-    handoffTimerRef.current = window.setTimeout(() => {
-      setActiveVault(null);
-      setIsHandoff(false);
-    }, delay);
+    setActiveVault(null);
   };
 
   const handoffOverlay = (
@@ -128,6 +118,22 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
         onBack={() => setInSignal(false)}
         sessionMeta={sessionMeta}
       />
+    );
+  }
+
+  // ── VAULT INTERIOR ───────────────────────────────────────────────
+  if (activeVault) {
+    return (
+      <AnimatePresence mode="wait">
+        <VaultView
+          key={activeVault}
+          vault={activeVault}
+          authenticated={false}
+          onBack={handleVaultBack}
+          onExitSystem={onPowerDown}
+          readOnly
+        />
+      </AnimatePresence>
     );
   }
 
@@ -182,22 +188,18 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
             initial={prefersReduced ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
-            transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
+            transition={{ duration: 0.3, ease: [0.25, 0, 0, 1] }}
           >
-            <div className="listener-stage-meta">
-              <span className="listener-stage-kicker">VAULT</span>
-              <span
-                className="listener-stage-color"
-                style={{ "--vault-color": selectedVault.color }}
-              >
-                {selectedVault.label}
-              </span>
-            </div>
-            <h1 className="listener-stage-title">{selectedVault.label}</h1>
+            <div className="listener-vault-accent" style={{ background: selectedVault.color }} aria-hidden="true" />
+            <p className="listener-stage-kicker">VAULT</p>
+            <h1 className="listener-stage-title" style={{ "--vault-color": selectedVault.color }}>
+              {selectedVault.label}
+            </h1>
             <div className="listener-stage-rule" aria-hidden="true" />
             <p className="listener-stage-copy">{selectedVault.copy}</p>
             <button
               className="listener-stage-cta"
+              style={{ "--vault-color": selectedVault.color }}
               onClick={() => openVault(selectedVault)}
             >
               OPEN {selectedVault.label}

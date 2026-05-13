@@ -1713,18 +1713,21 @@ function ArchitectConsole({
           role="group"
           aria-label="Hot cues"
         >
-          <div className="arch-cue-bank-selector">
-            {["A", "B", "C", "D"].map((bank) => (
-              <button
-                key={bank}
-                className={`arch-bank-btn${activeCueBank === bank ? " active" : ""}`}
-                onClick={() => setActiveCueBank(bank)}
-                aria-label={`Switch to cue bank ${bank}`}
-                aria-pressed={activeCueBank === bank}
-              >
-                {bank}
-              </button>
-            ))}
+          <div className="arch-bank-selector-wrap">
+            <span className="arch-cue-tag">BANK</span>
+            <div className="arch-cue-bank-selector">
+              {["A", "B", "C", "D"].map((bank) => (
+                <button
+                  key={bank}
+                  className={`arch-bank-btn${activeCueBank === bank ? " active" : ""}`}
+                  onClick={() => setActiveCueBank(bank)}
+                  aria-label={`Switch to cue bank ${bank}`}
+                  aria-pressed={activeCueBank === bank}
+                >
+                  {bank}
+                </button>
+              ))}
+            </div>
           </div>
           <div
             className="arch-hotcues"

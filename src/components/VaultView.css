@@ -1,0 +1,369 @@
+/* VaultView — shared vault interior for listener and console vault screens */
+
+.vv-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--void, #050505);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 50;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.vv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border, #222222);
+  background: var(--surface, #0d0d0d);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.vv-back-btn,
+.vv-exit-btn {
+  background: none;
+  border: none;
+  color: rgba(240, 237, 232, 0.45);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0 4px;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  transition: color 120ms;
+}
+
+.vv-back-btn:hover,
+.vv-exit-btn:hover {
+  color: rgba(240, 237, 232, 0.9);
+}
+
+.vv-header-title {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(240, 237, 232, 0.6);
+}
+
+/* ── Vault kicker ───────────────────────────────────────────────────────── */
+
+.vv-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 6px;
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.vv-kicker-vault {
+  font-weight: 600;
+}
+
+.vv-kicker-sep {
+  color: rgba(240, 237, 232, 0.2);
+}
+
+.vv-kicker-count {
+  color: rgba(240, 237, 232, 0.35);
+}
+
+/* ── Track list ─────────────────────────────────────────────────────────── */
+
+.vv-list {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding-bottom: 80px; /* space for now-playing bar */
+}
+
+.vv-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Track row ──────────────────────────────────────────────────────────── */
+
+.vv-track-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 16px;
+  min-height: 56px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  text-align: left;
+  transition: background 100ms;
+  position: relative;
+}
+
+.vv-track-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 120ms;
+}
+
+.vv-track-row:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.vv-track-active {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.vv-track-active::before {
+  background: var(--vault-color, rgba(240, 237, 232, 0.4));
+}
+
+.vv-track-num {
+  font-family: var(--font-mono, 'SF Mono', monospace);
+  font-size: 10px;
+  color: rgba(240, 237, 232, 0.2);
+  width: 24px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.vv-track-active .vv-track-num {
+  color: var(--vault-color, rgba(240, 237, 232, 0.4));
+}
+
+.vv-track-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vv-track-title {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(240, 237, 232, 0.88);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.vv-track-active .vv-track-title {
+  color: var(--vault-color, rgba(240, 237, 232, 0.4));
+}
+
+.vv-track-artist {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 10px;
+  color: rgba(240, 237, 232, 0.35);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: block;
+}
+
+.vv-track-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-family: var(--font-mono, 'SF Mono', monospace);
+  font-size: 10px;
+  color: rgba(240, 237, 232, 0.28);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.vv-meta-sep {
+  width: 1px;
+  height: 10px;
+  background: rgba(240, 237, 232, 0.12);
+  flex-shrink: 0;
+}
+
+.vv-track-dur {
+  min-width: 44px;
+  text-align: right;
+}
+
+.vv-track-playing {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  color: var(--vault-color, rgba(240, 237, 232, 0.4));
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+/* ── State screens ──────────────────────────────────────────────────────── */
+
+.vv-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 32px;
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(240, 237, 232, 0.3);
+}
+
+.vv-loading .vv-state-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(240, 237, 232, 0.25);
+  animation: vv-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes vv-pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.8; }
+}
+
+.vv-empty-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(240, 237, 232, 0.4);
+}
+
+.vv-empty-sub {
+  font-size: 9px;
+  color: rgba(240, 237, 232, 0.2);
+  text-align: center;
+  max-width: 240px;
+  line-height: 1.8;
+}
+
+.vv-error {
+  color: rgba(255, 68, 68, 0.6);
+}
+
+.vv-retry {
+  background: none;
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: rgba(255, 68, 68, 0.7);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms;
+}
+
+.vv-retry:hover {
+  border-color: rgba(255, 68, 68, 0.6);
+  color: rgba(255, 68, 68, 0.9);
+}
+
+/* ── Now playing bar ────────────────────────────────────────────────────── */
+
+.vv-now-playing {
+  position: fixed;
+  bottom: 64px; /* above listener dock if present; adjust for console */
+  left: 0;
+  right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--surface, #0d0d0d);
+  border-top: 1px solid var(--vault-color, rgba(240, 237, 232, 0.4));
+  z-index: 20;
+}
+
+.vv-np-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+  margin-right: 16px;
+}
+
+.vv-np-label {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--vault-color, rgba(240, 237, 232, 0.4));
+}
+
+.vv-np-title {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(240, 237, 232, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vv-np-stop {
+  background: none;
+  border: 1px solid rgba(240, 237, 232, 0.14);
+  color: rgba(240, 237, 232, 0.5);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 120ms, color 120ms;
+}
+
+.vv-np-stop:hover {
+  border-color: rgba(240, 237, 232, 0.35);
+  color: rgba(240, 237, 232, 0.85);
+}
+
+/* ── Console mode: no fixed bottom offset needed ──────────────────────── */
+
+.vv-screen.vv-console-mode .vv-now-playing {
+  bottom: 0;
+}
+
+/* ── Mobile adjustments ─────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .vv-track-row {
+    min-height: 64px;
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .vv-track-title {
+    font-size: 12px;
+  }
+}

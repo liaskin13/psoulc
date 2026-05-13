@@ -57,6 +57,19 @@ export async function fetchVaultTracks(vault) {
   return Array.isArray(results) ? results : [];
 }
 
+// Listener-facing: no auth header — worker returns published tracks only.
+export async function fetchPublishedVaultTracks(vault) {
+  if (IS_DEV) {
+    return loadFromStorage().filter(
+      (t) => t.vault === vault && !t.is_voided && t.is_published,
+    );
+  }
+  const res = await fetch(`${UPLOAD_WORKER_URL}/tracks/${vault}`);
+  if (!res.ok) return [];
+  const results = await res.json();
+  return Array.isArray(results) ? results : [];
+}
+
 export async function fetchAllTracks() {
   if (IS_DEV) {
     return loadFromStorage()
