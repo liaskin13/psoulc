@@ -1477,6 +1477,14 @@ function ArchitectConsole({
           </button>
 
           <button
+            className="arch-rail-btn arch-intake-btn"
+            onClick={() => onIntake?.()}
+            aria-label="Open intake upload"
+          >
+            INTAKE
+          </button>
+
+          <button
             className="arch-rail-btn arch-exit-btn"
             onClick={handlePowerDown}
           >
@@ -1800,13 +1808,6 @@ function ArchitectConsole({
             onClick={handleClearLoop}
           >
             CLEAR
-          </button>
-          <button
-            className="arch-loop-btn arch-loop-intake-btn"
-            onClick={() => onIntake?.()}
-            aria-label="Open intake upload"
-          >
-            INTAKE
           </button>
         </div>
 

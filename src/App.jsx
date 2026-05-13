@@ -149,7 +149,7 @@ function App() {
   }
 
   // ── LISTENER SHELL — guest / member listening room ───────────────────────
-  if (stage === "room") {
+  if (stage === "room" && !activeNode) {
     return (
       <Suspense fallback={null}>
         <ListenerShell
@@ -247,13 +247,13 @@ function App() {
               onPowerDown={handlePowerDown}
             />
           </Suspense>
-
-          {showUploadModal && (
-            <Suspense fallback={null}>
-              <UploadModal onClose={() => setShowUploadModal(false)} />
-            </Suspense>
-          )}
         </motion.div>
+
+        {showUploadModal && (
+          <Suspense fallback={null}>
+            <UploadModal onClose={() => setShowUploadModal(false)} defaultVault="venus" />
+          </Suspense>
+        )}
 
         {isMobile && (
           <BottomNav

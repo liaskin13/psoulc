@@ -171,6 +171,65 @@ DPWallpaper canvas:  position: fixed, z-index: 0   (page level — paints first)
 
 ---
 
+## Listener Shell
+
+The listening room for Shadow subscribers (LISTENER_CODE). iPhone-primary. Post-auth surface but identity-neutral — this is D's world presented to guests, not D's personal console.
+
+- **Background:** `--void` (#050505). DPWallpaper canvas at full opacity (same canvas as entry — the tessellation is permanent, not just a door).
+- **Header:** Solid `--surface` (#0d0d0d) strip, 1px `--border` bottom. No gradients. `position: fixed; top: 0; z-index: 10`. Left: LISTENING ROOM kicker + CURATED BY D at 8px/0.2em Chakra Petch. Right: EXIT button.
+- **Signal banner:** When D is live — full-width strip at 48px fixed below header. Blood red `--record-red` (#cc2200) 7px pulse dot with `ls-dot-pulse` animation. 1px `--record-red` accent border at bottom. No gradient. `z-index: 20`.
+- **Stage hero:** Selected vault preview fills remaining height. Vault label as 48px Chakra Petch 700 display heading. Tagline copy at 11px 0.2em tracking. 1px horizontal rule divider (`--border`). CTA button: Chakra Petch 500, 10px, 0.24em, `border: 1px solid rgba(240,237,232,0.14)`, height 56px, full width.
+- **Vault dock:** Fixed bottom bar, 64px, 3-column grid (one per vault). `z-index: 15`. `border-top: 1px solid --border`. Each button: full height, Chakra Petch label at 8-9px, 0.2em tracking. Active vault: `--vault-color` pip (Serato color per vault). Touch target: full button width.
+- **Handoff overlay:** Full-screen `--void`, centered OPENING kicker + vault label. 180ms in, 120ms out.
+- **Vault names:** MIXES / ORIGINAL MUSIC / LIVE SETS. Never show internal IDs (venus/saturn/mercury) in UI.
+
+---
+
+## Vault Interior
+
+Post-auth vault screen. Full-screen dark surface. Same rules as console: hard edges, Chakra Petch, 1px structural borders, `--identity` glow on active items.
+
+- **Background:** `--void` (#050505). Vault dp wallpaper via CSS `::before` pseudo-element at 2.2% white opacity (pattern texture on surface, not entry canvas).
+- **Vault header:** Vault name at 20px Chakra Petch 600 uppercase. Subtitle at 10px 0.2em tracking. Left-aligned. `border-bottom: 1px solid --border`.
+- **Command strip:** `god-btn` row below vault header. See god-btn spec below.
+- **god-btn pattern** (canonical across vault + console):
+  - `background: transparent`
+  - `border: 1px solid var(--border, #222222)`
+  - Chakra Petch 500, 11px, 0.12em tracking, uppercase
+  - Hover: `border-color: var(--identity)`, `color: var(--identity)` (uses whatever identity is active)
+  - Disabled: `opacity: 0.35`
+  - Height: 28px desktop. Min-height 44px on mobile (touch target).
+- **RecordShelf / file cells:** Grid of file cells. Active cell: 2px `--identity` left border + subtle `--identity-glow` background highlight. Void-armed state: cell dims to 0.4 opacity.
+- **Void operation overlay:** Full-viewport, `--void` at 0.94 opacity. Title "VOID [TRACK NAME]?" 14px Chakra Petch 600. CANCEL = ghost god-btn. CONFIRM = `--record-red` border god-btn.
+- **File cell dp mark:** Comfortaa 700 "dp" mark on cells — this is one of the 4 whitelisted Comfortaa locations.
+
+---
+
+## Audio Transport (StuderTransportBar)
+
+Visual metaphor: Studer A800 tape deck. Hardware readout. Post-auth surface.
+
+- **Container:** `--surface` (#0d0d0d) background. `border-top: 1px solid --border`. Fixed or sticky at bottom of vault screen.
+- **Transport controls:** PLAY / STOP / REW / FF / PAUSE / REC. `transport-btn` class: Chakra Petch 500, 10px, 0.12em tracking, 1px `--border` border. Active: `--identity` fill or accent border.
+- **REC button:** `--record-red` (#cc2200) border when armed. `rec-pulse` animation at 1.6s ease-in-out (slow heartbeat, matches DESIGN.md motion spec).
+- **Status readout:** Track title at 11px Chakra Petch 500. BPM and duration via `--font-mono` (Space Mono, tabular-nums). This is one of 3 valid mono surfaces (the others: BPM nixie in upload modal, telemetry timestamps).
+- **Pitch fader:** Range input styled with no rounded thumb. Hidden on mobile (< 640px).
+
+---
+
+## Intake (Upload Modal)
+
+INTAKE is a console-level action. The button lives in the top rail (`arch-top-actions`) alongside EXIT and SIGNAL — not buried in transport or loop controls.
+
+- **Modal overlay:** `position: fixed; inset: 0; z-index: 1200; background: rgba(0,0,0,0.88)`. The high z-index ensures it clears all console surfaces. NOTE: the UploadModal must be rendered OUTSIDE any `motion.div` that applies a CSS transform — transforms create stacking contexts that trap fixed-position children.
+- **Modal container:** `--surface` background, `border: 1px solid --border`, 0px border-radius.
+- **Vault selector:** Buttons show MIXES / ORIGINAL MUSIC / LIVE SETS / SONIC ARCH. Internal IDs (venus/saturn/mercury/earth) never shown in UI. Default vault: MIXES (venus).
+- **BPM display:** Nixie-style digits using Space Mono tabular-nums. 1px `--border` cell border. No glow or radial gradients.
+- **Progress bar:** 2px `--border` track, `--identity` fill.
+- **Error state:** `--error-text` (#ff4444) color, `--error-surface` (#1a0505) background, `--error-text` border.
+
+---
+
 ---
 
 ## Scrapped Concepts (do not revisit)
@@ -200,3 +259,10 @@ DPWallpaper canvas:  position: fixed, z-index: 0   (page level — paints first)
 | 2026-04-25 | Vault dp wallpaper via CSS ::before at 2.2% white opacity | CSS vars can't go in SVG data URIs. White at near-zero opacity reads as luxury texture against dark identity backgrounds. |
 | 2026-04-25 | Orphan track row fix: span full-width via rAF + getBoundingClientRect | Detects lone last-row cells after grid render, applies grid-column: 1 / -1. |
 | 2026-04-26 | entry-aperture background: transparent | DPWallpaper canvas provides the background. Aperture must be transparent or canvas is hidden behind it. |
+| 2026-05-13 | Listener header: solid --surface + 1px --border, no gradient | Linear gradient is a soft edge in a hard-edge language. Gradient removed. |
+| 2026-05-13 | god-btn documented as canonical vault/console control | Shared pattern across all admin surfaces. Needed spec to prevent drift. |
+| 2026-05-13 | Space Mono valid in 3 surfaces: transport readout, BPM nixie, telemetry timestamps | All three are numeric data readouts. Everything else: Chakra Petch. |
+| 2026-05-13 | UploadModal must render outside any CSS-transform ancestor | CSS transforms create stacking contexts that trap fixed-position modals. Modal moved to sibling of cockpit motion.div. |
+| 2026-05-13 | INTAKE button moved to top rail (arch-top-actions) | It is a global console action, not a loop control. Top rail alongside EXIT and SIGNAL is the correct location. |
+| 2026-05-13 | Vault selector in INTAKE shows friendly names only | MIXES / ORIGINAL MUSIC / LIVE SETS / SONIC ARCH. Venus/saturn/mercury/earth are internal IDs — never surface them in UI. |
+| 2026-05-13 | tune-modal CSS added back to index.css with design system tokens | CSS was deleted in May 10 reconciliation (had banned amber colors). Rewritten with --surface, --border, --identity, 0px border-radius. |

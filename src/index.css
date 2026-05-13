@@ -1586,8 +1586,8 @@ h3,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.66) 0%, rgba(0, 0, 0, 0.28) 100%);
+  border-bottom: 1px solid var(--border, #222222);
+  background: var(--surface, #0d0d0d);
 }
 
 .listener-header-id {
@@ -2791,4 +2791,371 @@ h3,
     min-height: 40svh;
     max-height: 52svh;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TUNE MODAL + UPLOAD MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tune-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.tune-modal {
+  background: var(--surface, #0d0d0d);
+  border: 1px solid var(--border, #222222);
+  border-radius: 0;
+  padding: 28px 32px;
+  min-width: 380px;
+  max-width: 520px;
+  width: 90vw;
+  box-sizing: border-box;
+}
+
+.tune-modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border, #222222);
+}
+
+.tune-modal-title {
+  font-family: var(--font-display, 'Chakra Petch', sans-serif);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--text-primary, #f0ede8);
+  text-transform: uppercase;
+}
+
+.tune-modal-sub {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  color: var(--text-secondary, #666666);
+  text-transform: uppercase;
+}
+
+/* Field layout */
+.tune-field {
+  margin-bottom: 20px;
+}
+
+.tune-field-label {
+  display: block;
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 8px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #666666);
+  margin-bottom: 8px;
+}
+
+/* Text input */
+.tune-label-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border, #222222);
+  border-radius: 0;
+  padding: 9px 12px;
+  color: var(--text-primary, #f0ede8);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.tune-label-input:focus {
+  border-color: var(--identity, rgba(240, 237, 232, 0.4));
+}
+
+.tune-label-input::placeholder {
+  color: var(--text-muted, #333333);
+}
+
+/* Slider row */
+.tune-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* BPM nixie digits — Space Mono (numeric data readout) */
+.nixie-digits {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.nixie-digit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 38px;
+  background: transparent;
+  border: 1px solid var(--border, #222222);
+  border-radius: 0;
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #f0ede8);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Range slider */
+.tune-slider {
+  flex: 1;
+  height: 2px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border, #222222);
+  border-radius: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.tune-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--text-primary, #f0ede8);
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+}
+
+.tune-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--text-primary, #f0ede8);
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+}
+
+/* Action buttons */
+.tune-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border, #222222);
+}
+
+.tune-btn {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 10px 22px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  min-height: 38px;
+}
+
+.tune-btn-cancel {
+  background: transparent;
+  border: 1px solid var(--border, #222222);
+  color: var(--text-secondary, #666666);
+}
+
+.tune-btn-cancel:hover {
+  border-color: rgba(240, 237, 232, 0.3);
+  color: var(--text-primary, #f0ede8);
+}
+
+.tune-btn-save {
+  background: transparent;
+  border: 1px solid var(--identity, rgba(240, 237, 232, 0.5));
+  color: var(--text-primary, #f0ede8);
+}
+
+.tune-btn-save:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--identity, rgba(240, 237, 232, 0.8));
+}
+
+.tune-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Upload Modal extensions ──────────────────────────────────────────────── */
+
+.upload-modal {
+  max-width: 560px;
+}
+
+/* Vault selector */
+.upload-vault-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border, #222222);
+}
+
+.upload-vault-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border, #222222);
+  color: var(--text-secondary, #666666);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+
+.upload-vault-btn:last-child {
+  border-right: none;
+}
+
+.upload-vault-btn:hover {
+  color: var(--text-primary, #f0ede8);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.upload-vault-btn.active {
+  color: var(--text-primary, #f0ede8);
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--identity, rgba(240, 237, 232, 0.5));
+}
+
+/* Drop zone */
+.upload-dropzone {
+  border: 1px dashed var(--border, #222222);
+  border-radius: 0;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.has-file {
+  border-color: rgba(240, 237, 232, 0.25);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.upload-drop-hint {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted, #333333);
+}
+
+.upload-filename {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-primary, #f0ede8);
+  word-break: break-all;
+}
+
+/* Frequency selector */
+.upload-freq-options {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border, #222222);
+}
+
+.upload-freq-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border, #222222);
+  color: var(--text-secondary, #666666);
+  font-family: var(--font-mono, 'Space Mono', monospace);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-freq-btn:last-child {
+  border-right: none;
+}
+
+.upload-freq-btn:hover {
+  color: var(--text-primary, #f0ede8);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.upload-freq-btn.active {
+  color: var(--text-primary, #f0ede8);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Progress */
+.upload-progress {
+  margin-bottom: 16px;
+  border: 1px solid var(--border, #222222);
+  padding: 12px 14px;
+}
+
+.upload-progress-head {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #666666);
+  margin-bottom: 8px;
+}
+
+.upload-progress-bar {
+  height: 2px;
+  background: var(--border, #222222);
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--identity, rgba(240, 237, 232, 0.7));
+  transition: width 0.2s ease;
+}
+
+.upload-progress-detail {
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted, #333333);
+}
+
+/* Error */
+.upload-error {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--error-text, #ff4444);
+  background: var(--error-surface, #1a0505);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--error-text, #ff4444);
 }

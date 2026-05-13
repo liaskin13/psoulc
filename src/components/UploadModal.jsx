@@ -98,7 +98,14 @@ function NixieDigits({ value }) {
   );
 }
 
-function UploadModal({ onClose, defaultVault = "saturn" }) {
+const VAULT_LABELS = {
+  venus: "MIXES",
+  saturn: "ORIGINAL MUSIC",
+  mercury: "LIVE SETS",
+  earth: "SONIC ARCH",
+};
+
+function UploadModal({ onClose, defaultVault = "venus" }) {
   const { consoleOwner, loadVaultTracks, dispatchCommand } = useSystem();
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
@@ -215,18 +222,15 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
           <div className="tune-field">
             <label className="tune-field-label">DESTINATION VAULT</label>
             <div className="upload-vault-toggle">
-              <button
-                className={`upload-vault-btn ${vault === "saturn" ? "active" : ""}`}
-                onClick={() => setVault("saturn")}
-              >
-                SATURN
-              </button>
-              <button
-                className={`upload-vault-btn ${vault === "venus" ? "active" : ""}`}
-                onClick={() => setVault("venus")}
-              >
-                VENUS
-              </button>
+              {Object.entries(VAULT_LABELS).map(([id, label]) => (
+                <button
+                  key={id}
+                  className={`upload-vault-btn ${vault === id ? "active" : ""}`}
+                  onClick={() => setVault(id)}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
