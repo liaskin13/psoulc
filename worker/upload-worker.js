@@ -172,7 +172,7 @@ export default {
           });
         }
         const body = await request.json();
-        const { key, uploadId, parts, vault, title, artist, bpm, uploaded_by } = body;
+        const { key, uploadId, parts, vault, title, artist, bpm, uploaded_by, waveform_data, duration } = body;
         if (!key || !uploadId || !parts || !vault || !title) {
           return new Response(JSON.stringify({ error: "Missing required fields" }), {
             status: 400,
@@ -182,9 +182,9 @@ export default {
         const mpu = env.PSC_AUDIO.resumeMultipartUpload(key, uploadId);
         await mpu.complete(parts);
         const result = await env.PSC_DB.prepare(
-          "INSERT INTO tracks (vault, title, artist, bpm, bpm_display, audio_path, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
+          "INSERT INTO tracks (vault, title, artist, bpm, bpm_display, audio_path, uploaded_by, waveform_data, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
         )
-          .bind(vault, title, artist || null, bpm ? parseFloat(String(bpm).split("-")[0]) : null, bpm || null, key, uploaded_by)
+          .bind(vault, title, artist || null, bpm ? parseFloat(String(bpm).split("-")[0]) : null, bpm || null, key, uploaded_by, waveform_data || null, duration || null)
           .first();
         if (!result) {
           throw new Error(`Database insert failed: vault=${vault} title="${title}"`);

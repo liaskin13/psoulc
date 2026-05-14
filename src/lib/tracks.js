@@ -1,4 +1,6 @@
 import { UPLOAD_WORKER_URL, UPLOAD_SECRET, R2_PUBLIC_URL } from "../config";
+import { parseSeratoOverview } from "./seratoParser";
+import { preprocessAudio } from "./audioPreprocessor";
 
 const IS_DEV = UPLOAD_WORKER_URL.includes("localhost");
 const TRACKS_STORAGE_KEY = "psc_dev_tracks";
@@ -99,7 +101,25 @@ export async function uploadTrack(file, metadata, onProgress) {
   };
 
   if (!IS_DEV) {
-    reportProgress("init", 5, "Initializing upload session");
+    let waveformData = null;
+    let duration = null;
+    try {
+      reportProgress("analyzing", 5, "Reading track data");
+      const seratoResult = await parseSeratoOverview(file);
+      if (seratoResult) {
+        waveformData = { low: seratoResult.low, high: seratoResult.high };
+      } else {
+        const waveformProgress = (pct) =>
+          reportProgress("analyzing", Math.round(pct * 0.20 + 5), "Analyzing audio...");
+        const result = await preprocessAudio(file, waveformProgress);
+        waveformData = result.waveformData;
+        duration = result.duration;
+      }
+    } catch (e) {
+      console.warn("[PSC] Waveform analysis failed, uploading without:", e);
+    }
+
+    reportProgress("init", 28, "Initializing upload session");
 
     const initRes = await fetch(`${UPLOAD_WORKER_URL}/upload-init`, {
       method: "POST",
@@ -130,7 +150,7 @@ export async function uploadTrack(file, metadata, onProgress) {
 
       reportProgress(
         "chunking",
-        Math.round((partNumber / totalParts) * 85),
+        Math.round(28 + (partNumber / totalParts) * 57),
         `Uploading chunk ${partNumber}/${totalParts}`,
       );
 
@@ -171,6 +191,8 @@ export async function uploadTrack(file, metadata, onProgress) {
         artist: metadata.artist || null,
         bpm: metadata.bpm || null,
         uploaded_by: metadata.uploaded_by,
+        waveform_data: waveformData ? JSON.stringify(waveformData) : null,
+        duration: duration || null,
       }),
     });
 
