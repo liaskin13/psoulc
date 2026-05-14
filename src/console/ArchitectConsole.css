@@ -788,17 +788,15 @@
 }
 
 /* Overview strip */
-.arch-waveform-overview {
+.arch-console-display {
   position: relative;
   display: flex;
-  align-items: flex-end;
-  gap: 1px;
-  height: 20px;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.15);
-  border-radius: 0;
-  padding: 2px 2px 0;
+  align-items: center;
+  height: 40px;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
+  background: #000;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.06) 0%, rgba(0, 0, 0, 0.5) 100%);
+  padding: 0 12px;
 }
 
 @media (max-width: 1100px) {
@@ -841,29 +839,41 @@
     height: 52px;
   }
 
-  .arch-waveform-overview {
-    height: 16px;
-  }
 }
 
-.arch-overview-bar {
-  display: block;
-  width: 2px;
-  height: var(--bar-h, 40%);
-  min-height: 1px;
-  background: rgba(var(--arch-accent-rgb), 0.22);
-  flex-shrink: 0;
-}
-
-.arch-overview-empty {
-  width: 100%;
+.arch-display-reach {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.55rem;
-  letter-spacing: 0.16em;
-  color: rgba(240, 237, 232, 0.78);
+  gap: 8px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.arch-display-prefix {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--identity);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.arch-display-sep {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--identity);
+  flex-shrink: 0;
+  opacity: 0.4;
+}
+
+.arch-display-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--identity);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .arch-playhead {

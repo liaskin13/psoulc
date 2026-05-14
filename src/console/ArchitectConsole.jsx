@@ -127,6 +127,9 @@ function parseWaveformData(rawWaveform) {
   }
 }
 
+const DIRECT_LINE_KEY = "psc_direct_line";
+const DIRECT_LINE_CHANNEL = "psc_direct_line_channel";
+
 const SR_ONLY_STYLE = {
   position: "absolute",
   width: "1px",
@@ -243,6 +246,12 @@ function ArchitectConsole({
   const [showRoster, setShowRoster] = useState(false);
   const [showReach, setShowReach] = useState(false);
   const [railOpen, setRailOpen] = useState(false);
+  const [reachMessages, setReachMessages] = useState(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(DIRECT_LINE_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  });
   const [activeVault, setActiveVault] = useState(null);
   const [activeLibVault, setActiveLibVault] = useState(VAULT_ROUTES[0].id);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -346,6 +355,38 @@ function ArchitectConsole({
     currentTime,
     duration: audioDuration,
   });
+
+  const latestUnreadMessage = useMemo(() => {
+    const peer = viewer === "D" ? "L" : "D";
+    const unread = reachMessages.filter(
+      (m) => m.from === peer && m.to === viewer && !(m.readBy || []).includes(viewer)
+    );
+    if (!unread.length) return null;
+    return unread.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+  }, [reachMessages, viewer]);
+
+  // Sync REACH messages for display bar
+  useEffect(() => {
+    const sync = () => {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(DIRECT_LINE_KEY) || "[]");
+        setReachMessages(Array.isArray(parsed) ? parsed : []);
+      } catch {}
+    };
+    const onStorage = (e) => { if (e.key === DIRECT_LINE_KEY) sync(); };
+    window.addEventListener("storage", onStorage);
+    let channel = null;
+    if ("BroadcastChannel" in window) {
+      channel = new BroadcastChannel(DIRECT_LINE_CHANNEL);
+      channel.onmessage = (e) => { if (e?.data?.type === "sync") sync(); };
+    }
+    const pollId = window.setInterval(sync, 2000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      if (channel) channel.close();
+      window.clearInterval(pollId);
+    };
+  }, []);
 
   // Auto-load tracks on mount + listen for upload events
   useEffect(() => {
@@ -1559,38 +1600,14 @@ function ArchitectConsole({
           </div>
         </div>
 
-        {/* Overview strip — low-res waveform */}
-        <div
-          className="arch-waveform-overview"
-          aria-hidden="true"
-          style={{ cursor: "default" }}
-        >
-          {Array.isArray(deckWaveformLowData) &&
-          deckWaveformLowData.length > 0 ? (
-            <>
-              {deckWaveformLowData.map((d, i) => (
-                <span
-                  key={i}
-                  className="arch-overview-bar"
-                  style={{
-                    "--bar-h": `${d.peak * 100}%`,
-                    backgroundColor: d.freq,
-                  }}
-                />
-              ))}
-              {deckCanSeek && (
-                <div
-                  className="arch-playhead"
-                  style={{
-                    left: `${audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0}%`,
-                  }}
-                />
-              )}
-            </>
-          ) : (
-            <div className="arch-overview-empty">
-              NO REAL WAVEFORM AVAILABLE
-            </div>
+        {/* Console display bar — hardware readout panel */}
+        <div className="arch-console-display" aria-live="polite">
+          {latestUnreadMessage && (
+            <span className="arch-display-reach">
+              <span className="arch-display-prefix">REACH</span>
+              <span className="arch-display-sep">▸</span>
+              <span className="arch-display-text">{latestUnreadMessage.body}</span>
+            </span>
           )}
         </div>
 
