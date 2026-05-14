@@ -51,6 +51,67 @@ function resample(bars, targetCount) {
   return result;
 }
 
+function parseSeratoOverviewFromBytes(bytes) {
+  if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) return null;
+
+  const version = bytes[3];
+  if (version < 3) return null;
+
+  const tagSize = syncsafeToInt(bytes, 6) + 10;
+
+  let offset = 10;
+  while (offset + 10 <= tagSize && offset + 10 <= bytes.length) {
+    const frameId = String.fromCharCode(bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
+    const frameSize = version === 4
+      ? syncsafeToInt(bytes, offset + 4)
+      : uint32BE(bytes, offset + 4);
+
+    offset += 10;
+
+    if (frameSize <= 0 || offset + frameSize > bytes.length) break;
+
+    if (frameId === "GEOB") {
+      const frame = bytes.slice(offset, offset + frameSize);
+      let pos = 1;
+      while (pos < frame.length && frame[pos] !== 0) pos++;
+      pos++;
+      while (pos < frame.length && frame[pos] !== 0) pos++;
+      pos++;
+
+      const descStart = pos;
+      while (pos < frame.length && frame[pos] !== 0) pos++;
+      const description = new TextDecoder().decode(frame.slice(descStart, pos));
+      pos++;
+
+      if (description === "Serato Overview") {
+        const bars = seratoBytesToBars(frame.slice(pos));
+        if (bars.length === 0) return null;
+        return { bars, low: resample(bars, 80), high: resample(bars, 1000) };
+      }
+    }
+
+    offset += frameSize;
+  }
+
+  return null;
+}
+
+/**
+ * Read Serato GEOB "Serato Overview" tag from a URL via a 256KB range request.
+ * Returns {bars, low (80), high (1000)} in PSC waveform format, or null.
+ * Works on any R2 URL — no full-file download, sub-second.
+ */
+export async function parseSeratoOverviewFromUrl(url) {
+  try {
+    const res = await fetch(url, { headers: { Range: "bytes=0-262143" } });
+    if (!res.ok && res.status !== 206) return null;
+    const buffer = await res.arrayBuffer();
+    return parseSeratoOverviewFromBytes(new Uint8Array(buffer));
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Read Serato GEOB "Serato Overview" tag from a File object.
  * Returns {bars, low (80), high (1000)} in PSC waveform format, or null.
@@ -63,52 +124,7 @@ function resample(bars, targetCount) {
 export async function parseSeratoOverview(file) {
   try {
     const buffer = await file.slice(0, 256 * 1024).arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-
-    if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) return null; // "ID3"
-
-    const version = bytes[3]; // 3 = v2.3, 4 = v2.4
-    if (version < 3) return null; // v2.2 uses 3-char frame IDs — not handled
-
-    const tagSize = syncsafeToInt(bytes, 6) + 10;
-
-    let offset = 10;
-    while (offset + 10 <= tagSize && offset + 10 <= bytes.length) {
-      const frameId = String.fromCharCode(bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
-      const frameSize = version === 4
-        ? syncsafeToInt(bytes, offset + 4)
-        : uint32BE(bytes, offset + 4);
-
-      offset += 10;
-
-      if (frameSize <= 0 || offset + frameSize > bytes.length) break;
-
-      if (frameId === "GEOB") {
-        const frame = bytes.slice(offset, offset + frameSize);
-        // GEOB body: encoding(1) + mime(\0) + filename(\0) + description(\0) + binary data
-        // Serato writes encoding=0 (Latin-1) so all null terminators are single bytes
-        let pos = 1;
-        while (pos < frame.length && frame[pos] !== 0) pos++;
-        pos++; // past mime \0
-        while (pos < frame.length && frame[pos] !== 0) pos++;
-        pos++; // past filename \0
-
-        const descStart = pos;
-        while (pos < frame.length && frame[pos] !== 0) pos++;
-        const description = new TextDecoder().decode(frame.slice(descStart, pos));
-        pos++;
-
-        if (description === "Serato Overview") {
-          const bars = seratoBytesToBars(frame.slice(pos));
-          if (bars.length === 0) return null;
-          return { bars, low: resample(bars, 80), high: resample(bars, 1000) };
-        }
-      }
-
-      offset += frameSize;
-    }
-
-    return null;
+    return parseSeratoOverviewFromBytes(new Uint8Array(buffer));
   } catch {
     return null;
   }

@@ -27,7 +27,8 @@ import {
 } from "./matrixState";
 import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { getWaveformBars } from "../utils/waveform";
-import { generateAndSaveWaveform } from "../lib/waveformAnalyzer";
+import { generateAndSaveWaveform, saveWaveform } from "../lib/waveformAnalyzer";
+import { parseSeratoOverviewFromUrl } from "../lib/seratoParser";
 
 const ALL_CUE_COLORS = [
   // Bank A (1–8) — Serato canonical
@@ -828,25 +829,24 @@ function ArchitectConsole({
     if (!url) return;
 
     setRegeneratingWaveforms((prev) => ({ ...prev, [track.id]: true }));
-    if (shouldAnnounce) {
-      announce(`Analyzing waveform for ${track.title || "track"}…`);
-    }
+    if (shouldAnnounce) announce(`Analyzing waveform for ${track.title || "track"}…`);
 
     try {
-      await generateAndSaveWaveform(track.id, url);
+      // Fast path: read Serato GEOB from first 256KB of R2 file — sub-second, no audio decode
+      const serato = await parseSeratoOverviewFromUrl(url);
+      if (serato) {
+        await saveWaveform(track.id, { low: serato.low, high: serato.high }, null);
+      } else {
+        // Fallback: full audio decode via OfflineAudioContext
+        await generateAndSaveWaveform(track.id, url);
+      }
       const refreshed = await fetchAllTracks();
       setTrackListData(refreshed);
       const updated = refreshed.find((t) => t.id === track.id);
-      if (updated && loadedDeckId === track.id) {
-        setLoadedTrack(updated);
-      }
-      if (shouldAnnounce) {
-        announce(`Waveform generated for ${track.title || "track"}.`);
-      }
+      if (updated && loadedDeckId === track.id) setLoadedTrack(updated);
+      if (shouldAnnounce) announce(`Waveform ready for ${track.title || "track"}.`);
     } catch (err) {
-      if (shouldAnnounce) {
-        announce(`Waveform generation failed: ${err.message}`);
-      }
+      if (shouldAnnounce) announce(`Waveform generation failed: ${err.message}`);
     } finally {
       setRegeneratingWaveforms((prev) => {
         const next = { ...prev };
