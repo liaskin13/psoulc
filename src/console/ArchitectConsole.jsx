@@ -860,6 +860,7 @@ function ArchitectConsole({
     setSelectedTrackId(track.id);
     setActiveVault(track.vault || null);
     announce(`${track.title || "Track"} selected.`);
+    if (!track.waveform_data) ensureWaveformForTrack(track);
   };
 
   const handleTrackRowKeyDown = (event, track) => {
