@@ -103,7 +103,7 @@ function parseSeratoOverviewFromBytes(bytes) {
  */
 export async function parseSeratoOverviewFromUrl(url) {
   try {
-    const res = await fetch(url, { headers: { Range: "bytes=0-1048575" } });
+    const res = await fetch(url, { headers: { Range: "bytes=0-4194303" } });
     if (!res.ok && res.status !== 206) return null;
     const buffer = await res.arrayBuffer();
     return parseSeratoOverviewFromBytes(new Uint8Array(buffer));
