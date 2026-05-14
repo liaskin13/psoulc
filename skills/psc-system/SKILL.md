@@ -19,14 +19,18 @@ A cinematic music streaming and sharing platform where the **independent artist 
 
 ---
 
-## The Two Consoles
+## The Console
 
-| Console | Owner | Access Code | Palette |
+**One component, two views.** Both D and L use `src/console/ArchitectConsole.jsx`. The `viewer` prop controls what each person sees.
+
+| Role | `viewer` prop | Identity Color | What they get |
 |---|---|---|---|
-| **The Sun** | D (God Mode) | 0528 | 70s Soul / Honey Amber / Studio warmth |
-| **The Black Star** | L (God Mode Plus / Architect) | 7677 | Cold graphite / cyan |
+| **D** (the artist) | `"D"` | `#14dc14` (Serato green) | AdminSettings panel: SYSTEM, MEMBERS, LOCKBOX |
+| **L** (the architect) | `"architect"` | Cyan | Same base as D + additional admin capabilities on top |
 
-**The Pull Cord** — braided rope + dog tags ("D" + "0528") suspended in the Sun console. Pulling → activates Black Star → UI drains to High-Contrast Grayscale → severs Tier B/C/D/G access. Restored only when D pulls again. *(Grayscale + severance pending Phase 9.)*
+The design language is fully shared. L's view is a superset of D's, not a separate console. There is no separate "Sun" or "Black Star" console — that concept was scrapped.
+
+**Palette:** Cold achromatic. `--text-primary: rgba(230, 230, 230, 0.92)`. No warmth, no amber. Identity colors inject via `--identity` CSS custom property at the body level. See `DESIGN.md` for full token reference.
 
 ---
 
@@ -67,9 +71,9 @@ A cinematic music streaming and sharing platform where the **independent artist 
 
 **Layout:** 30% top viewport (Binary Core porthole) / 70% file-cell library wall.
 
-**File-cell wall:** Square cells in warm wood-tone frame, Honey Amber lighting. Each cell: chakra-colored ownership rail + creator sigil. Hover reveals info + COMMENT handles.
+**File-cell wall:** Square cells. Each cell: chakra-colored ownership rail + creator sigil. Hover reveals info + COMMENT handles.
 
-**Readout:** Track Name + BPM in Amber phosphor on hover.
+**Readout:** Track Name + BPM on hover.
 
 **Controls:** PLAY · FFWD · REWIND · STOP · REC
 
@@ -83,7 +87,7 @@ A cinematic music streaming and sharing platform where the **independent artist 
 
 ## The Studer Transport
 
-Brushed Chrome Studer-style bar, bottom centre. Strobe effect + 70s shutter flicker under Honey Amber. Hover → 528Hz glow + tape hiss audio floor.
+Brushed Chrome Studer-style bar, bottom centre. Hover → 528Hz glow + tape hiss audio floor.
 
 ---
 
