@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { uploadTrack } from "../lib/tracks";
 import { useSystem, CMD } from "../state/SystemContext";
 
-const FREQ_OPTIONS = [396, 432, 528, 741, 852];
 
 // ── Lightweight ID3v2 parser ────────────────────────────────────────────────
 // Reads only TBPM and TIT2 frames from ID3v2.3/2.4 tags embedded in audio files.
@@ -110,7 +109,7 @@ function UploadModal({ onClose, defaultVault = "venus" }) {
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [bpm, setBpm] = useState(120);
-  const [frequencyHz, setFrequencyHz] = useState(528);
+  const [uploadedBy, setUploadedBy] = useState(consoleOwner || "");
   const [vault, setVault] = useState(defaultVault);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
@@ -168,8 +167,7 @@ function UploadModal({ onClose, defaultVault = "venus" }) {
           vault,
           title: title.trim(),
           bpm: parseInt(bpm),
-          frequency_hz: parseInt(frequencyHz),
-          uploaded_by: consoleOwner,
+          uploaded_by: uploadedBy.trim() || consoleOwner || "unknown",
         },
         (next) => setUploadStatus(next),
       );
@@ -290,20 +288,17 @@ function UploadModal({ onClose, defaultVault = "venus" }) {
             </div>
           </div>
 
-          {/* Frequency */}
+          {/* Uploaded By */}
           <div className="tune-field">
-            <label className="tune-field-label">FREQUENCY (Hz)</label>
-            <div className="upload-freq-options">
-              {FREQ_OPTIONS.map((hz) => (
-                <button
-                  key={hz}
-                  className={`upload-freq-btn ${frequencyHz === hz ? "active" : ""}`}
-                  onClick={() => setFrequencyHz(hz)}
-                >
-                  {hz}
-                </button>
-              ))}
-            </div>
+            <label className="tune-field-label">UPLOADED BY</label>
+            <input
+              className="tune-label-input"
+              value={uploadedBy}
+              onChange={(e) => setUploadedBy(e.target.value)}
+              maxLength={32}
+              spellCheck={false}
+              placeholder="ARTIST HANDLE"
+            />
           </div>
 
           {error && <div className="upload-error">{error}</div>}
