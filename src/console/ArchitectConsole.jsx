@@ -832,13 +832,9 @@ function ArchitectConsole({
     if (shouldAnnounce) announce(`Analyzing waveform for ${track.title || "track"}…`);
 
     try {
-      // Fast path: read Serato GEOB from first 256KB of R2 file — sub-second, no audio decode
       const serato = await parseSeratoOverviewFromUrl(url);
       if (serato) {
         await saveWaveform(track.id, { low: serato.low, high: serato.high }, null);
-      } else {
-        // Fallback: full audio decode via OfflineAudioContext
-        await generateAndSaveWaveform(track.id, url);
       }
       const refreshed = await fetchAllTracks();
       setTrackListData(refreshed);

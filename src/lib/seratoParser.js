@@ -51,9 +51,7 @@ function resample(bars, targetCount) {
   return result;
 }
 
-function parseSeratoOverviewFromBytes(bytes) {
-  if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) return null;
-
+function parseSeratoId3(bytes) {
   const version = bytes[3];
   if (version < 3) return null;
 
@@ -68,7 +66,8 @@ function parseSeratoOverviewFromBytes(bytes) {
 
     offset += 10;
 
-    if (frameSize <= 0 || offset + frameSize > bytes.length) break;
+    if (frameSize <= 0) break;
+    if (offset + frameSize > bytes.length) { offset += frameSize; continue; }
 
     if (frameId === "GEOB") {
       const frame = bytes.slice(offset, offset + frameSize);
@@ -91,6 +90,43 @@ function parseSeratoOverviewFromBytes(bytes) {
     }
 
     offset += frameSize;
+  }
+
+  return null;
+}
+
+function extractId3FromWav(bytes) {
+  // WAV RIFF structure: "RIFF" + size(LE32) + "WAVE" + chunks
+  if (bytes.length < 12) return null;
+  if (bytes[8] !== 0x57 || bytes[9] !== 0x41 || bytes[10] !== 0x56 || bytes[11] !== 0x45) return null;
+
+  let offset = 12;
+  while (offset + 8 <= bytes.length) {
+    const id = String.fromCharCode(bytes[offset], bytes[offset+1], bytes[offset+2], bytes[offset+3]);
+    const size = bytes[offset+4] | (bytes[offset+5] << 8) | (bytes[offset+6] << 16) | (bytes[offset+7] << 24);
+    offset += 8;
+
+    if (size < 0 || size > bytes.length) break;
+
+    if (id === "id3 " || id === "ID3 ") {
+      return bytes.slice(offset, offset + size);
+    }
+
+    offset += size + (size & 1); // RIFF chunks padded to even boundary
+  }
+  return null;
+}
+
+function parseSeratoOverviewFromBytes(bytes) {
+  // ID3v2 at offset 0 — MP3 and ID3-prepended files
+  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+    return parseSeratoId3(bytes);
+  }
+
+  // RIFF WAV with embedded id3 chunk — Serato DJ writes GEOB into WAV this way
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    const id3 = extractId3FromWav(bytes);
+    if (id3 && id3[0] === 0x49 && id3[1] === 0x44 && id3[2] === 0x33) return parseSeratoId3(id3);
   }
 
   return null;
