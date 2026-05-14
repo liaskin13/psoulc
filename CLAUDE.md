@@ -90,17 +90,18 @@ If the answer is unclear, stop and reframe until it is.
 ## Session Start Checklist
 
 1. Read `tasks/lessons.md` — internalize recent corrections
-2. Read `tasks/todo.md` — understand current state and next priorities
-3. Read `tasks/plan.active.md` if it exists — pick up exactly where we left off
-4. **Read `DESIGN.md`** — all design decisions live here. Do not touch any CSS, JSX, or visual element without reading this first. If what you are about to do contradicts DESIGN.md, stop and say so.
-5. Apply the artist benefit check to the first task before touching any code
+2. **SKIP `tasks/todo.md`** — stale Phase 9 artifact. Does not reflect current codebase. Ignore it.
+3. **SKIP `tasks/plan.active.md`** — stale Phase 9 artifact. Does not reflect current codebase. Ignore it.
+4. **Current state:** single console at `src/console/ArchitectConsole.jsx`. Both L and D use it; `viewer` prop controls feature differences. Branch is `main`. Cloudflare Pages deploys from main automatically.
+5. **Read `DESIGN.md`** — all design decisions live here. Do not touch any CSS, JSX, or visual element without reading this first. If what you are about to do contradicts DESIGN.md, stop and say so.
+6. Apply the artist benefit check to the first task before touching any code
 
 ---
 
 ## MASTER DIRECTIVE: SYSTEM
 
 > Full canonical spec: `vault/architecture/SYSTEM_DIRECTIVE.md`
-> Design skill (load on-demand for UI/vault/entry/console work): `skills/psc-system/SKILL.md`
+> **DO NOT load `skills/psc-system/SKILL.md`** — it contains dead code from scrapped designs and will cause regressions. Never load it. Ever.
 
 ---
 
@@ -130,3 +131,12 @@ Key routing rules:
 - Architecture review → invoke plan-eng-review
 - Save progress, checkpoint, resume → invoke checkpoint
 - Code quality, health check → invoke health
+
+## GBrain Configuration (configured by /setup-gbrain)
+- Mode: local-stdio
+- Engine: pglite
+- Config file: ~/.gbrain/config.json (mode 0600)
+- Setup date: 2026-05-14
+- MCP registered: yes (user scope)
+- Artifacts sync: off (Codespace token limitation; enable later with /setup-gbrain)
+- Current repo policy: read-write

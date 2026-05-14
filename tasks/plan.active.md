@@ -1,5 +1,6 @@
+<!-- STALE — Phase 9 artifact. DO NOT USE. Current work is on main branch. See CLAUDE.md for actual current state. -->
 <!-- /autoplan restore point: /home/codespace/.gstack/projects/liaskin13-psoulc/phase-9-autoplan-restore-20260426-002852.md -->
-# Active Plan — Phase 9 Design System Migration
+# ⚠️ STALE — Phase 9 Design System Migration (ARCHIVED)
 
 ## NEXT SESSION — START HERE, READ THIS FIRST
 

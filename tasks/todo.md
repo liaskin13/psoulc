@@ -1,4 +1,6 @@
-# PSC Universe — Sovereign Tasks
+# ⚠️ STALE — Phase 9 Sovereign Tasks (ARCHIVED)
+
+<!-- DO NOT USE. Phase 9 artifact. Current work is on main branch. See CLAUDE.md for actual current state. -->
 
 ## Phase 9 Execution Queue (Autoplan Aligned, 2026-04-26)
 
