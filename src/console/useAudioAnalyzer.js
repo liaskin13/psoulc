@@ -84,27 +84,25 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         const segGap = 2;
         const segFill = segH - segGap;
 
-        function drawSegBar(x, level, peak, isRight) {
+        // Serato color scheme: blue (low) → green (mid) → orange (hot) → red (clip)
+        function segColor(segFrac) {
+          if (segFrac >= 0.88) return CLIP_HEX;
+          if (segFrac >= 0.70) return HIGH_HEX;
+          if (segFrac >= 0.45) return MID_HEX;
+          return BASS_HEX;
+        }
+
+        function drawSegBar(x, level, peak) {
           const lit = Math.round(level * N_SEGS);
           for (let s = 0; s < N_SEGS; s++) {
             const segFrac = s / N_SEGS;
-            let color;
-            if (segFrac >= 0.85) color = CLIP_HEX;
-            else if (segFrac >= 0.65) color = isRight ? HIGH_HEX : MID_HEX;
-            else color = isRight ? MID_HEX : BASS_HEX;
-
+            const color = segColor(segFrac);
             const y = H - (s + 1) * segH + segGap;
-            if (s < lit) {
-              ctx.fillStyle = color;
-              ctx.globalAlpha = 1;
-            } else {
-              ctx.fillStyle = color;
-              ctx.globalAlpha = 0.1;
-            }
+            ctx.fillStyle = color;
+            ctx.globalAlpha = s < lit ? 1 : 0.1;
             ctx.fillRect(x, y, bw, segFill);
           }
           ctx.globalAlpha = 1;
-          // peak tick
           if (peak > 0.03) {
             const peakSeg = Math.min(Math.round(peak * N_SEGS), N_SEGS - 1);
             const py = H - (peakSeg + 1) * segH + segGap;
@@ -113,8 +111,8 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
           }
         }
 
-        drawSegBar(0, rL, peakL.current, false);
-        drawSegBar(bw + 6, rR, peakR.current, true);
+        drawSegBar(0, rL, peakL.current);
+        drawSegBar(bw + 6, rR, peakR.current);
       }
 
       // ── Spectrum ─────────────────────────────────────────────────────────
