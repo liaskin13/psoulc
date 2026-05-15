@@ -306,14 +306,15 @@ export default {
         const id = url.pathname.split("/")[2];
         const body = await request.json();
         const { waveform_data, duration } = body;
+        const waveformValue = waveform_data == null ? null : JSON.stringify(waveform_data);
         const { success } = await env.PSC_DB.prepare(
           duration != null
             ? "UPDATE tracks SET waveform_data = ?, duration = ? WHERE id = ?"
             : "UPDATE tracks SET waveform_data = ? WHERE id = ?",
         )
           .bind(...(duration != null
-            ? [JSON.stringify(waveform_data), duration, id]
-            : [JSON.stringify(waveform_data), id]))
+            ? [waveformValue, duration, id]
+            : [waveformValue, id]))
           .run();
 
         return new Response(JSON.stringify({ success }), {

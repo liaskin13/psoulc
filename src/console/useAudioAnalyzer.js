@@ -78,23 +78,43 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         peakL.current = Math.max(peakL.current * 0.97, rL);
         peakR.current = Math.max(peakR.current * 0.97, rR);
 
-        const bw = Math.floor((W - 3) / 2);
+        const bw = Math.floor((W - 6) / 2);
+        const N_SEGS = 24;
+        const segH = Math.floor(H / N_SEGS);
+        const segGap = 2;
+        const segFill = segH - segGap;
 
-        const lH = Math.round(rL * H);
-        ctx.fillStyle = rL > 0.85 ? CLIP_HEX : rL > 0.55 ? MID_HEX : BASS_HEX;
-        if (lH > 0) ctx.fillRect(0, H - lH, bw, lH);
-        if (peakL.current > 0.03) {
-          ctx.fillStyle = PEAK_TICK;
-          ctx.fillRect(0, H - Math.round(peakL.current * H) - 1, bw, 2);
+        function drawSegBar(x, level, peak, isRight) {
+          const lit = Math.round(level * N_SEGS);
+          for (let s = 0; s < N_SEGS; s++) {
+            const segFrac = s / N_SEGS;
+            let color;
+            if (segFrac >= 0.85) color = CLIP_HEX;
+            else if (segFrac >= 0.65) color = isRight ? HIGH_HEX : MID_HEX;
+            else color = isRight ? MID_HEX : BASS_HEX;
+
+            const y = H - (s + 1) * segH + segGap;
+            if (s < lit) {
+              ctx.fillStyle = color;
+              ctx.globalAlpha = 1;
+            } else {
+              ctx.fillStyle = color;
+              ctx.globalAlpha = 0.1;
+            }
+            ctx.fillRect(x, y, bw, segFill);
+          }
+          ctx.globalAlpha = 1;
+          // peak tick
+          if (peak > 0.03) {
+            const peakSeg = Math.min(Math.round(peak * N_SEGS), N_SEGS - 1);
+            const py = H - (peakSeg + 1) * segH + segGap;
+            ctx.fillStyle = PEAK_TICK;
+            ctx.fillRect(x, py, bw, 2);
+          }
         }
 
-        const rH = Math.round(rR * H);
-        ctx.fillStyle = rR > 0.85 ? CLIP_HEX : rR > 0.55 ? HIGH_HEX : BASS_HEX;
-        if (rH > 0) ctx.fillRect(bw + 3, H - rH, bw, rH);
-        if (peakR.current > 0.03) {
-          ctx.fillStyle = PEAK_TICK;
-          ctx.fillRect(bw + 3, H - Math.round(peakR.current * H) - 1, bw, 2);
-        }
+        drawSegBar(0, rL, peakL.current, false);
+        drawSegBar(bw + 6, rR, peakR.current, true);
       }
 
       // ── Spectrum ─────────────────────────────────────────────────────────

@@ -228,12 +228,11 @@ function analyzeWindow(pcmBytes, bitsPerSample, numChannels) {
   fftInPlace(re, im);
 
   // Frequency resolution: sampleRate / FFT_N — but we don't have sampleRate here.
-  // Use bin index proportions: low = first ~4%, mid = 4-17%, high = 17-100% of halfN.
-  // At 48kHz/512: bin=1 → 93Hz, bin=20 → 1875Hz, bin=88 → 8250Hz
-  // These thresholds give bass/mid/high split at ~375Hz and ~4.5kHz — musically sensible.
+  // At 48kHz/512: 93.75 Hz per bin. Tight bass-only low band so bass-heavy
+  // music still shows mid/high variation. low ≤ 281 Hz, mid ≤ 1875 Hz, high = rest.
   const halfN = FFT_N >> 1;
-  const lowTop = Math.max(2, Math.floor(halfN * 0.04));   // ~375 Hz at 48kHz
-  const midTop = Math.max(lowTop + 1, Math.floor(halfN * 0.17)); // ~4.5 kHz at 48kHz
+  const lowTop = Math.max(2, Math.floor(halfN * 0.015));  // ~180 Hz at 48kHz (bins 1-3)
+  const midTop = Math.max(lowTop + 1, Math.floor(halfN * 0.08)); // ~1.9 kHz at 48kHz
 
   let lo = 0, mi = 0, hi = 0;
   for (let i = 1; i < halfN; i++) {
