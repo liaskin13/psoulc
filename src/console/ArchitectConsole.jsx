@@ -1584,14 +1584,16 @@ function ArchitectConsole({
               ) : (
                 <DeckWaveform
                   waveformData={deckWaveformHighData}
-                  currentTime={deckCanSeek ? currentTime : 0}
+                  currentTime={loadedTrack?.id === deckTrack?.id ? currentTime : 0}
                   duration={
-                    deckCanSeek ? audioDuration : deckTrack.duration || 1
+                    loadedTrack?.id === deckTrack?.id && audioDuration > 0
+                      ? audioDuration
+                      : deckTrack.duration || 1
                   }
                   onSeek={deckCanSeek ? handleSeek : null}
                   trackId={deckTrack.id}
                   width={800}
-                  height={108}
+                  height={156}
                   hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
                   zoom={1}
