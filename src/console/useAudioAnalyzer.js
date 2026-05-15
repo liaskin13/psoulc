@@ -135,10 +135,14 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
           if (b.bass !== undefined) {
             const total = b.bass + b.mid + b.high;
             if (total < 0.001) continue;
-            const scale = (b.peak * H) / total;
-            const bH = Math.round(b.bass * scale);
-            const mH = Math.round(b.mid  * scale);
-            const hH = Math.round(b.high * scale);
+            const bs = Math.sqrt(b.bass / total);
+            const ms = Math.sqrt(b.mid  / total);
+            const hs = Math.sqrt(b.high / total);
+            const st = bs + ms + hs;
+            const totalH = b.peak * H;
+            const bH = Math.round((bs / st) * totalH);
+            const mH = Math.round((ms / st) * totalH);
+            const hH = Math.round((hs / st) * totalH);
             const xPos = i * (bw + 1);
             if (bH > 0) { ctx.fillStyle = BASS_HEX;  ctx.fillRect(xPos, H - bH, bw, bH); }
             if (mH > 0) { ctx.fillStyle = MID_HEX;   ctx.fillRect(xPos, H - bH - mH, bw, mH); }

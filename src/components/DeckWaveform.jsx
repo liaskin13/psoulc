@@ -130,13 +130,18 @@ export default function DeckWaveform({
         const suffix = isPast ? "40" : "ff";
 
         if (d.bass !== undefined) {
-          // Stacked spectral bars: bass nearest center, mid, high at edges
+          // Stacked spectral bars: bass nearest center, mid, high at edges.
+          // sqrt compression lifts subdominant bands so all 3 colors are visible.
           const total = d.bass + d.mid + d.high;
           if (total < 0.001) continue;
-          const scale = (d.peak * halfH) / total;
-          const bH = d.bass * scale;
-          const mH = d.mid  * scale;
-          const hH = d.high * scale;
+          const bs = Math.sqrt(d.bass / total);
+          const ms = Math.sqrt(d.mid  / total);
+          const hs = Math.sqrt(d.high / total);
+          const st = bs + ms + hs;
+          const totalH = d.peak * halfH;
+          const bH = (bs / st) * totalH;
+          const mH = (ms / st) * totalH;
+          const hH = (hs / st) * totalH;
 
           // Top half — bass from center up, mid above bass, high above mid
           ctx.fillStyle = BASS_COLOR + suffix;

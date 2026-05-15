@@ -822,8 +822,8 @@ function ArchitectConsole({
 
   const handleBroadcast = () => setShowSignalPanel(true);
 
-  const ensureWaveformForTrack = async (track, shouldAnnounce = false) => {
-    if (!track || track.waveform_data || regeneratingWaveforms[track.id])
+  const ensureWaveformForTrack = async (track, shouldAnnounce = false, force = false) => {
+    if (!track || (!force && track.waveform_data) || regeneratingWaveforms[track.id])
       return;
     const url = getAudioUrl(track.audio_path);
     if (!url) return;
@@ -1017,7 +1017,7 @@ function ArchitectConsole({
   };
 
   const handleRegenerateWaveform = async (track) => {
-    await ensureWaveformForTrack(track, true);
+    await ensureWaveformForTrack(track, true, true);
   };
 
   const handleNext = () => {
