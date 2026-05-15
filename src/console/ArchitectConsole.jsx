@@ -834,7 +834,18 @@ function ArchitectConsole({
     try {
       const serato = await parseSeratoOverviewFromUrl(url);
       if (serato) {
-        await saveWaveform(track.id, { low: serato.low, high: serato.high }, null);
+        const waveformData = { low: serato.low, high: serato.high };
+        await saveWaveform(track.id, waveformData, null);
+        // Inject waveform directly into local state — the deployed GET /tracks
+        // worker is an older version that omits waveform_data from the SELECT,
+        // so fetchAllTracks() would overwrite the waveform with null.
+        const withWaveform = (prev) =>
+          prev.map((t) => t.id === track.id ? { ...t, waveform_data: waveformData } : t);
+        setTrackListData(withWaveform);
+        const updatedTrack = { ...track, waveform_data: waveformData };
+        if (loadedDeckId === track.id) setLoadedTrack(updatedTrack);
+        if (shouldAnnounce) announce(`Waveform ready for ${track.title || "track"}.`);
+        return;
       }
       const refreshed = await fetchAllTracks();
       setTrackListData(refreshed);
