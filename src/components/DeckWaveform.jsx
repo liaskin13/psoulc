@@ -117,15 +117,48 @@ export default function DeckWaveform({
         }
       }
 
-      // Draw waveform bars
+      // Draw waveform bars — multi-band stacked, mirrored from center
+      const halfH = height / 2;
+      const BASS_COLOR = "#1464dc";
+      const MID_COLOR  = "#14dc14";
+      const HIGH_COLOR = "#e56020";
       for (let i = startBar; i < endBar; i++) {
-        const data = peaks[i];
+        const d = peaks[i];
         const x = (i - startBar) * barWidth;
-        const barHeight = data.peak * height;
-        const y = (height - barHeight) / 2;
-        const isPast = (i - startBar) * barWidth < playheadX;
-        ctx.fillStyle = isPast ? data.freq + "40" : data.freq;
-        ctx.fillRect(x, y, Math.max(barWidth - 1, 1), barHeight);
+        const bw = Math.max(barWidth - 1, 1);
+        const isPast = x < playheadX;
+        const suffix = isPast ? "40" : "ff";
+
+        if (d.bass !== undefined) {
+          // Stacked spectral bars: bass nearest center, mid, high at edges
+          const total = d.bass + d.mid + d.high;
+          if (total < 0.001) continue;
+          const scale = (d.peak * halfH) / total;
+          const bH = d.bass * scale;
+          const mH = d.mid  * scale;
+          const hH = d.high * scale;
+
+          // Top half — bass from center up, mid above bass, high above mid
+          ctx.fillStyle = BASS_COLOR + suffix;
+          ctx.fillRect(x, halfH - bH, bw, bH);
+          ctx.fillStyle = MID_COLOR + suffix;
+          ctx.fillRect(x, halfH - bH - mH, bw, mH);
+          ctx.fillStyle = HIGH_COLOR + suffix;
+          ctx.fillRect(x, halfH - bH - mH - hH, bw, hH);
+
+          // Bottom half — mirror
+          ctx.fillStyle = BASS_COLOR + suffix;
+          ctx.fillRect(x, halfH, bw, bH);
+          ctx.fillStyle = MID_COLOR + suffix;
+          ctx.fillRect(x, halfH + bH, bw, mH);
+          ctx.fillStyle = HIGH_COLOR + suffix;
+          ctx.fillRect(x, halfH + bH + mH, bw, hH);
+        } else {
+          // Legacy single-color fallback
+          const barHeight = d.peak * height;
+          ctx.fillStyle = isPast ? d.freq + "40" : d.freq;
+          ctx.fillRect(x, (height - barHeight) / 2, bw, barHeight);
+        }
       }
 
       // Draw playhead line

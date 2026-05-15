@@ -18,16 +18,17 @@ function seratoBytesToBars(rawData) {
   const bars = [];
   if (isColored) {
     for (let i = 0; i < bytes.length; i += 3) {
-      const lo = bytes[i], mi = bytes[i + 1], hi = bytes[i + 2];
-      const peak = Math.max(lo, mi, hi) / 255;
-      const freq = lo >= mi && lo >= hi ? FREQ_BANDS.low
-                 : mi >= hi            ? FREQ_BANDS.mid
+      const bv = bytes[i] / 255, mv = bytes[i + 1] / 255, hv = bytes[i + 2] / 255;
+      const peak = Math.max(bv, mv, hv);
+      const freq = bv >= mv && bv >= hv ? FREQ_BANDS.low
+                 : mv >= hv            ? FREQ_BANDS.mid
                                        : FREQ_BANDS.high;
-      bars.push({ peak, freq });
+      bars.push({ peak, freq, bass: bv, mid: mv, high: hv });
     }
   } else {
     for (let i = 0; i < bytes.length; i++) {
-      bars.push({ peak: bytes[i] / 255, freq: FREQ_BANDS.mid });
+      const v = bytes[i] / 255;
+      bars.push({ peak: v, freq: FREQ_BANDS.mid, bass: 0, mid: v, high: 0 });
     }
   }
   return bars;
@@ -40,12 +41,16 @@ function resample(bars, targetCount) {
   const result = [];
   for (let i = 0; i < targetCount; i++) {
     const pos = i * ratio;
-    const lo = Math.floor(pos);
-    const hi = Math.min(lo + 1, bars.length - 1);
-    const t = pos - lo;
+    const a = Math.floor(pos);
+    const b = Math.min(a + 1, bars.length - 1);
+    const t = pos - a;
+    const lerp = (k) => (bars[a][k] ?? 0) * (1 - t) + (bars[b][k] ?? 0) * t;
     result.push({
-      peak: bars[lo].peak * (1 - t) + bars[hi].peak * t,
+      peak: lerp("peak"),
       freq: bars[Math.round(pos)].freq,
+      bass: lerp("bass"),
+      mid:  lerp("mid"),
+      high: lerp("high"),
     });
   }
   return result;
@@ -246,7 +251,7 @@ function analyzeWindow(pcmBytes, bitsPerSample, numChannels) {
   const freq = lo >= mi && lo >= hi ? FREQ_BANDS.low
              : mi >= hi             ? FREQ_BANDS.mid
                                     : FREQ_BANDS.high;
-  return { rawPeak, freq };
+  return { rawPeak, freq, rawBass: lo, rawMid: mi, rawHigh: hi };
 }
 
 // Generate Serato-compatible waveform bars from a raw PCM WAV URL.
@@ -282,9 +287,15 @@ async function generateWaveformFromWavUrl(url, firstChunk) {
   // 12 concurrent workers — each grabs the next bar the moment it finishes
   await Promise.all(Array.from({ length: 12 }, worker));
 
-  // Normalize peaks across all bars (linear, so loudest bar = 1.0)
+  // Normalize all bands by global peak (loudest bar = 1.0)
   const maxPeak = Math.max(...rawBars.map(b => b.rawPeak), 1e-9);
-  const bars = rawBars.map(b => ({ peak: b.rawPeak / maxPeak, freq: b.freq }));
+  const bars = rawBars.map(b => ({
+    peak: b.rawPeak / maxPeak,
+    freq: b.freq,
+    bass: b.rawBass / maxPeak,
+    mid:  b.rawMid  / maxPeak,
+    high: b.rawHigh / maxPeak,
+  }));
 
   return { bars, low: resample(bars, 80), high: resample(bars, 1000) };
 }

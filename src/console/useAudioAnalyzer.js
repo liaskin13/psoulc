@@ -129,11 +129,26 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         for (let i = 0; i < SPEC_N; i++) {
           const b = bars[specStart + i];
           if (!b) continue;
-          const bH = Math.round(b.peak * H);
-          if (bH < 1) continue;
-          ctx.fillStyle = b.freq;
-          ctx.globalAlpha = 0.35 + b.peak * 0.65;
-          ctx.fillRect(i * (bw + 1), H - bH, bw, bH);
+          const alpha = 0.35 + b.peak * 0.65;
+          ctx.globalAlpha = alpha;
+
+          if (b.bass !== undefined) {
+            const total = b.bass + b.mid + b.high;
+            if (total < 0.001) continue;
+            const scale = (b.peak * H) / total;
+            const bH = Math.round(b.bass * scale);
+            const mH = Math.round(b.mid  * scale);
+            const hH = Math.round(b.high * scale);
+            const xPos = i * (bw + 1);
+            if (bH > 0) { ctx.fillStyle = BASS_HEX;  ctx.fillRect(xPos, H - bH, bw, bH); }
+            if (mH > 0) { ctx.fillStyle = MID_HEX;   ctx.fillRect(xPos, H - bH - mH, bw, mH); }
+            if (hH > 0) { ctx.fillStyle = HIGH_HEX;  ctx.fillRect(xPos, H - bH - mH - hH, bw, hH); }
+          } else {
+            const bH = Math.round(b.peak * H);
+            if (bH < 1) continue;
+            ctx.fillStyle = b.freq;
+            ctx.fillRect(i * (bw + 1), H - bH, bw, bH);
+          }
         }
         ctx.globalAlpha = 1;
       }
