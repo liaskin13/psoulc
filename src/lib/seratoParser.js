@@ -263,22 +263,25 @@ async function generateWaveformFromWavUrl(url, firstChunk) {
   const stride        = Math.max(windowBytes, Math.floor(dataSize / numBars));
 
   const rawBars = new Array(numBars);
-  const BATCH   = 8;
+  let nextBar   = 0;
 
-  for (let batch = 0; batch < numBars; batch += BATCH) {
-    const end = Math.min(batch + BATCH, numBars);
-    await Promise.all(
-      Array.from({ length: end - batch }, (_, k) => {
-        const i       = batch + k;
-        const bytePos = dataStart + i * stride;
-        const endPos  = bytePos + windowBytes - 1;
-        return fetch(url, { headers: { Range: `bytes=${bytePos}-${endPos}` } })
-          .then(r => r.arrayBuffer())
-          .then(buf => { rawBars[i] = analyzeWindow(new Uint8Array(buf), bitsPerSample, numChannels); })
-          .catch(() => { rawBars[i] = { rawPeak: 0, freq: FREQ_BANDS.mid }; });
-      })
-    );
+  async function worker() {
+    while (nextBar < numBars) {
+      const i       = nextBar++;
+      const bytePos = dataStart + i * stride;
+      const endPos  = bytePos + windowBytes - 1;
+      try {
+        const res = await fetch(url, { headers: { Range: `bytes=${bytePos}-${endPos}` } });
+        const buf = await res.arrayBuffer();
+        rawBars[i] = analyzeWindow(new Uint8Array(buf), bitsPerSample, numChannels);
+      } catch {
+        rawBars[i] = { rawPeak: 0, freq: FREQ_BANDS.mid };
+      }
+    }
   }
+
+  // 12 concurrent workers — each grabs the next bar the moment it finishes
+  await Promise.all(Array.from({ length: 12 }, worker));
 
   // Normalize peaks across all bars (linear, so loudest bar = 1.0)
   const maxPeak = Math.max(...rawBars.map(b => b.rawPeak), 1e-9);
