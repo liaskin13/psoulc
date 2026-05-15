@@ -117,52 +117,43 @@ export default function DeckWaveform({
         }
       }
 
-      // Draw waveform bars — multi-band stacked, mirrored from center
+      // Serato-style: three stacked bands per bar, tallest drawn first.
+      // Tallest band occupies the peak (outermost); shorter bands paint toward center.
+      // sqrt() applied per-band to boost quieter frequencies (orange/green visible even
+      // on bass-heavy mixes). Mirrors Serato's GEOB overview rendering.
       const halfH = height / 2;
-      const BASS_COLOR = "#1464dc";
-      const MID_COLOR  = "#14dc14";
-      const HIGH_COLOR = "#e56020";
+
       for (let i = startBar; i < endBar; i++) {
         const d = peaks[i];
         const x = (i - startBar) * barWidth;
         const bw = Math.max(barWidth - 1, 1);
         const isPast = x < playheadX;
-        const suffix = isPast ? "40" : "ff";
+        const alpha = isPast ? 0.25 : 1;
 
         if (d.bass !== undefined) {
-          // Stacked spectral bars: bass nearest center, mid, high at edges.
-          // sqrt compression lifts subdominant bands so all 3 colors are visible.
-          const total = d.bass + d.mid + d.high;
-          if (total < 0.001) continue;
-          const bs = Math.sqrt(d.bass / total);
-          const ms = Math.sqrt(d.mid  / total);
-          const hs = Math.sqrt(d.high / total);
-          const st = bs + ms + hs;
-          const totalH = d.peak * halfH;
-          const bH = (bs / st) * totalH;
-          const mH = (ms / st) * totalH;
-          const hH = (hs / st) * totalH;
+          // sqrt boost: lifts quieter bands so all three colors stay visible
+          const bassH = Math.sqrt(d.bass) * halfH;
+          const midH  = Math.sqrt(d.mid)  * halfH;
+          const highH = Math.sqrt(d.high) * halfH;
 
-          // Top half — bass from center up, mid above bass, high above mid
-          ctx.fillStyle = BASS_COLOR + suffix;
-          ctx.fillRect(x, halfH - bH, bw, bH);
-          ctx.fillStyle = MID_COLOR + suffix;
-          ctx.fillRect(x, halfH - bH - mH, bw, mH);
-          ctx.fillStyle = HIGH_COLOR + suffix;
-          ctx.fillRect(x, halfH - bH - mH - hH, bw, hH);
+          // Sort tallest first so dominant frequency color shows at the peak
+          const bands = [
+            { h: bassH, r: 20,  g: 100, b: 220 },   // blue  — bass
+            { h: midH,  r: 20,  g: 220, b: 20  },   // green — mid
+            { h: highH, r: 229, g: 96,  b: 32  },   // orange — high
+          ].sort((a, b) => b.h - a.h);
 
-          // Bottom half — mirror
-          ctx.fillStyle = BASS_COLOR + suffix;
-          ctx.fillRect(x, halfH, bw, bH);
-          ctx.fillStyle = MID_COLOR + suffix;
-          ctx.fillRect(x, halfH + bH, bw, mH);
-          ctx.fillStyle = HIGH_COLOR + suffix;
-          ctx.fillRect(x, halfH + bH + mH, bw, hH);
+          for (const band of bands) {
+            if (band.h < 1) continue;
+            ctx.fillStyle = `rgba(${band.r},${band.g},${band.b},${alpha})`;
+            ctx.fillRect(x, halfH - band.h, bw, band.h);   // upper half
+            ctx.fillRect(x, halfH, bw, band.h);             // lower half (mirror)
+          }
         } else {
-          // Legacy single-color fallback
-          const barHeight = d.peak * height;
+          const barH = d.peak * halfH;
           ctx.fillStyle = isPast ? d.freq + "40" : d.freq;
-          ctx.fillRect(x, (height - barHeight) / 2, bw, barHeight);
+          ctx.fillRect(x, halfH - barH, bw, barH);
+          ctx.fillRect(x, halfH, bw, barH);
         }
       }
 
