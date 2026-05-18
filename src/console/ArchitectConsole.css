@@ -2895,6 +2895,11 @@
   gap: 5px;
   min-width: 0;
   overflow: hidden;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .arch-display-reach-from {

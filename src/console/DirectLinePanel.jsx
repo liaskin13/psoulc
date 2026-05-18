@@ -25,7 +25,7 @@ function saveDirectMessages(messages) {
   } catch (_) {}
 }
 
-export default function DirectLinePanel({ viewer, variant = "architect", externalOpen = 0 }) {
+export default function DirectLinePanel({ viewer, variant = "architect", externalOpen = 0, hideTrigger = false }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -210,16 +210,18 @@ export default function DirectLinePanel({ viewer, variant = "architect", externa
 
   return (
     <>
-      <button
-        className={`direct-line-trigger ${variant === "architect" ? "architect" : "d-mode"}`}
-        onClick={() => setOpen(true)}
-        aria-expanded={open}
-      >
-        DIRECT LINE
-        {unreadCount > 0 && (
-          <span className="direct-line-badge">{unreadCount}</span>
-        )}
-      </button>
+      {!hideTrigger && (
+        <button
+          className={`direct-line-trigger ${variant === "architect" ? "architect" : "d-mode"}`}
+          onClick={() => setOpen(true)}
+          aria-expanded={open}
+        >
+          DIRECT LINE
+          {unreadCount > 0 && (
+            <span className="direct-line-badge">{unreadCount}</span>
+          )}
+        </button>
+      )}
 
       {open && (
         <div

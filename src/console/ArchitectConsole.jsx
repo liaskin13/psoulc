@@ -2242,11 +2242,14 @@ function ArchitectConsole({
         <div className="arch-display-zone arch-display-zone-b">
           <div className="arch-display-reach-zone">
             {latestUnreadMessage ? (
-              <span className="arch-display-reach-msg">
+              <button
+                className="arch-browser-btn arch-display-reach-msg"
+                onClick={() => setReachTrigger(n => n + 1)}
+              >
                 <span className="arch-display-reach-from">{latestUnreadMessage.from}</span>
                 <span className="arch-display-reach-sep">▸</span>
                 <span className="arch-display-reach-body">{latestUnreadMessage.body}</span>
-              </span>
+              </button>
             ) : (
               <button
                 className="arch-browser-btn arch-display-reach-idle"
@@ -2255,7 +2258,7 @@ function ArchitectConsole({
                 REACH
               </button>
             )}
-            <DirectLinePanel viewer={viewer} variant={viewer === "D" ? "d-mode" : "architect"} externalOpen={reachTrigger} />
+            <DirectLinePanel viewer={viewer} variant={viewer === "D" ? "d-mode" : "architect"} externalOpen={reachTrigger} hideTrigger />
           </div>
           <button
             className="arch-intake-btn"
