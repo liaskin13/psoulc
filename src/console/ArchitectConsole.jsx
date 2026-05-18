@@ -275,6 +275,9 @@ function ArchitectConsole({
   const [autoLoopDefault, setAutoLoopDefault] = useState(false);
   const [selectedTrackIds, setSelectedTrackIds] = useState(new Set());
   const [publishFilter, setPublishFilter] = useState("all");
+  const [publishState, setPublishState] = useState({ status: "idle", count: 0 });
+  const [retractState, setRetractState] = useState({ status: "idle", count: 0 });
+  const [reachTrigger, setReachTrigger] = useState(0);
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingValues, setEditingValues] = useState({});
   const [rosterShowAdd, setRosterShowAdd] = useState(false);
@@ -882,45 +885,57 @@ function ArchitectConsole({
   const handlePublishSelected = async () => {
     const ids = [...selectedTrackIds];
     if (!ids.length) return;
-    await Promise.all(
-      ids.map((id) =>
-        fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/publish`, {
-          method: "PUT",
-          headers: { "PSC-Secret": UPLOAD_SECRET },
-        }),
-      ),
-    );
-    setTrackListData((prev) =>
-      prev.map((t) =>
-        selectedTrackIds.has(t.id) ? { ...t, is_published: 1 } : t,
-      ),
-    );
-    setSelectedTrackIds(new Set());
-    announce(
-      `${ids.length} track${ids.length > 1 ? "s" : ""} published to vault.`,
-    );
+    setPublishState({ status: "pending", count: ids.length });
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/publish`, {
+            method: "PUT",
+            headers: { "PSC-Secret": UPLOAD_SECRET },
+          }),
+        ),
+      );
+      setTrackListData((prev) =>
+        prev.map((t) =>
+          selectedTrackIds.has(t.id) ? { ...t, is_published: 1 } : t,
+        ),
+      );
+      setSelectedTrackIds(new Set());
+      setPublishState({ status: "success", count: ids.length });
+      announce(`${ids.length} track${ids.length > 1 ? "s" : ""} published to vault.`);
+      setTimeout(() => setPublishState({ status: "idle", count: 0 }), 800);
+    } catch {
+      setPublishState({ status: "error", count: 0 });
+      setTimeout(() => setPublishState({ status: "idle", count: 0 }), 1200);
+    }
   };
 
   const handleRetractSelected = async () => {
     const ids = [...selectedTrackIds];
     if (!ids.length) return;
-    await Promise.all(
-      ids.map((id) =>
-        fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/retract`, {
-          method: "PUT",
-          headers: { "PSC-Secret": UPLOAD_SECRET },
-        }),
-      ),
-    );
-    setTrackListData((prev) =>
-      prev.map((t) =>
-        selectedTrackIds.has(t.id) ? { ...t, is_published: 0 } : t,
-      ),
-    );
-    setSelectedTrackIds(new Set());
-    announce(
-      `${ids.length} track${ids.length > 1 ? "s" : ""} retracted from vault.`,
-    );
+    setRetractState({ status: "pending", count: ids.length });
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/retract`, {
+            method: "PUT",
+            headers: { "PSC-Secret": UPLOAD_SECRET },
+          }),
+        ),
+      );
+      setTrackListData((prev) =>
+        prev.map((t) =>
+          selectedTrackIds.has(t.id) ? { ...t, is_published: 0 } : t,
+        ),
+      );
+      setSelectedTrackIds(new Set());
+      setRetractState({ status: "success", count: ids.length });
+      announce(`${ids.length} track${ids.length > 1 ? "s" : ""} retracted from vault.`);
+      setTimeout(() => setRetractState({ status: "idle", count: 0 }), 800);
+    } catch {
+      setRetractState({ status: "error", count: 0 });
+      setTimeout(() => setRetractState({ status: "idle", count: 0 }), 1200);
+    }
   };
 
   const handleEditStart = (e, track) => {
@@ -1947,7 +1962,7 @@ function ArchitectConsole({
                   </button>
                 </div>
               ) : visibleTracks.length === 0 ? (
-                <div className="arch-lib-empty">VAULT IS EMPTY</div>
+                <div className="arch-lib-vault-clear">VAULT CLEAR</div>
               ) : (
                 visibleTracks.map((t, i) => {
                   // Get waveform preview data (low-res)
@@ -2190,18 +2205,24 @@ function ArchitectConsole({
             <div className="arch-display-divider" aria-hidden="true" />
             {/* Group 2 — publish actions */}
             <button
-              className="arch-browser-btn arch-publish-btn"
+              className={`arch-browser-btn arch-publish-btn${publishState.status === "error" ? " arch-action-error" : ""}`}
               onClick={handlePublishSelected}
-              disabled={!selectionHasStaged}
+              disabled={!selectionHasStaged || publishState.status === "pending"}
             >
-              PUBLISH{selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}
+              {publishState.status === "pending" ? "PUBLISHING…" :
+               publishState.status === "success" ? `DONE (${publishState.count})` :
+               publishState.status === "error" ? "FAILED" :
+               `PUBLISH${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
             </button>
             <button
-              className="arch-browser-btn arch-retract-btn"
+              className={`arch-browser-btn arch-retract-btn${retractState.status === "error" ? " arch-action-error" : ""}`}
               onClick={handleRetractSelected}
-              disabled={!selectionHasLive}
+              disabled={!selectionHasLive || retractState.status === "pending"}
             >
-              RETRACT{selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}
+              {retractState.status === "pending" ? "RETRACTING…" :
+               retractState.status === "success" ? `DONE (${retractState.count})` :
+               retractState.status === "error" ? "FAILED" :
+               `RETRACT${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
             </button>
             <div className="arch-display-divider" aria-hidden="true" />
             {/* Group 3 — deck actions */}
@@ -2227,9 +2248,14 @@ function ArchitectConsole({
                 <span className="arch-display-reach-body">{latestUnreadMessage.body}</span>
               </span>
             ) : (
-              <span className="arch-display-reach-idle">REACH</span>
+              <button
+                className="arch-browser-btn arch-display-reach-idle"
+                onClick={() => setReachTrigger(n => n + 1)}
+              >
+                REACH
+              </button>
             )}
-            <DirectLinePanel viewer={viewer} variant={viewer === "D" ? "d-mode" : "architect"} />
+            <DirectLinePanel viewer={viewer} variant={viewer === "D" ? "d-mode" : "architect"} externalOpen={reachTrigger} />
           </div>
           <button
             className="arch-intake-btn"

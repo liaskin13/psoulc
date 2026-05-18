@@ -155,6 +155,7 @@ DPWallpaper canvas:  position: fixed, z-index: 0   (page level — paints first)
 - **Max content width:** 1440px
 - **Console layout:** Full-bleed dark surface, controls justified to a strict 4px grid. Dense, purposeful, no wasted space.
 - **Device targets:** Listener view = iPhone primary. D/L consoles = desktop/laptop primary.
+- **Console mobile scope:** The D-sovereign and L-sovereign console views are explicitly desktop/laptop-only. Touch targets follow desktop sizing. Mobile breakpoints on the console only handle library column hiding. The Listener Shell is the mobile-first surface — console mobile optimization is out of scope.
 
 ---
 
@@ -267,3 +268,23 @@ INTAKE is a console-level action. The button lives in the browser utility bar (`
 | 2026-05-13 | INTAKE button moved to arch-browser-utility bar alongside PUBLISH / RETRACT / LOAD DECK | Top rail is deliberately clean — no functional controls. Loop controls were wrong too. Browser utility bar is correct. |
 | 2026-05-13 | Vault selector in INTAKE shows friendly names only | MIXES / ORIGINAL MUSIC / LIVE SETS / SONIC ARCH. Venus/saturn/mercury/earth are internal IDs — never surface them in UI. |
 | 2026-05-13 | tune-modal CSS added back to index.css with design system tokens | CSS was deleted in May 10 reconciliation (had banned amber colors). Rewritten with --surface, --border, --identity, 0px border-radius. |
+| 2026-05-18 | SIGNAL button neutral at rest, red only when is-live | Red = live signal only. Permanently red SIGNAL conflated idle with broadcasting. |
+| 2026-05-18 | BPM sort is 2-state toggle (desc ↔ asc), not 3-state cycle | 3-state cycle returns to date order on 3rd click — accidental sort loss during live use. |
+| 2026-05-18 | INTAKE uses --arch-identity color (green D / cyan L) | INTAKE is a sovereign vault action. Identity color marks it as D's control, not platform chrome. |
+
+---
+
+## Console Variable Namespace (`--arch-*`)
+
+`ArchitectConsole.css` uses an `--arch-*` prefix for console-scoped tokens that shadow or extend the global design system. This is intentional isolation — the console is an instrument, not a general surface.
+
+| Token | Value (D-sovereign) | Value (L-sovereign) | Purpose |
+|-------|--------------------|--------------------|---------|
+| `--arch-identity` | `#14dc14` | `#00e5ff` | Sovereign identity color — active track row, SIGNAL live, INTAKE border |
+| `--arch-identity-rgb` | `20, 220, 20` | `0, 229, 255` | RGB triplet for `rgba()` identity calculations |
+| `--arch-accent` | `rgba(185,185,185,0.9)` | same | Column headers, labels, muted UI text |
+| `--arch-accent-rgb` | `185, 185, 185` | same | Pure achromatic. Zero warmth. |
+| `--arch-muted-rgb` | `185, 185, 185` | same | Structural borders and inactive controls |
+| `--arch-surface` | `#060606` | same | Console background (distinct from global `--surface`) |
+
+**Planned unification (P2 backlog):** `--arch-identity` → `--identity`, `--arch-accent` → global token. Requires audit of all `--arch-*` usages in ArchitectConsole.css before collapsing.

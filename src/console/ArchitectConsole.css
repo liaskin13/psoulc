@@ -345,12 +345,12 @@
 }
 
 .arch-intake-btn {
-  border-color: rgba(var(--arch-accent-rgb), 0.35);
-  color: rgba(var(--arch-accent-rgb), 0.9);
+  border-color: rgba(var(--arch-identity-rgb), 0.55);
+  color: var(--arch-identity);
   box-shadow:
     0 2px 0 #000,
     0 4px 8px rgba(0, 0, 0, 0.7),
-    0 0 6px rgba(var(--arch-accent-rgb), 0.15),
+    0 0 6px rgba(var(--arch-identity-rgb), 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -1662,6 +1662,17 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
+.arch-lib-vault-clear {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(215, 215, 215, 0.22);
+  text-align: center;
+  padding: 40px 20px;
+}
+
 /* ── Track List — Animation 1: Phosphor Radar Scan ──────────────────────── */
 /*
    .arch-track-list-body has a ::before pseudo-element:
@@ -2857,6 +2868,11 @@
   margin: 0 4px;
 }
 
+.arch-browser-btn.arch-action-error {
+  color: #cc2200;
+  border-color: rgba(204, 34, 0, 0.5);
+}
+
 .arch-display-zone-b {
   display: flex;
   align-items: center;
@@ -2905,14 +2921,14 @@
 .arch-display-reach-idle {
   font-size: 0.54rem;
   letter-spacing: 0.18em;
-  color: rgba(var(--arch-muted-rgb), 0.28);
+  color: rgba(var(--arch-muted-rgb), 0.52);
 }
 
-/* INTAKE — standalone CTA, identity-accent bordered */
+/* INTAKE — sovereign vault action, identity color */
 .arch-intake-btn {
   background: transparent;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.45);
-  color: rgb(var(--arch-accent-rgb));
+  border: 1px solid var(--arch-identity);
+  color: var(--arch-identity);
   padding: 7px 12px;
   min-height: 30px;
   font-family: 'Chakra Petch', sans-serif;
@@ -2924,6 +2940,6 @@
 }
 
 .arch-intake-btn:hover {
-  background: rgba(var(--arch-accent-rgb), 0.08);
-  border-color: rgba(var(--arch-accent-rgb), 0.75);
+  background: rgba(var(--arch-identity-rgb), 0.08);
+  border-color: var(--arch-identity);
 }

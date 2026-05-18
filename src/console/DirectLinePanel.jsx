@@ -25,8 +25,12 @@ function saveDirectMessages(messages) {
   } catch (_) {}
 }
 
-export default function DirectLinePanel({ viewer, variant = "architect" }) {
+export default function DirectLinePanel({ viewer, variant = "architect", externalOpen = 0 }) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (externalOpen > 0) setOpen(true);
+  }, [externalOpen]);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState(loadDirectMessages);
   const [isRecording, setIsRecording] = useState(false);
