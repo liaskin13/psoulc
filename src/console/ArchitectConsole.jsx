@@ -931,19 +931,21 @@ function ArchitectConsole({
 
   const handleEditSave = async (trackId) => {
     const vals = editingValues;
-    await fetch(`${UPLOAD_WORKER_URL}/tracks/${trackId}`, {
+    // Close and apply optimistic update immediately — no waiting for the server.
+    setEditingTrackId((curr) => curr === trackId ? null : curr);
+    setEditingValues({});
+    setTrackListData((prev) =>
+      prev.map((t) => (t.id === trackId ? { ...t, ...vals } : t)),
+    );
+    // Fire and forget — sync to server in background.
+    fetch(`${UPLOAD_WORKER_URL}/tracks/${trackId}`, {
       method: "PATCH",
       headers: {
         "PSC-Secret": UPLOAD_SECRET,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(vals),
-    });
-    setTrackListData((prev) =>
-      prev.map((t) => (t.id === trackId ? { ...t, ...vals } : t)),
-    );
-    setEditingTrackId(null);
-    setEditingValues({});
+    }).catch((err) => console.error("[PSC] edit save failed:", err));
   };
 
   const handleEditKeyDown = (e, trackId) => {
