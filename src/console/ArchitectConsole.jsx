@@ -1910,7 +1910,7 @@ function ArchitectConsole({
               <button
                 role="columnheader"
                 className={`arch-sort-col-btn${sortMode.startsWith("bpm") ? " active" : ""}`}
-                onClick={() => setSortMode(s => s === "recent" ? "bpm-desc" : s === "bpm-desc" ? "bpm-asc" : "recent")}
+                onClick={() => setSortMode(s => s === "bpm-desc" ? "bpm-asc" : "bpm-desc")}
                 aria-label={`Sort by BPM (${sortMode === "bpm-desc" ? "descending" : sortMode === "bpm-asc" ? "ascending" : "unsorted"})`}
               >
                 BPM
