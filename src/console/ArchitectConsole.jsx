@@ -1193,13 +1193,12 @@ function ArchitectConsole({
     );
 
   const visibleTracks = [...filteredTracks].sort((a, b) => {
-    if (sortMode === "recent") {
-      return (
-        new Date(b.created_at || 0).getTime() -
-        new Date(a.created_at || 0).getTime()
-      );
-    }
-    return (resolveTrackBpm(b) || 0) - (resolveTrackBpm(a) || 0);
+    if (sortMode === "bpm-desc") return (resolveTrackBpm(b) || 0) - (resolveTrackBpm(a) || 0);
+    if (sortMode === "bpm-asc") return (resolveTrackBpm(a) || 0) - (resolveTrackBpm(b) || 0);
+    return (
+      new Date(b.created_at || 0).getTime() -
+      new Date(a.created_at || 0).getTime()
+    );
   });
 
   const hasHotCuesForLoadedTrack = !!(
@@ -1457,7 +1456,7 @@ function ArchitectConsole({
       </div>
 
       {/* ── TOP RAIL ─────────────────────────────────────────────────── */}
-      <header className="arch-top-rail">
+      <header className={`arch-top-rail${isBroadcasting ? " is-broadcasting" : ""}`}>
         <div className="arch-top-identity">
           <span className="arch-top-dot" />
           <span className="arch-top-name">
@@ -1908,7 +1907,16 @@ function ArchitectConsole({
               />
               <span role="columnheader">TITLE</span>
               <span role="columnheader">ARTIST</span>
-              <span role="columnheader">BPM</span>
+              <button
+                role="columnheader"
+                className={`arch-sort-col-btn${sortMode.startsWith("bpm") ? " active" : ""}`}
+                onClick={() => setSortMode(s => s === "recent" ? "bpm-desc" : s === "bpm-desc" ? "bpm-asc" : "recent")}
+                aria-label={`Sort by BPM (${sortMode === "bpm-desc" ? "descending" : sortMode === "bpm-asc" ? "ascending" : "unsorted"})`}
+              >
+                BPM
+                {sortMode === "bpm-desc" && <span className="arch-sort-indicator">▼</span>}
+                {sortMode === "bpm-asc" && <span className="arch-sort-indicator">▲</span>}
+              </button>
               <span role="columnheader">KEY</span>
               <span role="columnheader">LENGTH</span>
               <span role="columnheader">ADDED</span>
@@ -2160,12 +2168,7 @@ function ArchitectConsole({
         {/* Zone A — library controls (default context) */}
         <div className="arch-display-zone arch-display-zone-a">
           <div className="arch-display-controls">
-            <button
-              className={`arch-browser-btn ${sortMode === "bpm" ? "active" : ""}`}
-              onClick={() => setSortMode("bpm")}
-            >
-              SORT: BPM
-            </button>
+            {/* Group 1 — filter/view */}
             <button
               className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
               onClick={() => setPublishFilter((p) => (p === "staged" ? "all" : "staged"))}
@@ -2178,6 +2181,14 @@ function ArchitectConsole({
             >
               LIVE
             </button>
+            <button
+              className={`arch-browser-btn ${historyEnabled ? "active" : ""}`}
+              onClick={() => setHistoryEnabled((prev) => !prev)}
+            >
+              HISTORY
+            </button>
+            <div className="arch-display-divider" aria-hidden="true" />
+            {/* Group 2 — publish actions */}
             <button
               className="arch-browser-btn arch-publish-btn"
               onClick={handlePublishSelected}
@@ -2192,12 +2203,8 @@ function ArchitectConsole({
             >
               RETRACT{selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}
             </button>
-            <button
-              className={`arch-browser-btn ${historyEnabled ? "active" : ""}`}
-              onClick={() => setHistoryEnabled((prev) => !prev)}
-            >
-              HISTORY
-            </button>
+            <div className="arch-display-divider" aria-hidden="true" />
+            {/* Group 3 — deck actions */}
             <button className="arch-browser-btn" onClick={handlePrepareSelected}>
               PREPARE{prepareQueue.length > 0 ? ` (${prepareQueue.length})` : ""}
             </button>
