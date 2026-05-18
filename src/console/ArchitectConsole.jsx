@@ -245,7 +245,6 @@ function ArchitectConsole({
   const [showArchive, setShowArchive] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
-  const [showReach, setShowReach] = useState(false);
   const [railOpen, setRailOpen] = useState(false);
   const [reachMessages, setReachMessages] = useState(() => {
     try {
@@ -314,10 +313,8 @@ function ArchitectConsole({
   });
   const [activeCueBank, setActiveCueBank] = useState("A");
   const [loopRegion, setLoopRegion] = useState({ start: null, end: null });
-  const [showLoopMenu, setShowLoopMenu] = useState(false);
   const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
   const loopActiveRef = useRef(false);
-  const loopMenuRef = useRef(null);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
   const tabRefs = useRef([]);
@@ -548,16 +545,6 @@ function ArchitectConsole({
     waveformDetail,
   ]);
 
-  useEffect(() => {
-    if (!showLoopMenu) return;
-    const onPointerDown = (e) => {
-      if (!loopMenuRef.current?.contains(e.target)) {
-        setShowLoopMenu(false);
-      }
-    };
-    window.addEventListener("pointerdown", onPointerDown);
-    return () => window.removeEventListener("pointerdown", onPointerDown);
-  }, [showLoopMenu]);
 
   useEffect(() => {
     try {
@@ -939,7 +926,7 @@ function ArchitectConsole({
   const handleEditStart = (e, track) => {
     e.stopPropagation();
     setEditingTrackId(track.id);
-    setEditingValues({ title: track.title || "", artist: track.artist || "" });
+    setEditingValues({ title: track.title || "", artist: track.artist || "", bpm_display: track.bpm_display || (track.bpm ? Math.round(track.bpm).toString() : "") });
   };
 
   const handleEditSave = async (trackId) => {
@@ -1485,31 +1472,6 @@ function ArchitectConsole({
             <span className="arch-signal-dot">●</span> SIGNAL
           </button>
 
-          <div className="arch-reach-wrap">
-            <button
-              className={`arch-reach-btn${showReach ? " active" : ""}`}
-              onClick={() => setShowReach((v) => !v)}
-              aria-label="Reach — direct line"
-              aria-expanded={showReach}
-            >
-              REACH
-              {unreadCountL > 0 && (
-                <span className="arch-reach-badge">{unreadCountL}</span>
-              )}
-            </button>
-            {showReach && (
-              <>
-                <div
-                  className="arch-reach-backdrop"
-                  onClick={() => setShowReach(false)}
-                  aria-hidden="true"
-                />
-                <div className="arch-reach-panel">
-                  <DirectLinePanel viewer={viewer} variant={viewer === "D" ? "d-mode" : "architect"} />
-                </div>
-              </>
-            )}
-          </div>
 
           <button
             className="arch-rail-btn arch-exit-btn"
@@ -1604,40 +1566,10 @@ function ArchitectConsole({
             <canvas
               ref={specRef}
               className="arch-spectrum-deck"
-              width={800}
-              height={64}
             />
           </div>
         </div>
 
-        {/* Console display bar — hardware readout panel */}
-        <div className="arch-console-display" aria-live="polite">
-          {latestUnreadMessage && (
-            <span className="arch-display-reach">
-              <span className="arch-display-prefix">REACH</span>
-              <span className="arch-display-sep">▸</span>
-              <span className="arch-display-text">{latestUnreadMessage.body}</span>
-            </span>
-          )}
-        </div>
-
-        <div className="arch-deck-edit" role="group" aria-label="Waveform edit controls">
-          <div className="arch-loop-region">
-            <span className="arch-cue-tag">LOOP</span>
-            <span className="arch-loop-readout">
-              {loopRegion.start !== null && loopRegion.end !== null
-                ? `${loopRegion.start.toFixed(1)}s → ${loopRegion.end.toFixed(1)}s`
-                : "NONE"}
-            </span>
-            <button
-              className="arch-deck-mini-btn"
-              disabled={loopRegion.start === null}
-              onClick={handleClearLoop}
-            >
-              CLEAR
-            </button>
-          </div>
-        </div>
       </section>
 
       {/* ── TRANSPORT BAR ───────────────────────────────────────────── */}
@@ -1762,73 +1694,43 @@ function ArchitectConsole({
             role="group"
             aria-label="Loop controls"
           >
-            <div className="arch-loop-menu-wrap" ref={loopMenuRef}>
-              <button
-                className="arch-loop-btn arch-loop-trigger"
-                disabled={!loadedTrack}
-                onClick={() => setShowLoopMenu((prev) => !prev)}
-              >
-                LOOP{" "}
-                {LOOP_LENGTH_OPTIONS.find((o) => o.id === selectedLoopLengthId)
-                  ?.label || "1/4"}
-              </button>
-              {showLoopMenu && (
-                <div
-                  className="arch-loop-menu"
-                  role="menu"
-                  aria-label="Loop length"
+            <span className="arch-cue-tag">LOOP</span>
+            {[
+              { id: "1-4", label: "1/4" },
+              { id: "1-2", label: "1/2" },
+              { id: "1-bar", label: "1" },
+              { id: "2-bars", label: "2" },
+              { id: "4-bars", label: "4" },
+            ].map((opt) => {
+              const full = LOOP_LENGTH_OPTIONS.find((o) => o.id === opt.id);
+              return (
+                <button
+                  key={opt.id}
+                  className={`arch-bank-btn${selectedLoopLengthId === opt.id ? " active" : ""}`}
+                  disabled={!loadedTrack}
+                  onClick={() => full && handleApplyLoopLength(full)}
+                  aria-pressed={selectedLoopLengthId === opt.id}
                 >
-                  {LOOP_LENGTH_OPTIONS.map((option) => (
-                    <button
-                      key={option.id}
-                      className={`arch-loop-menu-item ${selectedLoopLengthId === option.id ? "active" : ""}`}
-                      onClick={() => handleApplyLoopLength(option)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                  {opt.label}
+                </button>
+              );
+            })}
+            <span className="arch-loop-readout">
+              {loopRegion.start !== null && loopRegion.end !== null
+                ? `${loopRegion.start.toFixed(1)}s → ${loopRegion.end.toFixed(1)}s`
+                : ""}
+            </span>
             <button
               className="arch-loop-btn"
               disabled={loopRegion.start === null}
               onClick={handleClearLoop}
             >
-              CLEAR
+              CLR
             </button>
           </div>
         </div>
       </div>
 
-      <div className="arch-monitor-strip" role="group" aria-label="Monitoring">
-        <div className="arch-monitor-eq" aria-label="Mix stats">
-          <span className="arch-monitor-btn">
-            LOUDNESS {mixLoudness ?? "N/A"}
-          </span>
-          <span className="arch-monitor-btn">PEAK {mixPeak ?? "N/A"}</span>
-          <span className="arch-monitor-btn">RANGE {mixRange ?? "N/A"}</span>
-          <span className="arch-monitor-btn">
-            BPM{" "}
-            {deckTrack?.bpm_display ||
-              (deckTrack?.bpm ? Math.round(deckTrack.bpm) : "N/A")}
-          </span>
-        </div>
-        <div className="arch-monitor-vol" role="group" aria-label="Volume">
-          <span className="arch-monitor-label">VOL</span>
-          <input
-            type="range"
-            className="arch-vol-slider"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={handleVolumeChange}
-            aria-label="Master volume"
-          />
-          <span className="arch-vol-val">{Math.round(volume * 100)}</span>
-        </div>
-      </div>
 
       {/* ── LOWER ZONE ──────────────────────────────────────────────── */}
       <div className="arch-lower-zone">
@@ -1973,79 +1875,6 @@ function ArchitectConsole({
             })}
           </div>
 
-          <div
-            className="arch-browser-utility"
-            role="toolbar"
-            aria-label="Library controls"
-          >
-            <div className="arch-browser-group">
-              <button
-                className={`arch-browser-btn ${sortMode === "bpm" ? "active" : ""}`}
-                onClick={() => setSortMode("bpm")}
-              >
-                SORT: BPM
-              </button>
-              <button
-                className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
-                onClick={() =>
-                  setPublishFilter((p) => (p === "staged" ? "all" : "staged"))
-                }
-              >
-                STAGED
-              </button>
-              <button
-                className={`arch-browser-btn ${publishFilter === "live" ? "active" : ""}`}
-                onClick={() =>
-                  setPublishFilter((p) => (p === "live" ? "all" : "live"))
-                }
-              >
-                LIVE
-              </button>
-              <button
-                className="arch-browser-btn arch-publish-btn"
-                onClick={handlePublishSelected}
-                disabled={!selectionHasStaged}
-                title="Publish selected tracks to listener vault"
-              >
-                PUBLISH{" "}
-                {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
-              </button>
-              <button
-                className="arch-browser-btn arch-retract-btn"
-                onClick={handleRetractSelected}
-                disabled={!selectionHasLive}
-                title="Retract selected tracks from listener vault"
-              >
-                RETRACT{" "}
-                {selectedTrackIds.size > 0 ? `(${selectedTrackIds.size})` : ""}
-              </button>
-              <button
-                className={`arch-browser-btn ${historyEnabled ? "active" : ""}`}
-                onClick={() => setHistoryEnabled((prev) => !prev)}
-              >
-                HISTORY
-              </button>
-              <button
-                className="arch-browser-btn"
-                onClick={handlePrepareSelected}
-              >
-                PREPARE{" "}
-                {prepareQueue.length > 0 ? `(${prepareQueue.length})` : ""}
-              </button>
-              <button
-                className={`arch-browser-btn ${loadedDeckId && selectedTrackId === loadedDeckId ? "active" : ""}`}
-                onClick={handleLoadDeck}
-              >
-                LOAD DECK
-              </button>
-              <button
-                className="arch-browser-btn arch-intake-btn"
-                onClick={() => onIntake?.()}
-              >
-                INTAKE
-              </button>
-            </div>
-          </div>
 
           {/* Search */}
           <div className="arch-lib-search-row">
@@ -2173,7 +2002,10 @@ function ArchitectConsole({
                               }))
                             }
                             onKeyDown={(e) => handleEditKeyDown(e, t.id)}
-                            onBlur={() => handleEditSave(t.id)}
+                            onBlur={(e) => {
+                              if (e.relatedTarget?.classList?.contains('arch-track-edit-input')) return;
+                              handleEditSave(t.id);
+                            }}
                             autoFocus
                             onClick={(e) => e.stopPropagation()}
                           />
@@ -2198,7 +2030,10 @@ function ArchitectConsole({
                               }))
                             }
                             onKeyDown={(e) => handleEditKeyDown(e, t.id)}
-                            onBlur={() => handleEditSave(t.id)}
+                            onBlur={(e) => {
+                              if (e.relatedTarget?.classList?.contains('arch-track-edit-input')) return;
+                              handleEditSave(t.id);
+                            }}
                             onClick={(e) => e.stopPropagation()}
                           />
                         ) : (
@@ -2208,8 +2043,27 @@ function ArchitectConsole({
                         )}
                       </span>
                       <span className="arch-track-bpm" role="cell">
-                        {t.bpm_display ||
-                          (t.bpm ? Math.round(Number(t.bpm)) : "—")}
+                        {editingTrackId === t.id ? (
+                          <input
+                            className="arch-track-edit-input"
+                            value={editingValues.bpm_display ?? ""}
+                            onChange={(e) =>
+                              setEditingValues((v) => ({ ...v, bpm_display: e.target.value }))
+                            }
+                            onBlur={(e) => {
+                              if (e.relatedTarget?.classList?.contains('arch-track-edit-input')) return;
+                              handleEditSave(t.id);
+                            }}
+                            onKeyDown={(e) => handleEditKeyDown(e, t.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            maxLength={20}
+                          />
+                        ) : (
+                          <span onDoubleClick={(e) => handleEditStart(e, t)}>
+                            {t.bpm_display ||
+                              (t.bpm ? Math.round(Number(t.bpm)) : "—")}
+                          </span>
+                        )}
                       </span>
                       <span className="arch-track-key" role="cell">
                         {t.musical_key || "—"}
@@ -2297,6 +2151,84 @@ function ArchitectConsole({
             </div>
           </div>
         </main>
+      </div>
+
+      {/* ── PSC DISPLAY BAR ─────────────────────────────────────────────── */}
+      <div className="arch-display-bar" role="region" aria-label="PSC display">
+        {/* Zone A — library controls (default context) */}
+        <div className="arch-display-zone arch-display-zone-a">
+          <div className="arch-display-controls">
+            <button
+              className={`arch-browser-btn ${sortMode === "bpm" ? "active" : ""}`}
+              onClick={() => setSortMode("bpm")}
+            >
+              SORT: BPM
+            </button>
+            <button
+              className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
+              onClick={() => setPublishFilter((p) => (p === "staged" ? "all" : "staged"))}
+            >
+              STAGED
+            </button>
+            <button
+              className={`arch-browser-btn ${publishFilter === "live" ? "active" : ""}`}
+              onClick={() => setPublishFilter((p) => (p === "live" ? "all" : "live"))}
+            >
+              LIVE
+            </button>
+            <button
+              className="arch-browser-btn arch-publish-btn"
+              onClick={handlePublishSelected}
+              disabled={!selectionHasStaged}
+            >
+              PUBLISH{selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}
+            </button>
+            <button
+              className="arch-browser-btn arch-retract-btn"
+              onClick={handleRetractSelected}
+              disabled={!selectionHasLive}
+            >
+              RETRACT{selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}
+            </button>
+            <button
+              className={`arch-browser-btn ${historyEnabled ? "active" : ""}`}
+              onClick={() => setHistoryEnabled((prev) => !prev)}
+            >
+              HISTORY
+            </button>
+            <button className="arch-browser-btn" onClick={handlePrepareSelected}>
+              PREPARE{prepareQueue.length > 0 ? ` (${prepareQueue.length})` : ""}
+            </button>
+            <button
+              className={`arch-browser-btn ${loadedDeckId && selectedTrackId === loadedDeckId ? "active" : ""}`}
+              onClick={handleLoadDeck}
+            >
+              LOAD DECK
+            </button>
+          </div>
+        </div>
+
+        {/* Zone B — REACH / comms + INTAKE */}
+        <div className="arch-display-zone arch-display-zone-b">
+          <div className="arch-display-reach-zone">
+            {latestUnreadMessage ? (
+              <span className="arch-display-reach-msg">
+                <span className="arch-display-reach-from">{latestUnreadMessage.from}</span>
+                <span className="arch-display-reach-sep">▸</span>
+                <span className="arch-display-reach-body">{latestUnreadMessage.body}</span>
+              </span>
+            ) : (
+              <span className="arch-display-reach-idle">REACH</span>
+            )}
+            <DirectLinePanel viewer={viewer} variant={viewer === "D" ? "d-mode" : "architect"} />
+          </div>
+          <button
+            className="arch-intake-btn"
+            onClick={() => onIntake?.()}
+          >
+            INTAKE
+          </button>
+        </div>
       </div>
 
       {/* ── PANELS (overlays from right) ──────────────────────────────── */}

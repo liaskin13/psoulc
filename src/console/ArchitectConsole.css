@@ -27,8 +27,8 @@
     radial-gradient(120% 100% at 100% 100%, rgba(var(--arch-accent-rgb), 0.06) 0%, transparent 62%),
     #070a0d;
   display: grid;
-  grid-template-rows: 40px auto auto auto 1fr;
-  /* top-rail | deck | transport | monitor | lower-zone */
+  grid-template-rows: 40px auto auto 1fr 80px;
+  /* top-rail | deck | transport | lower-zone | display-bar */
   font-family: 'Chakra Petch', sans-serif;
   color: rgba(205, 215, 220, 0.75);
   overflow: hidden;
@@ -64,16 +64,14 @@
 /*    automatically goes grey. Then restore green at exactly 3 points.      */
 /*    3 identity points: THE SIGNAL button · active track row · BPM/Key     */
 .architect-console--d {
-  --arch-accent-rgb: 185, 200, 190;
-  /* neutral sage — replaces green everywhere */
-  --arch-accent: rgb(185, 200, 190);
+  --arch-accent-rgb: 185, 185, 185;
+  --arch-accent: rgb(185, 185, 185);
   --arch-identity: #14dc14;
-  /* real green — used at 3 points only */
   --arch-identity-rgb: 20, 220, 20;
-  --arch-neutral-rgb: 235, 240, 235;
-  --arch-neutral: #ebf0eb;
-  background: #060806;
-  color: rgba(210, 220, 215, 0.75);
+  --arch-neutral-rgb: 235, 235, 235;
+  --arch-neutral: #ebebeb;
+  background: #060606;
+  color: rgba(215, 215, 215, 0.75);
 }
 
 /* ── L sovereign — 3-point cyan identity on achromatic base ────────────── */
@@ -336,62 +334,6 @@
 
 /* ── REACH (top rail) ───────────────────────────────────────────────────── */
 
-.arch-reach-wrap {
-  position: relative;
-}
-
-.arch-reach-btn {
-  background: none;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.22);
-  color: rgba(var(--arch-accent-rgb), 0.65);
-  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  padding: 5px 12px;
-  height: 28px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: border-color 120ms, color 120ms;
-}
-
-.arch-reach-btn:hover,
-.arch-reach-btn.active {
-  border-color: rgba(var(--arch-accent-rgb), 0.6);
-  color: var(--arch-accent);
-}
-
-.arch-reach-badge {
-  background: var(--arch-accent);
-  color: #000;
-  font-size: 0.48rem;
-  font-weight: 700;
-  padding: 1px 5px;
-  min-width: 16px;
-  text-align: center;
-  letter-spacing: 0;
-}
-
-.arch-reach-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-}
-
-.arch-reach-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 320px;
-  background: var(--arch-surface, #0a0a0a);
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
-  z-index: 91;
-  padding: 12px;
-}
 
 /* ── RAIL slide ─────────────────────────────────────────────────────────── */
 /* Rail is hidden by default — PSC wordmark toggles it open */
@@ -661,11 +603,10 @@
 .arch-spectrum-deck {
   display: block;
   width: 100%;
-  height: 68px;
+  height: 96px;
   image-rendering: pixelated;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.16);
-  background:
-    linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.08) 0%, rgba(0, 0, 0, 0.68) 100%);
+  background: #000;
 }
 
 /* ── WAVEFORM — Animation 2: Standing Wave ──────────────────────────────── */
@@ -691,8 +632,8 @@
 
 .arch-waveform-main {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   gap: 1.5px;
   height: 156px;
   overflow: hidden;
@@ -815,7 +756,7 @@
   }
 
   .arch-spectrum-deck {
-    height: 58px;
+    height: 80px;
   }
 }
 
@@ -836,7 +777,7 @@
   }
 
   .arch-spectrum-deck {
-    height: 52px;
+    height: 68px;
   }
 
 }
@@ -1214,48 +1155,6 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 14px rgba(var(--arch-accent-rgb), 0.16);
 }
 
-.arch-loop-menu-wrap {
-  position: relative;
-}
-
-.arch-loop-trigger {
-  min-width: 142px;
-  text-align: left;
-  font-weight: 700;
-}
-
-.arch-loop-menu {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 4px);
-  z-index: 22;
-  min-width: 142px;
-  display: flex;
-  flex-direction: column;
-  background: #181818;
-  border: 1px solid rgba(var(--arch-accent-rgb), 0.46);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.8), 0 0 14px rgba(var(--arch-accent-rgb), 0.2);
-  padding: 4px;
-}
-
-.arch-loop-menu-item {
-  background: transparent;
-  border: 1px solid transparent;
-  color: rgba(240, 237, 232, 0.94);
-  text-align: left;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.57rem;
-  letter-spacing: 0.08em;
-  padding: 5px 6px;
-  cursor: pointer;
-}
-
-.arch-loop-menu-item:hover,
-.arch-loop-menu-item.active {
-  border-color: rgba(var(--arch-accent-rgb), 0.52);
-  color: rgba(var(--arch-accent-rgb), 0.96);
-  background: rgba(var(--arch-accent-rgb), 0.15);
-}
 
 .arch-loop-btn {
   background: linear-gradient(180deg, #343434 0%, #171717 100%);
@@ -1320,130 +1219,6 @@
   box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.8), 0 0 8px rgba(var(--arch-accent-rgb), 0.2);
 }
 
-.arch-monitor-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 20px;
-  height: 36px;
-  border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.07);
-  background: rgba(0, 0, 0, 0.3);
-  flex-shrink: 0;
-}
-
-.arch-monitor-vu {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.arch-monitor-label {
-  font-size: 0.54rem;
-  color: rgba(240, 237, 232, 0.82);
-  letter-spacing: 0.12em;
-}
-
-.arch-monitor-meter {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.arch-monitor-eq {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.arch-monitor-btn {
-  background: linear-gradient(180deg, #2a2a2a 0%, #121212 100%);
-  border: 1px solid #424242;
-  border-bottom-color: #050505;
-  box-shadow: 0 1px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  color: rgba(240, 237, 232, 0.86);
-  padding: 4px 7px;
-  font-size: 0.52rem;
-  letter-spacing: 0.1em;
-  font-family: 'JetBrains Mono', monospace;
-  cursor: pointer;
-  transition: box-shadow 60ms ease, transform 60ms ease;
-}
-
-.arch-monitor-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 0 0 #000, inset 1px 1px 5px rgba(0, 0, 0, 0.9);
-}
-
-.arch-monitor-btn:hover {
-  border-color: rgba(var(--arch-accent-rgb), 0.55);
-  color: rgba(var(--arch-accent-rgb), 0.96);
-}
-
-/* ── VOLUME SLIDER ──────────────────────────────────────────────────────── */
-.arch-monitor-vol {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-left: auto;
-}
-
-.arch-vol-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 90px;
-  height: 3px;
-  background: rgba(var(--arch-accent-rgb), 0.15);
-  cursor: pointer;
-}
-
-.arch-vol-slider:focus-visible {
-  outline: 1px solid var(--arch-accent);
-  outline-offset: 3px;
-}
-
-.arch-vol-slider::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 3px;
-  background: rgba(var(--arch-accent-rgb), 0.15);
-  border-radius: 0;
-  border: none;
-}
-
-.arch-vol-slider::-moz-range-track {
-  width: 100%;
-  height: 3px;
-  background: rgba(var(--arch-accent-rgb), 0.15);
-  border-radius: 0;
-  border: none;
-}
-
-.arch-vol-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 10px;
-  height: 10px;
-  background: var(--arch-accent);
-  border-radius: 0;
-  cursor: pointer;
-  margin-top: -3.5px;
-}
-
-.arch-vol-slider::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
-  background: var(--arch-accent);
-  border: none;
-  border-radius: 0;
-  cursor: pointer;
-}
-
-.arch-vol-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.54rem;
-  color: rgba(240, 237, 232, 0.86);
-  min-width: 22px;
-  text-align: right;
-}
 
 /* ── TRANSPORT ACTIVE / LOADING STATES ──────────────────────────────────── */
 .arch-transport-btn.active {
@@ -1497,30 +1272,34 @@
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: 180px 1fr;
+  grid-template-columns: 1fr;
   overflow: hidden;
   min-height: 0;
 }
 
-/* ── ARCHITECT RAIL (left sidebar) ─────────────────────────────────────── */
+/* ── ARCHITECT RAIL (fixed overlay sidebar) ─────────────────────────────── */
 .arch-rail {
   display: flex;
   flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 40px;
+  bottom: 80px;
   width: 0;
   min-width: 0;
   padding: 0;
   border-right: none;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(5, 11, 16, 0.97);
   overflow: hidden;
   scrollbar-width: none;
-  flex-shrink: 0;
+  z-index: 50;
   transition: width 220ms cubic-bezier(0.25, 1, 0.5, 1),
               padding 220ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .arch-rail--open {
-  width: 180px;
-  min-width: 180px;
+  width: 220px;
+  min-width: 220px;
   padding: 12px 0;
   border-right: 1px solid rgba(var(--arch-accent-rgb), 0.08);
   overflow-y: auto;
@@ -2977,4 +2756,118 @@
   .arch-panel-dot {
     box-shadow: none;
   }
+}
+/* ── PSC DISPLAY BAR ────────────────────────────────────────────────────── */
+.arch-display-bar {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 1fr 30%;
+  height: 80px;
+  border-top: 1px solid rgba(var(--arch-accent-rgb), 0.10);
+  background: var(--arch-surface-alt, #080808);
+  flex-shrink: 0;
+}
+
+.arch-display-zone {
+  border-right: 1px solid rgba(var(--arch-accent-rgb), 0.08);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+.arch-display-zone:last-child {
+  border-right: none;
+}
+
+.arch-display-zone-a {
+  /* library actions — scrolls horizontally if needed */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.arch-display-zone-a::-webkit-scrollbar {
+  display: none;
+}
+
+.arch-display-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.arch-display-zone-b {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.arch-display-reach-zone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.arch-display-reach-msg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.arch-display-reach-from {
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  color: rgb(var(--arch-accent-rgb));
+  flex-shrink: 0;
+}
+
+.arch-display-reach-sep {
+  font-size: 0.52rem;
+  color: rgba(var(--arch-accent-rgb), 0.45);
+  flex-shrink: 0;
+}
+
+.arch-display-reach-body {
+  font-size: 0.58rem;
+  color: rgba(240, 237, 232, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arch-display-reach-idle {
+  font-size: 0.54rem;
+  letter-spacing: 0.18em;
+  color: rgba(var(--arch-muted-rgb), 0.28);
+}
+
+/* INTAKE — standalone CTA, identity-accent bordered */
+.arch-intake-btn {
+  background: transparent;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.45);
+  color: rgb(var(--arch-accent-rgb));
+  padding: 7px 12px;
+  min-height: 30px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.60rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.arch-intake-btn:hover {
+  background: rgba(var(--arch-accent-rgb), 0.08);
+  border-color: rgba(var(--arch-accent-rgb), 0.75);
 }

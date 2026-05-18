@@ -39,13 +39,15 @@ export default function DeckWaveform({
 
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
+    const w = canvas.offsetWidth || width;
 
     // Set canvas size with device pixel ratio for crisp rendering
-    canvas.width = width * dpr;
+    canvas.width = w * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
     function draw() {
+      const width = w;
       ctx.clearRect(0, 0, width, height);
 
       // Get waveform data (real or placeholder)
@@ -263,7 +265,7 @@ export default function DeckWaveform({
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const frac = x / width;
+    const frac = x / rect.width;
     if (zoom <= 1) {
       onSeek(frac * duration);
       return;
@@ -290,7 +292,7 @@ export default function DeckWaveform({
       ref={canvasRef}
       onClick={handleClick}
       style={{
-        width: `${width}px`,
+        width: "100%",
         height: `${height}px`,
         cursor: onSeek ? "pointer" : "default",
         display: "block",

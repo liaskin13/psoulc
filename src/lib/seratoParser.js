@@ -287,14 +287,19 @@ async function generateWaveformFromWavUrl(url, firstChunk) {
   // 12 concurrent workers — each grabs the next bar the moment it finishes
   await Promise.all(Array.from({ length: 12 }, worker));
 
-  // Normalize all bands by global peak (loudest bar = 1.0)
+  // peak height: normalized to global loudest bar
+  // color bands: each normalized to its own max so bass-heavy mixes
+  // still show full green/orange range (mirrors how Serato stores GEOB bytes)
   const maxPeak = Math.max(...rawBars.map(b => b.rawPeak), 1e-9);
+  const maxBass = Math.max(...rawBars.map(b => b.rawBass), 1e-9);
+  const maxMid  = Math.max(...rawBars.map(b => b.rawMid),  1e-9);
+  const maxHigh = Math.max(...rawBars.map(b => b.rawHigh), 1e-9);
   const bars = rawBars.map(b => ({
     peak: b.rawPeak / maxPeak,
     freq: b.freq,
-    bass: b.rawBass / maxPeak,
-    mid:  b.rawMid  / maxPeak,
-    high: b.rawHigh / maxPeak,
+    bass: b.rawBass / maxBass,
+    mid:  b.rawMid  / maxMid,
+    high: b.rawHigh / maxHigh,
   }));
 
   return { bars, low: resample(bars, 80), high: resample(bars, 1000) };

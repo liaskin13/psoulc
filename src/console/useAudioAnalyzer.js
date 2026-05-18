@@ -10,14 +10,17 @@ const HIGH_HEX  = "#e56020";
 const CLIP_HEX  = "#e52020";
 const PEAK_TICK = "rgba(240,237,232,0.85)";
 
+const SPEC_N = 150;
+
 // Props: { isPlaying, waveformData, currentTime, duration }
 // waveformData = array of {peak: 0-1, freq: "#rrggbb"} (the .high array)
 export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime, duration }) {
-  const vuRef   = useRef(null);
-  const specRef = useRef(null);
-  const rafRef  = useRef(null);
-  const peakL   = useRef(0);
-  const peakR   = useRef(0);
+  const vuRef       = useRef(null);
+  const specRef     = useRef(null);
+  const rafRef      = useRef(null);
+  const peakL       = useRef(0);
+  const peakR       = useRef(0);
+  const specPeakRef = useRef(new Float32Array(150)); // per-column peak hold
 
   // liveRef carries values into the RAF loop without re-triggering the effect
   const liveRef = useRef({ waveformData, currentTime, duration });
@@ -33,6 +36,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       });
       peakL.current = 0;
       peakR.current = 0;
+      specPeakRef.current = new Float32Array(SPEC_N);
       return;
     }
 
@@ -53,20 +57,22 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       }
       if (!windowBars.length) return;
 
-      // Split window by frequency band
-      let bassSum = 0, bassCount = 0;
-      let midSum  = 0, midCount  = 0;
-      let highSum = 0, highCount = 0;
-      for (const b of windowBars) {
-        if (b.freq === BASS_HEX)     { bassSum += b.peak; bassCount++; }
-        else if (b.freq === MID_HEX) { midSum  += b.peak; midCount++;  }
-        else                          { highSum += b.peak; highCount++; }
-      }
       const avgPeak = windowBars.reduce((s, b) => s + b.peak, 0) / windowBars.length;
 
-      // L = bass energy, R = high energy
-      const rL = bassCount > 0 ? bassSum / bassCount : avgPeak * 0.85;
-      const rR = highCount > 0 ? highSum / highCount : avgPeak * 0.70;
+      // Use direct band fields when available, fall back to freq-based classification
+      let rL, rR;
+      if (windowBars[0]?.bass !== undefined) {
+        rL = windowBars.reduce((s, b) => s + b.bass, 0) / windowBars.length;
+        rR = windowBars.reduce((s, b) => s + b.high, 0) / windowBars.length;
+      } else {
+        let bassSum = 0, bassCount = 0, highSum = 0, highCount = 0;
+        for (const b of windowBars) {
+          if (b.freq === BASS_HEX)  { bassSum += b.peak; bassCount++; }
+          else if (b.freq !== MID_HEX) { highSum += b.peak; highCount++; }
+        }
+        rL = bassCount > 0 ? bassSum / bassCount : avgPeak * 0.85;
+        rR = highCount > 0 ? highSum / highCount : avgPeak * 0.70;
+      }
 
       // ── VU ──────────────────────────────────────────────────────────────
       const vu = vuRef.current;
@@ -118,43 +124,55 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       // ── Spectrum ─────────────────────────────────────────────────────────
       const spec = specRef.current;
       if (spec) {
+        // Sync canvas buffer to actual CSS display size
+        const dispW = spec.offsetWidth;
+        const dispH = spec.offsetHeight;
+        if (dispW > 0 && dispH > 0 && (spec.width !== dispW || spec.height !== dispH)) {
+          spec.width  = dispW;
+          spec.height = dispH;
+        }
+
         const ctx = spec.getContext("2d");
         const W = spec.width, H = spec.height;
         ctx.clearRect(0, 0, W, H);
 
-        const SPEC_N = 64;
         const specStart = Math.max(0, barIndex - SPEC_N);
-        const bw = Math.floor(W / SPEC_N) - 1;
+        // Bar width — 150 bars across the canvas gives ~7px each at 1100px
+        const barStep = W / SPEC_N;
+        const bw = Math.max(1, Math.floor(barStep));
+        const peakArr = specPeakRef.current;
+        const FLOOR = Math.round(H * 0.08);
+
+        // Global Tektronix gradient: color = amplitude, created once for the full canvas height.
+        // Tall bars reach into cyan-white; mid bars hit green/gold; short bars stay in red.
+        const liveGrad = ctx.createLinearGradient(0, 0, 0, H);
+        liveGrad.addColorStop(0,    "rgba(210,255,248,0.96)"); // cyan-white — tallest peaks
+        liveGrad.addColorStop(0.15, "rgba(40,235,185,0.93)");  // cyan-green
+        liveGrad.addColorStop(0.38, "rgba(40,215,40,0.90)");   // green
+        liveGrad.addColorStop(0.60, "rgba(205,148,0,0.90)");   // orange-gold
+        liveGrad.addColorStop(0.80, "rgba(200,28,0,0.93)");    // deep red
+        liveGrad.addColorStop(1.0,  "rgba(108,8,0,0.97)");     // floor — always visible
 
         for (let i = 0; i < SPEC_N; i++) {
           const b = bars[specStart + i];
-          if (!b) continue;
-          const alpha = 0.35 + b.peak * 0.65;
-          ctx.globalAlpha = alpha;
+          const liveH = b ? Math.max(Math.round(b.peak * H), FLOOR) : FLOOR;
 
-          if (b.bass !== undefined) {
-            const total = b.bass + b.mid + b.high;
-            if (total < 0.001) continue;
-            const bs = Math.sqrt(b.bass / total);
-            const ms = Math.sqrt(b.mid  / total);
-            const hs = Math.sqrt(b.high / total);
-            const st = bs + ms + hs;
-            const totalH = b.peak * H;
-            const bH = Math.round((bs / st) * totalH);
-            const mH = Math.round((ms / st) * totalH);
-            const hH = Math.round((hs / st) * totalH);
-            const xPos = i * (bw + 1);
-            if (bH > 0) { ctx.fillStyle = BASS_HEX;  ctx.fillRect(xPos, H - bH, bw, bH); }
-            if (mH > 0) { ctx.fillStyle = MID_HEX;   ctx.fillRect(xPos, H - bH - mH, bw, mH); }
-            if (hH > 0) { ctx.fillStyle = HIGH_HEX;  ctx.fillRect(xPos, H - bH - mH - hH, bw, hH); }
-          } else {
-            const bH = Math.round(b.peak * H);
-            if (bH < 1) continue;
-            ctx.fillStyle = b.freq;
-            ctx.fillRect(i * (bw + 1), H - bH, bw, bH);
+          // Decay peak hold then clamp to live if live exceeded it
+          peakArr[i] = Math.max(peakArr[i] * 0.985, liveH);
+          const maxH = Math.round(peakArr[i]);
+
+          const x = Math.round(i * barStep);
+
+          // IntermodAnalyzer: salmon ghost fills from live top up to max-hold
+          if (maxH > liveH + 1) {
+            ctx.fillStyle = "rgba(225,85,68,0.42)";
+            ctx.fillRect(x, H - maxH, bw, maxH - liveH);
           }
+
+          // Tektronix: live bar uses the global gradient — tall bars are cyan, short bars are red
+          ctx.fillStyle = liveGrad;
+          ctx.fillRect(x, H - liveH, bw, liveH);
         }
-        ctx.globalAlpha = 1;
       }
     }
 

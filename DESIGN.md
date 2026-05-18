@@ -61,10 +61,10 @@ Note: Space Mono is kept in `--font-mono` only for genuine numeric data readouts
   --surface-raised:  #141414;   /* modals, dropdowns */
   --border:          #222222;   /* 1px structural borders */
 
-  /* Typography */
-  --text-primary:    #f0ede8;   /* warm off-white, not pure white */
-  --text-secondary:  #666666;
-  --text-muted:      #333333;
+  /* Typography — ZERO WARMTH. Cold achromatic only. */
+  --text-primary:    rgba(230, 230, 230, 0.92);  /* cold near-white — NO warmth */
+  --text-secondary:  rgba(160, 160, 160, 0.72);  /* cold mid-gray */
+  --text-muted:      rgba(90, 90, 90, 0.80);     /* cold dark-gray */
 
   /* Identity — filled by theme, transparent by default */
   --identity:        transparent;
