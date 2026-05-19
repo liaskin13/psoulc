@@ -195,6 +195,7 @@ function EntrySequence({ onIgnite }) {
         <button type="button" className="entry-request-btn">
           REQUEST ACCESS
         </button>
+        <p className="entry-request-hint">By invitation only.</p>
       </div>
 
       {/* Bottom-right — mystery code cells */}
