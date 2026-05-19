@@ -1,7 +1,7 @@
 // Canvas-based waveform renderer for deck view
 // Serato-style: frequency-colored peaks, playhead, zoom support
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { getWaveformBars } from "../utils/waveform";
 
 /**
@@ -30,7 +30,8 @@ export default function DeckWaveform({
   zoom = 1,
   loopRegion = null,
 }) {
-  const canvasRef = useRef(null);
+  const canvasRef   = useRef(null);
+  const overviewRef = useRef(null);
   const animFrameRef = useRef(null);
 
   useEffect(() => {
@@ -140,9 +141,9 @@ export default function DeckWaveform({
 
           // Sort tallest first so dominant frequency color shows at the peak
           const bands = [
-            { h: bassH, r: 20,  g: 100, b: 220 },   // blue  — bass
-            { h: midH,  r: 20,  g: 220, b: 20  },   // green — mid
-            { h: highH, r: 229, g: 96,  b: 32  },   // orange — high
+            { h: bassH, r: 226, g: 88,  b: 20  },   // warm orange — bass (Serato standard)
+            { h: midH,  r: 20,  g: 220, b: 20  },   // Serato green — mid
+            { h: highH, r: 255, g: 248, b: 180 },   // bright yellow-white — transient peaks
           ].sort((a, b) => b.h - a.h);
 
           for (const band of bands) {
@@ -150,6 +151,14 @@ export default function DeckWaveform({
             ctx.fillStyle = `rgba(${band.r},${band.g},${band.b},${alpha})`;
             ctx.fillRect(x, halfH - band.h, bw, band.h);   // upper half
             ctx.fillRect(x, halfH, bw, band.h);             // lower half (mirror)
+          }
+
+          // Transient peak cap: 2px bright line where tallest band exceeds 80% of halfH
+          const tallestH = Math.max(bassH, midH, highH);
+          if (tallestH > halfH * 0.80) {
+            ctx.fillStyle = `rgba(255, 255, 220, ${isPast ? 0.35 : 0.95})`;
+            ctx.fillRect(x, halfH - tallestH - 1, bw, 2);  // upper cap
+            ctx.fillRect(x, halfH + tallestH - 1, bw, 2);  // lower cap (mirror)
           }
         } else {
           const barH = d.peak * halfH;
@@ -259,6 +268,63 @@ export default function DeckWaveform({
     loopRegion,
   ]);
 
+  // ── Overview strip drawing ────────────────────────────────────────────────
+  // Full-track compressed miniature: 1px per horizontal pixel, same palette.
+  useEffect(() => {
+    const canvas = overviewRef.current;
+    if (!canvas || !waveformData || !waveformData.length || !duration) return;
+
+    const OVERVIEW_H = 24;
+    const dpr = window.devicePixelRatio || 1;
+    const w   = canvas.offsetWidth || 800;
+    canvas.width  = w * dpr;
+    canvas.height = OVERVIEW_H * dpr;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, OVERVIEW_H);
+
+    const bars = waveformData;
+    const N    = bars.length;
+    const barsPerPx = N / w;
+
+    // Draw compressed waveform: pick max peak per pixel column
+    for (let px = 0; px < w; px++) {
+      const barStart = Math.floor(px * barsPerPx);
+      const barEnd   = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
+      let maxPeak = 0, color = "#14dc14";
+      for (let b = barStart; b < barEnd; b++) {
+        if (bars[b] && bars[b].peak > maxPeak) {
+          maxPeak = bars[b].peak;
+          // Use band colors matching main waveform
+          if (bars[b].freq === "#1464dc") color = "rgba(226,88,20,0.8)";       // bass → orange
+          else if (bars[b].freq === "#e56020") color = "rgba(255,248,180,0.8)"; // high → yellow-white
+          else color = "rgba(20,220,20,0.8)";                                    // mid → green
+        }
+      }
+      const barH = Math.max(2, Math.round(maxPeak * OVERVIEW_H));
+      ctx.fillStyle = color;
+      ctx.fillRect(px, OVERVIEW_H - barH, 1, barH);
+    }
+
+    // Hot cue marks (1px colored verticals)
+    if (hotCues && duration > 0) {
+      Object.entries(hotCues).forEach(([num, cue]) => {
+        if (!cue || typeof cue.time !== "number") return;
+        const cx = Math.round((cue.time / duration) * w);
+        const color = cueColors[parseInt(num, 10) - 1] || "rgba(255,255,255,0.7)";
+        ctx.fillStyle = color;
+        ctx.fillRect(cx, 0, 1, OVERVIEW_H);
+      });
+    }
+
+    // Playhead
+    if (duration > 0) {
+      const px = Math.round((currentTime / duration) * w);
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.fillRect(px, 0, 1, OVERVIEW_H);
+    }
+  }, [waveformData, currentTime, duration, hotCues, cueColors]);
+
   // Handle click to seek — accounts for zoom window offset
   const handleClick = (e) => {
     if (!onSeek) return;
@@ -287,16 +353,37 @@ export default function DeckWaveform({
     );
   };
 
+  const handleOverviewClick = (e) => {
+    if (!onSeek || !duration) return;
+    const canvas = overviewRef.current;
+    const rect   = canvas.getBoundingClientRect();
+    onSeek(((e.clientX - rect.left) / rect.width) * duration);
+  };
+
   return (
-    <canvas
-      ref={canvasRef}
-      onClick={handleClick}
-      style={{
-        width: "100%",
-        height: `${height}px`,
-        cursor: onSeek ? "pointer" : "default",
-        display: "block",
-      }}
-    />
+    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+      <canvas
+        ref={overviewRef}
+        onClick={handleOverviewClick}
+        style={{
+          width: "100%",
+          height: "24px",
+          cursor: onSeek ? "pointer" : "default",
+          display: "block",
+          flexShrink: 0,
+        }}
+      />
+      <canvas
+        ref={canvasRef}
+        onClick={handleClick}
+        style={{
+          width: "100%",
+          height: `${height}px`,
+          cursor: onSeek ? "pointer" : "default",
+          display: "block",
+          flex: 1,
+        }}
+      />
+    </div>
   );
 }

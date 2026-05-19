@@ -124,3 +124,9 @@ export function prewarm() {
 export function getAnalyser() {
   return null;
 }
+
+// Returns the module-level HTMLAudioElement singleton, or null if not yet created.
+// Used by useAudioAnalyzer's live FFT side-chain tap (createMediaElementSource).
+export function getAudioElement() {
+  return audio;
+}

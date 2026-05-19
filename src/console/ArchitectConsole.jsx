@@ -328,6 +328,8 @@ function ArchitectConsole({
     }
   });
   const [activeCueBank, setActiveCueBank] = useState("A");
+  const [editingCueNum, setEditingCueNum] = useState(null); // D-bank: internal cue number being label-edited
+  const [editingCueLabel, setEditingCueLabel] = useState("");
   const [loopRegion, setLoopRegion] = useState({ start: null, end: null });
   const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
   const loopActiveRef = useRef(false);
@@ -363,11 +365,12 @@ function ArchitectConsole({
     audioDuration > 0
   );
 
-  const { vuRef, specRef } = useAudioAnalyzer({
+  const { vuRef, specRef, energyRef } = useAudioAnalyzer({
     isPlaying,
     waveformData: loadedWaveformHighData,
     currentTime,
     duration: audioDuration,
+    hotCues: deckTrack ? (hotCues[deckTrack.id] || {}) : {},
   });
 
   const latestUnreadMessage = useMemo(() => {
@@ -1645,14 +1648,20 @@ function ArchitectConsole({
           </div>
         </div>
 
-        {/* Waveform row — VU left, waveform + spectrum right */}
+        {/* Waveform row — VU + Energy Map left column, waveform + spectrum right */}
         <div className="arch-waveform-row" aria-hidden="true">
-          <canvas
-            ref={vuRef}
-            className="arch-vu-deck"
-            width={220}
-            height={156}
-          />
+          <div className="arch-vu-col">
+            <canvas
+              ref={vuRef}
+              className="arch-vu-deck"
+              width={220}
+              height={156}
+            />
+            <canvas
+              ref={energyRef}
+              className="arch-energy-map"
+            />
+          </div>
           <div className="arch-waveform-col">
             <div className="arch-waveform-main">
               {!deckTrack ? (
@@ -1743,23 +1752,73 @@ function ArchitectConsole({
                 const internalNum = bankIndex * 8 + displayNum;
                 const cue = trackCues[internalNum];
                 const color = ALL_CUE_COLORS[internalNum - 1];
+                const isDBank = activeCueBank === "D";
+                const isEditing = editingCueNum === internalNum;
+
+                const handleDblClick = (e) => {
+                  e.stopPropagation();
+                  if (isDBank) {
+                    // D-bank: edit label instead of clearing
+                    setEditingCueNum(internalNum);
+                    setEditingCueLabel(cue?.label || "");
+                  } else {
+                    clearHotCue(displayNum, e);
+                  }
+                };
+
+                const saveCueLabel = () => {
+                  if (!loadedTrack) return;
+                  const trackId = loadedTrack.id;
+                  const updated = {
+                    ...hotCues,
+                    [trackId]: {
+                      ...(hotCues[trackId] || {}),
+                      [internalNum]: {
+                        ...(hotCues[trackId]?.[internalNum] || {}),
+                        label: editingCueLabel.trim(),
+                      },
+                    },
+                  };
+                  setHotCues(updated);
+                  try { localStorage.setItem("psc_hotcues", JSON.stringify(updated)); } catch (_) {}
+                  setEditingCueNum(null);
+                };
+
                 return (
                   <button
                     key={displayNum}
                     className={`arch-hotcue${cue ? " has-cue" : ""}`}
                     aria-label={
-                      cue
+                      isDBank
+                        ? `Cue D${displayNum}${cue?.label ? ` — ${cue.label}` : ""} — double-click to name`
+                        : cue
                         ? `Hot cue ${displayNum} — double-click to clear`
                         : `Hot cue ${displayNum}`
                     }
                     onClick={() => handleHotCueClick(displayNum)}
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      clearHotCue(displayNum, e);
-                    }}
+                    onDoubleClick={handleDblClick}
                     style={{ "--cue-color": color }}
                   >
-                    {displayNum}
+                    {isEditing ? (
+                      <input
+                        className="arch-hotcue-input"
+                        autoFocus
+                        value={editingCueLabel}
+                        maxLength={6}
+                        onChange={(e) => setEditingCueLabel(e.target.value.toUpperCase())}
+                        onBlur={saveCueLabel}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveCueLabel();
+                          if (e.key === "Escape") setEditingCueNum(null);
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : isDBank && cue?.label ? (
+                      cue.label
+                    ) : (
+                      displayNum
+                    )}
                   </button>
                 );
               })}

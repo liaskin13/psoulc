@@ -186,6 +186,27 @@ export default {
         });
       }
 
+      // PUT /tracks/:id — D saves D-bank cue labels (auth required)
+      if (request.method === "PUT" && url.pathname.match(/^\/tracks\/[^/]+$/) && !url.pathname.endsWith("/revoke")) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const trackId = url.pathname.split("/")[2];
+        const body = await request.json();
+        const allowed = ["cue_labels"];
+        const fields = Object.keys(body).filter(k => allowed.includes(k));
+        if (fields.length === 0) {
+          return new Response(JSON.stringify({ error: "No valid fields" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const cueLabelsJson = body.cue_labels != null ? JSON.stringify(body.cue_labels) : null;
+        await env.PSC_DB.prepare(
+          `UPDATE tracks SET cue_labels = ?, updated_at = datetime('now') WHERE id = ?`
+        ).bind(cueLabelsJson, trackId).run();
+        return new Response(JSON.stringify({ success: true, id: trackId }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // GET /tracks/:vault
       if (request.method === "GET" && url.pathname.startsWith("/tracks/")) {
         const vault = url.pathname.split("/")[2];
