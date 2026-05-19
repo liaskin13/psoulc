@@ -1,0 +1,188 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   ContextStrip.css — Slim bottom strip (replaces arch-display-bar)
+   Hardware model: AKAI MPC III / Pioneer DJS-1000 — always slim, never noisy.
+   Idle: 40px. Body: 160px collapsible. Strip never repeats top-rail info.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.arch-context-strip {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(185, 195, 200, 0.10);
+  background: #080808;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20;
+}
+
+/* Idle strip — 40px, always visible */
+.arch-context-strip-idle {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* PSC logo — left anchor, nav portal trigger */
+.arch-context-logo {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(185, 195, 200, 0.30);
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0 4px;
+  transition: color 80ms;
+  line-height: 1;
+}
+
+.arch-context-logo:hover,
+.arch-context-logo.active {
+  color: var(--arch-identity, #00e5ff);
+}
+
+/* REACH preview — fills remaining width, text right-aligned */
+.arch-context-reach-preview {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: rgba(185, 195, 200, 0.20);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0 4px;
+  transition: color 80ms;
+  line-height: 1;
+}
+
+.arch-context-reach-preview:hover {
+  color: rgba(185, 195, 200, 0.55);
+}
+
+.arch-context-reach-preview.has-unread {
+  color: rgba(240, 237, 232, 0.70);
+}
+
+/* Right-side triggers (INTAKE, ACCESS CODES — viewer=L) */
+.arch-context-trigger {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(185, 195, 200, 0.28);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0 6px;
+  height: 100%;
+  transition: color 80ms, border-color 80ms;
+  line-height: 1;
+}
+
+.arch-context-trigger:hover {
+  color: rgba(240, 237, 232, 0.65);
+}
+
+.arch-context-trigger.active {
+  color: var(--arch-identity, #00e5ff);
+  border-bottom-color: var(--arch-identity, #00e5ff);
+}
+
+/* Expandable body */
+.arch-context-body {
+  overflow: hidden;
+}
+
+.arch-context-body.is-open {
+  height: 160px;
+  border-top: 1px solid rgba(185, 195, 200, 0.07);
+  overflow-y: auto;
+}
+
+/* Nav portal — horizontal scrollable row of nav items */
+.arch-context-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px;
+  height: 100%;
+}
+
+.arch-context-nav-item {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(185, 195, 200, 0.40);
+  background: none;
+  border: 1px solid rgba(185, 195, 200, 0.10);
+  cursor: pointer;
+  padding: 8px 16px;
+  height: 32px;
+  transition: color 80ms, border-color 80ms;
+  flex-shrink: 0;
+}
+
+.arch-context-nav-item:hover {
+  color: var(--arch-identity, #00e5ff);
+  border-color: rgba(185, 195, 200, 0.25);
+}
+
+/* Loop size selector panel */
+.arch-context-loop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 12px;
+  height: 100%;
+  align-content: flex-start;
+}
+
+.arch-context-loop-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: rgba(185, 195, 200, 0.40);
+  background: none;
+  border: 1px solid rgba(185, 195, 200, 0.10);
+  cursor: pointer;
+  padding: 6px 10px;
+  height: 28px;
+  transition: color 80ms, border-color 80ms;
+  flex-shrink: 0;
+}
+
+.arch-context-loop-btn:hover {
+  color: rgba(240, 237, 232, 0.80);
+  border-color: rgba(185, 195, 200, 0.25);
+}
+
+.arch-context-loop-btn.active {
+  color: var(--arch-identity, #00e5ff);
+  border-color: var(--arch-identity, #00e5ff);
+}
+
+/* Placeholder for future panels */
+.arch-context-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(185, 195, 200, 0.20);
+  text-transform: uppercase;
+}

@@ -10,6 +10,7 @@ import { useSystem } from "../state/SystemContext";
 import "./ArchitectConsole.css";
 import InboxPanel from "./InboxPanel";
 import DirectLinePanel from "./DirectLinePanel";
+import ContextStrip from "./ContextStrip";
 import DeckWaveform from "../components/DeckWaveform";
 import {
   LOCKBOX_PREFIX,
@@ -290,7 +291,6 @@ function ArchitectConsole({
   const [publishFilter, setPublishFilter] = useState("all");
   const [publishState, setPublishState] = useState({ status: "idle", count: 0 });
   const [retractState, setRetractState] = useState({ status: "idle", count: 0 });
-  const [reachTrigger, setReachTrigger] = useState(0);
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingValues, setEditingValues] = useState({});
   const [rosterShowAdd, setRosterShowAdd] = useState(false);
@@ -332,6 +332,7 @@ function ArchitectConsole({
   const [editingCueLabel, setEditingCueLabel] = useState("");
   const [loopRegion, setLoopRegion] = useState({ start: null, end: null });
   const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
+  const [loopPanelTrigger, setLoopPanelTrigger] = useState(0);
   const loopActiveRef = useRef(false);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
@@ -373,14 +374,6 @@ function ArchitectConsole({
     hotCues: deckTrack ? (hotCues[deckTrack.id] || {}) : {},
   });
 
-  const latestUnreadMessage = useMemo(() => {
-    const peer = viewer === "D" ? "L" : "D";
-    const unread = reachMessages.filter(
-      (m) => m.from === peer && m.to === viewer && !(m.readBy || []).includes(viewer)
-    );
-    if (!unread.length) return null;
-    return unread.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-  }, [reachMessages, viewer]);
 
   // Sync REACH messages for display bar
   useEffect(() => {
@@ -1276,21 +1269,16 @@ function ArchitectConsole({
     const bpm = resolveTrackBpm(loadedTrack);
     if (!bpm) {
       announce("BPM unavailable for loop length.");
-      setShowLoopMenu(false);
       return;
     }
     const beats = resolveLoopBeats(option);
-    if (!beats) {
-      setShowLoopMenu(false);
-      return;
-    }
+    if (!beats) return;
     const beatSeconds = 60 / bpm;
     const start = currentTime;
     const end = start + beats * beatSeconds;
     setLoopRegion({ start, end });
     loopActiveRef.current = true;
     setSelectedLoopLengthId(option.id);
-    setShowLoopMenu(false);
     announce(`Loop ${option.label}.`);
   };
 
@@ -1868,7 +1856,7 @@ function ArchitectConsole({
           </button>
         </div>
 
-        {/* Right: loop controls */}
+        {/* Right: loop controls — compact single button + CLR */}
         <div className="arch-transport-right">
           <div
             className="arch-loop-controls"
@@ -1876,31 +1864,22 @@ function ArchitectConsole({
             aria-label="Loop controls"
           >
             <span className="arch-cue-tag">LOOP</span>
-            {[
-              { id: "1-4", label: "1/4" },
-              { id: "1-2", label: "1/2" },
-              { id: "1-bar", label: "1" },
-              { id: "2-bars", label: "2" },
-              { id: "4-bars", label: "4" },
-            ].map((opt) => {
-              const full = LOOP_LENGTH_OPTIONS.find((o) => o.id === opt.id);
-              return (
-                <button
-                  key={opt.id}
-                  className={`arch-bank-btn${selectedLoopLengthId === opt.id ? " active" : ""}`}
-                  disabled={!loadedTrack}
-                  onClick={() => full && handleApplyLoopLength(full)}
-                  aria-pressed={selectedLoopLengthId === opt.id}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-            <span className="arch-loop-readout">
-              {loopRegion.start !== null && loopRegion.end !== null
-                ? `${loopRegion.start.toFixed(1)}s → ${loopRegion.end.toFixed(1)}s`
-                : ""}
-            </span>
+            <button
+              className={`arch-loop-size-btn${loopRegion.start !== null ? " active" : ""}`}
+              disabled={!loadedTrack}
+              onClick={() => setLoopPanelTrigger((n) => n + 1)}
+              title="Select loop size"
+            >
+              {(() => {
+                const opt = LOOP_LENGTH_OPTIONS.find((o) => o.id === selectedLoopLengthId);
+                return opt ? opt.label : "1/4";
+              })()}
+            </button>
+            {loopRegion.start !== null && loopRegion.end !== null && (
+              <span className="arch-loop-readout">
+                {`${loopRegion.start.toFixed(1)}→${loopRegion.end.toFixed(1)}s`}
+              </span>
+            )}
             <button
               className="arch-loop-btn"
               disabled={loopRegion.start === null}
@@ -2020,7 +1999,7 @@ function ArchitectConsole({
 
         {/* LIBRARY PANEL */}
         <main className="arch-library" aria-label="Vault library">
-          {/* Vault tab selector — magnetic glider (Animation 3) */}
+          {/* Unified library row: vault tabs LEFT | action buttons RIGHT | search FAR RIGHT */}
           <div
             className="arch-vault-tabs"
             role="tablist"
@@ -2063,27 +2042,80 @@ function ArchitectConsole({
                 </button>
               );
             })}
-          </div>
 
-
-          {/* Search */}
-          <div className="arch-lib-search-row">
-            <input
-              className="arch-lib-search"
-              placeholder="SEARCH VAULT"
-              value={libSearch}
-              onChange={(e) => setLibSearch(e.target.value)}
-              aria-label="Search tracks"
-            />
-            {libSearch && (
+            {/* Library action buttons — RIGHT side of vault tab row */}
+            <div className="arch-lib-actions" role="toolbar" aria-label="Library actions">
+              <div className="arch-display-divider" aria-hidden="true" />
               <button
-                className="arch-lib-clear"
-                onClick={() => setLibSearch("")}
-                aria-label="Clear search"
+                className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
+                onClick={() => setPublishFilter((p) => (p === "staged" ? "all" : "staged"))}
               >
-                ✕
+                STAGED
               </button>
-            )}
+              <button
+                className={`arch-browser-btn ${publishFilter === "live" ? "active" : ""}`}
+                onClick={() => setPublishFilter((p) => (p === "live" ? "all" : "live"))}
+              >
+                LIVE
+              </button>
+              <button
+                className={`arch-browser-btn ${historyEnabled ? "active" : ""}`}
+                onClick={() => setHistoryEnabled((prev) => !prev)}
+              >
+                HISTORY
+              </button>
+              <div className="arch-display-divider" aria-hidden="true" />
+              <button
+                className={`arch-browser-btn arch-publish-btn${publishState.status === "error" ? " arch-action-error" : ""}`}
+                onClick={handlePublishSelected}
+                disabled={!selectionHasStaged || publishState.status === "pending"}
+              >
+                {publishState.status === "pending" ? "PUBLISHING…" :
+                 publishState.status === "success" ? `DONE (${publishState.count})` :
+                 publishState.status === "error" ? "FAILED" :
+                 `PUBLISH${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
+              </button>
+              <button
+                className={`arch-browser-btn arch-retract-btn${retractState.status === "error" ? " arch-action-error" : ""}`}
+                onClick={handleRetractSelected}
+                disabled={!selectionHasLive || retractState.status === "pending"}
+              >
+                {retractState.status === "pending" ? "RETRACTING…" :
+                 retractState.status === "success" ? `DONE (${retractState.count})` :
+                 retractState.status === "error" ? "FAILED" :
+                 `RETRACT${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
+              </button>
+              <div className="arch-display-divider" aria-hidden="true" />
+              <button className="arch-browser-btn" onClick={handlePrepareSelected}>
+                PREPARE{prepareQueue.length > 0 ? ` (${prepareQueue.length})` : ""}
+              </button>
+              <button
+                className={`arch-browser-btn ${loadedDeckId && selectedTrackId === loadedDeckId ? "active" : ""}`}
+                onClick={handleLoadDeck}
+              >
+                LOAD DECK
+              </button>
+            </div>
+
+            {/* Search — FAR RIGHT, margin-left: auto pushes it to the end */}
+            <div className="arch-lib-search-row arch-lib-search-inline">
+              <input
+                className="arch-lib-search"
+                placeholder="SEARCH"
+                value={libSearch}
+                onChange={(e) => setLibSearch(e.target.value)}
+                aria-label="Search tracks"
+              />
+              {libSearch && (
+                <button
+                  className="arch-lib-clear"
+                  onClick={() => setLibSearch("")}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Track list — phosphor scan animation (Animation 1) */}
@@ -2352,103 +2384,18 @@ function ArchitectConsole({
         </main>
       </div>
 
-      {/* ── PSC DISPLAY BAR ─────────────────────────────────────────────── */}
-      <div className="arch-display-bar" role="region" aria-label="PSC display">
-        {/* Zone A — library controls (default context) */}
-        <div className="arch-display-zone arch-display-zone-a">
-          <div className="arch-display-controls">
-            {/* Group 1 — filter/view */}
-            <button
-              className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
-              onClick={() => setPublishFilter((p) => (p === "staged" ? "all" : "staged"))}
-            >
-              STAGED
-            </button>
-            <button
-              className={`arch-browser-btn ${publishFilter === "live" ? "active" : ""}`}
-              onClick={() => setPublishFilter((p) => (p === "live" ? "all" : "live"))}
-            >
-              LIVE
-            </button>
-            <button
-              className={`arch-browser-btn ${historyEnabled ? "active" : ""}`}
-              onClick={() => setHistoryEnabled((prev) => !prev)}
-            >
-              HISTORY
-            </button>
-            <div className="arch-display-divider" aria-hidden="true" />
-            {/* Group 2 — publish actions */}
-            <button
-              className={`arch-browser-btn arch-publish-btn${publishState.status === "error" ? " arch-action-error" : ""}`}
-              onClick={handlePublishSelected}
-              disabled={!selectionHasStaged || publishState.status === "pending"}
-            >
-              {publishState.status === "pending" ? "PUBLISHING…" :
-               publishState.status === "success" ? `DONE (${publishState.count})` :
-               publishState.status === "error" ? "FAILED" :
-               `PUBLISH${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
-            </button>
-            <button
-              className={`arch-browser-btn arch-retract-btn${retractState.status === "error" ? " arch-action-error" : ""}`}
-              onClick={handleRetractSelected}
-              disabled={!selectionHasLive || retractState.status === "pending"}
-            >
-              {retractState.status === "pending" ? "RETRACTING…" :
-               retractState.status === "success" ? `DONE (${retractState.count})` :
-               retractState.status === "error" ? "FAILED" :
-               `RETRACT${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
-            </button>
-            <div className="arch-display-divider" aria-hidden="true" />
-            {/* Group 3 — deck actions */}
-            <button className="arch-browser-btn" onClick={handlePrepareSelected}>
-              PREPARE{prepareQueue.length > 0 ? ` (${prepareQueue.length})` : ""}
-            </button>
-            <button
-              className={`arch-browser-btn ${loadedDeckId && selectedTrackId === loadedDeckId ? "active" : ""}`}
-              onClick={handleLoadDeck}
-            >
-              LOAD DECK
-            </button>
-          </div>
-        </div>
-
-        {/* Zone B — REACH / comms + INTAKE */}
-        <div className="arch-display-zone arch-display-zone-b">
-          <div className="arch-display-reach-zone">
-            {latestUnreadMessage ? (
-              <button
-                className="arch-browser-btn arch-display-reach-msg"
-                onClick={() => setReachTrigger(n => n + 1)}
-              >
-                <span className="arch-display-reach-from">{latestUnreadMessage.from}</span>
-                <span className="arch-display-reach-sep">▸</span>
-                <span className="arch-display-reach-body">{latestUnreadMessage.body}</span>
-              </button>
-            ) : (
-              <button
-                className="arch-browser-btn arch-display-reach-idle"
-                onClick={() => setReachTrigger(n => n + 1)}
-              >
-                REACH
-              </button>
-            )}
-            <DirectLinePanel viewer={viewer} variant={viewer === "D" ? "d-mode" : "architect"} externalOpen={reachTrigger} hideTrigger />
-          </div>
-          <button
-            className="arch-intake-btn"
-            onClick={() => onIntake?.()}
-          >
-            INTAKE
-          </button>
-          <button
-            className={`arch-intake-btn${showVaults ? " active" : ""}`}
-            onClick={toggleVaults}
-            aria-expanded={showVaults}
-          >
-            VAULTS
-          </button>
-        </div>
-      </div>
+      {/* ── CONTEXT STRIP ────────────────────────────────────────────── */}
+      <ContextStrip
+        viewer={viewer}
+        reachMessages={reachMessages}
+        onIntake={() => onIntake?.()}
+        onVaults={toggleVaults}
+        onRoster={toggleRoster}
+        loopSizeOptions={LOOP_LENGTH_OPTIONS}
+        selectedLoopSizeId={selectedLoopLengthId}
+        onSelectLoopSize={(opt) => handleApplyLoopLength(opt)}
+        externalLoopOpen={loopPanelTrigger}
+      />
 
       {/* ── PANELS (overlays from right) ──────────────────────────────── */}
       <AnimatePresence>
