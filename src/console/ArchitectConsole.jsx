@@ -873,7 +873,7 @@ function ArchitectConsole({
     try {
       await fetch(`${SIGNAL_WORKER}/signal`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "PSC-Secret": UPLOAD_SECRET },
         body: JSON.stringify({
           is_live: 1,
           title: signalTitle.trim() || "THE SIGNAL",
@@ -894,7 +894,7 @@ function ArchitectConsole({
     try {
       await fetch(`${SIGNAL_WORKER}/signal`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "PSC-Secret": UPLOAD_SECRET },
         body: JSON.stringify({ is_live: 0, title: null }),
       });
       setSignalLive(false);

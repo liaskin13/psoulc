@@ -484,7 +484,49 @@ export default {
         });
       }
 
-      return new Response("Not found", { status: 404 });
+      // GET /signal — public; returns D's current broadcast state for listener polling
+      if (request.method === "GET" && url.pathname === "/signal") {
+        try {
+          const row = await env.PSC_DB.prepare(
+            "SELECT is_live, title FROM signal WHERE id = 1",
+          ).first();
+          return new Response(
+            JSON.stringify(row ?? { is_live: 0, title: null }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        } catch (_) {
+          return new Response(
+            JSON.stringify({ is_live: 0, title: null }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+
+      // PUT /signal — auth required; D's console sets broadcast state
+      if (request.method === "PUT" && url.pathname === "/signal") {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const body = await request.json();
+        const isLive = body.is_live ? 1 : 0;
+        const title = body.title ?? null;
+        await env.PSC_DB.prepare(
+          "INSERT INTO signal (id, is_live, title) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET is_live = excluded.is_live, title = excluded.title",
+        )
+          .bind(isLive, title)
+          .run();
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     } catch (error) {
       console.error("Worker error:", error.message, { vault: url.pathname });
       return new Response(
