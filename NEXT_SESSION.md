@@ -99,44 +99,56 @@ Removed dead code: Jess B (code:"1984") and Janet (code:"J-1966"). Only D and L 
 
 ## Pending Tasks (Next Session)
 
-### IMMEDIATE
-1. **Commit T1–T13** — all 13 changes are in working tree, not committed
-2. **Apply migration 0005** — CF dashboard D1 console (see MANUAL STEP above)
-3. **Test with 0000 code** — go to uoyni.com?code=0000, verify: VERIFYING → WELCOME TEST → listening room
-4. **Run /qa** — full guest flow QA after 0000 test confirms baseline
+### IMMEDIATE (before any real guest gets a code)
+1. **Apply migration 0005** — CF dashboard D1 console — vault_config table
+2. **Apply migration 0006** — CF dashboard D1 console — `ALTER TABLE tracks ADD COLUMN cue_labels TEXT DEFAULT NULL` (D-bank cue label persistence)
+3. **Remove 0000 test bypass** — `worker/upload-worker.js`, search `TEST CODE`, delete the early-return block
+4. **Add rate limiting to /redeem** — 5 attempts per IP per minute via Cloudflare rate limiting rule (prevents brute-force of 4-digit codes; 10k combinations crackable in hours without this)
+5. **Verify R2 audio URLs** — confirm tracks require auth to stream, not publicly accessible by raw URL; if public, add signed URL expiry
 
-### VAULT EDIT MODAL (T-next, ~1h) ← ADD FIRST NEXT SESSION
-D/L can double-click a vault tab to edit it (label, color, visibility, copy link).
-Currently the VAULTS panel is a right-side overlay — replace with inline context body on double-click.
-- Reference: plan file Part 5 ("When vault tab is double-clicked")
-- Behaviour: double-click vault tab → ContextStrip body opens with vault edit options
-- Files: ContextStrip.jsx (add onVaultEdit prop + body panel), ArchitectConsole.jsx (pass handler)
+### CROWN JEWEL FEATURES (what makes PSC unlike anything else)
+These 5 features are PSC-exclusive — no other music platform does them:
 
-### BUTTON/FIELD AUDIT (~1 session)
-Systematic pass — every button categorized: working / stub / missing / dead code.
-Run as Explore agent after audio confirmed working on D's machine.
+1. **SPRINT 2 — Multi-Version Release Chain** ← highest priority feature
+   ROUGH → MIXED → MASTERED, each a separate file, tier-gated access at each stage.
+   D advances tracks along the chain. No other platform treats a track as an evolving artifact.
+   Requires schema change + new upload flow.
 
-### SPRINT 2 — Multi-Version Release Chain
-ROUGH → MIXED → MASTERED tier access per track. Highest impact feature.
-Requires schema change. See plan file Feature 1.
+2. **Track Readiness Score** — pre-publish AI quality gate
+   Waveform quality + metadata completeness + version state → green/amber/red scorecard.
+   No other platform runs a pre-publish gate for independent artist catalog.
 
-### COMMAND BAR CONCEPT (~1 session)
-D wants a single text input at the bottom of the console replacing popups/dropdowns.
-Inspired by D's hardware (fixed command windows on Pioneer/Serato).
-- Use `/design-consultation` to spec the interaction model first
-- Then `/plan-eng-review` before building
-- Lives at the bottom of ArchitectConsole, always visible
+3. **Track Vibe Score** — single energy fingerprint per track
+   LOW/MID/HIGH energy reading from waveformData math (no AI). Vibe color tint in library cells.
+   D scans his library and knows at a glance which tracks are weapons vs journey music.
+   No other platform gives artists a "vibe fingerprint" of their own catalog.
 
-### VU METER PLACEMENT (T-next)
-`src/components/VUMeter.jsx` exists (twin analog needle, -45°/+45°, labels -20/0/+3).
-Currently not imported anywhere — needs to be placed in ArchitectConsole.
-- Confirm with D/L where it goes (transport section? top bar?)
-- Wire signal level from current playing track
+4. **Release Scheduler** — "drop this Friday midnight" in 10 seconds
+   Upload → set schedule → done. Worker promotes the track at scheduled time automatically.
 
-### 5 OTHER APPROVED IMPLEMENTATIONS
-User mentioned 5 other approved implementations alongside VU meter placement.
-**Location of spec not found** — user needs to confirm where these are documented,
-or list them so they can be added to the plan as T14+.
+5. **Production Timeline / Ledger** — immutable timestamped log per track
+   Every state change (uploaded, mixed, mastered, published, retracted) recorded with timestamp.
+   No other platform gives the artist an audit trail of their own creative history.
+
+### VAULT EDIT MODAL
+D/L double-clicks a vault tab → ContextStrip body opens with edit options (label, color, visibility, copy link).
+Currently VAULTS is a right-side overlay panel — replace with inline context body.
+
+### BUTTON/FIELD AUDIT
+Every button categorized: working / stub (empty handler) / missing feature / dead code.
+Run as Explore agent. Many stubs exist from earlier sessions.
+
+### D1 DATABASE BACKUP
+No backup exists. If a migration corrupts the DB, all track metadata is lost (audio files survive in R2 but become anonymous blobs).
+One-time setup: nightly D1 export to R2 or GitHub. 30-minute task, prevents catastrophic loss.
+
+### DESIGN REVIEW
+Run `/design-review` after audio confirmed working on D's machine.
+
+### UPLOAD WORKS — CONFIRMED
+D has successfully uploaded 5 mixes through the console. Upload auth uses PSC-Secret embedded in
+the console client — viewer prop (D vs L) controls UI features shown, not upload auth.
+This is the correct and intended behavior.
 
 ---
 
