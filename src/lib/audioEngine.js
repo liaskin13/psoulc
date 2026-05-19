@@ -110,14 +110,26 @@ export function isLoaded() {
   return !!(audio && audio.src && audio.readyState >= 1);
 }
 
-// No-op — kept so call sites in ArchitectConsole don't need updating.
-// AudioContext is created here for Safari autoplay compatibility only.
+// Creates/resumes the shared AudioContext inside user gesture scope.
+// Must be called from a click handler so the context starts RUNNING, not suspended.
+// useAudioAnalyzer reads this same context via getAudioContext() — sharing prevents
+// the "new context created outside gesture scope → suspended → silence" bug.
 export function prewarm() {
   if (!_audioCtx) {
     try {
       _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     } catch (_) {}
   }
+  if (_audioCtx?.state === 'suspended') {
+    _audioCtx.resume().catch(() => {});
+  }
+}
+
+// Returns the shared AudioContext singleton for the live FFT side-chain tap.
+// useAudioAnalyzer uses this instead of creating its own context, ensuring
+// createMediaElementSource routes audio through an already-running context.
+export function getAudioContext() {
+  return _audioCtx;
 }
 
 // Not used — waveform-driven meters in useAudioAnalyzer.js don't need this.

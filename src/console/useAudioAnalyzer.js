@@ -2,7 +2,7 @@
 // Energy Map always uses pre-analyzed waveformData (full-track view requires complete data).
 
 import { useEffect, useRef } from "react";
-import { getAudioElement } from "../lib/audioEngine.js";
+import { getAudioElement, getAudioContext } from "../lib/audioEngine.js";
 
 const BASS_HEX  = "#1464dc";
 const MID_HEX   = "#14dc14";
@@ -56,11 +56,22 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
     const audioEl = getAudioElement();
     if (!audioEl) return;
 
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
+    // Use the shared AudioContext from audioEngine — it was created inside a user
+    // gesture (prewarm() call in handlePlayPause), so it starts RUNNING, not suspended.
+    // Creating a new AudioContext here (outside gesture scope via useEffect) would start
+    // suspended and permanently silence audio after createMediaElementSource routes the
+    // audio element through it.
+    let audioCtx = getAudioContext();
 
-      const audioCtx = new AudioCtx();
+    try {
+      if (!audioCtx) {
+        // Fallback: create our own and immediately try to resume
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        audioCtx = new AudioCtx();
+        audioCtx.resume().catch(() => {});
+      }
+
       const source   = audioCtx.createMediaElementSource(audioEl);
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize               = 2048; // 1024 frequency bins
@@ -71,9 +82,9 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       source.connect(audioCtx.destination);
       source.connect(analyser);
 
-      audioCtxRef.current   = audioCtx;
-      analyserRef.current   = analyser;
-      freqDataRef.current   = new Uint8Array(analyser.frequencyBinCount);
+      audioCtxRef.current      = audioCtx;
+      analyserRef.current      = analyser;
+      freqDataRef.current      = new Uint8Array(analyser.frequencyBinCount);
       analyserSetupRef.current = true;
     } catch (err) {
       // AudioContext unavailable or blocked — fall back to pre-analyzed data silently
