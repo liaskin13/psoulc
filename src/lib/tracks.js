@@ -85,8 +85,7 @@ export async function fetchAllTracks() {
 export function getAudioUrl(audio_path) {
   if (!audio_path) return null;
   if (IS_DEV) return null;
-  if (!R2_PUBLIC_URL) return null;
-  return `${R2_PUBLIC_URL}/${audio_path}`;
+  return `${UPLOAD_WORKER_URL}/audio/${audio_path}`;
 }
 
 export function countVaultTracks(vault) {

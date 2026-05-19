@@ -1,6 +1,15 @@
 // Cloudflare Worker: PSC Audio Upload + Database Proxy
 // Handles R2 storage + D1 database without exposing credentials
 
+function parseRangeHeader(range) {
+  const m = range && range.match(/^bytes=(\d*)-(\d*)$/);
+  if (!m) return {};
+  if (m[1] && m[2]) return { offset: parseInt(m[1]), length: parseInt(m[2]) - parseInt(m[1]) + 1 };
+  if (m[1]) return { offset: parseInt(m[1]) };
+  if (m[2]) return { suffix: parseInt(m[2]) };
+  return {};
+}
+
 function timingSafeEqual(a, b) {
   const enc = new TextEncoder();
   const aBytes = enc.encode(a);
@@ -270,6 +279,22 @@ export default {
         const values = fields.map(f => body[f]);
         const { success } = await env.PSC_DB.prepare(`UPDATE tracks SET ${setClauses} WHERE id = ?`).bind(...values, id).run();
         return new Response(JSON.stringify({ success }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // GET /audio/:key — stream from R2 with Content-Type + Range support (CORS-safe for Web Audio API)
+      if (request.method === "GET" && url.pathname.startsWith("/audio/")) {
+        const key = decodeURIComponent(url.pathname.slice(7));
+        if (!key) return new Response("Bad key", { status: 400, headers: corsHeaders });
+        const ext = key.split(".").pop().toLowerCase();
+        const contentType = { wav: "audio/wav", mp3: "audio/mpeg", flac: "audio/flac", m4a: "audio/mp4", aac: "audio/aac", ogg: "audio/ogg" }[ext] || "audio/mpeg";
+        const rangeHeader = request.headers.get("Range");
+        const obj = rangeHeader
+          ? await env.PSC_AUDIO.get(key, { range: { suffix: undefined, ...parseRangeHeader(rangeHeader) } })
+          : await env.PSC_AUDIO.get(key);
+        if (!obj) return new Response("Not found", { status: 404, headers: corsHeaders });
+        const resHeaders = { ...corsHeaders, "Content-Type": contentType, "Accept-Ranges": "bytes", "Cache-Control": "public, max-age=31536000" };
+        if (rangeHeader && obj.range) resHeaders["Content-Range"] = `bytes ${obj.range.offset}-${obj.range.offset + obj.range.length - 1}/${obj.size}`;
+        return new Response(obj.body, { status: rangeHeader && obj.range ? 206 : 200, headers: resHeaders });
       }
 
       // POST /upload-init  — start a multipart upload, return uploadId + key

@@ -49,6 +49,7 @@ export function onStateChange(fn) {
 export async function load(url) {
   const a = getAudio();
   a.pause();
+  a.crossOrigin = "anonymous";
   a.src = url;
   a.currentTime = 0;
   notifyListeners();
