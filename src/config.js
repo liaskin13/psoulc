@@ -43,7 +43,7 @@ export const VAULT_ACCENT_COLORS = {
   venus: SERATO.green,    // MIXES
   saturn: null,           // ORIGINAL MUSIC — achromatic, no accent
   mercury: "#cc2200",     // LIVE SETS — record red
-  earth: SERATO.green,
+  earth: null,           // build vault — no accent, not yet a real vault
 };
 
 // Future artist lockboxes — Serato color reserved, name TBD by D

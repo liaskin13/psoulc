@@ -1644,11 +1644,54 @@
   flex-shrink: 0;
 }
 
-/* Search — far right of vault tab row */
-.arch-lib-search-inline {
-  border-bottom: none;
+/* build vault tab — visually distinct from real vault tabs */
+.arch-vault-tab.arch-vault-tab-add {
+  opacity: 0.5;
+  border-left: 1px solid rgba(185, 195, 200, 0.08);
+  margin-left: 4px;
+}
+
+.arch-vault-tab-add-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-style: italic;
+  color: rgba(185, 195, 200, 0.45);
+}
+
+.arch-vault-tab.arch-vault-tab-add:hover .arch-vault-tab-add-label,
+.arch-vault-tab.arch-vault-tab-add.active .arch-vault-tab-add-label {
+  color: rgba(240, 237, 232, 0.70);
+  opacity: 1;
+}
+
+.arch-vault-tab.arch-vault-tab-add.active {
+  box-shadow: inset 0 -2px 0 rgba(185, 195, 200, 0.20);
+}
+
+/* INTAKE — far right of vault tab row, primary upload action */
+.arch-intake-tab-btn {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(185, 195, 200, 0.40);
+  background: none;
+  border: 1px solid rgba(185, 195, 200, 0.12);
+  cursor: pointer;
   flex-shrink: 0;
-  width: 160px;
+  padding: 0 12px;
+  height: 32px;
+  margin-left: 8px;
+  transition: color 120ms, border-color 120ms, background 120ms;
+  line-height: 1;
+}
+
+.arch-intake-tab-btn:hover {
+  color: var(--arch-identity, #00e5ff);
+  border-color: var(--arch-identity, #00e5ff);
+  background: rgba(0, 229, 255, 0.05);
 }
 
 .arch-browser-utility {

@@ -5,13 +5,14 @@ import "./ContextStrip.css";
 export default function ContextStrip({
   viewer = "D",
   reachMessages = [],
-  onIntake,
   onVaults,
   onRoster,
   loopSizeOptions = [],
   selectedLoopSizeId = null,
   onSelectLoopSize,
   externalLoopOpen = 0,
+  libSearch = "",
+  onSearchChange,
 }) {
   const [activeContext, setActiveContext] = useState(null);
   const [reachTrigger, setReachTrigger] = useState(0);
@@ -35,42 +36,52 @@ export default function ContextStrip({
     <div className="arch-context-strip">
       {/* Idle strip — 40px always visible */}
       <div className="arch-context-strip-idle">
-        {/* LEFT: PSC logo → nav portal */}
+        {/* LEFT: dp logo → nav portal */}
         <button
           className={`arch-context-logo${activeContext === "nav" ? " active" : ""}`}
           onClick={() => toggle("nav")}
           aria-label="PSC navigation"
         >
-          PSC
+          dp
         </button>
 
-        {/* REACH preview — flex 1, right-aligned */}
+        {/* SEARCH — flex:1, center of strip */}
+        <div className="arch-context-search">
+          <input
+            className="arch-context-search-input"
+            placeholder="SEARCH VAULT"
+            value={libSearch}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            aria-label="Search tracks"
+          />
+          {libSearch && (
+            <button
+              className="arch-context-search-clear"
+              onClick={() => onSearchChange?.("")}
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* REACH — far right, compact */}
         <button
-          className={`arch-context-reach-preview${hasUnread ? " has-unread" : ""}`}
+          className={`arch-context-reach${hasUnread ? " has-unread" : ""}`}
           onClick={handleReach}
-          aria-label={latestMsg ? "Open REACH thread" : "DIRECT LINE"}
+          aria-label={latestMsg ? "Open REACH thread" : "REACH"}
         >
-          {latestMsg
-            ? `${latestMsg.from} ▸ ${(latestMsg.body || "").split("\n")[0]}`
-            : "DIRECT LINE"}
+          {hasUnread ? "● REACH" : "REACH"}
         </button>
 
-        {/* RIGHT triggers — viewer=L only */}
+        {/* ACCESS CODES — viewer=L only */}
         {viewer === "L" && (
-          <>
-            <button
-              className="arch-context-trigger"
-              onClick={() => onIntake?.()}
-            >
-              INTAKE
-            </button>
-            <button
-              className={`arch-context-trigger${activeContext === "access" ? " active" : ""}`}
-              onClick={() => toggle("access")}
-            >
-              ACCESS CODES
-            </button>
-          </>
+          <button
+            className={`arch-context-trigger${activeContext === "access" ? " active" : ""}`}
+            onClick={() => toggle("access")}
+          >
+            ACCESS CODES
+          </button>
         )}
       </div>
 

@@ -2011,6 +2011,7 @@ function ArchitectConsole({
               aria-hidden="true"
             />
             {VAULT_ROUTES.map((v, i) => {
+              const isAddTab = v.id === "earth";
               const count = (vaultTracksState?.[v.id] || []).filter(
                 (t) => !t.is_voided,
               ).length;
@@ -2019,7 +2020,7 @@ function ArchitectConsole({
                   key={v.id}
                   ref={(el) => (tabRefs.current[i] = el)}
                   role="tab"
-                  className={`arch-vault-tab ${activeLibVault === v.id ? "active" : ""}`}
+                  className={`arch-vault-tab ${activeLibVault === v.id ? "active" : ""}${isAddTab ? " arch-vault-tab-add" : ""}`}
                   style={{ "--vault-color": v.color }}
                   aria-selected={activeLibVault === v.id}
                   onClick={() => {
@@ -2034,10 +2035,16 @@ function ArchitectConsole({
                     )
                   }
                 >
-                  <span className="arch-vault-pip" aria-hidden="true" />
-                  {v.label}
-                  {count > 0 && (
-                    <span className="arch-vault-count">{count}</span>
+                  {isAddTab ? (
+                    <span className="arch-vault-tab-add-label">+ build vault</span>
+                  ) : (
+                    <>
+                      <span className="arch-vault-pip" aria-hidden="true" />
+                      {v.label}
+                      {count > 0 && (
+                        <span className="arch-vault-count">{count}</span>
+                      )}
+                    </>
                   )}
                 </button>
               );
@@ -2097,25 +2104,14 @@ function ArchitectConsole({
               </button>
             </div>
 
-            {/* Search — FAR RIGHT, margin-left: auto pushes it to the end */}
-            <div className="arch-lib-search-row arch-lib-search-inline">
-              <input
-                className="arch-lib-search"
-                placeholder="SEARCH"
-                value={libSearch}
-                onChange={(e) => setLibSearch(e.target.value)}
-                aria-label="Search tracks"
-              />
-              {libSearch && (
-                <button
-                  className="arch-lib-clear"
-                  onClick={() => setLibSearch("")}
-                  aria-label="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+            {/* INTAKE — far right of tab row, singular, upload to library */}
+            <button
+              className="arch-intake-tab-btn"
+              onClick={() => onIntake?.()}
+              aria-label="Upload music to vault"
+            >
+              + INTAKE
+            </button>
           </div>
 
           {/* Track list — phosphor scan animation (Animation 1) */}
@@ -2388,13 +2384,14 @@ function ArchitectConsole({
       <ContextStrip
         viewer={viewer}
         reachMessages={reachMessages}
-        onIntake={() => onIntake?.()}
         onVaults={toggleVaults}
         onRoster={toggleRoster}
         loopSizeOptions={LOOP_LENGTH_OPTIONS}
         selectedLoopSizeId={selectedLoopLengthId}
         onSelectLoopSize={(opt) => handleApplyLoopLength(opt)}
         externalLoopOpen={loopPanelTrigger}
+        libSearch={libSearch}
+        onSearchChange={setLibSearch}
       />
 
       {/* ── PANELS (overlays from right) ──────────────────────────────── */}
