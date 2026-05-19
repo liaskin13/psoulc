@@ -13,11 +13,13 @@ import VaultView from "../components/VaultView";
 import "../components/VaultView.css";
 import { VAULT_ACCENT_COLORS, UPLOAD_WORKER_URL } from "../config";
 import PSCWordmark from "../components/PSCWordmark";
+import { redeemCode } from "../lib/accessCodes";
 
 const WORKER_URL = UPLOAD_WORKER_URL;
 const SIGNAL_POLL_MS = 10000;
 
-const LISTENER_VAULTS = [
+// Fallback used while /vaults fetch is in flight
+const LISTENER_VAULTS_FALLBACK = [
   {
     id: "venus",
     label: "MIXES",
@@ -38,8 +40,58 @@ const LISTENER_VAULTS = [
   },
 ];
 
-function ListenerShell({ onPowerDown, sessionMeta }) {
-  const [selectedVault, setSelectedVault] = useState(LISTENER_VAULTS[0]);
+// ── CODE GATE — renders before vault when an access code is present ──────────
+function CodeGate({ code, onGranted }) {
+  const [status, setStatus] = useState("loading"); // loading | error-404 | error-410 | error-unknown
+
+  useEffect(() => {
+    redeemCode(code)
+      .then((data) => onGranted(data))
+      .catch((err) => {
+        if (err.status === 404) setStatus("error-404");
+        else if (err.status === 410) setStatus("error-410");
+        else setStatus("error-unknown");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+
+  const messages = {
+    loading: null,
+    "error-404": "THIS LINK DOESN'T EXIST",
+    "error-410": "THIS LINK HAS EXPIRED",
+    "error-unknown": "SOMETHING WENT WRONG",
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="code-gate" aria-live="polite">
+        <DPWallpaper opacity={1} />
+        <div className="code-gate-identity-glow" aria-hidden="true" />
+        <span className="code-gate-status">VERIFYING</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="code-gate code-gate--error" role="alert">
+      <DPWallpaper opacity={1} />
+      <div className="code-gate-identity-glow" aria-hidden="true" />
+      <p className="code-gate-message">{messages[status]}</p>
+      <button
+        className="code-gate-close god-btn"
+        onClick={() => { window.history.back(); window.close(); }}
+      >
+        CLOSE
+      </button>
+    </div>
+  );
+}
+
+function ListenerShell({ onPowerDown, sessionMeta, code }) {
+  const [codeSession, setCodeSession] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [vaults, setVaults] = useState(LISTENER_VAULTS_FALLBACK);
+  const [selectedVaultId, setSelectedVaultId] = useState(LISTENER_VAULTS_FALLBACK[0].id);
   const [activeVault, setActiveVault] = useState(null);
   const [inSignal, setInSignal] = useState(false);
   const [signalState, setSignalState] = useState({ is_live: 0, title: null });
@@ -48,6 +100,9 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
   const handoffTimerRef = useRef(null);
   const prefersReduced = useReducedMotion();
 
+  // Derive selectedVault from current vaults list
+  const selectedVault = vaults.find(v => v.id === selectedVaultId) ?? vaults[0];
+
   const fetchSignal = useCallback(async () => {
     try {
       const res = await fetch(`${WORKER_URL}/signal`);
@@ -55,13 +110,45 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
     } catch (_) {}
   }, []);
 
+  // Fetch published vaults from worker — replaces fallback when ready
   useEffect(() => {
+    fetch(`${WORKER_URL}/vaults`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data || data.length === 0) return;
+        const normalized = data.map(v => ({
+          id: v.vault_id,
+          label: v.label,
+          color: v.color ?? null,
+          copy: v.copy ?? "",
+        }));
+        setVaults(normalized);
+        setSelectedVaultId(normalized[0].id);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (code && !codeSession) return;
     fetchSignal();
     const poll = setInterval(fetchSignal, SIGNAL_POLL_MS);
     return () => clearInterval(poll);
-  }, [fetchSignal]);
+  }, [fetchSignal, code, codeSession]);
 
   useEffect(() => () => window.clearTimeout(handoffTimerRef.current), []);
+
+  // Show welcome interstitial when code guest is validated
+  useEffect(() => {
+    if (!codeSession) return;
+    setShowWelcome(true);
+    const t = window.setTimeout(() => setShowWelcome(false), 1200);
+    return () => window.clearTimeout(t);
+  }, [codeSession]);
+
+  // ── CODE GATE — all hooks above, conditional return is safe here ───────────
+  if (code && !codeSession) {
+    return <CodeGate code={code} onGranted={setCodeSession} />;
+  }
 
   const openVault = (vault) => {
     const delay = prefersReduced ? 0 : 220;
@@ -140,20 +227,22 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
   // ── MAIN SHELL ───────────────────────────────────────────────────
   return (
     <div className="listener-shell">
-      <DPWallpaper opacity={1} />
       <PSCWordmark />
 
       <header className="listener-header">
         <div className="listener-header-id" aria-hidden="true">
           <span className="listener-header-kicker">LISTENING ROOM</span>
           <span className="listener-header-owner">CURATED BY D</span>
+          {codeSession?.grantedTo && (
+            <span className="listener-header-guest">{codeSession.grantedTo}</span>
+          )}
         </div>
         <button
           className="listener-exit"
-          onClick={onPowerDown}
-          aria-label="Exit system"
+          onClick={code ? () => { window.history.back(); window.close(); } : onPowerDown}
+          aria-label={code ? "Close" : "Exit system"}
         >
-          EXIT
+          {code ? "CLOSE" : "EXIT"}
         </button>
       </header>
 
@@ -181,49 +270,75 @@ function ListenerShell({ onPowerDown, sessionMeta }) {
       </AnimatePresence>
 
       <main className="listener-stage" id="main-content">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={selectedVault.id}
-            className="listener-stage-content"
-            initial={prefersReduced ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
-            transition={{ duration: 0.3, ease: [0.25, 0, 0, 1] }}
-          >
-            <div className="listener-vault-accent" style={{ background: selectedVault.color }} aria-hidden="true" />
-            <p className="listener-stage-kicker">VAULT</p>
-            <h1 className="listener-stage-title" style={{ "--vault-color": selectedVault.color }}>
-              {selectedVault.label}
-            </h1>
-            <div className="listener-stage-rule" aria-hidden="true" />
-            <p className="listener-stage-copy">{selectedVault.copy}</p>
-            <button
-              className="listener-stage-cta"
-              style={{ "--vault-color": selectedVault.color }}
-              onClick={() => openVault(selectedVault)}
+        {selectedVault ? (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedVault.id}
+              className="listener-stage-content"
+              initial={prefersReduced ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: [0.25, 0, 0, 1] }}
             >
-              OPEN {selectedVault.label}
-            </button>
-          </motion.div>
-        </AnimatePresence>
+              <div className="listener-vault-accent" style={{ background: selectedVault.color || "transparent" }} aria-hidden="true" />
+              <p className="listener-stage-kicker">VAULT</p>
+              <h1 className="listener-stage-title" style={selectedVault.color ? { "--vault-color": selectedVault.color } : {}}>
+                {selectedVault.label}
+              </h1>
+              <div className="listener-stage-rule" aria-hidden="true" />
+              <p className="listener-stage-copy">{selectedVault.copy}</p>
+              <button
+                className="listener-stage-cta"
+                style={selectedVault.color ? { "--vault-color": selectedVault.color } : {}}
+                onClick={() => openVault(selectedVault)}
+              >
+                OPEN {selectedVault.label}
+              </button>
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div className="listener-stage-empty" aria-live="polite" />
+        )}
       </main>
 
-      <nav className="listener-dock" aria-label="Vault navigation">
-        {LISTENER_VAULTS.map((vault) => (
-          <button
-            key={vault.id}
-            className={`listener-dock-btn${selectedVault.id === vault.id ? " listener-dock-active" : ""}`}
-            style={{ "--vault-color": vault.color }}
-            onClick={() => setSelectedVault(vault)}
-            aria-pressed={selectedVault.id === vault.id}
-          >
-            <span className="listener-dock-pip" aria-hidden="true" />
-            <span className="listener-dock-label">{vault.label}</span>
-          </button>
-        ))}
-      </nav>
+      {vaults.length > 0 && (
+        <nav className="listener-dock" aria-label="Vault navigation">
+          {vaults.map((vault) => (
+            <button
+              key={vault.id}
+              className={`listener-dock-btn${selectedVault?.id === vault.id ? " listener-dock-active" : ""}`}
+              style={vault.color ? { "--vault-color": vault.color } : {}}
+              onClick={() => setSelectedVaultId(vault.id)}
+              aria-pressed={selectedVault?.id === vault.id}
+            >
+              <span className="listener-dock-pip" aria-hidden="true" />
+              <span className="listener-dock-label">{vault.label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
 
       {handoffOverlay}
+
+      {/* Welcome interstitial — full-screen theatrical entry for code guests */}
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div
+            className="listener-welcome"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            aria-live="polite"
+          >
+            <span className="listener-welcome-kicker">WELCOME</span>
+            {codeSession?.grantedTo && (
+              <span className="listener-welcome-name">{codeSession.grantedTo.toUpperCase()}</span>
+            )}
+            <span className="listener-welcome-sub">CURATED BY D</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

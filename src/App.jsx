@@ -38,14 +38,16 @@ function refreshSessionMeta() {
   }
 }
 
-// Stages: 'entry' | 'console' | 'architect' | 'room'
+// Stages: 'entry' | 'console' | 'architect' | 'room' | 'code-entry'
 function App() {
   const { setConsoleOwner, sessionMeta, setSessionMeta } = useSystem();
   const online = useNetworkStatus();
   const { isMobile } = useBreakpoint();
   const prefersReduced = useReducedMotion();
 
-  const [stage, setStage] = useState("entry");
+  const pendingCode = new URLSearchParams(window.location.search).get("code");
+  const [stage, setStage] = useState(pendingCode ? "code-entry" : "entry");
+  const [accessCode] = useState(pendingCode);
   const [owner, setOwner] = useState(null);
   const [activeNode, setActiveNode] = useState(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -132,6 +134,15 @@ function App() {
       SIGNAL LOST — ARCHIVE CACHED LOCALLY
     </div>
   );
+
+  // ── CODE ENTRY — listener arriving via access code link ─────────────────
+  if (stage === "code-entry") {
+    return (
+      <Suspense fallback={null}>
+        <ListenerShell code={accessCode} />
+      </Suspense>
+    );
+  }
 
   // ── ENTRY ────────────────────────────────────────────────────────────────
   if (stage === "entry") {

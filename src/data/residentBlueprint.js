@@ -22,22 +22,6 @@ export const RESIDENT_REGISTRY = [
     tier: "A", // Architect / Black Star
     palette: { primary: "#000000", accent: "#8B0000" },
   },
-  {
-    residentId: 12,
-    name: "Jess B",
-    accessCode: "1984",
-    vaultId: "mars",
-    tier: "B", // Resident
-    palette: { primary: "#7c1212", accent: "#C0C0C0" },
-  },
-  {
-    residentId: 101,
-    name: "Janet",
-    accessCode: "J-1966",
-    vaultId: "moon_janet",
-    tier: "C", // VIP / Love Letter
-    palette: { primary: "#C0C0C0", accent: "#B87333" },
-  },
 ];
 
 /**

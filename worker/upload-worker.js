@@ -45,6 +45,147 @@ export default {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+      // POST /access-codes — D generates a listener access code (auth required)
+      // A code grants access to all published content; tier controls future permissions.
+      if (request.method === "POST" && url.pathname === "/access-codes") {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const body = await request.json();
+        const { tier = "MEMBERS", granted_to, expires_at } = body;
+        const validTiers = ["MASTERS", "MUSES", "MEMBERS"];
+        if (!validTiers.includes(tier)) {
+          return new Response(JSON.stringify({ error: `tier must be one of: ${validTiers.join(", ")}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        if (expires_at != null && isNaN(new Date(expires_at).getTime())) {
+          return new Response(JSON.stringify({ error: "expires_at must be a valid ISO-8601 date" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        // Reserved resident PINs — regenerate if collision
+        const RESERVED = new Set(["0528", "7677", "0000"]); // 0000 is test-only
+        let code;
+        do {
+          const n = crypto.getRandomValues(new Uint32Array(1))[0] % 10000;
+          code = String(n).padStart(4, "0");
+        } while (RESERVED.has(code));
+        await env.PSC_DB.prepare(
+          "INSERT INTO access_codes (id, tier, granted_to, expires_at, created_by) VALUES (?, ?, ?, ?, 'D')"
+        ).bind(code, tier, granted_to ?? null, expires_at ?? null).run();
+        return new Response(JSON.stringify({ code, url: `https://uoyni.com?code=${code}` }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // POST /redeem — listener redeems an access code (public)
+      // Validates code and returns tier; grants access to all published content.
+      if (request.method === "POST" && url.pathname === "/redeem") {
+        const body = await request.json();
+        const { code, fingerprint } = body;
+        if (!code) {
+          return new Response(JSON.stringify({ error: "Missing code" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        // TEST CODE — remove before launch
+        if (code === "0000") {
+          return new Response(JSON.stringify({ valid: true, tier: "MEMBERS", grantedTo: "TEST" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const row = await env.PSC_DB.prepare(
+          "SELECT id, tier, granted_to, revoked, expires_at, redeemed_at FROM access_codes WHERE id = ?"
+        ).bind(code).first();
+        if (!row) {
+          return new Response(JSON.stringify({ error: "Code not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const isExpired = row.expires_at != null && new Date(row.expires_at) <= new Date();
+        if (row.revoked === 1 || isExpired) {
+          return new Response(JSON.stringify({ error: "Code expired or revoked" }), { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        if (!row.redeemed_at) {
+          await env.PSC_DB.prepare(
+            "UPDATE access_codes SET redeemed_at = datetime('now'), redeemed_by = ? WHERE id = ?"
+          ).bind(fingerprint ?? null, code).run();
+        }
+        return new Response(JSON.stringify({
+          valid: true,
+          tier: row.tier,
+          grantedTo: row.granted_to,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // PUT /access-codes/:id/revoke — D revokes a code (auth required)
+      if (request.method === "PUT" && url.pathname.match(/^\/access-codes\/[^/]+\/revoke$/)) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const id = url.pathname.split("/")[2];
+        const { success } = await env.PSC_DB.prepare("UPDATE access_codes SET revoked = 1 WHERE id = ?").bind(id).run();
+        return new Response(JSON.stringify({ success }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // GET /access-codes — D lists active codes (auth required)
+      if (request.method === "GET" && url.pathname === "/access-codes") {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { results } = await env.PSC_DB.prepare(
+          `SELECT id, tier, granted_to, expires_at, redeemed_at, revoked, created_at
+           FROM access_codes
+           WHERE revoked = 0
+           ORDER BY created_at DESC`
+        ).all();
+        return new Response(JSON.stringify(results), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // GET /vaults — listener dock: only vaults with ≥1 published track (public)
+      // Authenticated view (console) returns all visible vaults regardless of track count.
+      if (request.method === "GET" && url.pathname === "/vaults") {
+        let results;
+        if (isAuthenticated) {
+          ({ results } = await env.PSC_DB.prepare(
+            `SELECT vault_id, label, color, visibility, copy, sort_order
+             FROM vault_config
+             ORDER BY sort_order ASC`
+          ).all());
+        } else {
+          ({ results } = await env.PSC_DB.prepare(
+            `SELECT vc.vault_id, vc.label, vc.color, vc.copy, vc.sort_order
+             FROM vault_config vc
+             WHERE vc.visibility = 1
+               AND EXISTS (
+                 SELECT 1 FROM tracks t
+                 WHERE t.vault = vc.vault_id AND t.is_published = 1 AND t.is_voided = 0
+               )
+             ORDER BY vc.sort_order ASC`
+          ).all());
+        }
+        return new Response(JSON.stringify(results), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // PUT /vaults/:id — D updates vault config (auth required)
+      if (request.method === "PUT" && url.pathname.match(/^\/vaults\/[^/]+$/) && !url.pathname.endsWith("/revoke")) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const vaultId = url.pathname.split("/")[2];
+        const body = await request.json();
+        const allowed = ["label", "color", "visibility", "copy", "sort_order"];
+        const fields = Object.keys(body).filter(k => allowed.includes(k));
+        if (fields.length === 0) {
+          return new Response(JSON.stringify({ error: "No valid fields" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const setClauses = [...fields.map(f => `${f} = ?`), "updated_at = datetime('now')"].join(", ");
+        const values = fields.map(f => body[f]);
+        await env.PSC_DB.prepare(
+          `INSERT INTO vault_config (vault_id, label, color, visibility, copy, sort_order)
+           VALUES (?, 'VAULT', NULL, 1, NULL, 0)
+           ON CONFLICT(vault_id) DO UPDATE SET ${setClauses}`
+        ).bind(vaultId, ...values).run();
+        return new Response(JSON.stringify({ success: true, vault_id: vaultId }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // GET /tracks/:vault
       if (request.method === "GET" && url.pathname.startsWith("/tracks/")) {
         const vault = url.pathname.split("/")[2];

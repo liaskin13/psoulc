@@ -38,11 +38,11 @@ export const SERATO = {
 
 export const SIGNAL_COLOR = SERATO.red; // THE SIGNAL is always red
 
-// Vault tabs — Serato color per vault
+// Vault accent colors — D's spec: MIXES=green, ORIGINAL MUSIC=none, LIVE SETS=red
 export const VAULT_ACCENT_COLORS = {
-  saturn: SERATO.blue,
-  venus: SERATO.purple,
-  mercury: SERATO.cyan,
+  venus: SERATO.green,    // MIXES
+  saturn: null,           // ORIGINAL MUSIC — achromatic, no accent
+  mercury: "#cc2200",     // LIVE SETS — record red
   earth: SERATO.green,
 };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { findResidentByCode } from "../data/residentBlueprint";
+import { redeemCode } from "../lib/accessCodes";
 import {
   SESSION_KEY,
   SESSION_TTL_MS,
@@ -41,6 +42,7 @@ function EntrySequence({ onIgnite }) {
   const [unlocked, setUnlocked] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false);
   const curBallRef = useRef(null);
   const curRingRef = useRef(null);
 
@@ -70,7 +72,7 @@ function EntrySequence({ onIgnite }) {
   }, [lockoutRemaining]);
 
   const attempt = useCallback(
-    (code) => {
+    async (code) => {
       const lock = readLock();
       if (lock.lockedUntil > Date.now()) {
         setDigits("");
@@ -78,6 +80,7 @@ function EntrySequence({ onIgnite }) {
         return;
       }
 
+      // 1. Resident blueprint check (D, L — synchronous)
       const res = findResidentByCode(code);
       if (res) {
         clearLock();
@@ -93,7 +96,21 @@ function EntrySequence({ onIgnite }) {
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
         setTimeout(() => setGateOpen(true), 300);
         setTimeout(() => onIgnite(res.name, res.tier), 1600);
-      } else {
+        return;
+      }
+
+      // 2. /redeem fallback — guest access codes
+      setIsVerifying(true);
+      try {
+        const data = await redeemCode(code);
+        clearLock();
+        setIsVerifying(false);
+        setCellState("correct");
+        setUnlocked(true);
+        setTimeout(() => setGateOpen(true), 300);
+        setTimeout(() => onIgnite(null, data.tier), 1600);
+      } catch (err) {
+        setIsVerifying(false);
         const newCount = lock.count + 1;
         const newLock =
           newCount >= GATE_MAX_ATTEMPTS
@@ -102,7 +119,7 @@ function EntrySequence({ onIgnite }) {
         writeLock(newLock);
         if (newLock.lockedUntil) setLockoutRemaining(GATE_LOCKOUT_MS);
         setCellState("wrong");
-        setErrMsg("ACCESS DENIED");
+        setErrMsg(err.status === 410 ? "CODE EXPIRED" : "ACCESS DENIED");
         setTimeout(() => {
           setDigits("");
           setCellState("idle");
@@ -115,7 +132,7 @@ function EntrySequence({ onIgnite }) {
 
   useEffect(() => {
     const onKey = (e) => {
-      if (unlocked) return;
+      if (unlocked || isVerifying) return;
       if (e.key === "Backspace") {
         setDigits((prev) => prev.slice(0, -1));
         setCellState("idle");
@@ -130,7 +147,7 @@ function EntrySequence({ onIgnite }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [digits, unlocked, attempt]);
+  }, [digits, unlocked, isVerifying, attempt]);
 
   const cells = Array.from({ length: LEN }, (_, i) => {
     let cls = "entry-cell";
@@ -186,6 +203,8 @@ function EntrySequence({ onIgnite }) {
         <div className="entry-err" aria-live="polite">
           {lockoutRemaining > 0
             ? `LOCKED ${Math.ceil(lockoutRemaining / 1000)}s`
+            : isVerifying
+            ? "VERIFYING"
             : errMsg}
         </div>
       </div>

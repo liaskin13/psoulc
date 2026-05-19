@@ -2125,6 +2125,44 @@
   background: rgba(var(--arch-accent-rgb), 0.06);
 }
 
+.arch-vault-config-section {
+  margin-bottom: 8px;
+}
+
+.arch-vault-config-input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.15);
+  color: rgba(var(--arch-muted-rgb), 0.75);
+  font-family: inherit;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  padding: 3px 7px;
+  width: 140px;
+  outline: none;
+}
+
+.arch-vault-config-input:focus {
+  border-color: rgba(var(--arch-accent-rgb), 0.4);
+}
+
+.arch-vault-config-copy {
+  width: 200px;
+}
+
+.arch-settings-row--copy {
+  align-items: flex-start;
+}
+
+.arch-vault-config-save {
+  margin-left: auto;
+}
+
+.arch-settings-empty {
+  font-size: 0.6rem;
+  color: rgba(var(--arch-muted-rgb), 0.35);
+  padding: 12px;
+}
+
 /* ── PANELS (slide in from right) ───────────────────────────────────────── */
 .arch-panel-overlay {
   position: fixed;
@@ -2203,6 +2241,174 @@
   padding: 16px 24px;
   border-top: 1px solid rgba(var(--arch-accent-rgb), 0.07);
   flex-shrink: 0;
+}
+
+/* ── ACCESS CODES panel ──────────────────────────────────────────────────── */
+
+.arch-ac-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.arch-ac-tier-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.arch-ac-tier-btn {
+  flex: 1;
+  padding: 5px 0;
+  font: 500 9px/1 "Chakra Petch", monospace;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.4);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.arch-ac-tier-btn.active {
+  color: var(--identity, #14dc14);
+  border-color: var(--identity, #14dc14);
+  background: rgba(20, 220, 20, 0.06);
+}
+
+.arch-ac-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font: 400 10px/1 "Chakra Petch", monospace;
+  padding: 4px 8px;
+  width: 120px;
+  letter-spacing: 0.08em;
+  outline: none;
+}
+
+.arch-ac-input:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.arch-ac-generate {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 0;
+  font: 700 10px/1 "Chakra Petch", monospace;
+  letter-spacing: 0.18em;
+  color: var(--identity, #14dc14);
+  background: rgba(20, 220, 20, 0.08);
+  border: 1px solid rgba(20, 220, 20, 0.3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.arch-ac-generate:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.arch-ac-generate:not(:disabled):hover {
+  background: rgba(20, 220, 20, 0.14);
+}
+
+.arch-ac-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.arch-ac-result-url {
+  flex: 1;
+  font: 400 9px/1.4 monospace;
+  color: rgba(255, 255, 255, 0.6);
+  word-break: break-all;
+}
+
+.arch-ac-copy {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font: 600 9px/1 "Chakra Petch", monospace;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.arch-ac-copy:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.arch-ac-error {
+  font: 400 9px/1 "Chakra Petch", monospace;
+  color: #e52020;
+  letter-spacing: 0.1em;
+  margin-top: 8px;
+}
+
+.arch-ac-empty {
+  font: 400 9px/1 "Chakra Petch", monospace;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.14em;
+  margin: 8px 0;
+}
+
+.arch-ac-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.arch-ac-code-info {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.arch-ac-code-tier {
+  font: 600 8px/1 "Chakra Petch", monospace;
+  letter-spacing: 0.14em;
+  color: var(--identity, #14dc14);
+  opacity: 0.7;
+}
+
+.arch-ac-code-name {
+  font: 500 9px/1 "Chakra Petch", monospace;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.arch-ac-code-exp {
+  font: 400 8px/1 monospace;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.arch-ac-revoke {
+  padding: 3px 8px;
+  font: 600 8px/1 "Chakra Petch", monospace;
+  letter-spacing: 0.14em;
+  color: #e52020;
+  background: transparent;
+  border: 1px solid rgba(229, 32, 32, 0.25);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.arch-ac-revoke:hover {
+  background: rgba(229, 32, 32, 0.08);
+  border-color: #e52020;
 }
 
 /* ── Data tables (shared: roster, matrix, track registry) ───────────────── */

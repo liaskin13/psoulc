@@ -26,6 +26,7 @@ import {
   rollbackMatrixState,
 } from "./matrixState";
 import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
+import { generateCode, listCodes, revokeCode } from "../lib/accessCodes";
 import { getWaveformBars } from "../utils/waveform";
 import { generateAndSaveWaveform, saveWaveform } from "../lib/waveformAnalyzer";
 import { parseSeratoOverviewFromUrl } from "../lib/seratoParser";
@@ -259,6 +260,18 @@ function ArchitectConsole({
   const [showVoidConfirm, setShowVoidConfirm] = useState(false);
   const [showTrackList, setShowTrackList] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAccessCodes, setShowAccessCodes] = useState(false);
+  const [showVaults, setShowVaults] = useState(false);
+  const [vaultConfigs, setVaultConfigs] = useState([]);
+  const [vaultEdits, setVaultEdits] = useState({});
+  const [vaultSaving, setVaultSaving] = useState({});
+  const [acTier, setAcTier] = useState("MEMBERS");
+  const [acGrantedTo, setAcGrantedTo] = useState("");
+  const [acExpiresAt, setAcExpiresAt] = useState("");
+  const [acResult, setAcResult] = useState(null);
+  const [acCodes, setAcCodes] = useState([]);
+  const [acWorking, setAcWorking] = useState(false);
+  const [acError, setAcError] = useState(null);
   const [trackListData, setTrackListData] = useState([]);
   const [trackListLoading, setTrackListLoading] = useState(false);
   const [trackLoadError, setTrackLoadError] = useState(null);
@@ -762,6 +775,93 @@ function ArchitectConsole({
       const next = !prev;
       announce(`Settings ${next ? "opened" : "closed"}.`);
       return next;
+    });
+  };
+
+  const toggleAccessCodes = async () => {
+    const next = !showAccessCodes;
+    setShowAccessCodes(next);
+    announce(`Access codes ${next ? "opened" : "closed"}.`);
+    if (next) {
+      setAcWorking(true);
+      try { setAcCodes(await listCodes()); }
+      catch (_) { setAcError("Failed to load codes"); }
+      finally { setAcWorking(false); }
+    }
+  };
+
+  const handleGenerateCode = async () => {
+    setAcWorking(true);
+    setAcError(null);
+    setAcResult(null);
+    try {
+      const result = await generateCode({
+        tier: acTier,
+        grantedTo: acGrantedTo || undefined,
+        expiresAt: acExpiresAt ? `${acExpiresAt}T00:00:00Z` : undefined,
+      });
+      setAcResult(result);
+      setAcCodes(await listCodes());
+    } catch (e) {
+      setAcError(e.message || "Failed to generate code");
+    } finally {
+      setAcWorking(false);
+    }
+  };
+
+  const handleRevokeCode = async (codeId) => {
+    try {
+      await revokeCode(codeId);
+      setAcCodes((prev) => prev.filter((c) => c.id !== codeId));
+    } catch (_) {
+      setAcError("Failed to revoke");
+    }
+  };
+
+  const fetchVaultConfigs = useCallback(async () => {
+    try {
+      const res = await fetch(`${UPLOAD_WORKER_URL}/vaults`, {
+        headers: { "PSC-Secret": UPLOAD_SECRET },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setVaultConfigs(data);
+      const edits = {};
+      data.forEach(v => {
+        edits[v.vault_id] = {
+          label: v.label,
+          color: v.color ?? "",
+          visibility: v.visibility ?? 1,
+          copy: v.copy ?? "",
+        };
+      });
+      setVaultEdits(edits);
+    } catch (_) {}
+  }, []);
+
+  const saveVaultConfig = async (vaultId) => {
+    const edit = vaultEdits[vaultId];
+    if (!edit) return;
+    setVaultSaving(s => ({ ...s, [vaultId]: true }));
+    try {
+      await fetch(`${UPLOAD_WORKER_URL}/vaults/${vaultId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "PSC-Secret": UPLOAD_SECRET },
+        body: JSON.stringify({
+          label: edit.label,
+          color: edit.color || null,
+          visibility: edit.visibility,
+          copy: edit.copy,
+        }),
+      });
+    } catch (_) {}
+    setVaultSaving(s => ({ ...s, [vaultId]: false }));
+  };
+
+  const toggleVaults = () => {
+    setShowVaults(p => {
+      if (!p) fetchVaultConfigs();
+      return !p;
     });
   };
 
@@ -1433,12 +1533,18 @@ function ArchitectConsole({
       if (showSettings) {
         setShowSettings(false);
         announce("Settings closed.");
+        return;
+      }
+      if (showAccessCodes) {
+        setShowAccessCodes(false);
+        announce("Access codes closed.");
       }
     };
 
     window.addEventListener("keydown", onEscape);
     return () => window.removeEventListener("keydown", onEscape);
   }, [
+    showAccessCodes,
     showArchive,
     showInbox,
     showMatrix,
@@ -1812,6 +1918,15 @@ function ArchitectConsole({
             {unreadCountL > 0 && (
               <span className="arch-badge">{unreadCountL}</span>
             )}
+          </button>
+
+          <button
+            className={`arch-rail-toggle ${showAccessCodes ? "active" : ""}`}
+            onClick={toggleAccessCodes}
+            aria-expanded={showAccessCodes}
+          >
+            <span className="arch-rail-icon">⊛</span>
+            ACCESS CODES
           </button>
 
           <div className="arch-rail-divider" />
@@ -2266,6 +2381,13 @@ function ArchitectConsole({
           >
             INTAKE
           </button>
+          <button
+            className={`arch-intake-btn${showVaults ? " active" : ""}`}
+            onClick={toggleVaults}
+            aria-expanded={showVaults}
+          >
+            VAULTS
+          </button>
         </div>
       </div>
 
@@ -2685,6 +2807,196 @@ function ArchitectConsole({
                     {historyEnabled ? "ENABLED" : "DISABLED"}
                   </button>
                 </div>
+              </section>
+            </div>
+          </motion.div>
+        )}
+
+        {showVaults && (
+          <motion.div
+            className="arch-panel-overlay"
+            role="dialog"
+            aria-label="Vault Configuration"
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "100%", opacity: 0 }}
+            transition={{ type: "spring", stiffness: 120, damping: 22 }}
+          >
+            <div className="arch-panel-header">
+              <span className="arch-panel-dot" />
+              <span className="arch-panel-title">VAULTS</span>
+              <span className="arch-panel-sub">LABEL · COLOR · VISIBILITY · COPY</span>
+              <button
+                className="arch-panel-close"
+                onClick={toggleVaults}
+                aria-label="Close vault config"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="arch-panel-body arch-settings-body">
+              {vaultConfigs.length === 0 && (
+                <p className="arch-settings-empty">Loading vaults…</p>
+              )}
+              {vaultConfigs.map((vc) => {
+                const edit = vaultEdits[vc.vault_id] ?? {};
+                const saving = vaultSaving[vc.vault_id] ?? false;
+                return (
+                  <section key={vc.vault_id} className="arch-settings-section arch-vault-config-section">
+                    <h4 className="arch-settings-title">{vc.vault_id.toUpperCase()}</h4>
+                    <div className="arch-settings-row">
+                      <span>Label</span>
+                      <input
+                        className="arch-vault-config-input"
+                        value={edit.label ?? ""}
+                        onChange={e => setVaultEdits(s => ({ ...s, [vc.vault_id]: { ...s[vc.vault_id], label: e.target.value } }))}
+                        placeholder="MIXES"
+                      />
+                    </div>
+                    <div className="arch-settings-row">
+                      <span>Color <span style={{ opacity: 0.4 }}>(blank = none)</span></span>
+                      <input
+                        className="arch-vault-config-input"
+                        value={edit.color ?? ""}
+                        onChange={e => setVaultEdits(s => ({ ...s, [vc.vault_id]: { ...s[vc.vault_id], color: e.target.value } }))}
+                        placeholder="#14dc14"
+                        style={edit.color ? { color: edit.color } : {}}
+                      />
+                    </div>
+                    <div className="arch-settings-row">
+                      <span>Visible to listeners</span>
+                      <button
+                        className={`arch-settings-toggle${edit.visibility ? " active" : ""}`}
+                        onClick={() => setVaultEdits(s => ({ ...s, [vc.vault_id]: { ...s[vc.vault_id], visibility: edit.visibility ? 0 : 1 } }))}
+                      >
+                        {edit.visibility ? "ON" : "OFF"}
+                      </button>
+                    </div>
+                    <div className="arch-settings-row arch-settings-row--copy">
+                      <span>Copy line</span>
+                      <input
+                        className="arch-vault-config-input arch-vault-config-copy"
+                        value={edit.copy ?? ""}
+                        onChange={e => setVaultEdits(s => ({ ...s, [vc.vault_id]: { ...s[vc.vault_id], copy: e.target.value } }))}
+                        placeholder="Sub-headline shown to listeners"
+                      />
+                    </div>
+                    <div className="arch-settings-row">
+                      <button
+                        className="arch-vault-config-save god-btn"
+                        onClick={() => saveVaultConfig(vc.vault_id)}
+                        disabled={saving}
+                      >
+                        {saving ? "SAVING…" : "SAVE"}
+                      </button>
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {showAccessCodes && (
+          <motion.div
+            className="arch-panel-overlay"
+            role="dialog"
+            aria-label="Access Codes"
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "100%", opacity: 0 }}
+            transition={{ type: "spring", stiffness: 120, damping: 22 }}
+          >
+            <div className="arch-panel-header">
+              <span className="arch-panel-dot" />
+              <span className="arch-panel-title">ACCESS CODES</span>
+              <span className="arch-panel-sub">GRANT · REVOKE · MANAGE</span>
+              <button
+                className="arch-panel-close"
+                onClick={() => setShowAccessCodes(false)}
+                aria-label="Close access codes"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="arch-panel-body arch-ac-body">
+              <section className="arch-settings-section">
+                <h4 className="arch-settings-title">GENERATE</h4>
+                <div className="arch-ac-tier-row">
+                  {["MASTERS", "MUSES", "MEMBERS"].map((t) => (
+                    <button
+                      key={t}
+                      className={`arch-ac-tier-btn${acTier === t ? " active" : ""}`}
+                      onClick={() => setAcTier(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                <div className="arch-settings-row">
+                  <span>Granted To</span>
+                  <input
+                    className="arch-ac-input"
+                    placeholder="PUMP"
+                    value={acGrantedTo}
+                    onChange={(e) => setAcGrantedTo(e.target.value)}
+                  />
+                </div>
+                <div className="arch-settings-row">
+                  <span>Expires</span>
+                  <input
+                    className="arch-ac-input"
+                    type="date"
+                    value={acExpiresAt}
+                    onChange={(e) => setAcExpiresAt(e.target.value)}
+                  />
+                </div>
+                <button
+                  className="arch-ac-generate"
+                  disabled={acWorking}
+                  onClick={handleGenerateCode}
+                >
+                  {acWorking ? "GENERATING..." : "GENERATE CODE"}
+                </button>
+                {acResult && (
+                  <div className="arch-ac-result">
+                    <span className="arch-ac-result-url">{acResult.url}</span>
+                    <button
+                      className="arch-ac-copy"
+                      onClick={() => navigator.clipboard.writeText(acResult.url)}
+                    >
+                      COPY
+                    </button>
+                  </div>
+                )}
+                {acError && <p className="arch-ac-error">{acError}</p>}
+              </section>
+              <section className="arch-settings-section">
+                <h4 className="arch-settings-title">ACTIVE CODES</h4>
+                {acCodes.length === 0 && !acWorking && (
+                  <p className="arch-ac-empty">NO CODES ISSUED</p>
+                )}
+                {acCodes.map((c) => (
+                  <div key={c.id} className="arch-ac-code-row">
+                    <div className="arch-ac-code-info">
+                      <span className="arch-ac-code-tier">{c.tier}</span>
+                      {c.granted_to && (
+                        <span className="arch-ac-code-name">{c.granted_to}</span>
+                      )}
+                      {c.expires_at && (
+                        <span className="arch-ac-code-exp">
+                          {c.expires_at.slice(0, 10)}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      className="arch-ac-revoke"
+                      onClick={() => handleRevokeCode(c.id)}
+                    >
+                      REVOKE
+                    </button>
+                  </div>
+                ))}
               </section>
             </div>
           </motion.div>
