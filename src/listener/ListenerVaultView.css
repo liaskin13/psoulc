@@ -293,6 +293,12 @@
   fill: var(--vault-color, rgba(240, 237, 232, 0.72));
 }
 
+.lvv-play-loading {
+  padding: 0;
+  height: 56px;
+  gap: 6px;
+}
+
 .lvv-play-seek-hint {
   font-family: var(--font-ui, 'Chakra Petch', sans-serif);
   font-size: 7px;

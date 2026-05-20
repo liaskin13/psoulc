@@ -171,7 +171,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
       const x = (i - startBar) * step;
       const played = (x + barW / 2) < playheadX;
 
-      if (mode === 'heat') {
+      if (mode === 'freq') {
         const h = Math.max(2, bar.peak * H * 0.88);
         const alpha = played ? 0.92 : 0.14;
         ctx.fillStyle = heatColor(bar.peak, alpha);
@@ -322,7 +322,8 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
   const [playerState, setPlayerState] = useState(null); // null | 'paused' | 'playing' | 'error'
   const [activeTrack, setActiveTrack] = useState(null);
   const [audioState, setAudioState] = useState(() => audioEngine.getState());
-  const [vizMode, setVizMode] = useState('wave'); // 'wave' | 'heat'
+  const [vizMode, setVizMode] = useState('wave'); // 'wave' | 'freq'
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
 
   const screenStyle = vaultColor ? { '--vault-color': vaultColor } : undefined;
 
@@ -351,11 +352,14 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
     audioEngine.prewarm();
     setActiveTrack(track);
     setPlayerState('paused');
+    setIsAudioLoading(true);
     try {
       await audioEngine.load(url);
+      setIsAudioLoading(false);
       audioEngine.play();
     } catch (e) {
       console.warn('[LVV] load failed:', e.message);
+      setIsAudioLoading(false);
       setPlayerState('error');
     }
   }, []);
@@ -449,14 +453,21 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
           />
           <button
             className="lvv-play-btn"
-            onClick={handlePlayPause}
-            aria-label="Play"
+            onClick={isAudioLoading ? undefined : handlePlayPause}
+            aria-label={isAudioLoading ? 'Loading' : 'Play'}
           >
             <span className="lvv-play-track-title">{activeTrack?.title}</span>
-            <svg className="lvv-play-svg" viewBox="0 0 44 52" aria-hidden="true">
-              <polygon points="0,0 44,26 0,52" />
-            </svg>
-            <span className="lvv-play-seek-hint" aria-hidden="true">TAP WAVEFORM TO SEEK</span>
+            {isAudioLoading ? (
+              <div className="lvv-state lvv-play-loading" aria-live="polite">
+                <span className="lvv-state-dot" aria-hidden="true" />
+                <span>LOADING</span>
+              </div>
+            ) : (
+              <svg className="lvv-play-svg" viewBox="0 0 44 52" aria-hidden="true">
+                <polygon points="0,0 44,26 0,52" />
+              </svg>
+            )}
+            {!isAudioLoading && <span className="lvv-play-seek-hint" aria-hidden="true">TAP WAVEFORM TO SEEK</span>}
           </button>
         </div>
       </div>
@@ -486,11 +497,11 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
               WAVE
             </button>
             <button
-              className={`lvv-viz-btn${vizMode === 'heat' ? ' is-active' : ''}`}
-              onClick={() => setVizMode('heat')}
-              aria-pressed={vizMode === 'heat'}
+              className={`lvv-viz-btn${vizMode === 'freq' ? ' is-active' : ''}`}
+              onClick={() => setVizMode('freq')}
+              aria-pressed={vizMode === 'freq'}
             >
-              HEAT
+              FREQ
             </button>
           </div>
           <WaveformCanvas
