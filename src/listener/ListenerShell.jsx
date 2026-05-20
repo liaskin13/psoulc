@@ -227,10 +227,12 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
 
   // ── VAULT INTERIOR ───────────────────────────────────────────────
   if (activeVault) {
+    const activeVaultObj = vaults.find(v => v.id === activeVault);
     return (
       <ListenerVaultView
         key={activeVault}
         vault={activeVault}
+        vaultColor={activeVaultObj?.color || null}
         onBack={handleVaultBack}
         onExitSystem={onPowerDown}
       />
@@ -238,8 +240,11 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
   }
 
   // ── MAIN SHELL ───────────────────────────────────────────────────
+  const shellStyle = selectedVault?.color ? { '--vault-color': selectedVault.color } : undefined;
+
   return (
-    <div className="listener-shell">
+    <div className="listener-shell" style={shellStyle}>
+      <DPWallpaper opacity={0.35} />
       <PSCWordmark />
 
       <header className="listener-header">

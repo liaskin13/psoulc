@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { fetchPublishedVaultTracks, getAudioUrl } from '../lib/tracks';
 import * as audioEngine from '../lib/audioEngine';
 import { getWaveformBars } from '../utils/waveform';
@@ -14,8 +14,8 @@ function formatDuration(seconds) {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-// Returns { peak: 0-1, freq: hex color } per bar
-function parseWaveformBars(track, count = 80) {
+// Parse waveform data into 400 bars with Serato freq metadata
+function parseWaveformBars(track, count = 400) {
   try {
     const raw = JSON.parse(track.waveform_data || 'null');
     if (raw?.high?.length > 0) {
@@ -35,6 +35,22 @@ function parseWaveformBars(track, count = 80) {
   return getWaveformBars(track.id, count).map(v => ({ peak: v / 100, freq: '#14dc14' }));
 }
 
+// Maps GEOB freq color to Serato display [r, g, b]
+function seratoRgb(freq) {
+  if (freq === '#1464dc') return [226, 88, 20];    // bass → warm orange
+  if (freq === '#e56020') return [255, 248, 180];  // high → yellow-white
+  return [20, 220, 20];                             // mid → Serato green
+}
+
+// Maps normalized amplitude to a heat-map color (red → orange → green → cyan-white)
+function heatColor(normH, alpha) {
+  if (normH > 0.88) return `rgba(210, 255, 248, ${alpha})`;
+  if (normH > 0.70) return `rgba(40, 235, 185, ${alpha})`;
+  if (normH > 0.45) return `rgba(40, 215, 40, ${alpha})`;
+  if (normH > 0.25) return `rgba(205, 148, 0, ${alpha})`;
+  return `rgba(200, 28, 0, ${alpha})`;
+}
+
 function hexAlpha(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -42,6 +58,227 @@ function hexAlpha(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+// Draws the thin full-track overview strip
+function drawOverview(canvas, bars, currentTime, duration) {
+  const rect = canvas.getBoundingClientRect();
+  const W = rect.width || canvas.offsetWidth;
+  const H = rect.height || canvas.offsetHeight || 16;
+  if (!W) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const N = bars.length;
+  const barsPerPx = N / W;
+  for (let px = 0; px < W; px++) {
+    const bStart = Math.floor(px * barsPerPx);
+    const bEnd = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
+    let maxPeak = 0, bestFreq = '#14dc14';
+    for (let b = bStart; b < bEnd; b++) {
+      if (bars[b] && bars[b].peak > maxPeak) {
+        maxPeak = bars[b].peak; bestFreq = bars[b].freq;
+      }
+    }
+    const barH = Math.max(1, Math.round(maxPeak * H * 0.85));
+    const [r, g, bv] = seratoRgb(bestFreq);
+    ctx.fillStyle = `rgba(${r},${g},${bv},0.65)`;
+    ctx.fillRect(px, H - barH, 1, barH);
+  }
+
+  // Playhead marker
+  if (duration > 0) {
+    const px = Math.round((currentTime / duration) * W);
+    ctx.fillStyle = 'rgba(240,237,232,0.9)';
+    ctx.fillRect(Math.max(0, px - 1), 0, 2, H);
+  }
+}
+
+// Main scrolling zoom waveform canvas
+function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, mode = 'wave' }) {
+  const mainRef = useRef(null);
+  const overviewRef = useRef(null);
+  const ctRef = useRef(currentTime);
+  const durRef = useRef(duration);
+
+  useEffect(() => { ctRef.current = currentTime; }, [currentTime]);
+  useEffect(() => { durRef.current = duration; }, [duration]);
+
+  const parsedBars = useMemo(
+    () => parseWaveformBars(track, 400),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [track.id, track.waveform_data]
+  );
+  const barsRef = useRef(parsedBars);
+  useEffect(() => { barsRef.current = parsedBars; }, [parsedBars]);
+
+  const draw = useCallback(() => {
+    const ct = ctRef.current;
+    const dur = durRef.current;
+    const bars = barsRef.current;
+
+    // Overview strip
+    if (!ghost && overviewRef.current) {
+      drawOverview(overviewRef.current, bars, ct, dur);
+    }
+
+    const canvas = mainRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const W = rect.width || canvas.offsetWidth;
+    const H = rect.height || canvas.offsetHeight || 200;
+    if (!W) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    const totalBars = bars.length;
+
+    if (ghost) {
+      // Full-width ghost — off-white, no zoom, no playhead
+      const step = W / totalBars;
+      const barW = Math.max(1, step * 0.65);
+      bars.forEach((bar, i) => {
+        const h = Math.max(2, bar.peak * H * 0.85);
+        ctx.fillStyle = 'rgba(240,237,232,0.13)';
+        ctx.fillRect(i * step, (H - h) / 2, barW, h);
+      });
+      return;
+    }
+
+    // Scrolling zoom: 40 bars centered on playhead
+    const VISIBLE = 40;
+    const centerBarIdx = dur > 0 ? Math.round((ct / dur) * totalBars) : 0;
+    const halfVis = Math.floor(VISIBLE / 2);
+    const startBar = Math.max(0, Math.min(centerBarIdx - halfVis, totalBars - VISIBLE));
+    const endBar = Math.min(totalBars, startBar + VISIBLE);
+    const barCount = endBar - startBar;
+    const step = W / barCount;
+    const barW = Math.max(1, step * 0.72);
+    // Playhead sits at the center of the visible window
+    const playheadFrac = barCount > 0 ? (centerBarIdx - startBar) / barCount : 0.5;
+    const playheadX = playheadFrac * W;
+
+    for (let i = startBar; i < endBar; i++) {
+      const bar = bars[i];
+      const x = (i - startBar) * step;
+      const played = (x + barW / 2) < playheadX;
+
+      if (mode === 'heat') {
+        const h = Math.max(2, bar.peak * H * 0.88);
+        const alpha = played ? 0.92 : 0.14;
+        ctx.fillStyle = heatColor(bar.peak, alpha);
+        ctx.fillRect(x, (H - h) / 2, barW, h);
+      } else {
+        // WAVE mode — Serato display colors
+        const [r, g, bv] = seratoRgb(bar.freq);
+        const h = Math.max(2, bar.peak * H * 0.88);
+        const alpha = played ? 0.92 : 0.22;
+        ctx.fillStyle = `rgba(${r},${g},${bv},${alpha})`;
+        ctx.fillRect(x, (H - h) / 2, barW, h);
+      }
+    }
+
+    // Center line (subtle reference)
+    ctx.fillStyle = 'rgba(240,237,232,0.06)';
+    ctx.fillRect(0, H / 2, W, 1);
+
+    // Playhead — always centered
+    ctx.save();
+    ctx.fillStyle = 'rgba(240,237,232,0.88)';
+    ctx.shadowColor = 'rgba(240,237,232,0.5)';
+    ctx.shadowBlur = 8;
+    ctx.fillRect(Math.round(playheadX) - 1, 0, 2, H);
+    ctx.restore();
+  }, [ghost, mode]); // bars/ct/dur come from refs
+
+  // Stable ResizeObserver on main canvas — triggers draw on layout changes
+  useEffect(() => {
+    const canvas = mainRef.current;
+    if (!canvas) return;
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(canvas);
+    const raf = requestAnimationFrame(() => draw());
+    return () => { ro.disconnect(); cancelAnimationFrame(raf); };
+  }, [draw]);
+
+  // rAF loop — keeps scrolling without prop-driven re-renders
+  useEffect(() => {
+    let rafId;
+    const loop = () => { draw(); rafId = requestAnimationFrame(loop); };
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
+  }, [draw]);
+
+  const handleMainClick = useCallback((e) => {
+    if (!onSeek) return;
+    const dur = durRef.current;
+    if (!dur) return;
+    const canvas = mainRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+
+    if (ghost) {
+      // Ghost: full-track seek — tapping seeks + triggers play via onSeek
+      const frac = (e.clientX - rect.left) / rect.width;
+      onSeek(Math.max(0, Math.min(frac * dur, dur)));
+      return;
+    }
+
+    // Scrolling zoom seek
+    const VISIBLE = 40;
+    const bars = barsRef.current;
+    const totalBars = bars.length;
+    const centerBarIdx = Math.round((ctRef.current / dur) * totalBars);
+    const halfVis = Math.floor(VISIBLE / 2);
+    const startBar = Math.max(0, Math.min(centerBarIdx - halfVis, totalBars - VISIBLE));
+    const endBar = Math.min(totalBars, startBar + VISIBLE);
+    const barCount = endBar - startBar;
+    const frac = (e.clientX - rect.left) / rect.width;
+    const clickedBar = startBar + Math.round(frac * barCount);
+    onSeek(Math.max(0, Math.min((clickedBar / totalBars) * dur, dur)));
+  }, [onSeek, ghost]);
+
+  const handleOverviewClick = useCallback((e) => {
+    if (!onSeek) return;
+    const dur = durRef.current;
+    if (!dur) return;
+    const canvas = overviewRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    onSeek(((e.clientX - rect.left) / rect.width) * dur);
+  }, [onSeek]);
+
+  return (
+    <div className={`lvv-waveform-wrap${ghost ? ' lvv-waveform-ghost-wrap' : ''}`}>
+      {!ghost && (
+        <canvas
+          ref={overviewRef}
+          className="lvv-overview-canvas"
+          aria-hidden="true"
+          onClick={handleOverviewClick}
+          style={onSeek ? { cursor: 'pointer' } : undefined}
+        />
+      )}
+      <canvas
+        ref={mainRef}
+        className="lvv-waveform-canvas"
+        aria-hidden="true"
+        onClick={onSeek ? handleMainClick : undefined}
+        style={onSeek ? { cursor: 'pointer' } : undefined}
+      />
+    </div>
+  );
+}
+
+// Thumbnail for track list rows (uses low-res 80-bar data)
 function ThumbnailCanvas({ track }) {
   const ref = useRef(null);
 
@@ -56,12 +293,14 @@ function ThumbnailCanvas({ track }) {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, W, H);
 
+    // Use low-res bars (faster — same 80-bar thumbnail data)
     const bars = parseWaveformBars(track, 13);
     const step = W / bars.length;
     const barW = Math.max(1, step * 0.6);
     bars.forEach((bar, i) => {
       const h = Math.max(1, bar.peak * H);
-      ctx.fillStyle = hexAlpha(bar.freq, 0.72);
+      const [r, g, bv] = seratoRgb(bar.freq);
+      ctx.fillStyle = `rgba(${r},${g},${bv},0.65)`;
       ctx.fillRect(i * step, (H - h) / 2, barW, h);
     });
   }, [track.id, track.waveform_data]);
@@ -77,105 +316,15 @@ function ThumbnailCanvas({ track }) {
   );
 }
 
-function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek }) {
-  const ref = useRef(null);
-  const currentTimeRef = useRef(currentTime);
-  const durationRef = useRef(duration);
-
-  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
-  useEffect(() => { durationRef.current = duration; }, [duration]);
-
-  const draw = useCallback(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const W = rect.width || canvas.offsetWidth;
-    const H = rect.height || canvas.offsetHeight || 80;
-    if (!W) return;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, W, H);
-
-    const ct = currentTimeRef.current;
-    const dur = durationRef.current;
-    const bars = parseWaveformBars(track, 80);
-    const step = W / bars.length;
-    const barW = Math.max(1, step * 0.65);
-    const progress = dur > 0 ? ct / dur : 0;
-    const playheadX = Math.round(progress * W);
-
-    bars.forEach((bar, i) => {
-      const h = Math.max(2, bar.peak * H * 0.85);
-      const x = i * step;
-      const y = (H - h) / 2;
-      if (ghost) {
-        ctx.fillStyle = hexAlpha(bar.freq, 0.18);
-      } else {
-        const played = (x + barW / 2) <= playheadX;
-        ctx.fillStyle = hexAlpha(bar.freq, played ? 0.92 : 0.32);
-      }
-      ctx.fillRect(x, y, barW, h);
-    });
-
-    if (!ghost && dur > 0) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(240,237,232,0.9)';
-      ctx.shadowColor = 'rgba(240,237,232,0.5)';
-      ctx.shadowBlur = 6;
-      ctx.fillRect(Math.min(playheadX, W - 1), 0, 1, H);
-      ctx.restore();
-    }
-  }, [track, ghost]);
-
-  // Stable ResizeObserver — created once per track/ghost, deferred first draw
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const ro = new ResizeObserver(() => draw());
-    ro.observe(canvas);
-    const raf = requestAnimationFrame(() => draw());
-    return () => { ro.disconnect(); cancelAnimationFrame(raf); };
-  }, [draw]);
-
-  // rAF loop — keeps playhead moving without prop-driven re-renders
-  useEffect(() => {
-    let rafId;
-    const loop = () => { draw(); rafId = requestAnimationFrame(loop); };
-    rafId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafId);
-  }, [draw]);
-
-  const handleClick = useCallback((e) => {
-    if (!onSeek) return;
-    const dur = durationRef.current;
-    if (!dur) return;
-    const canvas = ref.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    onSeek(((e.clientX - rect.left) / rect.width) * dur);
-  }, [onSeek]);
-
-  return (
-    <canvas
-      ref={ref}
-      className={`lvv-waveform-canvas${ghost ? ' lvv-waveform-ghost' : ''}`}
-      aria-hidden="true"
-      onClick={onSeek ? handleClick : undefined}
-      style={onSeek ? { cursor: 'pointer' } : undefined}
-    />
-  );
-}
-
-function ListenerVaultView({ vault, onBack, onExitSystem }) {
+function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [playerState, setPlayerState] = useState(null); // null | 'paused' | 'playing'
+  const [playerState, setPlayerState] = useState(null); // null | 'paused' | 'playing' | 'error'
   const [activeTrack, setActiveTrack] = useState(null);
   const [audioState, setAudioState] = useState(() => audioEngine.getState());
+  const [vizMode, setVizMode] = useState('wave'); // 'wave' | 'heat'
+
+  const screenStyle = vaultColor ? { '--vault-color': vaultColor } : undefined;
 
   useEffect(() => {
     setLoading(true);
@@ -207,6 +356,7 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
       audioEngine.play();
     } catch (e) {
       console.warn('[LVV] load failed:', e.message);
+      setPlayerState('error');
     }
   }, []);
 
@@ -226,12 +376,21 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
 
   const handlePlayerBack = useCallback(() => {
     setPlayerState(null);
-    // activeTrack stays set — music keeps playing in background
+    // activeTrack stays set — music continues in background
   }, []);
 
   const handleMiniTransportTap = useCallback(() => {
     setPlayerState(audioState.isPlaying ? 'playing' : 'paused');
   }, [audioState.isPlaying]);
+
+  const handleRetry = useCallback(() => {
+    if (activeTrack) handleTrackSelect(activeTrack);
+  }, [activeTrack, handleTrackSelect]);
+
+  const handleGhostSeek = useCallback((time) => {
+    audioEngine.seek(time);
+    audioEngine.play();
+  }, []);
 
   const header = (
     <header className="lvv-header">
@@ -249,10 +408,29 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
     </header>
   );
 
+  // ERROR — load failed, offer retry
+  if (playerState === 'error') {
+    return (
+      <div className="lvv-screen" style={screenStyle}>
+        {header}
+        <button className="lvv-back god-btn" onClick={handlePlayerBack} aria-label="Back to track list">
+          ← BACK
+        </button>
+        <div className="lvv-error-stage" role="alert">
+          <p className="lvv-error-track">{activeTrack?.title}</p>
+          <p className="lvv-error-msg">COULDN'T LOAD</p>
+          <button className="lvv-error-retry god-btn" onClick={handleRetry}>
+            RETRY
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // PAUSED — ghost waveform + pulsing play triangle
   if (playerState === 'paused') {
     return (
-      <div className="lvv-screen">
+      <div className="lvv-screen" style={screenStyle}>
         {header}
         <button
           className="lvv-back god-btn"
@@ -267,6 +445,7 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
             currentTime={0}
             duration={audioState.duration}
             ghost
+            onSeek={handleGhostSeek}
           />
           <button
             className="lvv-play-btn"
@@ -283,11 +462,11 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
     );
   }
 
-  // PLAYING — live waveform + transport bar
+  // PLAYING — scrolling zoom waveform + viz toggle + transport bar
   if (playerState === 'playing') {
     const isPlaying = audioState.isPlaying;
     return (
-      <div className="lvv-screen">
+      <div className="lvv-screen" style={screenStyle}>
         {header}
         <button
           className="lvv-back god-btn"
@@ -297,10 +476,27 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
           ← BACK
         </button>
         <div className="lvv-player-stage">
+          <div className="lvv-viz-controls" role="group" aria-label="Visualization mode">
+            <button
+              className={`lvv-viz-btn${vizMode === 'wave' ? ' is-active' : ''}`}
+              onClick={() => setVizMode('wave')}
+              aria-pressed={vizMode === 'wave'}
+            >
+              WAVE
+            </button>
+            <button
+              className={`lvv-viz-btn${vizMode === 'heat' ? ' is-active' : ''}`}
+              onClick={() => setVizMode('heat')}
+              aria-pressed={vizMode === 'heat'}
+            >
+              HEAT
+            </button>
+          </div>
           <WaveformCanvas
             track={activeTrack}
             currentTime={audioState.currentTime}
             duration={audioState.duration}
+            mode={vizMode}
             onSeek={(t) => audioEngine.seek(t)}
           />
         </div>
@@ -315,6 +511,11 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
             </span>
             <span className="lvv-transport-dot" aria-hidden="true">·</span>
             <span className="lvv-transport-title">{activeTrack?.title}</span>
+            {audioState.duration > 0 && (
+              <span className="lvv-transport-time" aria-hidden="true">
+                {formatDuration(audioState.currentTime)} · −{formatDuration(audioState.duration - audioState.currentTime)}
+              </span>
+            )}
           </button>
           <button
             className="lvv-transport-stop"
@@ -353,7 +554,7 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
   ) : null;
 
   return (
-    <div className="lvv-screen">
+    <div className="lvv-screen" style={screenStyle}>
       {header}
       <button
         className="lvv-back god-btn"
@@ -375,7 +576,7 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
         {!loading && tracks.map((track, i) => (
           <button
             key={track.id}
-            className="lvv-track-row"
+            className={`lvv-track-row${activeTrack?.id === track.id ? ' lvv-track-row--active' : ''}`}
             onClick={() => handleTrackSelect(track)}
             role="listitem"
           >
