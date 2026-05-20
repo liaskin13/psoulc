@@ -773,7 +773,7 @@
   align-items: center;
   height: 40px;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
-  background: #000;
+  background: oklch(0.04 0.006 220);
   overflow: hidden;
   padding: 0 12px;
 }
@@ -2201,6 +2201,18 @@
 .arch-retract-btn:not(:disabled) {
   color: rgba(160, 160, 160, 0.75);
   border-color: rgba(160, 160, 160, 0.25);
+}
+
+.arch-retract-btn.arch-retract-confirm {
+  color: oklch(0.72 0.18 30);
+  border-color: oklch(0.72 0.18 30 / 0.55);
+  background: oklch(0.72 0.18 30 / 0.08);
+  animation: arch-retract-pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes arch-retract-pulse {
+  from { border-color: oklch(0.72 0.18 30 / 0.35); }
+  to   { border-color: oklch(0.72 0.18 30 / 0.75); }
 }
 
 .arch-track-wave-mini {

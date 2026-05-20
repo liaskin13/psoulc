@@ -336,6 +336,7 @@ function ArchitectConsole({
   const loopActiveRef = useRef(false);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
+  const retractTimerRef = useRef(null);
   const tabRefs = useRef([]);
   const gliderRef = useRef(null);
   const cursorRef = useRef(null);
@@ -1009,6 +1010,19 @@ function ArchitectConsole({
   const handleRetractSelected = async () => {
     const ids = [...selectedTrackIds];
     if (!ids.length) return;
+
+    // First click: arm the confirm state with 3s auto-cancel
+    if (retractState.status !== "confirm") {
+      setRetractState({ status: "confirm", count: ids.length });
+      if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+      retractTimerRef.current = setTimeout(() => {
+        setRetractState({ status: "idle", count: 0 });
+      }, 3000);
+      return;
+    }
+
+    // Second click (confirmed): execute
+    if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
     setRetractState({ status: "pending", count: ids.length });
     try {
       await Promise.all(
@@ -2106,13 +2120,15 @@ function ArchitectConsole({
                  `PUBLISH${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
               </button>
               <button
-                className={`arch-browser-btn arch-retract-btn${retractState.status === "error" ? " arch-action-error" : ""}`}
+                className={`arch-browser-btn arch-retract-btn${retractState.status === "confirm" ? " arch-retract-confirm" : ""}${retractState.status === "error" ? " arch-action-error" : ""}`}
                 onClick={handleRetractSelected}
                 disabled={!selectionHasLive || retractState.status === "pending"}
+                title={retractState.status === "confirm" ? "Click again to confirm — auto-cancels in 3s" : "RETRACT — unpublish selected live tracks from vault"}
               >
                 {retractState.status === "pending" ? "RETRACTING…" :
                  retractState.status === "success" ? `DONE (${retractState.count})` :
                  retractState.status === "error" ? "FAILED" :
+                 retractState.status === "confirm" ? `CONFIRM RETRACT (${retractState.count})?` :
                  `RETRACT${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
               </button>
               <div className="arch-display-divider" aria-hidden="true" />

@@ -444,12 +444,32 @@ function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
     }
   }
 
-  // Playhead — 2px bright line with glow so position is unmissable
+  // Playhead — 3px bright line + halo + time readout
   if (playheadPx >= 0) {
-    ctx.fillStyle = "rgba(240, 237, 232, 0.95)";
-    ctx.fillRect(playheadPx, 0, 2, H);
-    ctx.fillStyle = "rgba(240, 237, 232, 0.20)";
-    ctx.fillRect(Math.max(0, playheadPx - 1), 0, 4, H);
+    // Outer glow halo
+    ctx.fillStyle = "rgba(240, 237, 232, 0.15)";
+    ctx.fillRect(Math.max(0, playheadPx - 2), 0, 7, H);
+    // Core line
+    ctx.fillStyle = "rgba(240, 237, 232, 0.96)";
+    ctx.fillRect(playheadPx, 0, 3, H);
+
+    // Time readout — MM:SS above the playhead
+    if (duration > 0) {
+      const totalSec = Math.floor(currentTime);
+      const mm = String(Math.floor(totalSec / 60)).padStart(2, "0");
+      const ss = String(totalSec % 60).padStart(2, "0");
+      const label = `${mm}:${ss}`;
+      ctx.font = "bold 9px 'Chakra Petch', 'JetBrains Mono', monospace";
+      ctx.textBaseline = "top";
+      const tw = ctx.measureText(label).width;
+      // Pin label so it doesn't run off right edge
+      const lx = Math.min(playheadPx + 4, W - tw - 3);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+      ctx.fillRect(lx - 2, 2, tw + 4, 12);
+      ctx.fillStyle = "rgba(240, 237, 232, 0.92)";
+      ctx.fillText(label, lx, 3);
+      ctx.textBaseline = "alphabetic";
+    }
   }
 }
 
