@@ -30,9 +30,10 @@ export default function DeckWaveform({
   zoom = 1,
   loopRegion = null,
 }) {
-  const canvasRef   = useRef(null);
-  const overviewRef = useRef(null);
-  const animFrameRef = useRef(null);
+  const canvasRef      = useRef(null);
+  const overviewRef    = useRef(null);
+  const animFrameRef   = useRef(null);
+  const displayZoomRef = useRef(zoom); // smoothed zoom for lerp transition
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,8 +66,11 @@ export default function DeckWaveform({
       }
 
       const barCount = peaks.length;
+      // Smooth zoom: lerp displayZoom toward target zoom, ~300ms at 60fps
+      displayZoomRef.current += (zoom - displayZoomRef.current) * 0.12;
+      const displayZoom = displayZoomRef.current;
       // Zoom: show a window of barCount/zoom bars centered on playhead
-      const visibleBars = Math.round(barCount / zoom);
+      const visibleBars = Math.round(barCount / displayZoom);
       const playheadFrac = duration > 0 ? currentTime / duration : 0;
       const centerBar = Math.round(playheadFrac * barCount);
       const startBar = Math.max(
