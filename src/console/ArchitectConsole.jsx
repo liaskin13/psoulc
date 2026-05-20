@@ -337,6 +337,7 @@ function ArchitectConsole({
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
   const retractTimerRef = useRef(null);
+  const kbRef = useRef({});
   const tabRefs = useRef([]);
   const gliderRef = useRef(null);
   const cursorRef = useRef(null);
@@ -1002,8 +1003,7 @@ function ArchitectConsole({
       announce(`${ids.length} track${ids.length > 1 ? "s" : ""} published to vault.`);
       setTimeout(() => setPublishState({ status: "idle", count: 0 }), 800);
     } catch {
-      setPublishState({ status: "error", count: 0 });
-      setTimeout(() => setPublishState({ status: "idle", count: 0 }), 1200);
+      setPublishState({ status: "error", count: ids.length });
     }
   };
 
@@ -1043,8 +1043,7 @@ function ArchitectConsole({
       announce(`${ids.length} track${ids.length > 1 ? "s" : ""} retracted from vault.`);
       setTimeout(() => setRetractState({ status: "idle", count: 0 }), 800);
     } catch {
-      setRetractState({ status: "error", count: 0 });
-      setTimeout(() => setRetractState({ status: "idle", count: 0 }), 1200);
+      setRetractState({ status: "error", count: ids.length });
     }
   };
 
@@ -1560,6 +1559,55 @@ function ArchitectConsole({
     showVoidConfirm,
   ]);
 
+  // Sync latest values into kbRef so the keyboard handler never goes stale
+  kbRef.current = {
+    editingTrackId, editingCueNum, currentTime, audioDuration,
+    handlePlayPause, handleLoadDeck, handleCue, handleHotCueClick, handleSeek,
+  };
+
+  // Performance keyboard shortcuts — registered once, reads live values via kbRef
+  useEffect(() => {
+    const onKey = (e) => {
+      const kb = kbRef.current;
+      if (kb.editingTrackId || kb.editingCueNum) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if (e.code === "Space" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        kb.handlePlayPause();
+        return;
+      }
+      if (e.code === "KeyL" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        kb.handleLoadDeck();
+        return;
+      }
+      if (e.code === "Backquote" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        kb.handleCue();
+        return;
+      }
+      const digit = e.code.match(/^Digit([1-8])$/)?.[1];
+      if (digit && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        kb.handleHotCueClick(parseInt(digit, 10));
+        return;
+      }
+      if (e.code === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        kb.handleSeek(Math.max(0, kb.currentTime - 5));
+        return;
+      }
+      if (e.code === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        kb.handleSeek(Math.min(kb.audioDuration, kb.currentTime + 5));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const isD = viewer === "D";
 
   return (
@@ -1613,12 +1661,12 @@ function ArchitectConsole({
       <section className="arch-deck-zone" aria-label="Deck">
         <div className="arch-deck-meta">
           <div className="arch-deck-title">
-            {deckTrack ? deckTrack.title : "NO OBJECT LOADED"}
+            {deckTrack ? deckTrack.title : "NO TRACK LOADED"}
           </div>
           <div className="arch-deck-artist">
             {deckTrack
               ? deckTrack.artist || "METADATA READY"
-              : "SELECT AN OBJECT"}
+              : "SELECT A TRACK"}
           </div>
           <div className="arch-deck-stats">
             <span className="arch-stat">
@@ -1667,14 +1715,14 @@ function ArchitectConsole({
           <div className="arch-waveform-col">
             <div className="arch-waveform-main">
               {!deckTrack ? (
-                <div className="arch-deck-empty-state">SELECT AN OBJECT</div>
+                <div className="arch-deck-empty-state">SELECT A TRACK</div>
               ) : deckIsGenerating ? (
                 <div className="arch-deck-empty-state">
                   GENERATING WAVEFORM…
                 </div>
               ) : !deckTrackHasWaveform ? (
                 <div className="arch-deck-empty-state">
-                  NO WAVEFORM FOR SELECTED OBJECT
+                  NO WAVEFORM FOR SELECTED TRACK
                 </div>
               ) : (
                 <DeckWaveform
@@ -1912,11 +1960,23 @@ function ArchitectConsole({
                 return opt ? opt.label : "1/4";
               })()}
             </button>
-            {loopRegion.start !== null && loopRegion.end !== null && (
-              <span className="arch-loop-readout">
-                {`${loopRegion.start.toFixed(1)}→${loopRegion.end.toFixed(1)}s`}
-              </span>
-            )}
+            {loopRegion.start !== null && loopRegion.end !== null && (() => {
+              const bpm = loadedTrack ? resolveTrackBpm(loadedTrack) : null;
+              const durSec = loopRegion.end - loopRegion.start;
+              if (bpm && bpm > 0) {
+                const bars = (durSec * bpm) / 240;
+                return (
+                  <span className="arch-loop-readout" title={`${loopRegion.start.toFixed(1)}→${loopRegion.end.toFixed(1)}s`}>
+                    {bars < 1 ? `${(bars * 4).toFixed(0)} BEAT${Math.round(bars * 4) !== 1 ? "S" : ""}` : `${bars % 1 === 0 ? bars.toFixed(0) : bars.toFixed(1)} BAR${bars >= 2 ? "S" : ""}`}
+                  </span>
+                );
+              }
+              return (
+                <span className="arch-loop-readout">
+                  {`${loopRegion.start.toFixed(1)}→${loopRegion.end.toFixed(1)}s`}
+                </span>
+              );
+            })()}
             <button
               className="arch-loop-btn"
               disabled={loopRegion.start === null}
@@ -2109,28 +2169,46 @@ function ArchitectConsole({
                 HISTORY
               </button>
               <div className="arch-display-divider arch-display-divider--major" aria-hidden="true" />
-              <button
-                className={`arch-browser-btn arch-publish-btn${publishState.status === "error" ? " arch-action-error" : ""}`}
-                onClick={handlePublishSelected}
-                disabled={!selectionHasStaged || publishState.status === "pending"}
-              >
-                {publishState.status === "pending" ? "PUBLISHING…" :
-                 publishState.status === "success" ? `DONE (${publishState.count})` :
-                 publishState.status === "error" ? "FAILED" :
-                 `PUBLISH${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
-              </button>
-              <button
-                className={`arch-browser-btn arch-retract-btn${retractState.status === "confirm" ? " arch-retract-confirm" : ""}${retractState.status === "error" ? " arch-action-error" : ""}`}
-                onClick={handleRetractSelected}
-                disabled={!selectionHasLive || retractState.status === "pending"}
-                title={retractState.status === "confirm" ? "Click again to confirm — auto-cancels in 3s" : "RETRACT — unpublish selected live tracks from vault"}
-              >
-                {retractState.status === "pending" ? "RETRACTING…" :
-                 retractState.status === "success" ? `DONE (${retractState.count})` :
-                 retractState.status === "error" ? "FAILED" :
-                 retractState.status === "confirm" ? `CONFIRM RETRACT (${retractState.count})?` :
-                 `RETRACT${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
-              </button>
+              {publishState.status === "error" ? (
+                <button
+                  className="arch-browser-btn arch-publish-btn arch-action-error"
+                  onClick={handlePublishSelected}
+                  title={`Publish failed for ${publishState.count} track${publishState.count !== 1 ? "s" : ""} — click to retry`}
+                >
+                  {`RETRY PUBLISH (${publishState.count})`}
+                </button>
+              ) : (
+                <button
+                  className="arch-browser-btn arch-publish-btn"
+                  onClick={handlePublishSelected}
+                  disabled={!selectionHasStaged || publishState.status === "pending"}
+                >
+                  {publishState.status === "pending" ? "PUBLISHING…" :
+                   publishState.status === "success" ? `DONE (${publishState.count})` :
+                   `PUBLISH${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
+                </button>
+              )}
+              {retractState.status === "error" ? (
+                <button
+                  className="arch-browser-btn arch-retract-btn arch-action-error"
+                  onClick={handleRetractSelected}
+                  title={`Retract failed for ${retractState.count} track${retractState.count !== 1 ? "s" : ""} — click to retry`}
+                >
+                  {`RETRY RETRACT (${retractState.count})`}
+                </button>
+              ) : (
+                <button
+                  className={`arch-browser-btn arch-retract-btn${retractState.status === "confirm" ? " arch-retract-confirm" : ""}`}
+                  onClick={handleRetractSelected}
+                  disabled={!selectionHasLive || retractState.status === "pending"}
+                  title={retractState.status === "confirm" ? "Click again to confirm — auto-cancels in 3s" : "RETRACT — unpublish selected live tracks from vault"}
+                >
+                  {retractState.status === "pending" ? "RETRACTING…" :
+                   retractState.status === "success" ? `DONE (${retractState.count})` :
+                   retractState.status === "confirm" ? `CONFIRM RETRACT (${retractState.count})?` :
+                   `RETRACT${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
+                </button>
+              )}
               <div className="arch-display-divider" aria-hidden="true" />
               <button
                 className="arch-browser-btn"
