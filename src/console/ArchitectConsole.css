@@ -1225,6 +1225,33 @@
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* Clear-confirm state: pulsing red border, 3s auto-cancel */
+.arch-hotcue.clearing {
+  box-shadow:
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 1.5px oklch(0.62 0.22 25);
+  animation: arch-cue-clear-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes arch-cue-clear-pulse {
+  from { box-shadow: inset 0 -2px 0 rgba(0,0,0,0.55), 0 0 0 1.5px oklch(0.62 0.22 25 / 0.4); }
+  to   { box-shadow: inset 0 -2px 0 rgba(0,0,0,0.55), 0 0 0 1.5px oklch(0.62 0.22 25 / 0.9); }
+}
+
+/* Keyboard shortcut legend — toggled by ? key */
+.arch-shortcut-legend {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  color: rgba(185, 195, 200, 0.5);
+  text-align: center;
+  padding: 4px 16px;
+  border-top: 1px solid rgba(185, 195, 200, 0.06);
+  background: rgba(0, 0, 0, 0.15);
+  user-select: none;
+}
+
 /* D-bank editable label input — appears on double-click */
 .arch-hotcue-input {
   position: absolute;

@@ -330,6 +330,8 @@ function ArchitectConsole({
   const [activeCueBank, setActiveCueBank] = useState("A");
   const [editingCueNum, setEditingCueNum] = useState(null); // D-bank: internal cue number being label-edited
   const [editingCueLabel, setEditingCueLabel] = useState("");
+  const [cueClearConfirm, setCueClearConfirm] = useState(new Set());
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [loopRegion, setLoopRegion] = useState({ start: null, end: null });
   const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
   const [loopPanelTrigger, setLoopPanelTrigger] = useState(0);
@@ -337,6 +339,7 @@ function ArchitectConsole({
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
   const retractTimerRef = useRef(null);
+  const cueClearTimers = useRef({});
   const kbRef = useRef({});
   const tabRefs = useRef([]);
   const gliderRef = useRef(null);
@@ -1564,6 +1567,7 @@ function ArchitectConsole({
   kbRef.current = {
     editingTrackId, editingCueNum, currentTime, audioDuration,
     handlePlayPause, handleLoadDeck, handleCue, handleHotCueClick, handleSeek,
+    setShowShortcuts,
   };
 
   // Performance keyboard shortcuts — registered once, reads live values via kbRef
@@ -1574,6 +1578,12 @@ function ArchitectConsole({
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
+      // ? — toggle shortcut legend
+      if (e.key === "?" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        kb.setShowShortcuts((v) => !v);
+        return;
+      }
       if (e.code === "Space" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         kb.handlePlayPause();
@@ -1824,11 +1834,31 @@ function ArchitectConsole({
                 const handleDblClick = (e) => {
                   e.stopPropagation();
                   if (isDBank) {
-                    // D-bank: edit label instead of clearing
                     setEditingCueNum(internalNum);
                     setEditingCueLabel(cue?.label || "");
-                  } else {
+                    return;
+                  }
+                  if (!cue) return;
+                  if (cueClearConfirm.has(internalNum)) {
+                    // Second double-click: confirmed — clear
+                    clearTimeout(cueClearTimers.current[internalNum]);
+                    delete cueClearTimers.current[internalNum];
+                    setCueClearConfirm((prev) => {
+                      const next = new Set(prev);
+                      next.delete(internalNum);
+                      return next;
+                    });
                     clearHotCue(displayNum, e);
+                  } else {
+                    // First double-click: arm confirm with 3s auto-cancel
+                    setCueClearConfirm((prev) => new Set([...prev, internalNum]));
+                    cueClearTimers.current[internalNum] = setTimeout(() => {
+                      setCueClearConfirm((prev) => {
+                        const next = new Set(prev);
+                        next.delete(internalNum);
+                        return next;
+                      });
+                    }, 3000);
                   }
                 };
 
@@ -1850,13 +1880,16 @@ function ArchitectConsole({
                   setEditingCueNum(null);
                 };
 
+                const isClearPending = cueClearConfirm.has(internalNum);
                 return (
                   <button
                     key={displayNum}
-                    className={`arch-hotcue${cue ? " has-cue" : ""}`}
+                    className={`arch-hotcue${cue ? " has-cue" : ""}${isClearPending ? " clearing" : ""}`}
                     aria-label={
                       isDBank
                         ? `Cue D${displayNum}${cue?.label ? ` — ${cue.label}` : ""} — double-click to name`
+                        : isClearPending
+                        ? `Hot cue ${displayNum} — double-click again to confirm clear`
                         : cue
                         ? `Hot cue ${displayNum} — double-click to clear`
                         : `Hot cue ${displayNum}`
@@ -1864,6 +1897,8 @@ function ArchitectConsole({
                     title={
                       isDBank
                         ? `D-bank ${displayNum}${cue?.label ? `: ${cue.label}` : ""} — double-click to name`
+                        : isClearPending
+                        ? `Double-click again to clear — auto-cancels in 3s`
                         : cue
                         ? `Hot cue ${displayNum} at ${cue.time?.toFixed(1)}s — click to jump, double-click to clear`
                         : `Hot cue ${displayNum} — click while playing to set`
@@ -1989,6 +2024,12 @@ function ArchitectConsole({
         </div>
       </div>
 
+      {/* Keyboard shortcut legend — toggled by ? key */}
+      {showShortcuts && (
+        <div className="arch-shortcut-legend" role="note" aria-label="Keyboard shortcuts">
+          SPACE play/pause&nbsp;&nbsp;·&nbsp;&nbsp;L load&nbsp;&nbsp;·&nbsp;&nbsp;` cue&nbsp;&nbsp;·&nbsp;&nbsp;1–8 pads&nbsp;&nbsp;·&nbsp;&nbsp;← → seek ±5s&nbsp;&nbsp;·&nbsp;&nbsp;ESC dismiss&nbsp;&nbsp;·&nbsp;&nbsp;? close
+        </div>
+      )}
 
       {/* ── LOWER ZONE ──────────────────────────────────────────────── */}
       <div className="arch-lower-zone">
