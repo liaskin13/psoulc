@@ -317,7 +317,7 @@ function ThumbnailCanvas({ track }) {
   );
 }
 
-function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
+function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem }) {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playerState, setPlayerState] = useState(null); // null | 'paused' | 'playing' | 'error'
@@ -414,6 +414,7 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
       <div className="lvv-header-id">
         <span className="lvv-header-kicker">LISTENING ROOM</span>
         <span className="lvv-header-owner">CURATED BY D</span>
+        {vaultLabel && <span className="lvv-header-vault">{vaultLabel}</span>}
       </div>
       <button
         className="lvv-exit god-btn"

@@ -158,7 +158,7 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
   useEffect(() => {
     if (!codeSession) return;
     setShowWelcome(true);
-    const t = window.setTimeout(() => setShowWelcome(false), 1200);
+    const t = window.setTimeout(() => setShowWelcome(false), 2500);
     return () => window.clearTimeout(t);
   }, [codeSession]);
 
@@ -233,6 +233,7 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
         key={activeVault}
         vault={activeVault}
         vaultColor={activeVaultObj?.color || null}
+        vaultLabel={activeVaultObj?.label || null}
         onBack={handleVaultBack}
         onExitSystem={onPowerDown}
       />
@@ -361,6 +362,7 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
               <span className="listener-welcome-name">{codeSession.grantedTo.toUpperCase()}</span>
             )}
             <span className="listener-welcome-sub">CURATED BY D</span>
+            <span className="listener-welcome-browse">BROWSE THE VAULTS BELOW</span>
           </motion.div>
         )}
       </AnimatePresence>
