@@ -6,13 +6,13 @@ product
 
 ## Users
 
-**D** — Primary artist and architect. UBC music production degree. AKAI MPC III beta tester. DJ with 30+ mixes. Has all his audio files locally. Operates the console as a performance instrument, not a file manager. Expects hardware-grade precision and response.
+Three tiers. Abbreviated M³.
 
-**L** — Co-architect and gatekeeper. Infrastructure and access control. Maintains the platform, manages who enters.
+**MASTERS** — D and L. Sovereign architects. D is the primary artist: UBC music production degree, AKAI MPC III beta tester, DJ with 30+ mixes. Operates the console as a performance instrument, not a file manager. L is co-architect and gatekeeper: infrastructure, access control, who enters the room. MASTERS are the only users who configure anything.
 
-**Muses** — Featured artists granted vault access by D. Invited collaborators with sovereignty over their own uploads.
+**MUSES** — Featured artists granted vault access by D. Invited collaborators with sovereignty over their own uploads. Hand-selected. Never discovered through the platform.
 
-**Shadow subscribers** — Listeners with paid access ($9/mo). They are guests in D's world. They consume, they do not configure.
+**MEMBERS** — Paying listeners ($9/mo). Guests in D's world. They experience; they do not configure. The platform makes no distinction between a casual listener and a dedicated fan — everyone enters on the same terms.
 
 ## Product Purpose
 
@@ -59,6 +59,10 @@ Nothing that looks like AI made it.
 4. **The artist's work is the biggest thing on screen.** Track lists, waveforms, and cue points should dominate the layout. Controls are servants to the catalog, not competitors for space.
 
 5. **Looks like nothing anyone has ever seen.** Every screen is a first-principles decision. Category reflexes — "DJ software is gray and blue" — are rejected before they land.
+
+6. **The guest was invited, not discovering.** Every design decision in the listener flow should reflect receipt, not browsing. The sensation is receiving a mixtape: abundance communicated through time, not marketing copy. No CTAs. No pitch. Just the work, and a door.
+
+7. **The waveform is the artwork.** PSC has no album art concept. The waveform shape IS the visual identity of each mix. The canonical waveform rendering (DeckWaveform) uses Serato-style frequency bands — orange for bass, green for mid, yellow-white for high transients — making every mix visually distinct and immediately recognizable.
 
 ## Accessibility & Inclusion
 

@@ -3,7 +3,7 @@
 ## Product Context
 
 - **What this is:** A cinematic, artist-first music platform. Sovereign infrastructure for independent creators.
-- **Who it's for:** D (primary), L (co-architect), and invited collaborators with personal access codes.
+- **Who it's for:** M³ tiers — MASTERS (D and L), MUSES (invited collaborators), MEMBERS (paying listeners).
 - **Space/industry:** Music , archival, and selective sharing. Not a streaming platform — a private instrument.
 - **Project type:** Web app / artist console system.
 
@@ -215,19 +215,77 @@ Visual identity problem: PSC has no cover art, no album art, no per-mix image. T
 
 Browser autoplay restrictions make this state extremely common. It must feel inhabited, not broken.
 
-- **Main area:** Ghost waveform at 11% opacity — all bars `rgba(160,160,160,0.11)`. Spatial presence without implying playback.
-- **Center overlay:** Track title (14px Chakra Petch 600) + pulsing ▶ glyph (24px, `opacity: 0.4 ↔ 1.0` at `2s ease-in-out`).
+- **Main area:** Ghost waveform at 11% opacity — all bars `rgba(240,237,232,0.11)`. Spatial presence without implying playback.
+- **Center overlay:** Track title (14px Chakra Petch 600) + pulsing ▶ SVG polygon glyph (24px, `opacity: 0.4 ↔ 1.0` at `2s ease-in-out`).
 - **Reading:** "Something is loaded here. Tap to hear it."
 
 ### Player — Playing State
 
 The waveform IS the stage. No album art needed. The shape is identity.
 
-- **Waveform:** Full-width, tall bars spanning majority of main area height.
-  - Played bars: `rgba(20, 220, 20, 0.70)` — D's identity green
-  - Unplayed bars: `rgba(160, 160, 160, 0.13)` — cold near-transparent grey
-- **Playhead:** `1px solid rgba(20,220,20,1.0)`, `box-shadow: 0 0 6px rgba(20,220,20,0.6)`. A wire of light moving through the shape.
+**Current implementation (ListenerVaultView — pending upgrade):**
+- Played bars: `#14dc14` at 0.92 alpha — D's identity green
+- Unplayed bars: `rgba(240,237,232,0.55)` — warm off-white. Never cold grey.
+- Playhead: `1px solid rgba(240,237,232,0.9)`, no glow. Clean wire through the shape.
+
+**Canonical waveform spec (DeckWaveform — see Waveform section below):**
+The listener waveform is pending upgrade to the Serato frequency-band approach. When upgraded, it should match the DeckWaveform rendering exactly.
+
 - **Voice comment markers:** Warm diamond dots (6×6px `rotate(45deg)` square, `--vc-dot` color) positioned along the top edge of the waveform at time-mapped x positions. Tapping a diamond opens the comment card.
+
+### Mini-Transport Strip
+
+Persists when a guest navigates from the player back to the track list during playback. The music must not stop — the strip is the bridge.
+
+- **Container:** Fixed bottom strip above the vault dock. `--surface` background, `border-top: 1px solid var(--border)`. Height 48px.
+- **Content:** Track title (truncated, Chakra Petch 500 11px) + PAUSE/RESUME button (god-btn compact, 28px) + elapsed time (Space Mono 10px, valid mono surface).
+- **Tapping strip:** Returns to full player view. Tapping PAUSE/RESUME acts in place.
+- **Critical:** Never hide or remove the strip while audio is playing. The guest navigated away from the player — that was their choice. The music plays until they stop it.
+
+---
+
+## Waveform (Canonical — DeckWaveform)
+
+**The waveform is not decoration. It is the visual identity of the mix.**
+
+PSC has no album art concept. The waveform shape is how a mix is recognized before it plays. This is not a limitation — it is the principle. Every rendering decision reinforces it.
+
+### Serato Frequency-Band Rendering
+
+Used by `DeckWaveform.jsx` (console). Mirrors Serato DJ Pro's GEOB overview. Three frequency bands stacked per bar, tallest drawn first so the dominant color shows at the peak.
+
+| Band | Color | Role |
+|------|-------|------|
+| Bass | `rgba(226, 88, 20, α)` | Warm orange — the groove |
+| Mid  | `rgba(20, 220, 20, α)` | Serato green — the melody |
+| High | `rgba(255, 248, 180, α)` | Bright yellow-white — transients, attack |
+
+**Alpha:** Unplayed bars at 1.0. Played (past playhead) bars at 0.25.
+
+**Transient peak cap:** 2px bright line `rgba(255, 255, 220, α)` drawn where the tallest band exceeds 80% of half-height. Marks drum hits and loud transients.
+
+**Playhead:** `rgba(255, 255, 255, 0.9)` — 2px white vertical line. No glow. Precise.
+
+**Center reference:** `rgba(255, 255, 255, 0.10)` — 1px horizontal midline. Subtle axis.
+
+**sqrt boost:** Each band height = `Math.sqrt(band_value) * halfHeight`. Lifts quieter frequencies so orange and yellow remain visible on bass-heavy mixes. Without it, only green shows.
+
+**Waveform is symmetric:** bars mirror above and below the center line. Same height both directions.
+
+### Seeded Placeholder (No Real Waveform Data)
+
+Used in track lists (52×26px thumbnail) and wherever real FFT data isn't available. Seed = track title string → deterministic PRNG → same shape every render. The waveform fingerprint is stable: a guest learns to recognize a mix by its shape before they tap it.
+
+- Thumbnail color: `rgba(240,237,232,0.55)` — warm off-white. Single color (no frequency bands at thumbnail scale).
+- Thumbnail size: 52×26px. Seeded bar heights. No playhead.
+
+### ListenerVaultView Waveform (Pending Upgrade)
+
+Currently renders single-color (played green / unplayed off-white). Targeted for upgrade to Serato frequency bands in a future sprint. Until then, use the NEXT_SESSION.md values:
+
+- Played: `#14dc14` at 0.92 alpha
+- Unplayed: `rgba(240,237,232,0.55)` — warm off-white, not cold grey
+- Ghost (paused): `rgba(240,237,232,0.11)`
 
 ---
 
@@ -408,6 +466,10 @@ INTAKE is a console-level action. The button lives in the browser utility bar (`
 | 2026-05-19 | HEAR IT ducks mix to 25% gain, ramps back over 2s on ended | Mix is never interrupted. Comment is a layer. Web Audio API linearRampToValueAtTime. |
 | 2026-05-19 | Phase 2: D can sample fan voice comments as audio in future mixes | Closes the listener↔artist loop in a way no platform has done. Fan hears their voice in a published mix. Build when comment approval queue ships. |
 | 2026-05-19 | Serato cue labels never shown in guest/listener view | D does not want this. Cue points are his internal production metadata, not guest-facing content. |
+| 2026-05-20 | User tiers renamed to M³: MASTERS / MUSES / MEMBERS | MASTERS = D and L (sovereign). MUSES = invited collaborators. MEMBERS = paying listeners. Formalizes what was implicit. |
+| 2026-05-20 | DeckWaveform: Serato frequency-band rendering (orange/green/yellow-white) | Three bands stacked per bar, sqrt boost, 0.25 alpha past playhead. Mirrors Serato DJ Pro GEOB overview. The waveform IS the artwork. |
+| 2026-05-20 | ListenerVaultView waveform: unplayed bars rgba(240,237,232,0.55) not cold grey | Off-white is warm and legible. Cold grey (rgba(160,160,160,0.13)) was wrong — too invisible on void background. |
+| 2026-05-20 | Mini-transport strip: persists above vault dock during playback while in tracklist | Guest navigated away from player — their choice. Music plays until they stop it. Strip is the bridge back. |
 
 ---
 
