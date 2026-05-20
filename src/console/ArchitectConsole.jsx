@@ -867,6 +867,7 @@ function ArchitectConsole({
   const [signalTitle, setSignalTitle] = useState("");
   const [signalLive, setSignalLive] = useState(false);
   const [signalWorking, setSignalWorking] = useState(false);
+  const [streamKeyRevealed, setStreamKeyRevealed] = useState(false);
 
   const SIGNAL_WORKER = "https://psc-upload-worker.psoulc.workers.dev";
 
@@ -3386,7 +3387,17 @@ function ArchitectConsole({
                 </label>
                 <div className="signal-panel-mono">
                   <div>SERVER: rtmps://live.cloudflare.com:443/live/</div>
-                  <div>KEY: dede7aa1a5039f9d121f59e924369990</div>
+                  <div
+                    className="signal-panel-key-row"
+                    onClick={() => setStreamKeyRevealed((v) => !v)}
+                    title={streamKeyRevealed ? "Click to hide" : "Click to reveal stream key"}
+                    style={{ cursor: "pointer" }}
+                  >
+                    KEY:{" "}
+                    {streamKeyRevealed
+                      ? "dede7aa1a5039f9d121f59e924369990"
+                      : "●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"}
+                  </div>
                 </div>
               </div>
 
