@@ -192,9 +192,8 @@ The guest was invited — not discovering. Every design decision in this flow sh
 
 ### Vault Landing
 
-- **Hero:** Total runtime of all published mixes. 72–96px `--font-mono` (Space Mono, valid numeric readout surface). Format: `5:42` = 5 hours 42 minutes. The number IS the promise.
-- **Kicker above hero:** "OF MUSIC" — 10px Chakra Petch 500, 0.2em tracking, `--text-muted`. Quiet label, loud number.
-- **Vault name:** 20px Chakra Petch 600 uppercase. Secondary presence beneath the runtime.
+- **Hero:** Total runtime of all published mixes. 72–96px `--font-mono` (Space Mono, valid numeric readout surface). Format: `5:42` = 5 hours 42 minutes. The number IS the promise. No kicker — the number stands alone.
+- **Vault name:** Below the hero — vault label + session count at 8px Chakra Petch 600, 0.24em tracking, `--text-secondary`.
 - **No CTA button.** Entry is: `TOUCH ANYWHERE TO ENTER` — 10px Chakra Petch 500, 0.14em tracking, `rgba(240,237,232,0.35)` color. Breathes at `opacity: 0.35 ↔ 0.65` over `2.6s ease-in-out infinite`. An invitation, not a button.
 - **Background:** DPWallpaper canvas at full opacity. Permanent — same tessellation as entry. The wallpaper is the room, not a door.
 - **Layout:** Vertically centered content block. No wasted empty space — if it reads as "page failed to load," something is wrong.
@@ -207,7 +206,7 @@ Visual identity problem: PSC has no cover art, no album art, no per-mix image. T
   - Track number: Space Mono 15px, left-anchored, `--text-muted`
   - Title: Chakra Petch 500, flex-grow, `--text-primary`
   - Duration: Space Mono 11px, right-anchored, `--text-secondary`
-  - Waveform thumbnail: 52×26px, seeded pseudorandom bars (seed = track title string → always same shape per mix), bar color `rgba(20,220,20,0.55)` (identity green at 55%)
+  - Waveform thumbnail: 52×26px, seeded pseudorandom bars (seed = track title string → always same shape per mix), bar color `rgba(240,237,232,0.55)` (warm off-white — achromatic, not identity green)
   - Voice badge: count only, `--vc` color, 9px Chakra Petch, shown only if comments exist
 - **Row height:** 52px. `border-bottom: 1px solid var(--border)`.
 - **Seeded waveform:** Use track title as string seed for PRNG. Same input → same bar heights every render. The waveform shape becomes how guests recognize a mix before playing it.

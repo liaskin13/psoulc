@@ -3,11 +3,12 @@
 **Last updated:** 2026-05-20
 
 ## Status
-Eng review COMPLETE — implementation plan approved, ready to code.
+v3 Guest Flow IMPLEMENTATION COMPLETE — uncommitted, design review pending.
+Next: commit + deploy, then run `/plan-design-review`.
 
 ---
 
-## IMPLEMENT: v3 Guest Flow (approved, start here)
+## DONE: v3 Guest Flow (shipped 2026-05-20, uncommitted)
 
 ### Decision locked
 - **Fork, not conditional**: Create `src/listener/ListenerVaultView.jsx` (new file)
@@ -111,9 +112,13 @@ For thumbnails: use `high` array. Normalize to 0-1 range. Draw centered bars.
 - Design findings 001–003+007: committed and deployed
 - Preview deployed: uoyni.com/guest-flow-preview.html (commit f966855)
 - DESIGN.md: Guest Flow + Voice Comments spec written
+- **v3 guest flow implementation** — ListenerVaultView.jsx + ListenerVaultView.css + ListenerShell.jsx updates
 
-## Pending after v3 implementation
-- D needs to publish 4 remaining mixes (only 1/5 published)
-- Zone B: ACCESS CODES panel for L
-- Migration 0006: cue_labels column (D-bank cue persistence)
-- Waveform zoom fix (separate from v3 guest flow)
+## Start here next session
+1. **Commit v3 guest flow** — stage `src/listener/`, `src/index.css`, `src/variables.css`; do NOT stage `node_modules/`, `.claude/settings.json`
+2. **Deploy** — push to main → wrangler pages deploy (Pages is NOT auto-deployed from git per memory)
+3. **Run `/plan-design-review`** — score the implementation against DESIGN.md
+4. D needs to publish 4 remaining mixes (only 1/5 published currently)
+5. Zone B: ACCESS CODES panel for L
+6. Migration 0006: cue_labels column (D-bank cue persistence)
+7. Waveform zoom fix: `zoom={1}` hardcoded at `src/console/ArchitectConsole.jsx:1680`

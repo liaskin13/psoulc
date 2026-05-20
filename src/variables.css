@@ -41,6 +41,12 @@
   --section-released: #0a1a0a;
   --section-archive: #181818;
 
+  /* ── VOICE COMMENT PALETTE ──────────────────────── */
+  --vc:        rgba(240, 230, 200, 0.72);
+  --vc-dot:    rgba(240, 230, 200, 0.45);
+  --vc-active: rgba(240, 230, 200, 0.90);
+  --vc-bg:     rgba(240, 230, 200, 0.06);
+
   /* ── NOISE / FILM GRAIN ──────────────────────────── */
   --noise-opacity: 0.025;
   --noise-blend: overlay;

@@ -1,7 +1,5 @@
 import React, {
   useState,
-  lazy,
-  Suspense,
   useEffect,
   useRef,
   useCallback,
@@ -9,9 +7,9 @@ import React, {
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import DPWallpaper from "../components/DPWallpaper";
 import TheSignal from "../signal/TheSignal";
-import VaultView from "../components/VaultView";
-import "../components/VaultView.css";
+import ListenerVaultView from "./ListenerVaultView";
 import { VAULT_ACCENT_COLORS, UPLOAD_WORKER_URL } from "../config";
+import { fetchPublishedVaultTracks } from "../lib/tracks";
 import PSCWordmark from "../components/PSCWordmark";
 import { redeemCode } from "../lib/accessCodes";
 
@@ -87,12 +85,20 @@ function CodeGate({ code, onGranted }) {
   );
 }
 
+function formatDurationHero(totalSecs) {
+  if (!totalSecs) return '--:--';
+  const h = Math.floor(totalSecs / 3600);
+  const m = Math.floor((totalSecs % 3600) / 60);
+  return `${h}:${String(m).padStart(2, '0')}`;
+}
+
 function ListenerShell({ onPowerDown, sessionMeta, code }) {
   const [codeSession, setCodeSession] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [vaults, setVaults] = useState(LISTENER_VAULTS_FALLBACK);
   const [selectedVaultId, setSelectedVaultId] = useState(LISTENER_VAULTS_FALLBACK[0].id);
   const [activeVault, setActiveVault] = useState(null);
+  const [vaultStats, setVaultStats] = useState({});
   const [inSignal, setInSignal] = useState(false);
   const [signalState, setSignalState] = useState({ is_live: 0, title: null });
   const [isHandoff, setIsHandoff] = useState(false);
@@ -127,6 +133,17 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!selectedVaultId) return;
+    fetchPublishedVaultTracks(selectedVaultId).then(tracks => {
+      const totalDuration = tracks.reduce((sum, t) => sum + (Number(t.duration) || 0), 0);
+      setVaultStats(prev => ({
+        ...prev,
+        [selectedVaultId]: { totalDuration, count: tracks.length },
+      }));
+    }).catch(() => {});
+  }, [selectedVaultId]);
 
   useEffect(() => {
     if (code && !codeSession) return;
@@ -211,16 +228,12 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
   // ── VAULT INTERIOR ───────────────────────────────────────────────
   if (activeVault) {
     return (
-      <AnimatePresence mode="wait">
-        <VaultView
-          key={activeVault}
-          vault={activeVault}
-          authenticated={false}
-          onBack={handleVaultBack}
-          onExitSystem={onPowerDown}
-          readOnly
-        />
-      </AnimatePresence>
+      <ListenerVaultView
+        key={activeVault}
+        vault={activeVault}
+        onBack={handleVaultBack}
+        onExitSystem={onPowerDown}
+      />
     );
   }
 
@@ -269,7 +282,13 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
         )}
       </AnimatePresence>
 
-      <main className="listener-stage" id="main-content">
+      <main
+        className="listener-stage"
+        id="main-content"
+        onClick={selectedVault ? () => openVault(selectedVault) : undefined}
+        style={selectedVault ? { cursor: 'pointer' } : undefined}
+        aria-label={selectedVault ? `Open ${selectedVault.label}` : undefined}
+      >
         {selectedVault ? (
           <AnimatePresence mode="wait">
             <motion.div
@@ -280,20 +299,15 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
               exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
               transition={{ duration: 0.3, ease: [0.25, 0, 0, 1] }}
             >
-              <div className="listener-vault-accent" style={{ background: selectedVault.color || "transparent" }} aria-hidden="true" />
-              <p className="listener-stage-kicker">VAULT</p>
-              <h1 className="listener-stage-title" style={selectedVault.color ? { "--vault-color": selectedVault.color } : {}}>
-                {selectedVault.label}
-              </h1>
+              <p className="ls-duration-hero">
+                {formatDurationHero(vaultStats[selectedVaultId]?.totalDuration)}
+              </p>
+              <p className="ls-duration-subtitle">
+                {selectedVault.label} · {vaultStats[selectedVaultId]?.count ?? '--'} SESSIONS
+              </p>
+              <p className="ls-duration-meta">{selectedVault.copy}</p>
               <div className="listener-stage-rule" aria-hidden="true" />
-              <p className="listener-stage-copy">{selectedVault.copy}</p>
-              <button
-                className="listener-stage-cta"
-                style={selectedVault.color ? { "--vault-color": selectedVault.color } : {}}
-                onClick={() => openVault(selectedVault)}
-              >
-                OPEN {selectedVault.label}
-              </button>
+              <p className="ls-touch-hint">TOUCH ANYWHERE TO ENTER</p>
             </motion.div>
           </AnimatePresence>
         ) : (
