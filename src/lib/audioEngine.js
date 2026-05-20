@@ -26,7 +26,9 @@ function getAudio() {
 
 function notifyListeners() {
   const state = getState();
-  stateListeners.forEach((fn) => fn(state));
+  stateListeners.forEach((fn) => {
+    try { fn(state); } catch (e) { console.error("[audioEngine] listener error:", e); }
+  });
 }
 
 export function getState() {

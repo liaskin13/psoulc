@@ -145,9 +145,9 @@ export default function DeckWaveform({
 
           // Sort tallest first so dominant frequency color shows at the peak
           const bands = [
-            { h: bassH, r: 40,  g: 60,  b: 220 },   // PSC indigo — bass
-            { h: midH,  r: 0,   g: 200, b: 190 },   // PSC teal — mid
-            { h: highH, r: 240, g: 237, b: 232 },   // PSC cream-white — transient peaks
+            { h: bassH, r: 40,  g: 60,  b: 220 },   // indigo — bass (Serato blue)
+            { h: midH,  r: 20,  g: 220, b: 20  },   // green — mid (Serato standard)
+            { h: highH, r: 240, g: 237, b: 232 },   // cream-white — transient peaks
           ].sort((a, b) => b.h - a.h);
 
           for (const band of bands) {

@@ -390,10 +390,9 @@ function drawVU(ctx, W, H, rL, rR, peakLVal, peakRVal) {
   drawSegBar(bw + 6, rR, peakRVal);
 }
 
-// Maps stored Serato freq hex values to PSC identity palette.
+// Maps stored Serato freq hex values — bass gets a slight indigo deepening, mid/high stay true.
 function pscFreqColor(hexColor) {
-  if (hexColor === "#1464dc") return "#2840dc"; // bass blue → PSC indigo
-  if (hexColor === "#14dc14") return "#00c8be"; // Serato green → PSC teal
+  if (hexColor === "#1464dc") return "#2840dc"; // bass → PSC indigo (slight deepening only)
   return hexColor;
 }
 
@@ -442,6 +441,12 @@ function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
       ctx.fillStyle = cue.color || "rgba(255,255,255,0.6)";
       ctx.fillRect(cx, 0, 1, H);
     }
+  }
+
+  // White progress bar — 2px line running left-to-right along the bottom edge
+  if (playheadPx > 0) {
+    ctx.fillStyle = "rgba(240, 237, 232, 0.85)";
+    ctx.fillRect(0, H - 2, playheadPx, 2);
   }
 
   // Playhead — 3px bright line + halo + time readout
