@@ -103,7 +103,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       specPeakRef.current = new Float32Array(SPEC_N);
       frameCountRef.current = 0;
 
-      // Draw idle state: floor bars on spectrum, clear VU
+      // Draw idle state: neutral dim floor bars on spectrum, ghost segment structure on VU
       const spec = specRef.current;
       if (spec && spec.width > 0 && spec.height > 0) {
         const ctx = spec.getContext("2d");
@@ -112,14 +112,34 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         const barStep = W / SPEC_N;
         const bw      = Math.max(1, Math.floor(barStep) - 1);
         const FLOOR   = Math.round(H * FLOOR_PCT);
-        const idleColor = specBarColor(FLOOR_PCT);
         for (let i = 0; i < SPEC_N; i++) {
-          ctx.fillStyle = idleColor;
+          ctx.fillStyle = "rgba(185, 185, 185, 0.12)";
           ctx.fillRect(Math.round(i * barStep), H - FLOOR, bw, FLOOR);
         }
       }
       const vu = vuRef.current;
-      if (vu) vu.getContext("2d").clearRect(0, 0, vu.width, vu.height);
+      if (vu && vu.width > 0 && vu.height > 0) {
+        drawVU(vu.getContext("2d"), vu.width, vu.height, 0, 0, 0, 0);
+      }
+
+      // Draw energy map using available waveformData, or ghost grid if none loaded
+      const energy = energyRef.current;
+      if (energy) {
+        const dispW = energy.offsetWidth || energy.width;
+        const dispH = energy.offsetHeight || energy.height;
+        if (dispW > 0 && dispH > 0) {
+          if (energy.width !== dispW || energy.height !== dispH) {
+            energy.width = dispW;
+            energy.height = dispH;
+          }
+          const { waveformData: bars, currentTime: t, duration: dur, hotCues: cues } = liveRef.current;
+          if (bars && bars.length > 0 && dur > 0) {
+            drawEnergyMap(energy, bars, t, dur, cues);
+          } else {
+            drawEnergyMapIdle(energy);
+          }
+        }
+      }
 
       return;
     }
@@ -309,6 +329,26 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
     };
   }, [isPlaying]); // only restarts on play/pause — values read live via liveRef
 
+  // Secondary effect: redraw energy map whenever waveformData or playhead changes while paused.
+  // The main RAF loop handles this when playing; this covers the static/scrubbing case.
+  useEffect(() => {
+    if (isPlaying) return;
+    const energy = energyRef.current;
+    if (!energy) return;
+    const dispW = energy.offsetWidth || energy.width;
+    const dispH = energy.offsetHeight || energy.height;
+    if (dispW <= 0 || dispH <= 0) return;
+    if (energy.width !== dispW || energy.height !== dispH) {
+      energy.width = dispW;
+      energy.height = dispH;
+    }
+    if (waveformData && waveformData.length > 0 && duration > 0) {
+      drawEnergyMap(energy, waveformData, currentTime, duration, hotCues);
+    } else {
+      drawEnergyMapIdle(energy);
+    }
+  }, [waveformData, currentTime, duration, hotCues, isPlaying]);
+
   return { vuRef, specRef, energyRef };
 }
 
@@ -350,6 +390,13 @@ function drawVU(ctx, W, H, rL, rR, peakLVal, peakRVal) {
   drawSegBar(bw + 6, rR, peakRVal);
 }
 
+// Maps stored Serato freq hex values to PSC identity palette.
+function pscFreqColor(hexColor) {
+  if (hexColor === "#1464dc") return "#2840dc"; // bass blue → PSC indigo
+  if (hexColor === "#14dc14") return "#00c8be"; // Serato green → PSC teal
+  return hexColor;
+}
+
 // Full energy map redraw: full-track waveform envelope, playhead, hot cue marks.
 function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
   const ctx = canvas.getContext("2d");
@@ -359,23 +406,30 @@ function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
 
   const N          = bars.length;
   const barsPerPx  = N / W;
+  const playheadPx = duration > 0 ? Math.round((currentTime / duration) * W) : -1;
+
+  // Played-region darkening — subtle fill behind already-played portion
+  if (playheadPx > 0) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+    ctx.fillRect(0, 0, playheadPx, H);
+  }
 
   for (let px = 0; px < W; px++) {
     const barStart = Math.floor(px * barsPerPx);
     const barEnd   = Math.min(Math.floor((px + 1) * barsPerPx) + 1, N);
     let   maxPeak  = 0;
-    let   color    = "#1464dc";
+    let   color    = "#2840dc";
 
     for (let b = barStart; b < barEnd; b++) {
       if (bars[b] && bars[b].peak > maxPeak) {
         maxPeak = bars[b].peak;
-        color   = bars[b].freq || "#14dc14";
+        color   = pscFreqColor(bars[b].freq || "#14dc14");
       }
     }
 
     const barH = Math.max(2, Math.round(maxPeak * H));
     ctx.fillStyle = color;
-    ctx.globalAlpha = 0.7;
+    ctx.globalAlpha = px < playheadPx ? 0.45 : 0.75;
     ctx.fillRect(px, H - barH, 1, barH);
   }
   ctx.globalAlpha = 1;
@@ -390,11 +444,12 @@ function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
     }
   }
 
-  // Playhead
-  if (duration > 0) {
-    const px = Math.round((currentTime / duration) * W);
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.fillRect(px, 0, 1, H);
+  // Playhead — 2px bright line with glow so position is unmissable
+  if (playheadPx >= 0) {
+    ctx.fillStyle = "rgba(240, 237, 232, 0.95)";
+    ctx.fillRect(playheadPx, 0, 2, H);
+    ctx.fillStyle = "rgba(240, 237, 232, 0.20)";
+    ctx.fillRect(Math.max(0, playheadPx - 1), 0, 4, H);
   }
 }
 
@@ -407,5 +462,21 @@ function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
 // that keeps the call site clean. The 15-frame throttle in the RAF loop handles pacing.
 function updateEnergyPlayhead(_canvas, _currentTime, _duration) {
   // Intentionally empty — full redraw is throttled to 4fps in the RAF loop.
+}
+
+// Ghost grid drawn when no waveformData is loaded yet.
+function drawEnergyMapIdle(canvas) {
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = "rgba(185, 185, 185, 0.08)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    const y = Math.round((i / 4) * H);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.strokeStyle = "rgba(185, 185, 185, 0.15)";
+  const midY = Math.round(H / 2);
+  ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(W, midY); ctx.stroke();
 }
 

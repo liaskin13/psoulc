@@ -1677,7 +1677,7 @@ function ArchitectConsole({
                   height={156}
                   hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
-                  zoom={1}
+                  zoom={isPlaying && loadedTrack?.id === deckTrack?.id ? 6 : 1}
                   loopRegion={loopRegion}
                 />
               )}
@@ -1707,17 +1707,32 @@ function ArchitectConsole({
             <div className="arch-bank-selector-wrap">
               <span className="arch-cue-tag">BANK</span>
               <div className="arch-cue-bank-selector">
-                {["A", "B", "C", "D"].map((bank) => (
-                  <button
-                    key={bank}
-                    className={`arch-bank-btn${activeCueBank === bank ? " active" : ""}`}
-                    onClick={() => setActiveCueBank(bank)}
-                    aria-label={`Switch to cue bank ${bank}`}
-                    aria-pressed={activeCueBank === bank}
-                  >
-                    {bank}
-                  </button>
-                ))}
+                {["A", "B", "C", "D"].map((bank) => {
+                  const bIdx = { A: 0, B: 1, C: 2, D: 3 }[bank];
+                  const trackCues = loadedTrack ? hotCues[loadedTrack.id] || {} : {};
+                  const bankOccupancy = Array.from({ length: 8 }, (_, i) => !!trackCues[bIdx * 8 + i + 1]);
+                  return (
+                    <button
+                      key={bank}
+                      className={`arch-bank-btn${activeCueBank === bank ? " active" : ""}`}
+                      onClick={() => setActiveCueBank(bank)}
+                      aria-label={`Switch to cue bank ${bank}`}
+                      aria-pressed={activeCueBank === bank}
+                      title={`Bank ${bank} — 8 cue slots (dots = occupied)`}
+                    >
+                      {bank}
+                      <span className="arch-bank-dots" aria-hidden="true">
+                        {bankOccupancy.map((occupied, i) => (
+                          <span
+                            key={i}
+                            className={`arch-bank-dot${occupied ? " occupied" : ""}`}
+                            style={occupied ? { background: ALL_CUE_COLORS[bIdx * 8 + i] } : undefined}
+                          />
+                        ))}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
               <button
                 className="arch-clr-bank-btn"
@@ -1783,6 +1798,13 @@ function ArchitectConsole({
                         ? `Hot cue ${displayNum} — double-click to clear`
                         : `Hot cue ${displayNum}`
                     }
+                    title={
+                      isDBank
+                        ? `D-bank ${displayNum}${cue?.label ? `: ${cue.label}` : ""} — double-click to name`
+                        : cue
+                        ? `Hot cue ${displayNum} at ${cue.time?.toFixed(1)}s — click to jump, double-click to clear`
+                        : `Hot cue ${displayNum} — click while playing to set`
+                    }
                     onClick={() => handleHotCueClick(displayNum)}
                     onDoubleClick={handleDblClick}
                     style={{ "--cue-color": color }}
@@ -1841,6 +1863,7 @@ function ArchitectConsole({
           <button
             className="arch-transport-btn arch-cue-btn"
             aria-label="Cue"
+            title="CUE — set cue point when stopped; return to cue when paused"
             onClick={handleCue}
             disabled={audioLoading || !audioEngine.isLoaded()}
           >
@@ -2071,7 +2094,7 @@ function ArchitectConsole({
               >
                 HISTORY
               </button>
-              <div className="arch-display-divider" aria-hidden="true" />
+              <div className="arch-display-divider arch-display-divider--major" aria-hidden="true" />
               <button
                 className={`arch-browser-btn arch-publish-btn${publishState.status === "error" ? " arch-action-error" : ""}`}
                 onClick={handlePublishSelected}
@@ -2093,12 +2116,17 @@ function ArchitectConsole({
                  `RETRACT${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
               </button>
               <div className="arch-display-divider" aria-hidden="true" />
-              <button className="arch-browser-btn" onClick={handlePrepareSelected}>
+              <button
+                className="arch-browser-btn"
+                onClick={handlePrepareSelected}
+                title="PREPARE — queue selected tracks for deck loading (rekordbox-style)"
+              >
                 PREPARE{prepareQueue.length > 0 ? ` (${prepareQueue.length})` : ""}
               </button>
               <button
                 className={`arch-browser-btn ${loadedDeckId && selectedTrackId === loadedDeckId ? "active" : ""}`}
                 onClick={handleLoadDeck}
+                title="LOAD DECK — load selected track to the deck (or double-click a track row)"
               >
                 LOAD DECK
               </button>
@@ -2123,6 +2151,7 @@ function ArchitectConsole({
                 aria-label="Select"
               />
               <span role="columnheader">TITLE</span>
+              <span role="columnheader">STATUS</span>
               <span role="columnheader">ARTIST</span>
               <button
                 role="columnheader"
@@ -2138,7 +2167,6 @@ function ArchitectConsole({
               <span role="columnheader">LENGTH</span>
               <span role="columnheader">ADDED</span>
               <span role="columnheader">PLAYS</span>
-              <span role="columnheader">STATUS</span>
               <span role="columnheader">PREVIEW</span>
               <span role="columnheader">ACTIONS</span>
             </div>
@@ -2245,6 +2273,12 @@ function ArchitectConsole({
                           </span>
                         )}
                       </span>
+                      <span className="arch-track-state" role="cell">
+                        <i
+                          className={`arch-state-dot arch-pub-dot ${isLive ? "is-live" : "is-staged"}`}
+                        />
+                        {isLive ? "LIVE" : "STAGED"}
+                      </span>
                       <span className="arch-track-artist" role="cell">
                         {isEditing ? (
                           <input
@@ -2310,12 +2344,6 @@ function ArchitectConsole({
                       <span className="arch-track-plays" role="cell">
                         {trackPlayCounts[t.id] || 0}
                       </span>
-                      <span className="arch-track-state" role="cell">
-                        <i
-                          className={`arch-state-dot arch-pub-dot ${isLive ? "is-live" : "is-staged"}`}
-                        />
-                        {isLive ? "LIVE" : "STAGED"}
-                      </span>
                       <span className="arch-track-preview" role="cell">
                         <span
                           className="arch-track-wave-mini"
@@ -2355,7 +2383,7 @@ function ArchitectConsole({
                             handleTrackAction(t);
                           }}
                         >
-                          {prepareQueue.includes(t.id) ? "−Q" : "+Q"}
+                          {prepareQueue.includes(t.id) ? "PREP ✓" : "PREP"}
                         </button>
                         {!t.waveform_data && (
                           <button

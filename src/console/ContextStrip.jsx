@@ -65,13 +65,26 @@ export default function ContextStrip({
           )}
         </div>
 
-        {/* REACH — far right, compact */}
+        {/* REACH LCD — fixed-window readout, MPC III / Pioneer style */}
         <button
-          className={`arch-context-reach${hasUnread ? " has-unread" : ""}`}
+          className={`arch-reach-lcd${hasUnread ? " has-unread" : ""}`}
           onClick={handleReach}
-          aria-label={latestMsg ? "Open REACH thread" : "REACH"}
+          aria-label={latestMsg ? "Open REACH thread" : "REACH — no messages yet"}
         >
-          {hasUnread ? "● REACH" : "REACH"}
+          <span className="arch-reach-lcd-label">REACH</span>
+          <span className="arch-reach-lcd-screen">
+            {latestMsg ? (
+              <span className="arch-reach-lcd-preview">
+                {hasUnread && <span className="arch-reach-lcd-dot" aria-hidden="true" />}
+                <span className="arch-reach-lcd-from">{latestMsg.from} ·</span>
+                <span className="arch-reach-lcd-msg">
+                  {latestMsg.audioData ? "◆ VOICE NOTE" : latestMsg.body}
+                </span>
+              </span>
+            ) : (
+              <span className="arch-reach-lcd-idle">——</span>
+            )}
+          </span>
         </button>
 
         {/* ACCESS CODES — viewer=L only */}

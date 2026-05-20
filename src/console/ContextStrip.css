@@ -96,28 +96,101 @@
   color: rgba(240, 237, 232, 0.70);
 }
 
-/* REACH — far right, compact indicator */
-.arch-context-reach {
+/* REACH LCD — fixed hardware-style readout window */
+.arch-reach-lcd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  width: 196px;
+  flex-shrink: 0;
+  height: 30px;
+  background: rgba(4, 6, 8, 0.95);
+  border: 1px solid rgba(185, 195, 200, 0.09);
+  cursor: pointer;
+  padding: 3px 7px;
+  transition: border-color 80ms;
+  text-align: left;
+}
+
+.arch-reach-lcd:hover {
+  border-color: rgba(185, 195, 200, 0.20);
+}
+
+.arch-reach-lcd.has-unread {
+  border-color: rgba(var(--arch-identity-rgb, 0, 229, 255), 0.32);
+}
+
+.arch-reach-lcd-label {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 6.5px;
+  letter-spacing: 0.18em;
+  color: rgba(185, 195, 200, 0.26);
+  text-transform: uppercase;
+  line-height: 1;
+  display: block;
+}
+
+.arch-reach-lcd.has-unread .arch-reach-lcd-label {
+  color: rgba(var(--arch-identity-rgb, 0, 229, 255), 0.60);
+}
+
+.arch-reach-lcd-screen {
+  width: 100%;
+  overflow: hidden;
+  display: block;
+}
+
+.arch-reach-lcd-preview {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+}
+
+.arch-reach-lcd-dot {
+  width: 3px;
+  height: 3px;
+  background: rgb(var(--arch-identity-rgb, 0, 229, 255));
+  flex-shrink: 0;
+  animation: arch-dot-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes arch-dot-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+.arch-reach-lcd-from {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: rgba(var(--arch-identity-rgb, 0, 229, 255), 0.72);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.arch-reach-lcd-msg {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: rgba(240, 237, 232, 0.58);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.arch-reach-lcd-idle {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
+  color: rgba(185, 195, 200, 0.18);
   letter-spacing: 0.08em;
-  color: rgba(185, 195, 200, 0.22);
-  background: none;
-  border: none;
-  cursor: pointer;
-  flex-shrink: 0;
-  padding: 0 4px;
-  transition: color 80ms;
   line-height: 1;
-  text-transform: uppercase;
-}
-
-.arch-context-reach:hover {
-  color: rgba(185, 195, 200, 0.55);
-}
-
-.arch-context-reach.has-unread {
-  color: rgba(240, 237, 232, 0.80);
 }
 
 /* Right-side triggers (ACCESS CODES — viewer=L) */
