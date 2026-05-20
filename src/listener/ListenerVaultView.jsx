@@ -14,6 +14,7 @@ function formatDuration(seconds) {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
+// Returns { peak: 0-1, freq: hex color } per bar
 function parseWaveformBars(track, count = 80) {
   try {
     const raw = JSON.parse(track.waveform_data || 'null');
@@ -21,13 +22,24 @@ function parseWaveformBars(track, count = 80) {
       const arr = Array.from(raw.high);
       const samples = Array.from({ length: count }, (_, i) => {
         const idx = Math.floor(i * arr.length / count);
-        return Math.abs(arr[idx] || 0);
+        const bar = arr[idx];
+        if (bar && typeof bar === 'object') {
+          return { peak: Math.abs(bar.peak || 0), freq: bar.freq || '#14dc14' };
+        }
+        return { peak: Math.abs(bar || 0), freq: '#14dc14' };
       });
-      const max = Math.max(...samples, 0.001);
-      return samples.map(v => v / max);
+      const max = Math.max(...samples.map(s => s.peak), 0.001);
+      return samples.map(s => ({ peak: s.peak / max, freq: s.freq }));
     }
   } catch {}
-  return getWaveformBars(track.id, count).map(v => v / 100);
+  return getWaveformBars(track.id, count).map(v => ({ peak: v / 100, freq: '#14dc14' }));
+}
+
+function hexAlpha(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 function ThumbnailCanvas({ track }) {
@@ -47,9 +59,9 @@ function ThumbnailCanvas({ track }) {
     const bars = parseWaveformBars(track, 13);
     const step = W / bars.length;
     const barW = Math.max(1, step * 0.6);
-    ctx.fillStyle = 'rgba(240,237,232,0.55)';
-    bars.forEach((amp, i) => {
-      const h = Math.max(1, amp * H);
+    bars.forEach((bar, i) => {
+      const h = Math.max(1, bar.peak * H);
+      ctx.fillStyle = hexAlpha(bar.freq, 0.72);
       ctx.fillRect(i * step, (H - h) / 2, barW, h);
     });
   }, [track.id, track.waveform_data]);
@@ -96,22 +108,23 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek })
     const progress = dur > 0 ? ct / dur : 0;
     const playheadX = Math.round(progress * W);
 
-    bars.forEach((amp, i) => {
-      const h = Math.max(2, amp * H * 0.85);
+    bars.forEach((bar, i) => {
+      const h = Math.max(2, bar.peak * H * 0.85);
       const x = i * step;
       const y = (H - h) / 2;
       if (ghost) {
-        ctx.fillStyle = 'rgba(240,237,232,0.11)';
+        ctx.fillStyle = hexAlpha(bar.freq, 0.18);
       } else {
-        ctx.fillStyle = (x + barW / 2) <= playheadX ? '#14dc14' : 'rgba(240,237,232,0.55)';
+        const played = (x + barW / 2) <= playheadX;
+        ctx.fillStyle = hexAlpha(bar.freq, played ? 0.92 : 0.32);
       }
       ctx.fillRect(x, y, barW, h);
     });
 
     if (!ghost && dur > 0) {
       ctx.save();
-      ctx.fillStyle = '#14dc14';
-      ctx.shadowColor = 'rgba(20,220,20,0.5)';
+      ctx.fillStyle = 'rgba(240,237,232,0.9)';
+      ctx.shadowColor = 'rgba(240,237,232,0.5)';
       ctx.shadowBlur = 6;
       ctx.fillRect(Math.min(playheadX, W - 1), 0, 1, H);
       ctx.restore();
