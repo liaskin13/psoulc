@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { fetchPublishedVaultTracks, getAudioUrl } from '../lib/tracks';
 import * as audioEngine from '../lib/audioEngine';
 import { getWaveformBars } from '../utils/waveform';
@@ -325,7 +326,16 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
   const [vizMode, setVizMode] = useState('wave'); // 'wave' | 'freq'
   const [isAudioLoading, setIsAudioLoading] = useState(false);
 
+  const prefersReduced = useReducedMotion();
   const screenStyle = vaultColor ? { '--vault-color': vaultColor } : undefined;
+
+  const motionProps = {
+    className: 'lvv-body',
+    initial: prefersReduced ? { opacity: 0 } : { opacity: 0, y: 6 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0 },
+    transition: { duration: prefersReduced ? 0.1 : 0.18, ease: [0.25, 1, 0.5, 1] },
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -396,6 +406,9 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
     audioEngine.play();
   }, []);
 
+  const isPlaying = audioState.isPlaying;
+  const inPlayer = playerState === 'paused' || playerState === 'playing';
+
   const header = (
     <header className="lvv-header">
       <div className="lvv-header-id">
@@ -412,203 +425,193 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
     </header>
   );
 
-  // ERROR — load failed, offer retry
-  if (playerState === 'error') {
-    return (
-      <div className="lvv-screen" style={screenStyle}>
-        {header}
-        <button className="lvv-back god-btn" onClick={handlePlayerBack} aria-label="Back to track list">
-          ← BACK
-        </button>
-        <div className="lvv-error-stage" role="alert">
-          <p className="lvv-error-track">{activeTrack?.title}</p>
-          <p className="lvv-error-msg">COULDN'T LOAD</p>
-          <button className="lvv-error-retry god-btn" onClick={handleRetry}>
-            RETRY
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // PAUSED — ghost waveform + pulsing play triangle
-  if (playerState === 'paused') {
-    return (
-      <div className="lvv-screen" style={screenStyle}>
-        {header}
-        <button
-          className="lvv-back god-btn"
-          onClick={handlePlayerBack}
-          aria-label="Back to track list"
-        >
-          ← BACK
-        </button>
-        <div className="lvv-player-stage">
-          <WaveformCanvas
-            track={activeTrack}
-            currentTime={0}
-            duration={audioState.duration}
-            ghost
-            onSeek={handleGhostSeek}
-          />
-          <button
-            className="lvv-play-btn"
-            onClick={isAudioLoading ? undefined : handlePlayPause}
-            aria-label={isAudioLoading ? 'Loading' : 'Play'}
-          >
-            <span className="lvv-play-track-title">{activeTrack?.title}</span>
-            {isAudioLoading ? (
-              <div className="lvv-state lvv-play-loading" aria-live="polite">
-                <span className="lvv-state-dot" aria-hidden="true" />
-                <span>LOADING</span>
-              </div>
-            ) : (
-              <svg className="lvv-play-svg" viewBox="0 0 44 52" aria-hidden="true">
-                <polygon points="0,0 44,26 0,52" />
-              </svg>
-            )}
-            {!isAudioLoading && <span className="lvv-play-seek-hint" aria-hidden="true">TAP WAVEFORM TO SEEK</span>}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // PLAYING — scrolling zoom waveform + viz toggle + transport bar
-  if (playerState === 'playing') {
-    const isPlaying = audioState.isPlaying;
-    return (
-      <div className="lvv-screen" style={screenStyle}>
-        {header}
-        <button
-          className="lvv-back god-btn"
-          onClick={handlePlayerBack}
-          aria-label="Back to track list"
-        >
-          ← BACK
-        </button>
-        <div className="lvv-player-stage">
-          <div className="lvv-viz-controls" role="group" aria-label="Visualization mode">
-            <button
-              className={`lvv-viz-btn${vizMode === 'wave' ? ' is-active' : ''}`}
-              onClick={() => setVizMode('wave')}
-              aria-pressed={vizMode === 'wave'}
-            >
-              WAVE
-            </button>
-            <button
-              className={`lvv-viz-btn${vizMode === 'freq' ? ' is-active' : ''}`}
-              onClick={() => setVizMode('freq')}
-              aria-pressed={vizMode === 'freq'}
-            >
-              FREQ
-            </button>
-          </div>
-          <WaveformCanvas
-            track={activeTrack}
-            currentTime={audioState.currentTime}
-            duration={audioState.duration}
-            mode={vizMode}
-            onSeek={(t) => audioEngine.seek(t)}
-          />
-        </div>
-        <div className="lvv-transport">
-          <button
-            className="lvv-transport-toggle"
-            onClick={handlePlayPause}
-            aria-label={isPlaying ? 'Pause' : 'Resume'}
-          >
-            <span className={`lvv-transport-status${isPlaying ? '' : ' is-paused'}`}>
-              {isPlaying ? '▶ PLAYING' : '▮▮ PAUSED'}
-            </span>
-            <span className="lvv-transport-dot" aria-hidden="true">·</span>
-            <span className="lvv-transport-title">{activeTrack?.title}</span>
-            {audioState.duration > 0 && (
-              <span className="lvv-transport-time" aria-hidden="true">
-                {formatDuration(audioState.currentTime)} · −{formatDuration(audioState.duration - audioState.currentTime)}
-              </span>
-            )}
-          </button>
-          <button
-            className="lvv-transport-stop"
-            onClick={handleStop}
-            aria-label="Stop playback"
-          >
-            STOP
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // TRACK LIST
-  const miniTransport = activeTrack ? (
-    <div className="lvv-mini-transport">
-      <button
-        className="lvv-mini-transport-toggle"
-        onClick={handleMiniTransportTap}
-        aria-label="Return to player"
-      >
-        <span className={`lvv-transport-status${audioState.isPlaying ? '' : ' is-paused'}`}>
-          {audioState.isPlaying ? '▶ PLAYING' : '▮▮ PAUSED'}
-        </span>
-        <span className="lvv-transport-dot" aria-hidden="true">·</span>
-        <span className="lvv-transport-title">{activeTrack.title}</span>
-        {audioState.duration > 0 && (
-          <span className="lvv-transport-time" aria-hidden="true">
-            {formatDuration(audioState.currentTime)} · −{formatDuration(audioState.duration - audioState.currentTime)}
-          </span>
-        )}
-      </button>
-      <button
-        className="lvv-transport-stop"
-        onClick={handleStop}
-        aria-label="Stop playback"
-      >
-        STOP
-      </button>
-    </div>
-  ) : null;
-
   return (
     <div className="lvv-screen" style={screenStyle}>
       {header}
-      <button
-        className="lvv-back god-btn"
-        onClick={onBack}
-        aria-label="Back to vault landing"
-      >
-        ← BACK
-      </button>
-      <div className="lvv-list" role="list">
-        {loading && (
-          <div className="lvv-state">
-            <span className="lvv-state-dot" aria-hidden="true" />
-            <span>LOADING</span>
-          </div>
+      <AnimatePresence mode="wait">
+
+        {/* ERROR — load failed */}
+        {playerState === 'error' && (
+          <motion.div key="error" {...motionProps}>
+            <button className="lvv-back god-btn" onClick={handlePlayerBack} aria-label="Back to track list">
+              ← BACK
+            </button>
+            <div className="lvv-error-stage" role="alert">
+              <p className="lvv-error-track">{activeTrack?.title}</p>
+              <p className="lvv-error-msg">COULDN'T LOAD</p>
+              <button className="lvv-error-retry god-btn" onClick={handleRetry}>
+                RETRY
+              </button>
+            </div>
+          </motion.div>
         )}
-        {!loading && tracks.length === 0 && (
-          <div className="lvv-state">NO TRACKS PUBLISHED</div>
-        )}
-        {!loading && tracks.map((track, i) => (
-          <button
-            key={track.id}
-            className={`lvv-track-row${activeTrack?.id === track.id ? ' lvv-track-row--active' : ''}`}
-            onClick={() => handleTrackSelect(track)}
-            role="listitem"
-          >
-            <span className="lvv-track-num">{String(i + 1).padStart(2, '0')}</span>
-            <span className="lvv-track-info">
-              <span className="lvv-track-title">{track.title || 'UNTITLED'}</span>
-              {track.duration != null && (
-                <span className="lvv-track-dur">{formatDuration(track.duration)}</span>
+
+        {/* PLAYER — paused and playing share this key so within-player transitions are instant */}
+        {inPlayer && (
+          <motion.div key="player" {...motionProps}>
+            <button
+              className="lvv-back god-btn"
+              onClick={handlePlayerBack}
+              aria-label="Back to track list"
+            >
+              ← BACK
+            </button>
+            <div className="lvv-player-stage">
+              {playerState === 'playing' && (
+                <div className="lvv-viz-controls" role="group" aria-label="Visualization mode">
+                  <button
+                    className={`lvv-viz-btn${vizMode === 'wave' ? ' is-active' : ''}`}
+                    onClick={() => setVizMode('wave')}
+                    aria-pressed={vizMode === 'wave'}
+                  >
+                    WAVE
+                  </button>
+                  <button
+                    className={`lvv-viz-btn${vizMode === 'freq' ? ' is-active' : ''}`}
+                    onClick={() => setVizMode('freq')}
+                    aria-pressed={vizMode === 'freq'}
+                  >
+                    FREQ
+                  </button>
+                </div>
               )}
-            </span>
-            <ThumbnailCanvas track={track} />
-          </button>
-        ))}
-      </div>
-      {miniTransport}
+              {playerState === 'paused' ? (
+                <WaveformCanvas
+                  track={activeTrack}
+                  currentTime={0}
+                  duration={audioState.duration}
+                  ghost
+                  onSeek={handleGhostSeek}
+                />
+              ) : (
+                <WaveformCanvas
+                  track={activeTrack}
+                  currentTime={audioState.currentTime}
+                  duration={audioState.duration}
+                  mode={vizMode}
+                  onSeek={(t) => audioEngine.seek(t)}
+                />
+              )}
+              {playerState === 'paused' && (
+                <button
+                  className="lvv-play-btn"
+                  onClick={isAudioLoading ? undefined : handlePlayPause}
+                  aria-label={isAudioLoading ? 'Loading' : 'Play'}
+                >
+                  <span className="lvv-play-track-title">{activeTrack?.title}</span>
+                  {isAudioLoading ? (
+                    <div className="lvv-state lvv-play-loading" aria-live="polite">
+                      <span className="lvv-state-dot" aria-hidden="true" />
+                      <span>LOADING</span>
+                    </div>
+                  ) : (
+                    <svg className="lvv-play-svg" viewBox="0 0 44 52" aria-hidden="true">
+                      <polygon points="0,0 44,26 0,52" />
+                    </svg>
+                  )}
+                  {!isAudioLoading && <span className="lvv-play-seek-hint" aria-hidden="true">TAP WAVEFORM TO SEEK</span>}
+                </button>
+              )}
+            </div>
+            {playerState === 'playing' && (
+              <div className="lvv-transport">
+                <button
+                  className="lvv-transport-toggle"
+                  onClick={handlePlayPause}
+                  aria-label={isPlaying ? 'Pause' : 'Resume'}
+                >
+                  <span className={`lvv-transport-status${isPlaying ? '' : ' is-paused'}`}>
+                    {isPlaying ? '▶ PLAYING' : '▮▮ PAUSED'}
+                  </span>
+                  <span className="lvv-transport-dot" aria-hidden="true">·</span>
+                  <span className="lvv-transport-title">{activeTrack?.title}</span>
+                  {audioState.duration > 0 && (
+                    <span className="lvv-transport-time" aria-hidden="true">
+                      {formatDuration(audioState.currentTime)} · −{formatDuration(audioState.duration - audioState.currentTime)}
+                    </span>
+                  )}
+                </button>
+                <button
+                  className="lvv-transport-stop"
+                  onClick={handleStop}
+                  aria-label="Stop playback"
+                >
+                  STOP
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* TRACK LIST */}
+        {!playerState && (
+          <motion.div key="list" {...motionProps}>
+            <button
+              className="lvv-back god-btn"
+              onClick={onBack}
+              aria-label="Back to vault landing"
+            >
+              ← BACK
+            </button>
+            <div className="lvv-list" role="list">
+              {loading && (
+                <div className="lvv-state">
+                  <span className="lvv-state-dot" aria-hidden="true" />
+                  <span>LOADING</span>
+                </div>
+              )}
+              {!loading && tracks.length === 0 && (
+                <div className="lvv-state">NO TRACKS PUBLISHED</div>
+              )}
+              {!loading && tracks.map((track, i) => (
+                <button
+                  key={track.id}
+                  className={`lvv-track-row${activeTrack?.id === track.id ? ' lvv-track-row--active' : ''}`}
+                  onClick={() => handleTrackSelect(track)}
+                  role="listitem"
+                >
+                  <span className="lvv-track-num">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="lvv-track-info">
+                    <span className="lvv-track-title">{track.title || 'UNTITLED'}</span>
+                    {track.duration != null && (
+                      <span className="lvv-track-dur">{formatDuration(track.duration)}</span>
+                    )}
+                  </span>
+                  <ThumbnailCanvas track={track} />
+                </button>
+              ))}
+            </div>
+            {activeTrack && (
+              <div className="lvv-mini-transport">
+                <button
+                  className="lvv-mini-transport-toggle"
+                  onClick={handleMiniTransportTap}
+                  aria-label="Return to player"
+                >
+                  <span className={`lvv-transport-status${isPlaying ? '' : ' is-paused'}`}>
+                    {isPlaying ? '▶ PLAYING' : '▮▮ PAUSED'}
+                  </span>
+                  <span className="lvv-transport-dot" aria-hidden="true">·</span>
+                  <span className="lvv-transport-title">{activeTrack.title}</span>
+                  {audioState.duration > 0 && (
+                    <span className="lvv-transport-time" aria-hidden="true">
+                      {formatDuration(audioState.currentTime)} · −{formatDuration(audioState.duration - audioState.currentTime)}
+                    </span>
+                  )}
+                </button>
+                <button
+                  className="lvv-transport-stop"
+                  onClick={handleStop}
+                  aria-label="Stop playback"
+                >
+                  STOP
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+      </AnimatePresence>
     </div>
   );
 }

@@ -75,6 +75,10 @@
   outline: none;
 }
 
+.lvv-track-row:active {
+  background: rgba(255, 255, 255, 0.055);
+}
+
 .lvv-track-row--active {
   background: rgba(255, 255, 255, 0.02);
 }
@@ -162,6 +166,14 @@
 @keyframes lvv-blink {
   0%, 100% { opacity: 0.3; }
   50%       { opacity: 1; }
+}
+
+/* ── Screen body — motion.div wrapper, fills remaining height after header ── */
+.lvv-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* ── Player stage ── */
