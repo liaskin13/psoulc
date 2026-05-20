@@ -390,9 +390,8 @@ function drawVU(ctx, W, H, rL, rR, peakLVal, peakRVal) {
   drawSegBar(bw + 6, rR, peakRVal);
 }
 
-// Maps stored Serato freq hex values — bass gets a slight indigo deepening, mid/high stay true.
+// Pass Serato freq hex values through unchanged.
 function pscFreqColor(hexColor) {
-  if (hexColor === "#1464dc") return "#2840dc"; // bass → PSC indigo (slight deepening only)
   return hexColor;
 }
 

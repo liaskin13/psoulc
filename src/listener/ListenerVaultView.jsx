@@ -38,7 +38,7 @@ function parseWaveformBars(track, count = 400) {
 
 // Maps GEOB freq color to Serato display [r, g, b]
 function seratoRgb(freq) {
-  if (freq === '#1464dc') return [40, 60, 220];    // bass → indigo-blue (Serato standard)
+  if (freq === '#1464dc') return [20, 100, 220];   // bass → blue (#1464dc, Serato)
   if (freq === '#e56020') return [229, 96, 32];    // high → warm orange (Serato standard)
   return [20, 220, 20];                             // mid → Serato green
 }
