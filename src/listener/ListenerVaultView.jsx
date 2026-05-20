@@ -67,32 +67,33 @@ function ThumbnailCanvas({ track }) {
 
 function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek }) {
   const ref = useRef(null);
+  const currentTimeRef = useRef(currentTime);
+  const durationRef = useRef(duration);
 
-  const handleClick = useCallback((e) => {
-    if (!onSeek || !duration) return;
-    const canvas = ref.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    onSeek(((e.clientX - rect.left) / rect.width) * duration);
-  }, [onSeek, duration]);
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+  useEffect(() => { durationRef.current = duration; }, [duration]);
 
   const draw = useCallback(() => {
     const canvas = ref.current;
     if (!canvas) return;
-    const W = canvas.offsetWidth;
-    const H = canvas.offsetHeight;
-    if (!W || !H) return;
+    const rect = canvas.getBoundingClientRect();
+    const W = rect.width || canvas.offsetWidth;
+    const H = rect.height || canvas.offsetHeight || 80;
+    if (!W) return;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = W * dpr;
     canvas.height = H * dpr;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, W, H);
 
+    const ct = currentTimeRef.current;
+    const dur = durationRef.current;
     const bars = parseWaveformBars(track, 80);
     const step = W / bars.length;
     const barW = Math.max(1, step * 0.65);
-    const progress = duration > 0 ? currentTime / duration : 0;
+    const progress = dur > 0 ? ct / dur : 0;
     const playheadX = Math.round(progress * W);
 
     bars.forEach((amp, i) => {
@@ -107,7 +108,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek })
       ctx.fillRect(x, y, barW, h);
     });
 
-    if (!ghost && duration > 0) {
+    if (!ghost && dur > 0) {
       ctx.save();
       ctx.fillStyle = '#14dc14';
       ctx.shadowColor = 'rgba(20,220,20,0.5)';
@@ -115,16 +116,35 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek })
       ctx.fillRect(Math.min(playheadX, W - 1), 0, 1, H);
       ctx.restore();
     }
-  }, [track, currentTime, duration, ghost]);
+  }, [track, ghost]);
 
+  // Stable ResizeObserver — created once per track/ghost, deferred first draw
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
-    const ro = new ResizeObserver(draw);
+    const ro = new ResizeObserver(() => draw());
     ro.observe(canvas);
-    draw();
-    return () => ro.disconnect();
+    const raf = requestAnimationFrame(() => draw());
+    return () => { ro.disconnect(); cancelAnimationFrame(raf); };
   }, [draw]);
+
+  // rAF loop — keeps playhead moving without prop-driven re-renders
+  useEffect(() => {
+    let rafId;
+    const loop = () => { draw(); rafId = requestAnimationFrame(loop); };
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
+  }, [draw]);
+
+  const handleClick = useCallback((e) => {
+    if (!onSeek) return;
+    const dur = durationRef.current;
+    if (!dur) return;
+    const canvas = ref.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    onSeek(((e.clientX - rect.left) / rect.width) * dur);
+  }, [onSeek]);
 
   return (
     <canvas
