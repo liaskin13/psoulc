@@ -322,7 +322,13 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
               key={vault.id}
               className={`listener-dock-btn${selectedVault?.id === vault.id ? " listener-dock-active" : ""}`}
               style={vault.color ? { "--vault-color": vault.color } : {}}
-              onClick={() => setSelectedVaultId(vault.id)}
+              onClick={() => {
+                if (selectedVault?.id === vault.id) {
+                  openVault(vault);
+                } else {
+                  setSelectedVaultId(vault.id);
+                }
+              }}
               aria-pressed={selectedVault?.id === vault.id}
             >
               <span className="listener-dock-pip" aria-hidden="true" />

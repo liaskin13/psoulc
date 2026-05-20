@@ -65,8 +65,16 @@ function ThumbnailCanvas({ track }) {
   );
 }
 
-function WaveformCanvas({ track, currentTime, duration, ghost = false }) {
+function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek }) {
   const ref = useRef(null);
+
+  const handleClick = useCallback((e) => {
+    if (!onSeek || !duration) return;
+    const canvas = ref.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    onSeek(((e.clientX - rect.left) / rect.width) * duration);
+  }, [onSeek, duration]);
 
   const draw = useCallback(() => {
     const canvas = ref.current;
@@ -94,7 +102,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false }) {
       if (ghost) {
         ctx.fillStyle = 'rgba(240,237,232,0.11)';
       } else {
-        ctx.fillStyle = (x + barW / 2) <= playheadX ? '#14dc14' : 'rgba(240,237,232,0.28)';
+        ctx.fillStyle = (x + barW / 2) <= playheadX ? '#14dc14' : 'rgba(240,237,232,0.55)';
       }
       ctx.fillRect(x, y, barW, h);
     });
@@ -123,6 +131,8 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false }) {
       ref={ref}
       className={`lvv-waveform-canvas${ghost ? ' lvv-waveform-ghost' : ''}`}
       aria-hidden="true"
+      onClick={onSeek ? handleClick : undefined}
+      style={onSeek ? { cursor: 'pointer' } : undefined}
     />
   );
 }
@@ -182,10 +192,13 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
   }, []);
 
   const handlePlayerBack = useCallback(() => {
-    audioEngine.stop();
     setPlayerState(null);
-    setActiveTrack(null);
+    // activeTrack stays set — music keeps playing in background
   }, []);
+
+  const handleMiniTransportTap = useCallback(() => {
+    setPlayerState(audioState.isPlaying ? 'playing' : 'paused');
+  }, [audioState.isPlaying]);
 
   const header = (
     <header className="lvv-header">
@@ -228,7 +241,9 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
             aria-label="Play"
           >
             <span className="lvv-play-track-title">{activeTrack?.title}</span>
-            <span className="lvv-play-triangle" aria-hidden="true">▶</span>
+            <svg className="lvv-play-svg" viewBox="0 0 44 52" aria-hidden="true">
+              <polygon points="0,0 44,26 0,52" />
+            </svg>
           </button>
         </div>
       </div>
@@ -253,6 +268,7 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
             track={activeTrack}
             currentTime={audioState.currentTime}
             duration={audioState.duration}
+            onSeek={(t) => audioEngine.seek(t)}
           />
         </div>
         <div className="lvv-transport">
@@ -280,6 +296,29 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
   }
 
   // TRACK LIST
+  const miniTransport = activeTrack ? (
+    <div className="lvv-mini-transport">
+      <button
+        className="lvv-mini-transport-toggle"
+        onClick={handleMiniTransportTap}
+        aria-label="Return to player"
+      >
+        <span className={`lvv-transport-status${audioState.isPlaying ? '' : ' is-paused'}`}>
+          {audioState.isPlaying ? '▶ PLAYING' : '▮▮ PAUSED'}
+        </span>
+        <span className="lvv-transport-dot" aria-hidden="true">·</span>
+        <span className="lvv-transport-title">{activeTrack.title}</span>
+      </button>
+      <button
+        className="lvv-transport-stop"
+        onClick={handleStop}
+        aria-label="Stop playback"
+      >
+        STOP
+      </button>
+    </div>
+  ) : null;
+
   return (
     <div className="lvv-screen">
       {header}
@@ -318,6 +357,7 @@ function ListenerVaultView({ vault, onBack, onExitSystem }) {
           </button>
         ))}
       </div>
+      {miniTransport}
     </div>
   );
 }

@@ -209,14 +209,14 @@
   text-overflow: ellipsis;
 }
 
-.lvv-play-triangle {
-  font-size: 52px;
-  line-height: 1;
-  color: rgba(240, 237, 232, 0.72);
+.lvv-play-svg {
+  width: 52px;
+  height: 52px;
+  fill: rgba(240, 237, 232, 0.72);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .lvv-play-triangle {
+  .lvv-play-svg {
     animation: lvv-play-pulse 2s ease-in-out infinite;
   }
 }
@@ -308,4 +308,34 @@
 
 .lvv-transport-stop:hover {
   color: rgba(230, 230, 230, 0.92);
+}
+
+/* ── Mini-transport (persistent playback strip in track list) ── */
+.lvv-mini-transport {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  border-top: 1px solid var(--border, #1e1e1e);
+  background: var(--surface, #0d0d0d);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.lvv-mini-transport-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms;
+}
+
+.lvv-mini-transport-toggle:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
