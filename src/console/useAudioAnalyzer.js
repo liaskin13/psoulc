@@ -434,7 +434,7 @@ function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
 
   // Hot cue marks
   if (hotCues && duration > 0) {
-    for (const cue of hotCues) {
+    for (const cue of Object.values(hotCues)) {
       if (cue.time == null) continue;
       const cx = Math.round((cue.time / duration) * W);
       ctx.fillStyle = cue.color || "rgba(255,255,255,0.6)";
