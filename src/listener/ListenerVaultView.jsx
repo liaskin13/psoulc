@@ -456,6 +456,7 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
             <svg className="lvv-play-svg" viewBox="0 0 44 52" aria-hidden="true">
               <polygon points="0,0 44,26 0,52" />
             </svg>
+            <span className="lvv-play-seek-hint" aria-hidden="true">TAP WAVEFORM TO SEEK</span>
           </button>
         </div>
       </div>
@@ -542,6 +543,11 @@ function ListenerVaultView({ vault, vaultColor, onBack, onExitSystem }) {
         </span>
         <span className="lvv-transport-dot" aria-hidden="true">·</span>
         <span className="lvv-transport-title">{activeTrack.title}</span>
+        {audioState.duration > 0 && (
+          <span className="lvv-transport-time" aria-hidden="true">
+            {formatDuration(audioState.currentTime)} · −{formatDuration(audioState.duration - audioState.currentTime)}
+          </span>
+        )}
       </button>
       <button
         className="lvv-transport-stop"
