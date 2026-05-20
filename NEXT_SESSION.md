@@ -1,98 +1,119 @@
 # Next Session — Resume Here
 
-**Last updated:** 2026-05-19
+**Last updated:** 2026-05-20
 
 ## Status
-/investigate COMPLETE — root causes found, fixes NOT yet applied (awaiting approval)
+Eng review COMPLETE — implementation plan approved, ready to code.
 
 ---
 
-## BUG 1: Sound broken — affects BOTH D's console and listener (uoyni.com)
+## IMPLEMENT: v3 Guest Flow (approved, start here)
 
-**Root cause confirmed:**
-Sprint 1A added live FFT analyzer (useAudioAnalyzer.js:75: createMediaElementSource).
-When audio element is tapped into Web Audio API via createMediaElementSource,
-browser enforces CORS on the src URL. R2 public URL has NO CORS headers.
-Result: CORS error silently kills audio. Before Sprint 1A, basic HTML audio
-element playback didnt require CORS so it worked.
-`pub-a782f6b9fdf342b3bfa6c668c4b7a5ce.r2.dev/venus/1777811220926-ng5hgc3pc3a.wav`
-returns HTTP 200 with NO Content-Type header (confirmed via curl -I).
-Browser audio element fires `onerror` → load rejects → "Audio load failed" error.
+### Decision locked
+- **Fork, not conditional**: Create `src/listener/ListenerVaultView.jsx` (new file)
+- `VaultView.jsx` and all 4 console consumers are **NOT TOUCHED**
+- Audio via `audioEngine` (not `new Audio()`) — CORS already handled
 
-**Fix (two files):**
+### What the preview looks like (approved by L)
+Live at: uoyni.com/guest-flow-preview.html
 
-1. `worker/upload-worker.js` — Add `/audio/*` streaming proxy route:
+5 screens:
+1. Vault landing — large duration hero (H:MM) + "TOUCH ANYWHERE TO ENTER" breathing hint
+2. Mix list — track rows with 52×26px waveform thumbnails + duration
+3. Player paused — ghost waveform (11% opacity) + pulsing play triangle, nothing else
+4. Player playing — full waveform (played=green, unplayed=grey), green playhead line
+5. Voice note open — deferred (no backend), do NOT implement now
+
+### Task list (3 tasks)
+
+**T1 — `src/listener/ListenerVaultView.jsx` (NEW FILE)**
+- Fetch published tracks via `fetchPublishedVaultTracks(vault)` from lib/tracks.js
+- Track list with rows: num | title + duration | 52×26px waveform thumbnail canvas
+  - Waveform: parse `track.waveform_data` (JSON string `{low:[...], high:[...]}`)
+  - Fallback: seeded bars from `getWaveformBars(track.id, 80)` in utils/waveform.js
+- Player state machine: `null` | `paused` | `playing`
+  - null: show track list
+  - paused: hide list, show ghost waveform + pulsing play button center stage
+  - playing: hide list, show waveform with playhead, transport bar at bottom
+- Audio: use `audioEngine` (load/play/pause/stop/seek/onStateChange) from lib/audioEngine.js
+- Back button: from track list → ListenerShell vault landing; from player → track list
+- Header: "LISTENING ROOM / CURATED BY D" + EXIT button (same as current)
+- Transport bar: "▶ PLAYING · TRACK TITLE · STOP" or "▮▮ PAUSED · TRACK TITLE · STOP"
+
+**T2 — `src/listener/ListenerShell.jsx` (MODIFY)**
+- Add `vaultStats` state: `{ [vaultId]: { totalDuration: number, count: number } }`
+- Fetch published tracks when vault tab changes to compute totalDuration + count
+- Format duration hero: `Math.floor(totalSecs/3600) + ':' + String(Math.floor((totalSecs%3600)/60)).padStart(2,'0')`
+  - e.g. 5h 42m → "5:42", show "--:--" while loading
+- Replace `listener-stage-content` block with:
+  ```
+  <duration-hero>5:42</duration-hero>          ← Space Mono, 72-82px, tabular-nums
+  <subtitle>MIXES · 5 SESSIONS</subtitle>     ← Chakra Petch, 8px
+  <meta>CURATED BY D · EXTENDED SETS · FULL SEQUENCES</meta>
+  <rule/>
+  <hint>TOUCH ANYWHERE TO ENTER</hint>        ← breathing animation (opacity pulse)
+  ```
+- Make entire `listener-stage` clickable (onClick → openVault), not just a button
+- Remove: `.listener-stage-cta` button, `.listener-stage-kicker`, `.listener-vault-accent`
+- Import `fetchPublishedVaultTracks` from lib/tracks.js (already available)
+- Replace `<VaultView>` with `<ListenerVaultView>` (new import)
+
+**T3 — `src/index.css` + `src/listener/ListenerVaultView.css` (NEW FILE)**
+- Add CSS vars to `:root`: `--vc`, `--vc-dot`, `--vc-active`, `--vc-bg` (from preview)
+- Duration hero class: Space Mono or monospace, 72-82px, font-weight 700, tabular-nums
+- Touch hint: `animation: breathe 2.6s ease-in-out infinite` (opacity 0.09 → 0.35 → 0.09)
+- Ghost waveform: opacity 0.11, full width
+- Waveform thumbnail: 52px × 26px canvas, display block
+- Playhead: 1px green line, box-shadow 0 0 6px rgba(20,220,20,0.5)
+
+### Key imports to use
 ```js
-// GET /audio/:key — stream from R2 with correct Content-Type + Range support
-if (request.method === "GET" && url.pathname.startsWith("/audio/")) {
-  const key = decodeURIComponent(url.pathname.slice(7)); // strip /audio/
-  const ext = key.split('.').pop().toLowerCase();
-  const contentTypes = { wav:'audio/wav', mp3:'audio/mpeg', flac:'audio/flac', m4a:'audio/mp4' };
-  const contentType = contentTypes[ext] || 'audio/mpeg';
-  
-  const rangeHeader = request.headers.get('Range');
-  const obj = rangeHeader
-    ? await env.PSC_AUDIO.get(key, { range: parseRange(rangeHeader) })
-    : await env.PSC_AUDIO.get(key);
-  
-  if (!obj) return new Response('Not found', { status: 404, headers: corsHeaders });
-  
-  const status = rangeHeader ? 206 : 200;
-  const headers = { ...corsHeaders, 'Content-Type': contentType, 'Accept-Ranges': 'bytes' };
-  if (rangeHeader && obj.range) {
-    headers['Content-Range'] = `bytes ${obj.range.offset}-${obj.range.end}/${obj.size}`;
-  }
-  return new Response(obj.body, { status, headers });
-}
+// In ListenerVaultView.jsx
+import { fetchPublishedVaultTracks, getAudioUrl } from '../lib/tracks';
+import * as audioEngine from '../lib/audioEngine';
+import { getWaveformBars } from '../utils/waveform';
 ```
 
-2. `src/lib/tracks.js:85` — Update getAudioUrl to use worker proxy:
-```js
-export function getAudioUrl(audio_path) {
-  if (!audio_path) return null;
-  if (IS_DEV) return null;
-  return `${UPLOAD_WORKER_URL}/audio/${audio_path}`;  // was: R2_PUBLIC_URL
-}
+### waveform_data format
+Stored as JSON string in D1. Parse with: `JSON.parse(track.waveform_data || 'null')`
+Structure: `{ low: Float32Array|number[], high: Float32Array|number[] }`
+For thumbnails: use `high` array. Normalize to 0-1 range. Draw centered bars.
+
+### CSS design tokens (from preview, already approved)
+```css
+--void: #050505;
+--surface: #0d0d0d;
+--border: #1e1e1e;
+--id: #14dc14;          /* identity green */
+--id-dim: rgba(20,220,20,0.07);
+--tp: rgba(230,230,230,0.92);   /* text primary */
+--ts: rgba(160,160,160,0.72);   /* text secondary */
+--tm: rgba(90,90,90,0.80);      /* text muted */
+--tg: rgba(255,255,255,0.09);   /* text ghost */
 ```
-(Remove the `if (!R2_PUBLIC_URL) return null;` check — no longer needed)
 
 ---
 
-## BUG 2: Waveform zoom — both strips show identical full-track view
+## BUG: Waveform zoom — both strips show identical full-track view
 
 **Root cause confirmed:**
 `zoom={1}` hardcoded at `src/console/ArchitectConsole.jsx:1680`.
-DeckWaveform has two canvases: 24px overview (always full-track) + main canvas
-(zoomed when zoom>1). zoom=1 → both show full track → looks duplicated.
 
-**Fix (one file):**
-`src/console/ArchitectConsole.jsx`:
+**Fix:**
 - Add: `const [deckZoom, setDeckZoom] = useState(4);` near other deck state
 - Change line 1680: `zoom={1}` → `zoom={deckZoom}`
-- Add zoom +/- buttons near waveform (use god-btn pattern, 11px Chakra Petch)
+- Add zoom +/- buttons near waveform (god-btn pattern, 11px Chakra Petch)
 
 ---
 
-## Design Consultation — COMPLETE (DESIGN.md written, not implemented)
+## Already done (do NOT redo)
+- Audio CORS fix: worker proxy `/audio/*` + `crossOrigin="anonymous"` in audioEngine (commit 2e476df)
+- Design findings 001–003+007: committed and deployed
+- Preview deployed: uoyni.com/guest-flow-preview.html (commit f966855)
+- DESIGN.md: Guest Flow + Voice Comments spec written
 
-Guest Flow spec locked in DESIGN.md:
-- Vault landing: total runtime hero (Space Mono, 82px), "TOUCH ANYWHERE TO ENTER" breathing
-- Mix list: 52×26px seeded waveform thumbnails, voice badge
-- Player paused: ghost waveform 11% opacity + pulsing ▶
-- Player playing: full waveform stage, played=green, unplayed=grey, playhead=green
-- Voice comments: warm near-white `--vc` tokens, whisper mode audio ducking
-
-Preview: `/workspaces/psoulc/public/guest-flow-preview.html`
-Start Vite: `npx vite --port 5174` then open http://localhost:5174/guest-flow-preview.html
-**User has NOT approved preview visually yet — show before implementing.**
-
-Voice comments: listener-only, D can respond/react/like, Phase 2: D samples fan voice in mixes.
-
----
-
-## Pending (do NOT implement without showing preview first)
-1. Fix sound bug (worker proxy) + fix waveform zoom → needs approval
-2. Show guest-flow-preview.html → get approval → implement v3 design
-3. D needs to publish 4 remaining mixes (only 1/5 published)
-4. Zone B: ACCESS CODES panel for L
-5. Migration 0006: cue_labels column (D-bank cue persistence)
+## Pending after v3 implementation
+- D needs to publish 4 remaining mixes (only 1/5 published)
+- Zone B: ACCESS CODES panel for L
+- Migration 0006: cue_labels column (D-bank cue persistence)
+- Waveform zoom fix (separate from v3 guest flow)
