@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSC Guest Flow — Radical Design v3 (voice comments)</title>
+<style>
+/* Codespaces-safe font stack — no external fetch required */
+@font-face { font-family: 'Chakra Petch'; src: local('Courier New'); }
+@font-face { font-family: 'Space Mono'; src: local('Courier New'); }
+</style>
+<style>
+  :root {
+    --void: #050505;
+    --surface: #0d0d0d;
+    --surface-raised: #141414;
+    --border: #1e1e1e;
+    --border-b: #2a2a2a;
+    --tp: rgba(230,230,230,0.92);
+    --ts: rgba(160,160,160,0.72);
+    --tm: rgba(90,90,90,0.80);
+    --tg: rgba(255,255,255,0.09);
+    --id: #14dc14;
+    --id-dim: rgba(20,220,20,0.07);
+    --font: 'Chakra Petch', sans-serif;
+    --mono: 'Space Mono', monospace;
+    /* Voice comment accent — warm near-white, distinct from identity green */
+    --vc: rgba(240,230,200,0.72);
+    --vc-dot: rgba(240,230,200,0.55);
+    --vc-active: rgba(240,230,200,0.92);
+    --vc-bg: rgba(20,18,14,0.96);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #060606;
+    color: var(--tp);
+    font-family: var(--font);
+    padding: 40px 20px 80px;
+  }
+
+  .pg-title { text-align:center; font-size:8px; font-weight:500; letter-spacing:.28em; text-transform:uppercase; color:var(--tm); margin-bottom:4px; }
+  .pg-sub   { text-align:center; font-size:7px; letter-spacing:.16em; text-transform:uppercase; color:rgba(90,90,90,.32); margin-bottom:48px; }
+  .sec-lbl  { text-align:center; font-size:7px; letter-spacing:.26em; text-transform:uppercase; color:rgba(20,220,20,.45); margin:52px 0 28px; }
+  hr.div    { border:none; border-top:1px solid var(--border); margin:56px 0; }
+
+  /* ── PHONE FRAME ── */
+  .screens { display:flex; gap:18px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
+  .sw { display:flex; flex-direction:column; align-items:center; gap:9px; }
+  .snum { font-size:7px; letter-spacing:.22em; text-transform:uppercase; color:var(--tm); }
+  .phone {
+    width:285px; height:600px;
+    background:var(--void);
+    border:1px solid var(--border-b);
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  canvas.dp { position:absolute; inset:0; z-index:0; pointer-events:none; }
+
+  /* ── HEADER ── */
+  .hdr {
+    position:relative; z-index:20; height:40px;
+    background:var(--surface); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 11px; flex-shrink:0;
+  }
+  .hdr-l { display:flex; flex-direction:column; gap:2px; }
+  .hdr-room { font-size:7px; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--id); }
+  .hdr-cur  { font-size:6px; letter-spacing:.16em; text-transform:uppercase; color:var(--tm); }
+  .hdr-exit { font-size:6px; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:var(--tm); background:transparent; border:1px solid var(--border); padding:3px 6px; font-family:var(--font); cursor:pointer; }
+
+  /* ── DOCK ── */
+  .dock {
+    position:relative; z-index:20; height:50px;
+    background:var(--surface); border-top:1px solid var(--border);
+    display:grid; grid-template-columns:1fr 1fr 1fr; flex-shrink:0;
+  }
+  .dtab { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:none; background:transparent; font-family:var(--font); cursor:pointer; }
+  .dtab + .dtab { border-left:1px solid var(--border); }
+  .dpip { width:3px; height:3px; border-radius:50%; background:transparent; }
+  .dtab.on .dpip { background:var(--id); box-shadow:0 0 5px rgba(20,220,20,.55); }
+  .dlbl { font-size:6px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--tm); }
+  .dtab.on .dlbl { color:var(--ts); }
+
+  /* ── TRANSPORT ── */
+  .xport {
+    position:relative; z-index:20; height:30px;
+    background:var(--surface); border-top:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 10px; flex-shrink:0; gap:8px;
+  }
+  .xstate { display:flex; align-items:center; gap:5px; font-size:6px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--ts); }
+  .xdot { width:4px; height:4px; border-radius:50%; }
+  .xdot.play { background:var(--id); animation:bth 1.6s ease-in-out infinite; }
+  .xdot.pau  { background:var(--tm); }
+  .xtrack { font-size:6px; font-family:var(--mono); color:var(--tm); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-align:center; }
+  .xstop  { font-size:6px; letter-spacing:.14em; text-transform:uppercase; color:var(--tm); cursor:pointer; }
+
+  /* ── STAGE ── */
+  .stage { flex:1; position:relative; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px 14px; overflow:hidden; }
+
+  /* ══ S1: VAULT LANDING ══ */
+  .vd-hero  { font-size:82px; font-weight:700; letter-spacing:-.04em; font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--tp); line-height:1; width:100%; margin-bottom:10px; }
+  .vd-sub   { font-size:8px; font-weight:500; letter-spacing:.18em; text-transform:uppercase; color:var(--ts); width:100%; margin-bottom:3px; }
+  .vd-meta  { font-size:7px; letter-spacing:.16em; text-transform:uppercase; color:var(--tm); width:100%; margin-bottom:26px; }
+  .vd-rule  { width:100%; height:1px; background:var(--border); margin-bottom:22px; }
+  .vd-hint  { font-size:7px; letter-spacing:.22em; text-transform:uppercase; color:var(--tg); width:100%; text-align:center; animation:bth 2.6s ease-in-out infinite; }
+
+  /* ══ S2: MIXES LIST ══ */
+  .mlist { width:100%; display:flex; flex-direction:column; }
+  .mlist-hdr { display:flex; justify-content:space-between; font-size:7px; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--tm); padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:6px; }
+  .mx-row { padding:9px 0 8px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .mx-row.active { background:var(--id-dim); border-bottom:1px solid rgba(20,220,20,.12); }
+  .mx-row-top { display:grid; grid-template-columns:24px 1fr 52px; align-items:center; gap:7px; }
+  .mx-row.active .mx-row-top { padding-left:5px; border-left:2px solid var(--id); }
+  .mx-num { font-size:15px; font-weight:700; font-family:var(--mono); color:var(--tm); text-align:right; line-height:1; }
+  .mx-row.active .mx-num { color:var(--id); }
+  .mx-info { display:flex; flex-direction:column; gap:3px; }
+  .mx-title { font-size:9px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--tp); }
+  .mx-row.active .mx-title { color:var(--id); }
+  .mx-dur { font-size:7px; font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--tm); }
+  .mx-wf { height:26px; width:52px; flex-shrink:0; }
+  .mx-wf canvas { display:block; width:100%; height:100%; }
+  /* Voice comment count badge on mix row */
+  .mx-vc-count {
+    font-size:6px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--vc-dot); padding-top:5px; padding-left:32px;
+    display:flex; align-items:center; gap:4px;
+  }
+  .vc-badge-dot { width:4px; height:4px; border-radius:50%; background:var(--vc-dot); display:inline-block; }
+
+  /* ══ S3: PLAYER PAUSED ══ */
+  .paused-stage { flex:1; position:relative; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; }
+  .ghost-wf { width:100%; height:80px; opacity:.11; position:relative; }
+  .ghost-wf canvas { display:block; width:100%; height:100%; }
+  .paused-overlay { position:absolute; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .p-title { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--tp); text-align:center; }
+  .play-btn { width:38px; height:38px; border:1px solid rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; cursor:pointer; animation:bth 1.6s ease-in-out infinite; }
+  .play-tri { width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; border-left:11px solid var(--tp); margin-left:2px; }
+  .p-hint { font-size:6px; letter-spacing:.22em; text-transform:uppercase; color:var(--tg); animation:bth 2.4s ease-in-out infinite; animation-delay:.5s; }
+
+  /* ══ S4: PLAYER PLAYING ══ */
+  .playing-stage { flex:1; position:relative; z-index:10; display:flex; flex-direction:column; overflow:hidden; }
+  .np-strip { padding:8px 11px 6px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .np-title { font-size:9px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--tp); margin-bottom:2px; }
+  .np-elapsed { font-size:7px; font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--tm); }
+  .wf-stage { flex:1; position:relative; overflow:hidden; cursor:pointer; }
+  .wf-stage canvas { display:block; width:100%; height:100%; }
+  .playhead { position:absolute; top:0; bottom:0; width:1px; background:var(--id); box-shadow:0 0 6px rgba(20,220,20,.5), 0 0 18px rgba(20,220,20,.18); pointer-events:none; }
+
+  /* Voice comment markers on waveform — small diamonds along the top zone */
+  .vc-marker {
+    position:absolute;
+    top:6px;
+    width:6px; height:6px;
+    background:var(--vc-dot);
+    transform:translateX(-50%) rotate(45deg);
+    cursor:pointer;
+    transition:background 120ms, box-shadow 120ms;
+  }
+  .vc-marker:hover, .vc-marker.active {
+    background:var(--vc-active);
+    box-shadow:0 0 8px rgba(240,230,200,.4);
+  }
+  /* Small vertical tick below each marker connecting it to waveform */
+  .vc-marker::after {
+    content:'';
+    position:absolute;
+    top:7px; left:50%; transform:translateX(-50%);
+    width:1px; height:6px;
+    background:var(--vc-dot);
+  }
+
+  .wf-time { position:absolute; bottom:5px; left:0; right:0; display:flex; justify-content:space-between; padding:0 7px; font-size:6px; font-family:var(--mono); color:rgba(90,90,90,.4); pointer-events:none; font-variant-numeric:tabular-nums; }
+
+  /* ══ S5: VOICE COMMENT OPEN ══ */
+  /* Same as S4 but with a comment card visible */
+  .vc-card {
+    position:absolute;
+    bottom:28px; /* sits above the waveform time labels */
+    left:8px; right:8px;
+    background:var(--vc-bg);
+    border:1px solid rgba(240,230,200,.18);
+    padding:10px 11px;
+    z-index:30;
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    /* Subtle warm glow — distinct from identity green */
+    box-shadow:0 0 20px rgba(240,230,200,.06);
+  }
+  .vc-card-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .vc-timestamp {
+    font-size:7px; font-family:var(--mono); font-variant-numeric:tabular-nums;
+    color:var(--vc);
+    letter-spacing:.08em;
+  }
+  .vc-author {
+    font-size:6px; font-weight:500; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--vc-dot);
+  }
+  .vc-transcript {
+    font-size:9px; font-weight:400; line-height:1.55;
+    color:var(--tp);
+    font-style:italic;
+  }
+  .vc-actions {
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .vc-hear {
+    font-size:7px; font-weight:600; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--vc);
+    background:transparent;
+    border:1px solid rgba(240,230,200,.22);
+    padding:4px 8px;
+    font-family:var(--font);
+    cursor:pointer;
+    display:flex; align-items:center; gap:5px;
+  }
+  /* Tiny play triangle for HEAR button */
+  .vc-play-tri {
+    width:0; height:0;
+    border-top:3px solid transparent;
+    border-bottom:3px solid transparent;
+    border-left:5px solid var(--vc);
+  }
+  .vc-dismiss {
+    font-size:6px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--tm); cursor:pointer;
+    margin-left:auto;
+  }
+  .vc-whisper-note {
+    font-size:6px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--tm); font-style:normal;
+    border-top:1px solid rgba(240,230,200,.08);
+    padding-top:6px;
+  }
+
+  /* ── DECISION CARDS ── */
+  .dec-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:1px; background:var(--border); border:1px solid var(--border);
+    max-width:1080px; margin:0 auto;
+  }
+  .dc { background:var(--surface); padding:18px; }
+  .dc-tag { font-size:7px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; margin-bottom:7px; }
+  .r { color:#ffcc00; }
+  .e { color:#00e5ff; }
+  .s { color:var(--tm); }
+  .n { color:var(--id); }
+  .vc-clr { color:rgba(240,230,200,.8); }
+  .dc-h { font-size:11px; font-weight:600; letter-spacing:.05em; color:var(--tp); margin-bottom:6px; }
+  .dc-b { font-size:9px; line-height:1.65; color:var(--ts); }
+  code { display:block; font-family:var(--mono); font-size:8px; color:rgba(20,220,20,.55); background:rgba(20,220,20,.04); border:1px solid rgba(20,220,20,.12); padding:7px 9px; margin-top:8px; line-height:1.6; white-space:pre; }
+  code.warm { color:rgba(240,230,200,.65); background:rgba(240,230,200,.04); border-color:rgba(240,230,200,.12); }
+
+  @keyframes bth { 0%,100%{opacity:.35} 50%{opacity:1} }
+</style>
+</head>
+<body>
+
+<div class="pg-title">Pleasant Soul Collective — Guest Flow · Radical Design v3</div>
+<div class="pg-sub">Voice comments · No Serato cues · Waveform as art · 2026-05-19</div>
+
+<p class="sec-lbl">01 VAULT &nbsp;·&nbsp; 02 MIXES &nbsp;·&nbsp; 03 PAUSED &nbsp;·&nbsp; 04 PLAYING &nbsp;·&nbsp; 05 VOICE COMMENT OPEN</p>
+
+<div class="screens">
+
+  <!-- ── S1: VAULT LANDING ── -->
+  <div class="sw">
+    <span class="snum">01 — Vault Landing</span>
+    <div class="phone">
+      <canvas class="dp" id="dp1"></canvas>
+      <div class="hdr">
+        <div class="hdr-l"><span class="hdr-room">LISTENING ROOM</span><span class="hdr-cur">CURATED BY D</span></div>
+        <button class="hdr-exit">EXIT</button>
+      </div>
+      <div class="stage">
+        <div class="vd-hero">5:42</div>
+        <div class="vd-sub">MIXES · 5 SESSIONS</div>
+        <div class="vd-meta">CURATED BY D · EXTENDED SETS · FULL SEQUENCES</div>
+        <div class="vd-rule"></div>
+        <span class="vd-hint">TOUCH ANYWHERE TO ENTER</span>
+      </div>
+      <div class="dock">
+        <button class="dtab on"><div class="dpip"></div><span class="dlbl">MIXES</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">ORIGINALS</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">LIVE</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S2: MIXES LIST ── -->
+  <div class="sw">
+    <span class="snum">02 — Mixes List</span>
+    <div class="phone">
+      <canvas class="dp" id="dp2"></canvas>
+      <div class="hdr">
+        <div class="hdr-l"><span class="hdr-room">LISTENING ROOM</span><span class="hdr-cur">CURATED BY D</span></div>
+        <button class="hdr-exit">EXIT</button>
+      </div>
+      <div class="stage" style="justify-content:flex-start;padding:12px 12px;">
+        <div class="mlist">
+          <div class="mlist-hdr"><span>MIXES</span><span>5 SESSIONS</span></div>
+
+          <div class="mx-row active">
+            <div class="mx-row-top">
+              <span class="mx-num">01</span>
+              <div class="mx-info">
+                <span class="mx-title">93'WAS INFINITY</span>
+                <span class="mx-dur">1:19:02</span>
+              </div>
+              <div class="mx-wf"><canvas id="wf1"></canvas></div>
+            </div>
+            <!-- Voice comment count — no cue dots -->
+            <div class="mx-vc-count">
+              <span class="vc-badge-dot"></span>
+              <span>3 VOICE NOTES</span>
+            </div>
+          </div>
+
+          <div class="mx-row" style="opacity:.5;">
+            <div class="mx-row-top">
+              <span class="mx-num">02</span>
+              <div class="mx-info"><span class="mx-title">UNTITLED II</span><span class="mx-dur">—</span></div>
+              <div class="mx-wf"><canvas id="wf2"></canvas></div>
+            </div>
+          </div>
+          <div class="mx-row" style="opacity:.5;">
+            <div class="mx-row-top">
+              <span class="mx-num">03</span>
+              <div class="mx-info"><span class="mx-title">UNTITLED III</span><span class="mx-dur">—</span></div>
+              <div class="mx-wf"><canvas id="wf3"></canvas></div>
+            </div>
+          </div>
+          <div class="mx-row" style="opacity:.5;">
+            <div class="mx-row-top">
+              <span class="mx-num">04</span>
+              <div class="mx-info"><span class="mx-title">UNTITLED IV</span><span class="mx-dur">—</span></div>
+              <div class="mx-wf"><canvas id="wf4"></canvas></div>
+            </div>
+          </div>
+          <div class="mx-row" style="opacity:.5;">
+            <div class="mx-row-top">
+              <span class="mx-num">05</span>
+              <div class="mx-info"><span class="mx-title">UNTITLED V</span><span class="mx-dur">—</span></div>
+              <div class="mx-wf"><canvas id="wf5"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dock">
+        <button class="dtab on"><div class="dpip"></div><span class="dlbl">MIXES</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">ORIGINALS</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">LIVE</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S3: PLAYER PAUSED ── -->
+  <div class="sw">
+    <span class="snum">03 — Player · Paused</span>
+    <div class="phone">
+      <canvas class="dp" id="dp3"></canvas>
+      <div class="hdr">
+        <div class="hdr-l"><span class="hdr-room">LISTENING ROOM</span><span class="hdr-cur">CURATED BY D</span></div>
+        <button class="hdr-exit">EXIT</button>
+      </div>
+      <div class="paused-stage">
+        <div class="ghost-wf"><canvas id="gwf"></canvas></div>
+        <div class="paused-overlay">
+          <div class="p-title">93'WAS INFINITY</div>
+          <div class="play-btn"><div class="play-tri"></div></div>
+          <span class="p-hint">TAP TO PLAY</span>
+        </div>
+      </div>
+      <div class="xport">
+        <div class="xstate"><div class="xdot pau"></div>PAUSED</div>
+        <span class="xtrack">93'WAS INFINITY</span>
+        <span class="xstop">STOP</span>
+      </div>
+      <div class="dock">
+        <button class="dtab on"><div class="dpip"></div><span class="dlbl">MIXES</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">ORIGINALS</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">LIVE</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S4: PLAYER PLAYING (with voice comment markers, no card open) ── -->
+  <div class="sw">
+    <span class="snum">04 — Playing · Notes Visible</span>
+    <div class="phone">
+      <canvas class="dp" id="dp4"></canvas>
+      <div class="hdr">
+        <div class="hdr-l"><span class="hdr-room">LISTENING ROOM</span><span class="hdr-cur">CURATED BY D</span></div>
+        <button class="hdr-exit">EXIT</button>
+      </div>
+      <div class="playing-stage">
+        <div class="np-strip">
+          <div class="np-title">93'WAS INFINITY</div>
+          <div class="np-elapsed">0:24:31 <span style="color:rgba(90,90,90,.4)">/ 1:19:02</span></div>
+        </div>
+        <div class="wf-stage">
+          <canvas id="fwf4"></canvas>
+          <div class="playhead" style="left:31%;"></div>
+
+          <!-- Voice comment markers as small warm diamonds -->
+          <!-- No Serato cues — no artist structure exposed -->
+          <div class="vc-marker" style="left:12%;" title="0:09:28"></div>
+          <div class="vc-marker" style="left:31%;" title="0:24:31"></div>
+          <div class="vc-marker active" style="left:57%;" title="0:44:58"></div>
+
+          <div class="wf-time">
+            <span>0:00</span><span>0:24:31</span><span>0:39:31</span><span>1:19:02</span>
+          </div>
+        </div>
+      </div>
+      <div class="xport">
+        <div class="xstate"><div class="xdot play"></div>PLAYING</div>
+        <span class="xtrack">93'WAS INFINITY</span>
+        <span class="xstop">STOP</span>
+      </div>
+      <div class="dock">
+        <button class="dtab on"><div class="dpip"></div><span class="dlbl">MIXES</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">ORIGINALS</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">LIVE</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S5: VOICE COMMENT CARD OPEN ── -->
+  <div class="sw">
+    <span class="snum">05 — Voice Note · Open</span>
+    <div class="phone">
+      <canvas class="dp" id="dp5"></canvas>
+      <div class="hdr">
+        <div class="hdr-l"><span class="hdr-room">LISTENING ROOM</span><span class="hdr-cur">CURATED BY D</span></div>
+        <button class="hdr-exit">EXIT</button>
+      </div>
+      <div class="playing-stage">
+        <div class="np-strip">
+          <div class="np-title">93'WAS INFINITY</div>
+          <div class="np-elapsed">0:44:58 <span style="color:rgba(90,90,90,.4)">/ 1:19:02</span></div>
+        </div>
+        <div class="wf-stage">
+          <canvas id="fwf5"></canvas>
+          <!-- Playhead at the comment's timestamp (~57%) -->
+          <div class="playhead" style="left:57%;"></div>
+
+          <!-- All markers dim except the active one -->
+          <div class="vc-marker" style="left:12%;opacity:.3;"></div>
+          <div class="vc-marker" style="left:31%;opacity:.3;"></div>
+          <div class="vc-marker active" style="left:57%;"></div>
+
+          <!-- Voice comment card — appears near active marker -->
+          <div class="vc-card">
+            <div class="vc-card-header">
+              <span class="vc-timestamp">0:44:58</span>
+              <span class="vc-author">L · 2024-11-18</span>
+            </div>
+            <div class="vc-transcript">
+              "this drop right here — this is the one. this is the whole reason."
+            </div>
+            <div class="vc-actions">
+              <button class="vc-hear">
+                <div class="vc-play-tri"></div>
+                HEAR IT
+              </button>
+              <span class="vc-dismiss">CLOSE ×</span>
+            </div>
+            <div class="vc-whisper-note">
+              PLAYS AT WHISPER VOLUME · MIX CONTINUES
+            </div>
+          </div>
+
+          <div class="wf-time">
+            <span>0:00</span><span>0:24:31</span><span>0:44:58</span><span>1:19:02</span>
+          </div>
+        </div>
+      </div>
+      <div class="xport">
+        <div class="xstate"><div class="xdot play"></div>PLAYING</div>
+        <span class="xtrack">93'WAS INFINITY</span>
+        <span class="xstop">STOP</span>
+      </div>
+      <div class="dock">
+        <button class="dtab on"><div class="dpip"></div><span class="dlbl">MIXES</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">ORIGINALS</span></button>
+        <button class="dtab"><div class="dpip"></div><span class="dlbl">LIVE</span></button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="div">
+<p class="sec-lbl">DESIGN DECISIONS</p>
+
+<div class="dec-grid">
+
+  <div class="dc">
+    <div class="dc-tag e">REMOVED</div>
+    <div class="dc-h">Serato cue points — gone from guest view</div>
+    <div class="dc-b">
+      D's cue structure is private. Guests never see it. The waveform shape is visible but its internal landmarks are not. What replaces it: voice comment markers — anchored by guests and L, not by D's production structure. Different information, different ownership.
+    </div>
+  </div>
+
+  <div class="dc">
+    <div class="dc-tag vc-clr">VOICE COMMENTS — the feature</div>
+    <div class="dc-h">Timed voice notes at precise waveform positions</div>
+    <div class="dc-b">
+      SoundCloud had timed text comments. Nobody has done timed voice with whisper-mode playback. Guests (and L) leave a voice note at a precise moment in the mix — not at the song level, not in a chat, but pinned to exactly <strong>0:44:58</strong> of that specific mix. The marker is a small warm diamond on the waveform. Tap it to read the auto-transcription. Tap HEAR IT to listen.
+      <code class="warm">/* Voice comment color — warm near-white
+   Distinct from identity green on purpose:
+   Comments are human. Identity is D's sovereignty. */
+--vc: rgba(240,230,200,0.72);</code>
+    </div>
+  </div>
+
+  <div class="dc">
+    <div class="dc-tag vc-clr">VOICE COMMENTS — whisper mode</div>
+    <div class="dc-h">Mix continues · Voice plays at ~25% volume</div>
+    <div class="dc-b">
+      HEAR IT plays the voice comment alongside the mix, not instead of it. The mix auto-ducks to ~25% while the voice plays, then fades back up over 2s. The sensation is exactly like someone leaning over and whispering to you while the music plays. The mix is never interrupted — the comment is a layer, not a takeover.
+      <code class="warm">// On HEAR IT:
+mixGainNode.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.3)
+vcAudio.play()
+vcAudio.onended = () =&gt; {
+  mixGainNode.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 2.0)
+}</code>
+    </div>
+  </div>
+
+  <div class="dc">
+    <div class="dc-tag vc-clr">VOICE COMMENTS — access rules</div>
+    <div class="dc-h">Who can leave them, who can hear them</div>
+    <div class="dc-b">
+      <strong>Phase 1:</strong> Only L (and D via console) can leave voice notes visible to guests. L curates what guests encounter.<br><br>
+      <strong>Phase 2:</strong> Guests with a code can leave voice notes — but they appear in a pending state until L approves them for the guest view. The console shows the full unmoderated feed. Guests see the curated version.<br><br>
+      <strong>Console only:</strong> D and L can hear all voice notes (including pending) directly in the console. No approval required for their own view.
+    </div>
+  </div>
+
+  <div class="dc">
+    <div class="dc-tag vc-clr">VOICE COMMENTS — auto-transcription</div>
+    <div class="dc-h">Text is always the default. Voice is opt-in.</div>
+    <div class="dc-b">
+      When a guest taps a comment marker, they see the transcript first. Always. HEAR IT is a secondary action — never automatic. Guests in a public space, on a call, or who simply don't want audio can still fully engage with every comment via text. The voice is the original artifact; the transcript is the accessible layer.
+      <code class="warm">// On voice note submission:
+POST /voice-comment
+  { vaultId, trackId, timestamp, audioBlob }
+
+// Worker triggers transcription (Cloudflare AI or Whisper)
+// Stores: audio in R2, transcript in D1
+// Guest response: { transcript, audioUrl, ts, author }</code>
+    </div>
+  </div>
+
+  <div class="dc">
+    <div class="dc-tag r">RISK — VAULT LANDING</div>
+    <div class="dc-h">5:42 at 82px — total runtime as hero</div>
+    <div class="dc-b">
+      Five hours forty-two minutes of uninterrupted music. That's the statement. Not the vault name. The duration shows the scale of D's work before a single note plays. No other platform leads with runtime because they're scared the number will deter. PSC is the opposite: it's a commitment, and the right guests want to know what they're entering.
+    </div>
+  </div>
+
+  <div class="dc">
+    <div class="dc-tag r">RISK — TRACK LIST</div>
+    <div class="dc-h">Waveform thumbnail = each mix's unique visual identity</div>
+    <div class="dc-b">
+      Every mix row has a 52×26px waveform thumbnail. The shape of a 79-minute mix is visibly different from a 90-minute mix. No album art. No cover images. The waveform IS the visual identity of each session. Combined with the track number at 15px Space Mono, each row reads like a numbered limited edition, not a Spotify track row.
+    </div>
+  </div>
+
+  <div class="dc">
+    <div class="dc-tag e">EUREKA — PLAYING STATE</div>
+    <div class="dc-h">Waveform + voice note markers = the full picture</div>
+    <div class="dc-b">
+      The playing stage has two layers: the waveform (the music's shape) and the voice comment markers (the human response to specific moments). The markers are warm diamonds — small, quiet, warm-colored — distinct from the cold green identity system. Together: you can see the structure of D's mix AND where people have felt moved enough to speak. That's unprecedented.
+    </div>
+  </div>
+
+</div>
+
+<script>
+function rand(seed) {
+  let s = seed | 0;
+  return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+}
+
+function waveform(canvas, opts = {}) {
+  const {
+    playedFrac = 0,
+    playedClr = 'rgba(20,220,20,.72)',
+    idleClr   = 'rgba(160,160,160,.20)',
+    bars = 80, seed = 42, centered = false
+  } = opts;
+  const par = canvas.parentElement;
+  const W = par.offsetWidth || 100;
+  const H = par.offsetHeight || 30;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const r = rand(seed);
+  const gap = 1;
+  const bw = Math.max(1, (W - gap * bars) / bars);
+  const maxH = centered ? H * 0.46 : H * 0.9;
+  for (let i = 0; i < bars; i++) {
+    const t = i / bars;
+    const env = Math.sin(t * Math.PI) * 0.58 + 0.42;
+    const noise = 0.18 + r() * 0.82;
+    const h = Math.max(2, Math.round(env * noise * maxH));
+    const x = i * (bw + gap);
+    ctx.fillStyle = i / bars < playedFrac ? playedClr : idleClr;
+    if (centered) ctx.fillRect(x, H / 2 - h / 2, bw, h);
+    else ctx.fillRect(x, H - h, bw, h);
+  }
+}
+
+function dpWallpaper(canvas, alpha = 0.038) {
+  const phone = canvas.parentElement;
+  const W = phone.offsetWidth; const H = phone.offsetHeight;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.font = `bold 12px Georgia, serif`;
+  ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const step = 44; const halfY = step * 0.5;
+  for (let row = -1; row < Math.ceil(H / halfY) + 2; row++) {
+    const off = row % 2 === 0 ? 0 : step * 0.5;
+    for (let col = -1; col < Math.ceil(W / step) + 2; col++) {
+      ctx.fillText('dp', col * step + off, row * halfY);
+    }
+  }
+}
+
+window.addEventListener('load', () => {
+  ['dp1','dp2','dp3','dp4','dp5'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) dpWallpaper(el);
+  });
+
+  const thumbSeeds = [77, 42, 91, 13, 55];
+  for (let i = 1; i <= 5; i++) {
+    const c = document.getElementById('wf' + i);
+    if (c) {
+      c.width = c.parentElement.offsetWidth;
+      c.height = c.parentElement.offsetHeight;
+      waveform(c, {
+        playedFrac: 0,
+        idleClr: i === 1 ? 'rgba(20,220,20,.42)' : 'rgba(160,160,160,.26)',
+        bars: 38, seed: thumbSeeds[i - 1]
+      });
+    }
+  }
+
+  const gwf = document.getElementById('gwf');
+  if (gwf) {
+    gwf.width = gwf.parentElement.offsetWidth;
+    gwf.height = gwf.parentElement.offsetHeight;
+    waveform(gwf, { idleClr:'rgba(160,160,160,.9)', bars:100, seed:77, centered:true });
+  }
+
+  ['fwf4','fwf5'].forEach((id, idx) => {
+    const c = document.getElementById(id);
+    if (!c) return;
+    c.width = c.parentElement.offsetWidth;
+    c.height = c.parentElement.offsetHeight;
+    // S4: playhead at 31%, S5: at 57%
+    const frac = idx === 0 ? 0.31 : 0.57;
+    waveform(c, {
+      playedFrac: frac,
+      playedClr: 'rgba(20,220,20,.70)',
+      idleClr: 'rgba(160,160,160,.13)',
+      bars: 120, seed: 77, centered: true
+    });
+  });
+});
+</script>
+</body>
+</html>

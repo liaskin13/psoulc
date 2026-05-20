@@ -186,6 +186,136 @@ The listening room for Shadow subscribers (LISTENER_CODE). iPhone-primary. Post-
 
 ---
 
+## Guest Flow
+
+The guest was invited — not discovering. Every design decision in this flow should reflect that. The sensation is receiving a mixtape, not browsing a catalog. Abundance is communicated through time, not marketing.
+
+### Vault Landing
+
+- **Hero:** Total runtime of all published mixes. 72–96px `--font-mono` (Space Mono, valid numeric readout surface). Format: `5:42` = 5 hours 42 minutes. The number IS the promise.
+- **Kicker above hero:** "OF MUSIC" — 10px Chakra Petch 500, 0.2em tracking, `--text-muted`. Quiet label, loud number.
+- **Vault name:** 20px Chakra Petch 600 uppercase. Secondary presence beneath the runtime.
+- **No CTA button.** Entry is: `TOUCH ANYWHERE TO ENTER` — 10px Chakra Petch 500, 0.14em tracking, `rgba(240,237,232,0.35)` color. Breathes at `opacity: 0.35 ↔ 0.65` over `2.6s ease-in-out infinite`. An invitation, not a button.
+- **Background:** DPWallpaper canvas at full opacity. Permanent — same tessellation as entry. The wallpaper is the room, not a door.
+- **Layout:** Vertically centered content block. No wasted empty space — if it reads as "page failed to load," something is wrong.
+
+### Mix List
+
+Visual identity problem: PSC has no cover art, no album art, no per-mix image. The **waveform shape IS the artwork** for each mix. Every mix has a distinct waveform fingerprint.
+
+- **Row structure:** track number · title · duration · waveform thumbnail · voice badge
+  - Track number: Space Mono 15px, left-anchored, `--text-muted`
+  - Title: Chakra Petch 500, flex-grow, `--text-primary`
+  - Duration: Space Mono 11px, right-anchored, `--text-secondary`
+  - Waveform thumbnail: 52×26px, seeded pseudorandom bars (seed = track title string → always same shape per mix), bar color `rgba(20,220,20,0.55)` (identity green at 55%)
+  - Voice badge: count only, `--vc` color, 9px Chakra Petch, shown only if comments exist
+- **Row height:** 52px. `border-bottom: 1px solid var(--border)`.
+- **Seeded waveform:** Use track title as string seed for PRNG. Same input → same bar heights every render. The waveform shape becomes how guests recognize a mix before playing it.
+
+### Player — Paused State
+
+Browser autoplay restrictions make this state extremely common. It must feel inhabited, not broken.
+
+- **Main area:** Ghost waveform at 11% opacity — all bars `rgba(160,160,160,0.11)`. Spatial presence without implying playback.
+- **Center overlay:** Track title (14px Chakra Petch 600) + pulsing ▶ glyph (24px, `opacity: 0.4 ↔ 1.0` at `2s ease-in-out`).
+- **Reading:** "Something is loaded here. Tap to hear it."
+
+### Player — Playing State
+
+The waveform IS the stage. No album art needed. The shape is identity.
+
+- **Waveform:** Full-width, tall bars spanning majority of main area height.
+  - Played bars: `rgba(20, 220, 20, 0.70)` — D's identity green
+  - Unplayed bars: `rgba(160, 160, 160, 0.13)` — cold near-transparent grey
+- **Playhead:** `1px solid rgba(20,220,20,1.0)`, `box-shadow: 0 0 6px rgba(20,220,20,0.6)`. A wire of light moving through the shape.
+- **Voice comment markers:** Warm diamond dots (6×6px `rotate(45deg)` square, `--vc-dot` color) positioned along the top edge of the waveform at time-mapped x positions. Tapping a diamond opens the comment card.
+
+---
+
+## Voice Comments
+
+Timed voice notes anchored to precise waveform positions. Like SoundCloud timed comments, but with voice — and with rules that protect the mix.
+
+### Philosophy
+
+Voice comments are **listener-authored content** — not platform chrome, not artist identity. They are moments of connection: a listener whispering something about the music at exactly the moment it hit them. The warm near-white color communicates humanity and intimacy, distinct from the cold achromatic system and from D's sovereign identity green.
+
+### Color Tokens
+
+```css
+--vc:        rgba(240,230,200,0.72);   /* warm near-white — voice content accent */
+--vc-dot:    rgba(240,230,200,0.55);   /* marker dots at rest */
+--vc-active: rgba(240,230,200,0.92);   /* active/tapped marker */
+--vc-bg:     rgba(20,18,14,0.96);      /* comment card background (dark warm) */
+```
+
+Why warm near-white and not identity green: green = D's sovereignty. Warm near-white = a person speaking. The distinction is immediate and correct.
+
+### Marker Anatomy
+
+- 6×6px `rotate(45deg)` square (diamond shape) at `--vc-dot` color
+- Positioned at `x = (timestamp / total_duration) × waveform_width` along top edge of waveform
+- Tapping expands comment card inline below the waveform. Waveform remains visible.
+- Tapping again or tapping elsewhere closes card.
+
+### Comment Card
+
+```
+[00:42:17]  L         ×
+"the way this break hits after the build..."
+[ HEAR IT ]
+PLAYS AT WHISPER VOLUME · MIX CONTINUES
+```
+
+- Full-width, `--vc-bg` background, `border: 1px solid rgba(240,230,200,0.18)`
+- Timestamp: Space Mono 11px (valid mono surface — it's a timestamp readout)
+- Handle: Chakra Petch 500 11px. `D` renders in Serato green. `L` renders in L's cyan. Guest handles render in `--vc`.
+- Transcript: Chakra Petch 400 **italic**, 13px, `--vc` color. Auto-transcribed from voice by default.
+- HEAR IT: 28px god-btn variant, `--vc` border and color. Never auto-plays.
+- Footer: `PLAYS AT WHISPER VOLUME · MIX CONTINUES` — 9px Chakra Petch 500, `--text-muted`.
+
+### Audio Behavior (HEAR IT)
+
+The mix never stops. The comment is a layer, not a takeover.
+
+```js
+// Web Audio API gain ramping — never interrupts the mix
+mixGainNode.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.3)
+vcAudio.play()
+vcAudio.onended = () => {
+  mixGainNode.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 2.0)
+}
+```
+
+The sensation: someone leans over and whispers to you while the music plays. Then the music comes back up.
+
+Auto-transcription is the **default display**. Voice is always opt-in (HEAR IT button). This solves public-space listening, accessibility, and the "I don't want to make noise" case simultaneously.
+
+### Access Model
+
+**Phase 1 (current spec):**
+- Listeners (guests with valid access codes) can post voice comments on any track
+- Comments auto-transcribe via Cloudflare AI (Whisper)
+- D receives all new comments in console — pending review queue
+- D can: respond (text or voice), react (like in Serato green), or ignore
+- D's reactions and responses are visible to guests on the comment card
+- L's console comments are **never** surfaced to guests — internal only
+
+**Phase 2 (future — do not build yet):**
+- D can **sample approved voice comments as audio clips in future mixes** — pull a fan's voice in as an effect or texture
+- A fan hears their own voice in a published mix. They lose their mind. They tell everyone.
+- This is a deliberate platform differentiator. It closes the loop between listener and artist in a way no platform has done. Spec it when building the comment approval queue.
+
+### Never
+
+- Auto-play voice comments
+- Overlay comment text on the waveform (cluttered)
+- Show L's internal notes to guests
+- Allow voice comments without a valid access code session
+- Show Serato cue point labels in the guest view (D does not want this)
+
+---
+
 ## Vault Interior
 
 Post-auth vault screen. Full-screen dark surface. Same rules as console: hard edges, Chakra Petch, 1px structural borders, `--identity` glow on active items.
@@ -271,6 +401,14 @@ INTAKE is a console-level action. The button lives in the browser utility bar (`
 | 2026-05-18 | SIGNAL button neutral at rest, red only when is-live | Red = live signal only. Permanently red SIGNAL conflated idle with broadcasting. |
 | 2026-05-18 | BPM sort is 2-state toggle (desc ↔ asc), not 3-state cycle | 3-state cycle returns to date order on 3rd click — accidental sort loss during live use. |
 | 2026-05-18 | INTAKE uses --arch-identity color (green D / cyan L) | INTAKE is a sovereign vault action. Identity color marks it as D's control, not platform chrome. |
+| 2026-05-19 | Guest flow: total runtime as vault landing hero | Guest was invited, not discovering. Duration communicates abundance and trust. No marketing language. |
+| 2026-05-19 | No CTA button on vault landing — "TOUCH ANYWHERE TO ENTER" breathing | An invitation, not a button. The breathing opacity (2.6s ease-in-out) is the only motion on the landing. |
+| 2026-05-19 | Waveform shape = visual identity of each mix. No album art. | PSC has no cover art concept. Seeded PRNG from track title → stable, unique waveform fingerprint per mix. |
+| 2026-05-19 | Voice comments in warm near-white (--vc), not identity green | Green = D's sovereignty. Warm near-white = a person speaking. The distinction is legible and correct. |
+| 2026-05-19 | Voice comments: listener-authored, D can respond/react/like via console | Comments are guest-facing. D's response carries authority (Serato green badge). L's internal notes never surface to guests. |
+| 2026-05-19 | HEAR IT ducks mix to 25% gain, ramps back over 2s on ended | Mix is never interrupted. Comment is a layer. Web Audio API linearRampToValueAtTime. |
+| 2026-05-19 | Phase 2: D can sample fan voice comments as audio in future mixes | Closes the listener↔artist loop in a way no platform has done. Fan hears their voice in a published mix. Build when comment approval queue ships. |
+| 2026-05-19 | Serato cue labels never shown in guest/listener view | D does not want this. Cue points are his internal production metadata, not guest-facing content. |
 
 ---
 

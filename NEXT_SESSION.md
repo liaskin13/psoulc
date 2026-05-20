@@ -1,186 +1,98 @@
-# NEXT SESSION — Start Here
+# Next Session — Resume Here
 
-## First Commands
+**Last updated:** 2026-05-19
 
-```bash
-git -C /workspaces/psoulc pull --ff-only
-git -C /workspaces/psoulc status -sb
-git -C /workspaces/psoulc log --oneline -5
+## Status
+/investigate COMPLETE — root causes found, fixes NOT yet applied (awaiting approval)
+
+---
+
+## BUG 1: Sound broken — affects BOTH D's console and listener (uoyni.com)
+
+**Root cause confirmed:**
+Sprint 1A added live FFT analyzer (useAudioAnalyzer.js:75: createMediaElementSource).
+When audio element is tapped into Web Audio API via createMediaElementSource,
+browser enforces CORS on the src URL. R2 public URL has NO CORS headers.
+Result: CORS error silently kills audio. Before Sprint 1A, basic HTML audio
+element playback didnt require CORS so it worked.
+`pub-a782f6b9fdf342b3bfa6c668c4b7a5ce.r2.dev/venus/1777811220926-ng5hgc3pc3a.wav`
+returns HTTP 200 with NO Content-Type header (confirmed via curl -I).
+Browser audio element fires `onerror` → load rejects → "Audio load failed" error.
+
+**Fix (two files):**
+
+1. `worker/upload-worker.js` — Add `/audio/*` streaming proxy route:
+```js
+// GET /audio/:key — stream from R2 with correct Content-Type + Range support
+if (request.method === "GET" && url.pathname.startsWith("/audio/")) {
+  const key = decodeURIComponent(url.pathname.slice(7)); // strip /audio/
+  const ext = key.split('.').pop().toLowerCase();
+  const contentTypes = { wav:'audio/wav', mp3:'audio/mpeg', flac:'audio/flac', m4a:'audio/mp4' };
+  const contentType = contentTypes[ext] || 'audio/mpeg';
+  
+  const rangeHeader = request.headers.get('Range');
+  const obj = rangeHeader
+    ? await env.PSC_AUDIO.get(key, { range: parseRange(rangeHeader) })
+    : await env.PSC_AUDIO.get(key);
+  
+  if (!obj) return new Response('Not found', { status: 404, headers: corsHeaders });
+  
+  const status = rangeHeader ? 206 : 200;
+  const headers = { ...corsHeaders, 'Content-Type': contentType, 'Accept-Ranges': 'bytes' };
+  if (rangeHeader && obj.range) {
+    headers['Content-Range'] = `bytes ${obj.range.offset}-${obj.range.end}/${obj.size}`;
+  }
+  return new Response(obj.body, { status, headers });
+}
 ```
 
-## Current Baseline
-
-- Branch: `main`
-- Build: clean (457 modules, no errors — Sprint 1A+1B + INTAKE/search/build-vault shipped)
-- Worker: deployed — `psc-upload-worker.psoulc.workers.dev`
-- Pages: NOT YET deployed this session — run full 4-step deploy sequence before testing
-- Working tree: UNCOMMITTED — commit + deploy before switching windows
-
----
-
-## MANUAL STEP REQUIRED — Apply Migration 0005
-
-The vault_config table does not exist in D1 yet. Apply it via the CF dashboard:
-
-1. Go to Cloudflare dashboard → Workers & Pages → D1 → `psc-tracks`
-2. Open the Console tab
-3. Paste and run the contents of `worker/migrations/0005_add_vault_config.sql`
-
-Until this is done:
-- GET /vaults returns an empty array (fallback vaults show in listener shell)
-- PUT /vaults/:id will fail (table missing)
-- ArchitectConsole VAULTS panel will show empty
+2. `src/lib/tracks.js:85` — Update getAudioUrl to use worker proxy:
+```js
+export function getAudioUrl(audio_path) {
+  if (!audio_path) return null;
+  if (IS_DEV) return null;
+  return `${UPLOAD_WORKER_URL}/audio/${audio_path}`;  // was: R2_PUBLIC_URL
+}
+```
+(Remove the `if (!R2_PUBLIC_URL) return null;` check — no longer needed)
 
 ---
 
-## What Shipped This Session (T1–T13 — Guest Flow Complete)
+## BUG 2: Waveform zoom — both strips show identical full-track view
 
-### T1 — residentBlueprint.js
-Removed dead code: Jess B (code:"1984") and Janet (code:"J-1966"). Only D and L remain.
+**Root cause confirmed:**
+`zoom={1}` hardcoded at `src/console/ArchitectConsole.jsx:1680`.
+DeckWaveform has two canvases: 24px overview (always full-track) + main canvas
+(zoomed when zoom>1). zoom=1 → both show full track → looks duplicated.
 
-### T2 — worker/upload-worker.js
-- Code generation: 4-digit numeric, padded (e.g. "0847"), RESERVED=["0528","7677","0000"]
-- 0000 is a TEST CODE — bypass returns `{ tier:"MEMBERS", grantedTo:"TEST" }` — **REMOVE BEFORE LAUNCH**
-- Removed `identityColor` from /redeem response
-- Added GET /vaults (public: vaults with ≥1 published track)
-- Added PUT /vaults/:id (auth required, upsert vault_config)
-
-### T3 — EntrySequence.jsx
-- async `attempt()` tries residentBlueprint first, falls back to `redeemCode()` on miss
-- LEN=4, digits only — 4-cell input unchanged for beta
-- Shows "VERIFYING" during async, "CODE EXPIRED" for 410, "ACCESS DENIED" otherwise
-
-### T4 — ListenerShell.jsx (hooks violation fixed)
-- All hooks (useCallback, 2× useEffect) now run before conditional CodeGate return
-- Signal poll skips while CodeGate is active
-
-### T5 — CodeGate loading state
-- "LOADING" → "VERIFYING"
-- Glow: rgba(20,220,20,0.08) → rgba(230,230,230,0.04) — achromatic pre-auth
-
-### T6 — CodeGate error state
-- Removed "CURATED BY D" from error screen
-- Added CLOSE button (god-btn) → window.history.back() + window.close()
-
-### T7 — Welcome interstitial + persistent header name
-- After CodeGate success: full-screen overlay (WELCOME / grantedTo / CURATED BY D), 1.2s hold, 400ms fade
-- grantedTo persists in header as `.listener-header-guest` (8px, rgba white 0.25)
-
-### T8 — Remove DPWallpaper from shell
-- DPWallpaper removed from ListenerShell main return (kept in CodeGate)
-- Shell background is pure --void
-
-### T9 — EXIT → CLOSE for code guests
-- When `code` prop set: button shows "CLOSE", calls window.history.back() + window.close()
-
-### T10 — iPhone safe area insets
-- `.listener-header`: calc(4px + env(safe-area-inset-top)) padding
-- `.listener-dock`: env(safe-area-inset-bottom) padding
-- index.html viewport-fit=cover was already present
-
-### T11 — Vault accent colors (config.js)
-- venus (MIXES): #14dc14 (Serato green)
-- saturn (ORIGINAL MUSIC): null (achromatic)
-- mercury (LIVE SETS): #cc2200 (record red)
-- LOCKBOX_CODES preserved — lockboxes stay
-
-### T12 — Dynamic vault list
-- LISTENER_VAULTS_FALLBACK used during fetch
-- GET /vaults fetched on mount, replaces fallback
-- selectedVaultId as string state, selectedVault derived via .find()
-- Null color handled gracefully in JSX and CSS
-
-### T13 — ArchitectConsole vault config panel
-- VAULTS button in Zone B
-- Per-vault: label, color (blank=achromatic), visibility toggle, copy line, SAVE
-- GET /vaults (authenticated) + PUT /vaults/:id wired
+**Fix (one file):**
+`src/console/ArchitectConsole.jsx`:
+- Add: `const [deckZoom, setDeckZoom] = useState(4);` near other deck state
+- Change line 1680: `zoom={1}` → `zoom={deckZoom}`
+- Add zoom +/- buttons near waveform (use god-btn pattern, 11px Chakra Petch)
 
 ---
 
-## Pending Tasks (Next Session)
+## Design Consultation — COMPLETE (DESIGN.md written, not implemented)
 
-### IMMEDIATE (before any real guest gets a code)
-1. **Apply migration 0005** — CF dashboard D1 console — vault_config table
-2. **Apply migration 0006** — CF dashboard D1 console — `ALTER TABLE tracks ADD COLUMN cue_labels TEXT DEFAULT NULL` (D-bank cue label persistence)
-3. **Remove 0000 test bypass** — `worker/upload-worker.js`, search `TEST CODE`, delete the early-return block
-4. **Add rate limiting to /redeem** — 5 attempts per IP per minute via Cloudflare rate limiting rule (prevents brute-force of 4-digit codes; 10k combinations crackable in hours without this)
-5. **Verify R2 audio URLs** — confirm tracks require auth to stream, not publicly accessible by raw URL; if public, add signed URL expiry
+Guest Flow spec locked in DESIGN.md:
+- Vault landing: total runtime hero (Space Mono, 82px), "TOUCH ANYWHERE TO ENTER" breathing
+- Mix list: 52×26px seeded waveform thumbnails, voice badge
+- Player paused: ghost waveform 11% opacity + pulsing ▶
+- Player playing: full waveform stage, played=green, unplayed=grey, playhead=green
+- Voice comments: warm near-white `--vc` tokens, whisper mode audio ducking
 
-### CROWN JEWEL FEATURES (what makes PSC unlike anything else)
-These 5 features are PSC-exclusive — no other music platform does them:
+Preview: `/workspaces/psoulc/public/guest-flow-preview.html`
+Start Vite: `npx vite --port 5174` then open http://localhost:5174/guest-flow-preview.html
+**User has NOT approved preview visually yet — show before implementing.**
 
-1. **SPRINT 2 — Multi-Version Release Chain** ← highest priority feature
-   ROUGH → MIXED → MASTERED, each a separate file, tier-gated access at each stage.
-   D advances tracks along the chain. No other platform treats a track as an evolving artifact.
-   Requires schema change + new upload flow.
-
-2. **Track Readiness Score** — pre-publish AI quality gate
-   Waveform quality + metadata completeness + version state → green/amber/red scorecard.
-   No other platform runs a pre-publish gate for independent artist catalog.
-
-3. **Track Vibe Score** — single energy fingerprint per track
-   LOW/MID/HIGH energy reading from waveformData math (no AI). Vibe color tint in library cells.
-   D scans his library and knows at a glance which tracks are weapons vs journey music.
-   No other platform gives artists a "vibe fingerprint" of their own catalog.
-
-4. **Release Scheduler** — "drop this Friday midnight" in 10 seconds
-   Upload → set schedule → done. Worker promotes the track at scheduled time automatically.
-
-5. **Production Timeline / Ledger** — immutable timestamped log per track
-   Every state change (uploaded, mixed, mastered, published, retracted) recorded with timestamp.
-   No other platform gives the artist an audit trail of their own creative history.
-
-### VAULT EDIT MODAL
-D/L double-clicks a vault tab → ContextStrip body opens with edit options (label, color, visibility, copy link).
-Currently VAULTS is a right-side overlay panel — replace with inline context body.
-
-### BUTTON/FIELD AUDIT
-Every button categorized: working / stub (empty handler) / missing feature / dead code.
-Run as Explore agent. Many stubs exist from earlier sessions.
-
-### D1 DATABASE BACKUP
-No backup exists. If a migration corrupts the DB, all track metadata is lost (audio files survive in R2 but become anonymous blobs).
-One-time setup: nightly D1 export to R2 or GitHub. 30-minute task, prevents catastrophic loss.
-
-### DESIGN REVIEW
-Run `/design-review` after audio confirmed working on D's machine.
-
-### UPLOAD WORKS — CONFIRMED
-D has successfully uploaded 5 mixes through the console. Upload auth uses PSC-Secret embedded in
-the console client — viewer prop (D vs L) controls UI features shown, not upload auth.
-This is the correct and intended behavior.
+Voice comments: listener-only, D can respond/react/like, Phase 2: D samples fan voice in mixes.
 
 ---
 
-## Test Checklist After 0005 Migration
-
-- [ ] uoyni.com?code=0000 → CodeGate shows VERIFYING (pulsing) → welcome overlay → listening room
-- [ ] uoyni.com?code=9999 → CodeGate shows "THIS LINK DOESN'T EXIST"
-- [ ] Vault dock shows D's real vaults (not fallback) after migration applied
-- [ ] VAULTS panel in console saves label/color/copy changes
-- [ ] EXIT shows "CLOSE" for code guests, standard EXIT for L
-- [ ] iPhone: no overlap with Dynamic Island or home indicator
-
----
-
-## REMOVE BEFORE PRODUCTION LAUNCH
-
-- **0000 test bypass** in `worker/upload-worker.js` around the `/redeem` handler
-  Search: `TEST CODE` comment — delete the 0000 early-return block
-
----
-
-## Key Files
-
-| File | Last Changed | What |
-|------|-------------|------|
-| src/data/residentBlueprint.js | T1 | D + L only |
-| worker/upload-worker.js | T2, T12 | 4-digit codes, GET/PUT /vaults |
-| worker/migrations/0005_add_vault_config.sql | T12 | vault_config table — NEEDS APPLYING |
-| src/entry/EntrySequence.jsx | T3 | /redeem fallback |
-| src/listener/ListenerShell.jsx | T4–T9, T12 | guest flow complete |
-| src/index.css | T5, T6, T7, T10 | CodeGate + listener styles |
-| src/config.js | T11 | vault accent colors, lockboxes preserved |
-| src/console/ArchitectConsole.jsx | T13 | vault config panel |
-| src/console/ArchitectConsole.css | T13 | vault config styles |
-| src/lib/accessCodes.js | new | redeemCode(), generateCode() |
+## Pending (do NOT implement without showing preview first)
+1. Fix sound bug (worker proxy) + fix waveform zoom → needs approval
+2. Show guest-flow-preview.html → get approval → implement v3 design
+3. D needs to publish 4 remaining mixes (only 1/5 published)
+4. Zone B: ACCESS CODES panel for L
+5. Migration 0006: cue_labels column (D-bank cue persistence)
