@@ -62,17 +62,60 @@ export async function reanalyzeFromUrl(url, onProgress = null) {
   return { waveformData, duration: audioBuffer.duration };
 }
 
+// Cooley-Tukey radix-2 FFT — in-place on interleaved [re, im, re, im, ...] Float32Array.
+// N must be a power of 2.
+function fft(buf) {
+  const N = buf.length >> 1;
+  // Bit-reversal permutation
+  for (let i = 1, j = 0; i < N; i++) {
+    let bit = N >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) {
+      let t = buf[2*i]; buf[2*i] = buf[2*j]; buf[2*j] = t;
+      t = buf[2*i+1]; buf[2*i+1] = buf[2*j+1]; buf[2*j+1] = t;
+    }
+  }
+  // FFT butterfly
+  for (let len = 2; len <= N; len <<= 1) {
+    const ang = -2 * Math.PI / len;
+    const wRe = Math.cos(ang), wIm = Math.sin(ang);
+    for (let i = 0; i < N; i += len) {
+      let uRe = 1, uIm = 0;
+      for (let j = 0; j < (len >> 1); j++) {
+        const eRe = buf[2*(i+j)],   eIm = buf[2*(i+j)+1];
+        const oRe = buf[2*(i+j+(len>>1))], oIm = buf[2*(i+j+(len>>1))+1];
+        const tRe = uRe*oRe - uIm*oIm, tIm = uRe*oIm + uIm*oRe;
+        buf[2*(i+j)]            = eRe + tRe;
+        buf[2*(i+j)+1]          = eIm + tIm;
+        buf[2*(i+j+(len>>1))]   = eRe - tRe;
+        buf[2*(i+j+(len>>1))+1] = eIm - tIm;
+        const nuRe = uRe*wRe - uIm*wIm;
+        uIm = uRe*wIm + uIm*wRe;
+        uRe = nuRe;
+      }
+    }
+  }
+}
+
 /**
- * Generate 3-band waveform data using two cascaded single-pole IIR lowpass filters.
+ * Generate 3-band waveform data using windowed FFT per bar.
  *
- * Two filters in series:
- *   LP-200Hz → bass signal
- *   LP-2500Hz → bass+mid signal; high = original − LP-2500Hz
- *   mid = LP-2500Hz − LP-200Hz
+ * Each bar gets an independent spectral snapshot — no IIR state bleeds
+ * between adjacent bars, so transients (kick hits, snare cracks) appear
+ * as sharp spikes rather than smeared mountains.
  *
- * Each band is independently normalized so that quiet-but-real content
- * (e.g. hi-hats in a dense mix) remains visible. A 2% floor relative to
- * the overall peak prevents near-silence from being amplified to full scale.
+ * For each bar: extract a centered Hann-windowed analysis frame, run FFT,
+ * compute RMS energy in bass/mid/high bins. Peak amplitude of the raw
+ * samples is used for bar height (best transient visibility).
+ *
+ * Band boundaries (Serato-aligned):
+ *   bass:  20–250 Hz  → RED channel
+ *   mid:   250–2500 Hz → GREEN channel
+ *   high:  2500+ Hz   → BLUE channel
+ *
+ * Each band is independently normalized with a 2% floor so quiet-but-real
+ * content (hi-hats in a dense mix) remains visible.
  *
  * Returns [{bass, mid, high, peak}] — all values 0-1.
  */
@@ -82,51 +125,74 @@ function generateWaveformDataBands(audioBuffer, barCount) {
   const total       = channelData.length;
   const samplesPerBar = Math.floor(total / barCount);
 
-  // Single-pole IIR coefficient: α = 1 − exp(−2π·fc/fs)
-  const aLow  = 1 - Math.exp(-2 * Math.PI * 200  / sampleRate); // 200 Hz  → bass
-  const aHigh = 1 - Math.exp(-2 * Math.PI * 2500 / sampleRate); // 2500 Hz → mid/high split
+  // Analysis window: next power of 2, capped at 2048 samples (~46ms at 44100Hz).
+  // Large enough to resolve bass frequencies; small enough for bar-level independence.
+  let fftSize = 1;
+  while (fftSize < samplesPerBar && fftSize < 2048) fftSize <<= 1;
+  if (fftSize > 2048) fftSize = 2048;
 
-  let lpLowState  = 0; // filter state for the 200 Hz LP
-  let lpHighState = 0; // filter state for the 2500 Hz LP
+  // Frequency bin boundaries
+  const bassMaxBin = Math.max(1, Math.floor(250  * fftSize / sampleRate));
+  const midMaxBin  = Math.max(bassMaxBin + 1, Math.floor(2500 * fftSize / sampleRate));
+  const nyquist    = fftSize >> 1;
 
+  // Pre-compute Hann window coefficients
+  const hannWindow = new Float32Array(fftSize);
+  for (let i = 0; i < fftSize; i++) {
+    hannWindow[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (fftSize - 1)));
+  }
+
+  const fftBuf = new Float32Array(fftSize * 2); // interleaved re/im
   const bars = [];
 
   for (let i = 0; i < barCount; i++) {
-    const start = i * samplesPerBar;
-    const end   = Math.min(start + samplesPerBar, total);
+    // Center the analysis window on the bar's midpoint
+    const barCenter = Math.floor(i * samplesPerBar + samplesPerBar / 2);
+    const frameStart = barCenter - (fftSize >> 1);
 
-    let bassPeak = 0, midPeak = 0, highPeak = 0, allPeak = 0;
-
-    for (let j = start; j < end; j++) {
-      const x = channelData[j];
-
-      lpLowState  = aLow  * x + (1 - aLow)  * lpLowState;
-      lpHighState = aHigh * x + (1 - aHigh) * lpHighState;
-
-      const bassVal = lpLowState;
-      const midVal  = lpHighState - lpLowState; // 200–2500 Hz band
-      const highVal = x - lpHighState;          // above 2500 Hz
-
-      const absBass = Math.abs(bassVal);
-      const absMid  = Math.abs(midVal);
-      const absHigh = Math.abs(highVal);
-      const absAll  = Math.abs(x);
-
-      if (absBass > bassPeak) bassPeak = absBass;
-      if (absMid  > midPeak)  midPeak  = absMid;
-      if (absHigh > highPeak) highPeak = absHigh;
-      if (absAll  > allPeak)  allPeak  = absAll;
+    // Fill FFT buffer with Hann-windowed samples (zero-pad at edges)
+    for (let j = 0; j < fftSize; j++) {
+      const idx = frameStart + j;
+      const s = (idx >= 0 && idx < total) ? channelData[idx] : 0;
+      fftBuf[2*j]   = s * hannWindow[j]; // real
+      fftBuf[2*j+1] = 0;                  // imaginary
     }
 
-    bars.push({ bass: bassPeak, mid: midPeak, high: highPeak, peak: allPeak });
+    fft(fftBuf);
+
+    // RMS energy per band from FFT magnitude bins 1..nyquist
+    let bassSum = 0, midSum = 0, highSum = 0;
+    let bassCt = 0, midCt = 0, highCt = 0;
+
+    for (let b = 1; b <= nyquist; b++) {
+      const mag = fftBuf[2*b]*fftBuf[2*b] + fftBuf[2*b+1]*fftBuf[2*b+1]; // magnitude²
+      if (b <= bassMaxBin)       { bassSum += mag; bassCt++; }
+      else if (b <= midMaxBin)   { midSum  += mag; midCt++;  }
+      else                       { highSum += mag; highCt++; }
+    }
+
+    const bassEnergy = bassCt > 0 ? Math.sqrt(bassSum / bassCt) : 0;
+    const midEnergy  = midCt  > 0 ? Math.sqrt(midSum  / midCt)  : 0;
+    const highEnergy = highCt > 0 ? Math.sqrt(highSum / highCt) : 0;
+
+    // Peak amplitude for bar height — captures transients better than RMS
+    let allPeak = 0;
+    const s = i * samplesPerBar;
+    const e = Math.min(s + samplesPerBar, total);
+    for (let j = s; j < e; j++) {
+      const abs = Math.abs(channelData[j]);
+      if (abs > allPeak) allPeak = abs;
+    }
+
+    bars.push({ bass: bassEnergy, mid: midEnergy, high: highEnergy, peak: allPeak });
   }
 
-  // Global peak for the floor calculation
+  // Global peak for normalization floor
   let maxPeak = 0;
   for (const b of bars) if (b.peak > maxPeak) maxPeak = b.peak;
   maxPeak = Math.max(maxPeak, 0.0001);
 
-  // Per-band max with 2% floor so absent bands don't get boosted
+  // Per-band max with 2% floor so absent bands don't get boosted to full scale
   let maxBass = 0, maxMid = 0, maxHigh = 0;
   for (const b of bars) {
     if (b.bass > maxBass) maxBass = b.bass;

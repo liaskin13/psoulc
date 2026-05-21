@@ -66,7 +66,7 @@ function hexAlpha(hex, alpha) {
 }
 
 // Draws the thin full-track overview strip.
-// Color = rgb(high, mid, bass) — spectral snapshot per pixel.
+// Serato standard: Low=RED, Mid=GREEN, Hi=BLUE → rgb(bass, mid, high).
 function drawOverview(canvas, bars, currentTime, duration) {
   const rect = canvas.getBoundingClientRect();
   const W = rect.width || canvas.offsetWidth;
@@ -95,9 +95,9 @@ function drawOverview(canvas, bars, currentTime, duration) {
     const overallH = Math.max(1, Math.round(maxPeak * H * 0.85));
 
     if (best.bass !== undefined) {
-      const r = Math.round(best.high * 255);
+      const r = Math.round(best.bass * 255);
       const g = Math.round(best.mid  * 255);
-      const b = Math.round(best.bass * 255);
+      const b = Math.round(best.high * 255);
       ctx.fillStyle = `rgb(${r},${g},${b})`;
       ctx.fillRect(px, H - overallH, 1, overallH);
     } else {
@@ -182,7 +182,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
     const playheadX = barCount > 0 ? ((centerBarIdx - startBar) / barCount) * W : W / 2;
 
     // Pixel-resolution waveform: one bar per column, color encodes frequency.
-    // Height = peak amplitude. Color = rgb(high, mid, bass).
+    // Height = peak amplitude. Serato standard: rgb(bass, mid, high).
     // Played side dimmed to ~45%, future side full brightness.
     const halfH = H / 2;
     const totalCols = Math.ceil(W);
@@ -201,9 +201,9 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
         ctx.fillRect(px, (H - h) / 2, 1, h);
       } else if (bar.bass !== undefined) {
         const barH = Math.max(1, bar.peak * halfH * 0.96);
-        const r = Math.round(bar.high * 255 * dimMult);
+        const r = Math.round(bar.bass * 255 * dimMult);
         const g = Math.round(bar.mid  * 255 * dimMult);
-        const b = Math.round(bar.bass * 255 * dimMult);
+        const b = Math.round(bar.high * 255 * dimMult);
 
         ctx.fillStyle = `rgb(${r},${g},${b})`;
         ctx.fillRect(px, halfH - barH, 1, barH);

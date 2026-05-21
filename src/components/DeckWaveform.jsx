@@ -109,8 +109,8 @@ export default function DeckWaveform({
       }
 
       // ── Waveform bars — one bar per pixel, color encodes frequency ──────
-      // Color = rgb(high, mid, bass) so each bar is a spectral snapshot:
-      // kick=red, snare=cyan, hihat=blue, full-mix=white.
+      // Serato standard: Low=RED, Mid=GREEN, Hi=BLUE → rgb(bass, mid, high)
+      // kick=red, snare=green, hihat=blue, full-mix=white.
       // Height = peak amplitude so loud hits are tall, silence is flat.
       // Played side dimmed to ~45%, future side full brightness.
       const totalCols = Math.ceil(w);
@@ -125,9 +125,9 @@ export default function DeckWaveform({
 
         if (d.bass !== undefined) {
           const barH = Math.max(1, d.peak * halfH * 0.96);
-          const r = Math.round(d.high * 255 * dimMult);
+          const r = Math.round(d.bass * 255 * dimMult);
           const g = Math.round(d.mid  * 255 * dimMult);
-          const b = Math.round(d.bass * 255 * dimMult);
+          const b = Math.round(d.high * 255 * dimMult);
 
           ctx.fillStyle = `rgb(${r},${g},${b})`;
           ctx.fillRect(px, halfH - barH, 1, barH);
@@ -247,9 +247,9 @@ export default function DeckWaveform({
       const overallH = Math.max(1, Math.round(maxPeak * OVERVIEW_H));
 
       if (best.bass !== undefined) {
-        const r = Math.round(best.high * 255);
+        const r = Math.round(best.bass * 255);
         const g = Math.round(best.mid  * 255);
-        const b = Math.round(best.bass * 255);
+        const b = Math.round(best.high * 255);
         ctx.fillStyle = `rgb(${r},${g},${b})`;
         ctx.fillRect(px, OVERVIEW_H - overallH, 1, overallH);
       } else {
