@@ -32,6 +32,8 @@ import { getWaveformBars } from "../utils/waveform";
 import { generateAndUploadWaveformV2, unpackFromBinary, saveWaveform } from "../lib/waveformAnalyzer";
 import { R2_PUBLIC_URL } from "../config";
 
+const cleanBpm = (str) => String(str ?? "").replace(/\.0+$/, "").trim();
+
 const ALL_CUE_COLORS = [
   // Bank A (1–8) — Serato canonical
   "#e52020", "#e56020", "#e5a020", "#14dc14",
@@ -1086,7 +1088,7 @@ function ArchitectConsole({
   const handleEditStart = (e, track) => {
     e.stopPropagation();
     setEditingTrackId(track.id);
-    setEditingValues({ title: track.title || "", artist: track.artist || "", bpm_display: track.bpm_display || (track.bpm ? Math.round(track.bpm).toString() : "") });
+    setEditingValues({ title: track.title || "", artist: track.artist || "", bpm_display: cleanBpm(track.bpm_display) || (track.bpm ? Math.round(track.bpm).toString() : "") });
   };
 
   const handleEditSave = async (trackId) => {
@@ -1105,7 +1107,9 @@ function ArchitectConsole({
         "Content-Type": "application/json",
       },
       body: JSON.stringify(vals),
-    }).catch((err) => console.error("[PSC] edit save failed:", err));
+    })
+      .then((res) => { if (!res.ok) throw new Error(`[PSC] edit PATCH ${res.status}`); })
+      .catch((err) => console.error("[PSC] edit save failed:", err));
   };
 
   const handleEditKeyDown = (e, trackId) => {
@@ -1714,10 +1718,23 @@ function ArchitectConsole({
           <div className="arch-deck-stats">
             <span className="arch-stat">
               BPM{" "}
-              <strong>
-                {deckTrack?.bpm_display ||
-                  (deckTrack?.bpm ? Math.round(deckTrack.bpm) : "--")}
-              </strong>
+              {deckTrack ? (() => {
+                const raw = deckTrack.bpm ? Math.round(deckTrack.bpm) : null;
+                const display = cleanBpm(deckTrack.bpm_display);
+                const showBoth = display && raw && String(raw) !== display;
+                return (
+                  <>
+                    <strong style={{ color: "var(--accent-green, #00cc66)" }}>
+                      {raw ?? "--"}
+                    </strong>
+                    {showBoth && (
+                      <span style={{ color: "rgba(240,237,232,0.7)", marginLeft: 4, fontWeight: 500 }}>
+                        {display}
+                      </span>
+                    )}
+                  </>
+                );
+              })() : <strong>--</strong>}
             </span>
             <span
               className={`arch-stat arch-elapsed${isPlaying ? " arch-elapsed--playing" : ""}`}
@@ -2490,7 +2507,7 @@ function ArchitectConsole({
                           />
                         ) : (
                           <span onDoubleClick={(e) => handleEditStart(e, t)}>
-                            {t.bpm_display ||
+                            {cleanBpm(t.bpm_display) ||
                               (t.bpm ? Math.round(Number(t.bpm)) : "—")}
                           </span>
                         )}
