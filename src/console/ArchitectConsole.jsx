@@ -29,7 +29,7 @@ import {
 import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { generateCode, listCodes, revokeCode } from "../lib/accessCodes";
 import { getWaveformBars } from "../utils/waveform";
-import { generateAndUploadWaveformV2, unpackFromBinary } from "../lib/waveformAnalyzer";
+import { generateAndUploadWaveformV2, unpackFromBinary, saveWaveform } from "../lib/waveformAnalyzer";
 import { R2_PUBLIC_URL } from "../config";
 
 const ALL_CUE_COLORS = [
@@ -973,6 +973,8 @@ function ArchitectConsole({
         setWaveformZoom(Math.max(1, Math.min(100, Math.round(bars.length / 3000))));
       }
       if (shouldAnnounce) announce(`Waveform ready for ${track.title || "track"}.`);
+      // Sentinel: mark track as having v2 waveform so auto-gen doesn't re-fire every session
+      try { await saveWaveform(track.id, 'v2', null); } catch (_) { /* non-critical */ }
     } catch (err) {
       if (shouldAnnounce) announce(`Waveform generation failed: ${err.message}`);
       console.error("[PSC] waveform generation failed:", err);
@@ -2551,17 +2553,6 @@ function ArchitectConsole({
                           }}
                         >
                           {prepareQueue.includes(t.id) ? "PREP ✓" : "PREP"}
-                        </button>
-                        <button
-                          className="arch-track-action-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRegenerateWaveform(t);
-                          }}
-                          disabled={!!regeneratingWaveforms[t.id]}
-                          title="Generate frequency-colored waveform"
-                        >
-                          {regeneratingWaveforms[t.id] ? "…" : "WVF"}
                         </button>
                       </span>
                     </div>
