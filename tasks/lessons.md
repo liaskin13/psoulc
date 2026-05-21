@@ -307,3 +307,25 @@ Captures patterns, mistakes, and corrections to prevent "Shadow Gaps" from repea
 - **Lesson**: An entire session was spent correcting `CLAUDE.md` content that was demonstrably wrong. Had the agent audited the file at session start (cross-checking planets, tiers, vault description against the plan log), the corrections would have been caught before any user effort was spent flagging them.
 - **Rule**: If the session involves architectural planning, design spec work, or anything touching `CLAUDE.md` or `SYSTEM_DIRECTIVE.md`, read those files and cross-check key facts (planet list, tier names, vault description, recent D-series log entries) before responding to any request.
 - **How to apply**: Session start checklist (from `CLAUDE.md`) already requires reading lessons and `plan.active.md`. Add: if task touches design canon, also read `SYSTEM_DIRECTIVE.md` and grep `plan.log.ndjson` for entries from the last 7 days.
+
+---
+
+### Session: Waveform v2 — 2026-05-21
+
+#### Never Touch What User Says Is Already Done
+
+- **Lesson**: User said "no wvf button" as part of a deploy instruction. I found the button in code and removed it. User then said "wvf was deleted time ago — leave it alone." Whether it was truly already gone or not, the pattern is: when a user says something is handled, stop looking for it, stop touching it.
+- **Rule**: If the user says "X is already done / deleted / handled" — do NOT grep for X, do NOT remove X again, do NOT comment on X. Trust the user's statement and move on.
+- **How to apply**: Before touching anything the user mentioned in passing, ask: did they say this was already taken care of? If yes, skip it entirely.
+
+#### Waveform v2 Is Shipped — What D Must Do After Deploy
+
+- **Lesson**: Waveform v2 shipped 2026-05-21. High-res binary and PNG are not yet generated for any of D's 5 tracks. The old D1 waveform_data JSON fallback is still the active data source until D regenerates.
+- **Rule**: D needs to trigger `generateAndUploadWaveformV2` for each track. There is currently NO UI button for this (WVF button was removed). Need to decide how L triggers regeneration for her own use.
+- **How to apply**: Next session — figure out how L triggers waveform regeneration without a visible button. Options: hidden keyboard shortcut, console-only admin route, URL param.
+
+#### The Regenerate Button Was Silently Broken for Two Sessions
+
+- **Lesson**: `ensureWaveformForTrack` tried Serato GEOB first (always fails for WAV), then just re-fetched tracks — `generateAndSaveWaveform` was imported but never called. D's waveforms never actually regenerated when the WVF button was clicked. This was invisible.
+- **Rule**: When a feature "does nothing" and there's no error, check whether the code path actually reaches the implementation or silently exits early.
+- **How to apply**: After any async operation that changes data, verify the data actually changed (check D1/R2 for the expected record before declaring success).
