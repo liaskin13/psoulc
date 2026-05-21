@@ -29,8 +29,8 @@ import {
 import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { generateCode, listCodes, revokeCode } from "../lib/accessCodes";
 import { getWaveformBars } from "../utils/waveform";
-import { generateAndSaveWaveform, saveWaveform } from "../lib/waveformAnalyzer";
-import { parseSeratoOverviewFromUrl } from "../lib/seratoParser";
+import { generateAndUploadWaveformV2, unpackFromBinary } from "../lib/waveformAnalyzer";
+import { R2_PUBLIC_URL } from "../config";
 
 const ALL_CUE_COLORS = [
   // Bank A (1–8) — Serato canonical
@@ -336,6 +336,8 @@ function ArchitectConsole({
   const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
   const [loopPanelTrigger, setLoopPanelTrigger] = useState(0);
   const [waveformZoom, setWaveformZoom] = useState(20);
+  const [deckHighResBars, setDeckHighResBars] = useState(null);
+  const waveformBarsCache = useRef({}); // trackId → decoded bars array
   const loopActiveRef = useRef(false);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
@@ -360,7 +362,8 @@ function ArchitectConsole({
     [deckTrack?.waveform_data],
   );
   const loadedWaveformHighData = loadedWaveform?.high || null;
-  const deckWaveformHighData = deckWaveform?.high || null;
+  // High-res binary from R2 takes priority over D1 JSON for the deck waveform
+  const deckWaveformHighData = deckHighResBars || deckWaveform?.high || null;
   const deckWaveformLowData = deckWaveform?.low || null;
   const deckTrackHasWaveform =
     Array.isArray(deckWaveformHighData) && deckWaveformHighData.length > 0;
@@ -640,6 +643,7 @@ function ArchitectConsole({
       setSelectedTrackId(track.id);
       setLoadedTrack(track);
       setLoadedDeckId(track.id);
+      setDeckHighResBars(null);
       pushTrackHistory(track);
       setTrackPlayCounts((prev) => ({
         ...prev,
@@ -647,6 +651,7 @@ function ArchitectConsole({
       }));
       audioEngine.play();
       announce(`Playing ${track.title || "track"}.`);
+      loadWaveformBinaryForDeck(track.id);
       if (!track.waveform_data) ensureWaveformForTrack(track);
     } catch (err) {
       console.error("[PSC] Audio load error:", err);
@@ -673,7 +678,9 @@ function ArchitectConsole({
       setSelectedTrackId(track.id);
       setLoadedTrack(track);
       setLoadedDeckId(track.id);
+      setDeckHighResBars(null);
       announce(`${track.title || "Track"} loaded to deck. Press PLAY.`);
+      loadWaveformBinaryForDeck(track.id);
     } catch (err) {
       setAudioError(err.message);
       announce("Audio load failed.");
@@ -915,9 +922,37 @@ function ArchitectConsole({
 
   const handleBroadcast = () => setShowSignalPanel(true);
 
-  const ensureWaveformForTrack = async (track, shouldAnnounce = false, force = false) => {
-    if (!track || (!force && track.waveform_data) || regeneratingWaveforms[track.id])
+  // Load high-res waveform binary from R2, decode, and cache in state.
+  // Falls back silently — D1 JSON waveform_data is still available as fallback.
+  const loadWaveformBinaryForDeck = async (trackId) => {
+    if (!R2_PUBLIC_URL || waveformBarsCache.current[trackId]) {
+      if (waveformBarsCache.current[trackId]) {
+        setDeckHighResBars(waveformBarsCache.current[trackId]);
+      }
       return;
+    }
+    try {
+      const res = await fetch(`${R2_PUBLIC_URL}/waveform/${trackId}.bin`);
+      if (!res.ok) return; // not yet generated — D1 fallback stays
+      const buf = await res.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      const bars = unpackFromBinary(bytes);
+      if (bars) {
+        waveformBarsCache.current[trackId] = bars;
+        setDeckHighResBars(bars);
+        // Auto-center zoom: target ~60s visible window
+        setWaveformZoom(Math.max(1, Math.min(100, Math.round(bars.length / 3000))));
+      }
+    } catch (_) {
+      // Network error — D1 fallback stays
+    }
+  };
+
+  const ensureWaveformForTrack = async (track, shouldAnnounce = false, force = false) => {
+    if (!track || regeneratingWaveforms[track.id]) return;
+    // Skip unless forced (Regenerate button) or track has no waveform at all
+    if (!force && (track.waveform_data || waveformBarsCache.current[track.id])) return;
+
     const url = getAudioUrl(track.audio_path);
     if (!url) return;
 
@@ -925,28 +960,22 @@ function ArchitectConsole({
     if (shouldAnnounce) announce(`Analyzing waveform for ${track.title || "track"}…`);
 
     try {
-      const serato = await parseSeratoOverviewFromUrl(url);
-      if (serato) {
-        const waveformData = { low: serato.low, high: serato.high };
-        await saveWaveform(track.id, waveformData, null);
-        // Inject waveform directly into local state — the deployed GET /tracks
-        // worker is an older version that omits waveform_data from the SELECT,
-        // so fetchAllTracks() would overwrite the waveform with null.
-        const withWaveform = (prev) =>
-          prev.map((t) => t.id === track.id ? { ...t, waveform_data: waveformData } : t);
-        setTrackListData(withWaveform);
-        const updatedTrack = { ...track, waveform_data: waveformData };
-        if (loadedDeckId === track.id) setLoadedTrack(updatedTrack);
-        if (shouldAnnounce) announce(`Waveform ready for ${track.title || "track"}.`);
-        return;
+      const { bars } = await generateAndUploadWaveformV2(track.id, url, (pct) => {
+        if (shouldAnnounce && pct % 20 === 0) {
+          announce(`Waveform ${pct}% — ${track.title || "track"}`);
+        }
+      });
+
+      // Cache decoded bars and inject into deck if this is the loaded track
+      waveformBarsCache.current[track.id] = bars;
+      if (loadedDeckId === track.id) {
+        setDeckHighResBars(bars);
+        setWaveformZoom(Math.max(1, Math.min(100, Math.round(bars.length / 3000))));
       }
-      const refreshed = await fetchAllTracks();
-      setTrackListData(refreshed);
-      const updated = refreshed.find((t) => t.id === track.id);
-      if (updated && loadedDeckId === track.id) setLoadedTrack(updated);
       if (shouldAnnounce) announce(`Waveform ready for ${track.title || "track"}.`);
     } catch (err) {
       if (shouldAnnounce) announce(`Waveform generation failed: ${err.message}`);
+      console.error("[PSC] waveform generation failed:", err);
     } finally {
       setRegeneratingWaveforms((prev) => {
         const next = { ...prev };
@@ -2523,19 +2552,6 @@ function ArchitectConsole({
                         >
                           {prepareQueue.includes(t.id) ? "PREP ✓" : "PREP"}
                         </button>
-                        {!t.waveform_data && (
-                          <button
-                            className="arch-track-action-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRegenerateWaveform(t);
-                            }}
-                            disabled={regeneratingWaveforms[t.id]}
-                            title="Generate frequency-colored waveform"
-                          >
-                            {regeneratingWaveforms[t.id] ? "..." : "WVF"}
-                          </button>
-                        )}
                       </span>
                     </div>
                   );

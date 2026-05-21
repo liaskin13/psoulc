@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { fetchPublishedVaultTracks, getAudioUrl } from '../lib/tracks';
 import * as audioEngine from '../lib/audioEngine';
 import { getWaveformBars } from '../utils/waveform';
+import { R2_PUBLIC_URL } from '../config';
 import './ListenerVaultView.css';
 
 function formatDuration(seconds) {
@@ -346,6 +347,65 @@ function ThumbnailCanvas({ track }) {
   );
 }
 
+// Waveform display for the guest player.
+// If a pre-rendered PNG exists in R2, renders it as <img> with a CSS playhead line.
+// Falls back to WaveformCanvas if the PNG is unavailable or fails to load.
+function WaveformImg({ track, currentTime, duration, ghost, onSeek }) {
+  const [useFallback, setUseFallback] = useState(false);
+  const pngUrl = R2_PUBLIC_URL && track?.id
+    ? `${R2_PUBLIC_URL}/waveform/${track.id}.png`
+    : null;
+
+  const playheadPct = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  if (!pngUrl || useFallback) {
+    return (
+      <WaveformCanvas
+        track={track}
+        currentTime={ghost ? 0 : currentTime}
+        duration={duration}
+        ghost={ghost}
+        onSeek={onSeek}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`lvv-waveform-wrap${ghost ? ' lvv-waveform-ghost-wrap' : ''}`}
+      style={{ position: 'relative', cursor: onSeek ? 'pointer' : 'default' }}
+      onClick={onSeek && duration > 0 ? (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        onSeek(((e.clientX - rect.left) / rect.width) * duration);
+      } : undefined}
+    >
+      <img
+        src={pngUrl}
+        alt={`Waveform for ${track?.title || 'track'}`}
+        className="lvv-waveform-canvas"
+        style={{ display: 'block', width: '100%', height: '100%', objectFit: 'fill' }}
+        onError={() => setUseFallback(true)}
+        draggable={false}
+      />
+      {!ghost && duration > 0 && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: `${playheadPct}%`,
+            width: '2px',
+            background: 'rgba(240,237,232,0.9)',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem }) {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -528,7 +588,7 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
                 </div>
               )}
               {playerState === 'paused' ? (
-                <WaveformCanvas
+                <WaveformImg
                   track={activeTrack}
                   currentTime={0}
                   duration={audioState.duration}
@@ -536,11 +596,10 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
                   onSeek={handleGhostSeek}
                 />
               ) : (
-                <WaveformCanvas
+                <WaveformImg
                   track={activeTrack}
                   currentTime={audioState.currentTime}
                   duration={audioState.duration}
-                  mode={vizMode}
                   onSeek={(t) => audioEngine.seek(t)}
                 />
               )}

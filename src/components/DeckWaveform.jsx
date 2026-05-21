@@ -84,10 +84,9 @@ export default function DeckWaveform({
       const visibleBars  = Math.round(barCount / displayZoom);
       const playheadFrac = dur > 0 ? ct / dur : 0;
       const centerBar    = Math.round(playheadFrac * barCount);
-      const startBar     = Math.max(0, Math.min(centerBar - Math.round(visibleBars / 2), barCount - visibleBars));
-      const endBar       = Math.min(barCount, startBar + visibleBars);
-      const barWidth     = w / (endBar - startBar);
-      const playheadX    = ((centerBar - startBar) / (endBar - startBar)) * w;
+      const startBar     = centerBar - Math.round(visibleBars / 2);
+      const endBar       = startBar + visibleBars;
+      const playheadX    = w / 2;
       const halfH        = height / 2;
 
       // Loop region highlight
@@ -120,7 +119,8 @@ export default function DeckWaveform({
         const dimMult = isPast ? 0.45 : 1.0;
 
         const barIdx = Math.floor(startBar + (px / w) * (endBar - startBar));
-        const d = peaks[Math.max(0, Math.min(barCount - 1, barIdx))];
+        if (barIdx < 0 || barIdx >= barCount) continue;
+        const d = peaks[barIdx];
         if (!d) continue;
 
         if (d.bass !== undefined) {
@@ -288,7 +288,7 @@ export default function DeckWaveform({
     const totalBars  = waveformData?.length ?? 1000;
     const visibleBars = Math.round(totalBars / zoom);
     const centerBar   = Math.round((currentTime / duration) * totalBars);
-    const startBar    = Math.max(0, Math.min(centerBar - Math.round(visibleBars / 2), totalBars - visibleBars));
+    const startBar    = centerBar - Math.round(visibleBars / 2);
     const clickedBar  = startBar + Math.round(frac * visibleBars);
     onSeek(Math.max(0, Math.min((clickedBar / totalBars) * duration, duration)));
   };

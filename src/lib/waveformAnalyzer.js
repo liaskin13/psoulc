@@ -30,16 +30,21 @@ export async function analyzeAudio(
   audioUrl,
   highResSamples = 1000,
   lowResSamples = 80,
+  barsPerSec = null,
 ) {
   const response = await fetch(audioUrl);
   if (!response.ok)
     throw new Error(`Failed to fetch audio: ${response.status}`);
   const arrayBuffer = await response.arrayBuffer();
 
-  const audioContext = new OfflineAudioContext(2, 44100 * 30, 44100);
+  const audioContext = new AudioContext();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-  const highRes = generateWaveformDataBands(audioBuffer, highResSamples);
+  const actualHighRes = barsPerSec
+    ? Math.min(Math.ceil(audioBuffer.duration * barsPerSec), 250000)
+    : highResSamples;
+
+  const highRes = generateWaveformDataBands(audioBuffer, actualHighRes);
   const lowRes  = generateWaveformDataBands(audioBuffer, lowResSamples);
 
   return { high: highRes, low: lowRes, duration: audioBuffer.duration };
@@ -137,7 +142,7 @@ export async function saveWaveform(trackId, waveformData, duration) {
 }
 
 /**
- * Analyze and save waveform for a track
+ * Analyze and save waveform for a track (D1 only — legacy, kept for fallback)
  */
 export async function generateAndSaveWaveform(trackId, audioUrl, onProgress) {
   if (onProgress) onProgress(10);
@@ -147,4 +152,141 @@ export async function generateAndSaveWaveform(trackId, audioUrl, onProgress) {
   await saveWaveform(trackId, waveformData, duration);
   if (onProgress) onProgress(100);
   return waveformData;
+}
+
+/**
+ * Pack bars array into a compact Uint8Array — 4 bytes per bar: bass, mid, high, peak (0–255).
+ * Returns null for empty or invalid input.
+ */
+export function packToBinary(bars) {
+  if (!bars || bars.length === 0) return null;
+  const buf = new Uint8Array(bars.length * 4);
+  for (let i = 0; i < bars.length; i++) {
+    const b = bars[i];
+    buf[i * 4]     = Math.round((b.bass ?? 0) * 255);
+    buf[i * 4 + 1] = Math.round((b.mid  ?? 0) * 255);
+    buf[i * 4 + 2] = Math.round((b.high ?? 0) * 255);
+    buf[i * 4 + 3] = Math.round((b.peak ?? 0) * 255);
+  }
+  return buf;
+}
+
+/**
+ * Decode a Uint8Array produced by packToBinary back into [{bass,mid,high,peak}] 0-1 floats.
+ * Returns null if the buffer length is not a multiple of 4.
+ */
+export function unpackFromBinary(bytes) {
+  if (!bytes || bytes.length % 4 !== 0) return null;
+  const bars = new Array(bytes.length / 4);
+  for (let i = 0; i < bars.length; i++) {
+    bars[i] = {
+      bass: bytes[i * 4]     / 255,
+      mid:  bytes[i * 4 + 1] / 255,
+      high: bytes[i * 4 + 2] / 255,
+      peak: bytes[i * 4 + 3] / 255,
+    };
+  }
+  return bars;
+}
+
+/**
+ * Render a full-track waveform overview PNG using an OffscreenCanvas.
+ * Returns a Blob (image/png) or null if OffscreenCanvas is unavailable.
+ */
+export async function renderWaveformPng(bars, width = 1200, height = 60) {
+  if (typeof OffscreenCanvas === "undefined") return null;
+  if (!bars || bars.length === 0) return null;
+
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, width, height);
+
+  const N = bars.length;
+  const barsPerPx = N / width;
+
+  for (let px = 0; px < width; px++) {
+    const bStart = Math.floor(px * barsPerPx);
+    const bEnd   = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
+    let maxPeak = 0, best = null;
+    for (let b = bStart; b < bEnd; b++) {
+      if (bars[b] && bars[b].peak > maxPeak) { maxPeak = bars[b].peak; best = bars[b]; }
+    }
+    if (!best) continue;
+    const barH = Math.max(1, Math.round(maxPeak * height));
+    const r = Math.round(best.bass * 255);
+    const g = Math.round(best.mid  * 255);
+    const bv = Math.round(best.high * 255);
+    ctx.fillStyle = `rgb(${r},${g},${bv})`;
+    ctx.fillRect(px, height - barH, 1, barH);
+  }
+
+  return canvas.convertToBlob({ type: "image/png" });
+}
+
+function uint8ToBase64(bytes) {
+  let binary = "";
+  const chunk = 8192;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+/**
+ * Upload high-res binary and PNG waveform assets to R2 via the worker.
+ * Throws on non-2xx response.
+ */
+export async function uploadWaveformAssets(trackId, binaryBytes, pngBlob, onProgress) {
+  if (onProgress) onProgress(80);
+
+  const b64bin = binaryBytes ? uint8ToBase64(binaryBytes) : null;
+
+  let b64png = null;
+  if (pngBlob) {
+    const pngBuf = await pngBlob.arrayBuffer();
+    b64png = uint8ToBase64(new Uint8Array(pngBuf));
+  }
+
+  if (onProgress) onProgress(90);
+
+  const res = await fetch(`${WORKER_URL}/tracks/${trackId}/waveform-assets`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "PSC-Secret": UPLOAD_SECRET,
+    },
+    body: JSON.stringify({ binary_b64: b64bin, png_b64: b64png }),
+  });
+
+  if (!res.ok) throw new Error(`Failed to upload waveform assets: ${res.status}`);
+  if (onProgress) onProgress(100);
+  return res.json();
+}
+
+/**
+ * Full v2 waveform generation: analyze audio, pack to binary, render PNG, upload both to R2.
+ * Returns the bars array so callers can use it immediately without re-fetching from R2.
+ */
+export async function generateAndUploadWaveformV2(trackId, audioUrl, onProgress) {
+  if (onProgress) onProgress(5);
+
+  const { high: bars, duration } = await analyzeAudio(
+    audioUrl,
+    1000,
+    80,
+    50,
+  );
+
+  if (onProgress) onProgress(60);
+
+  const binaryBytes = packToBinary(bars);
+  const pngBlob = await renderWaveformPng(bars);
+
+  if (onProgress) onProgress(75);
+
+  await uploadWaveformAssets(trackId, binaryBytes, pngBlob, (p) => {
+    if (onProgress) onProgress(75 + Math.round(p * 0.25));
+  });
+
+  return { bars, duration };
 }

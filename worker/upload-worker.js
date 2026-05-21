@@ -509,6 +509,67 @@ export default {
         });
       }
 
+      // PUT /tracks/:id/waveform-assets — store high-res binary + PNG in R2
+      if (
+        request.method === "PUT" &&
+        url.pathname.match(/^\/tracks\/[^\/]+\/waveform-assets$/)
+      ) {
+        if (!isAuthenticated) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const rawId = url.pathname.split("/")[2];
+        const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
+        if (!id) {
+          return new Response(JSON.stringify({ error: "Invalid track id" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const body = await request.json();
+        const { binary_b64, png_b64 } = body;
+
+        if (!binary_b64) {
+          return new Response(JSON.stringify({ error: "binary_b64 required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Decode and size-check binary (~960KB max for 240k bars)
+        const binaryStr = atob(binary_b64);
+        if (binaryStr.length > 1572864) { // 1.5MB
+          return new Response(JSON.stringify({ error: "binary too large" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const binaryBytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) binaryBytes[i] = binaryStr.charCodeAt(i);
+
+        await env.PSC_AUDIO.put(`waveform/${id}.bin`, binaryBytes, {
+          httpMetadata: { contentType: "application/octet-stream" },
+        });
+
+        if (png_b64) {
+          const pngStr = atob(png_b64);
+          if (pngStr.length <= 204800) { // 200KB
+            const pngBytes = new Uint8Array(pngStr.length);
+            for (let i = 0; i < pngStr.length; i++) pngBytes[i] = pngStr.charCodeAt(i);
+            await env.PSC_AUDIO.put(`waveform/${id}.png`, pngBytes, {
+              httpMetadata: { contentType: "image/png" },
+            });
+          }
+        }
+
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // GET /signal — public; returns D's current broadcast state for listener polling
       if (request.method === "GET" && url.pathname === "/signal") {
         try {
