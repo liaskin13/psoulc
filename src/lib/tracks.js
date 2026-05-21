@@ -1,6 +1,6 @@
 import { UPLOAD_WORKER_URL, UPLOAD_SECRET, R2_PUBLIC_URL } from "../config";
-import { parseSeratoOverview } from "./seratoParser";
-import { preprocessAudio } from "./audioPreprocessor";
+import { generateWaveformDataBands } from "./audioPreprocessor";
+import { packToBinary, uploadWaveformAssets, saveWaveform } from "./waveformAnalyzer";
 
 const IS_DEV = UPLOAD_WORKER_URL.includes("localhost");
 const TRACKS_STORAGE_KEY = "psc_dev_tracks";
@@ -100,20 +100,19 @@ export async function uploadTrack(file, metadata, onProgress) {
   };
 
   if (!IS_DEV) {
-    let waveformData = null;
-    let duration = null;
+    let binaryBytes = null;
+    let waveformDuration = null;
     try {
-      reportProgress("analyzing", 5, "Reading track data");
-      const seratoResult = await parseSeratoOverview(file);
-      if (seratoResult) {
-        waveformData = { low: seratoResult.low, high: seratoResult.high };
-      } else {
-        const waveformProgress = (pct) =>
-          reportProgress("analyzing", Math.round(pct * 0.20 + 5), "Analyzing audio...");
-        const result = await preprocessAudio(file, waveformProgress);
-        waveformData = result.waveformData;
-        duration = result.duration;
-      }
+      reportProgress("analyzing", 5, "Analyzing audio...");
+      const arrayBuffer = await file.arrayBuffer();
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      audioContext.close();
+      const barCount = Math.min(Math.ceil(audioBuffer.duration * 50), 250000);
+      const bars = generateWaveformDataBands(audioBuffer, barCount);
+      binaryBytes = packToBinary(bars);
+      waveformDuration = audioBuffer.duration;
+      reportProgress("analyzing", 20, "Packing waveform...");
     } catch (e) {
       console.warn("[PSC] Waveform analysis failed, uploading without:", e);
     }
@@ -190,8 +189,8 @@ export async function uploadTrack(file, metadata, onProgress) {
         artist: metadata.artist || null,
         bpm: metadata.bpm || null,
         uploaded_by: metadata.uploaded_by,
-        waveform_data: waveformData ? JSON.stringify(waveformData) : null,
-        duration: duration || null,
+        waveform_data: null,
+        duration: waveformDuration || null,
       }),
     });
 
@@ -200,6 +199,18 @@ export async function uploadTrack(file, metadata, onProgress) {
     }
 
     const completed = await completeRes.json();
+
+    const trackId = completed?.id;
+    if (trackId && binaryBytes) {
+      reportProgress("waveform", 95, "Uploading waveform...");
+      try {
+        await uploadWaveformAssets(trackId, binaryBytes, null);
+        await saveWaveform(trackId, "v2", waveformDuration);
+      } catch (e) {
+        console.warn("[PSC] Waveform upload failed:", e);
+      }
+    }
+
     reportProgress("done", 100, "Upload complete");
 
     window.dispatchEvent(new CustomEvent("psc:track-uploaded"));

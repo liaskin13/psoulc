@@ -340,6 +340,7 @@ function ArchitectConsole({
   const [waveformZoom, setWaveformZoom] = useState(20);
   const [deckHighResBars, setDeckHighResBars] = useState(null);
   const waveformBarsCache = useRef({}); // trackId → decoded bars array
+  const loadedDeckIdRef = useRef(null);
   const loopActiveRef = useRef(false);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
@@ -645,6 +646,7 @@ function ArchitectConsole({
       setSelectedTrackId(track.id);
       setLoadedTrack(track);
       setLoadedDeckId(track.id);
+      loadedDeckIdRef.current = track.id;
       setDeckHighResBars(null);
       pushTrackHistory(track);
       setTrackPlayCounts((prev) => ({
@@ -680,6 +682,7 @@ function ArchitectConsole({
       setSelectedTrackId(track.id);
       setLoadedTrack(track);
       setLoadedDeckId(track.id);
+      loadedDeckIdRef.current = track.id;
       setDeckHighResBars(null);
       announce(`${track.title || "Track"} loaded to deck. Press PLAY.`);
       loadWaveformBinaryForDeck(track.id);
@@ -970,7 +973,7 @@ function ArchitectConsole({
 
       // Cache decoded bars and inject into deck if this is the loaded track
       waveformBarsCache.current[track.id] = bars;
-      if (loadedDeckId === track.id) {
+      if (loadedDeckIdRef.current === track.id) {
         setDeckHighResBars(bars);
         setWaveformZoom(Math.max(1, Math.min(100, Math.round(bars.length / 3000))));
       }
@@ -1170,7 +1173,18 @@ function ArchitectConsole({
   };
 
   const handleRegenerateWaveform = async (track) => {
-    await ensureWaveformForTrack(track, true, true);
+    announce(`Regenerating waveform for ${track.title || "track"}…`);
+    try {
+      const res = await fetch(
+        `${UPLOAD_WORKER_URL}/tracks/${track.id}/regenerate-waveform`,
+        { method: "POST", headers: { "PSC-Secret": UPLOAD_SECRET } },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      announce(`Waveform ready.`);
+      loadWaveformBinaryForDeck(track.id);
+    } catch (e) {
+      announce(`Waveform failed: ${e.message}`);
+    }
   };
 
   const handleNext = () => {
@@ -2569,6 +2583,16 @@ function ArchitectConsole({
                           }}
                         >
                           {prepareQueue.includes(t.id) ? "PREP ✓" : "PREP"}
+                        </button>
+                        <button
+                          className="arch-track-action-btn"
+                          title="Regenerate waveform"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRegenerateWaveform(t);
+                          }}
+                        >
+                          WVF
                         </button>
                       </span>
                     </div>

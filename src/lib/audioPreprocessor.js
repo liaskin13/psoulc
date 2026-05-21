@@ -119,7 +119,7 @@ function fft(buf) {
  *
  * Returns [{bass, mid, high, peak}] — all values 0-1.
  */
-function generateWaveformDataBands(audioBuffer, barCount) {
+export function generateWaveformDataBands(audioBuffer, barCount) {
   const channelData = audioBuffer.getChannelData(0);
   const sampleRate  = audioBuffer.sampleRate;
   const total       = channelData.length;
