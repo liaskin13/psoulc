@@ -15,7 +15,8 @@ function formatDuration(seconds) {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-// Parse waveform data into 400 bars with Serato freq metadata
+// Parse waveform data into bars. New tracks: {bass,mid,high,peak} 0-1 floats.
+// Legacy tracks: {peak, freq} hex string — renderer handles both formats.
 function parseWaveformBars(track, count = 400) {
   try {
     const raw = JSON.parse(track.waveform_data || 'null');
@@ -25,10 +26,15 @@ function parseWaveformBars(track, count = 400) {
         const idx = Math.floor(i * arr.length / count);
         const bar = arr[idx];
         if (bar && typeof bar === 'object') {
+          if (bar.bass !== undefined) {
+            // New 3-band format — already normalized 0-1 by the analyzer
+            return { peak: bar.peak || 0, bass: bar.bass || 0, mid: bar.mid || 0, high: bar.high || 0 };
+          }
           return { peak: Math.abs(bar.peak || 0), freq: bar.freq || '#14dc14' };
         }
         return { peak: Math.abs(bar || 0), freq: '#14dc14' };
       });
+      if (samples[0]?.bass !== undefined) return samples; // already normalized
       const max = Math.max(...samples.map(s => s.peak), 0.001);
       return samples.map(s => ({ peak: s.peak / max, freq: s.freq }));
     }
@@ -59,7 +65,8 @@ function hexAlpha(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// Draws the thin full-track overview strip
+// Draws the thin full-track overview strip using layered screen-blend colors.
+// bass→RED, mid→GREEN, high→BLUE — same physics model as main waveform.
 function drawOverview(canvas, bars, currentTime, duration) {
   const rect = canvas.getBoundingClientRect();
   const W = rect.width || canvas.offsetWidth;
@@ -75,20 +82,35 @@ function drawOverview(canvas, bars, currentTime, duration) {
 
   const N = bars.length;
   const barsPerPx = N / W;
+
+  ctx.globalCompositeOperation = 'screen';
+
   for (let px = 0; px < W; px++) {
     const bStart = Math.floor(px * barsPerPx);
     const bEnd = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
-    let maxPeak = 0, bestFreq = '#14dc14';
+    let maxPeak = 0, best = null;
     for (let b = bStart; b < bEnd; b++) {
-      if (bars[b] && bars[b].peak > maxPeak) {
-        maxPeak = bars[b].peak; bestFreq = bars[b].freq;
-      }
+      if (bars[b] && bars[b].peak > maxPeak) { maxPeak = bars[b].peak; best = bars[b]; }
     }
-    const barH = Math.max(1, Math.round(maxPeak * H * 0.85));
-    const [r, g, bv] = seratoRgb(bestFreq);
-    ctx.fillStyle = `rgba(${r},${g},${bv},0.65)`;
-    ctx.fillRect(px, H - barH, 1, barH);
+    if (!best) continue;
+
+    const overallH = Math.max(1, Math.round(maxPeak * H * 0.85));
+
+    if (best.bass !== undefined) {
+      const bH = Math.max(1, Math.round(Math.sqrt(best.bass) * overallH));
+      const mH = Math.max(1, Math.round(Math.sqrt(best.mid)  * overallH));
+      const hH = Math.max(1, Math.round(Math.sqrt(best.high) * overallH));
+      ctx.fillStyle = 'rgba(255,0,0,0.80)';   ctx.fillRect(px, H - bH, 1, bH);
+      ctx.fillStyle = 'rgba(0,255,0,0.80)';   ctx.fillRect(px, H - mH, 1, mH);
+      ctx.fillStyle = 'rgba(0,0,255,0.80)';   ctx.fillRect(px, H - hH, 1, hH);
+    } else {
+      const [r, g, bv] = seratoRgb(best.freq);
+      ctx.fillStyle = `rgba(${r},${g},${bv},0.65)`;
+      ctx.fillRect(px, H - overallH, 1, overallH);
+    }
   }
+
+  ctx.globalCompositeOperation = 'source-over';
 
   // Playhead marker
   if (duration > 0) {
@@ -167,14 +189,18 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
     const playheadFrac = barCount > 0 ? (centerBarIdx - startBar) / barCount : 0.5;
     const playheadX = playheadFrac * W;
 
-    // Continuous pixel-resolution rendering — same model as DeckWaveform.
+    // Continuous pixel-resolution rendering — layered screen-blend model.
+    // bass→RED, mid→GREEN, high→BLUE. Each band has its own bar height so
+    // spectral structure is visible within every column.
     const halfH = H / 2;
     const totalCols = Math.ceil(W);
+
+    ctx.globalCompositeOperation = 'screen';
+    const transients = [];
 
     for (let px = 0; px < totalCols; px++) {
       const played = px < playheadX;
 
-      // Interpolate between adjacent bars at pixel resolution
       const barFrac = startBar + (px / W) * barCount;
       const b0 = Math.max(startBar, Math.min(endBar - 2, Math.floor(barFrac)));
       const b1 = Math.min(endBar - 1, b0 + 1);
@@ -185,37 +211,50 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
       const peak = bar0.peak + ((bar1.peak - bar0.peak) * t);
 
       if (mode === 'freq') {
+        // Heat-map mode: keep existing single-color rendering
+        ctx.globalCompositeOperation = 'source-over';
         const h = Math.max(2, peak * H * 0.88);
-        const alpha = played ? 0.92 : 0.14;
-        ctx.fillStyle = heatColor(peak, alpha);
+        ctx.fillStyle = heatColor(peak, played ? 0.92 : 0.14);
         ctx.fillRect(px, (H - h) / 2, 1, h);
+        ctx.globalCompositeOperation = 'screen';
       } else if (bar0.bass !== undefined) {
-        // True additive RGB with interpolation — matches DeckWaveform
+        // 3-band format — layered per-frequency bars
         const bass = bar0.bass + (((bar1.bass ?? bar0.bass) - bar0.bass) * t);
         const mid  = bar0.mid  + (((bar1.mid  ?? bar0.mid)  - bar0.mid)  * t);
         const high = bar0.high + (((bar1.high ?? bar0.high) - bar0.high) * t);
-        const bAmp = Math.sqrt(bass), mAmp = Math.sqrt(mid), hAmp = Math.sqrt(high);
-        const cr = Math.min(255, Math.round(bAmp * 20  + mAmp * 20  + hAmp * 229));
-        const cg = Math.min(255, Math.round(bAmp * 100 + mAmp * 220 + hAmp * 96));
-        const cb = Math.min(255, Math.round(bAmp * 220 + mAmp * 20  + hAmp * 32));
-        const barH = Math.max(1, peak * halfH * 0.88);
-        const alpha = played ? 1.0 : 0.22;
-        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
-        ctx.fillRect(px, halfH - barH, 1, barH);
-        ctx.fillRect(px, halfH, 1, barH);
-        if (barH > halfH * 0.80) {
-          ctx.fillStyle = `rgba(255,255,220,${played ? 0.95 : 0.35})`;
-          ctx.fillRect(px, halfH - barH - 1, 1, 2);
-          ctx.fillRect(px, halfH + barH - 1, 1, 2);
-        }
+
+        const a  = played ? 0.20 : 0.88;
+        const bH = Math.max(1, Math.sqrt(bass) * halfH * 0.94);
+        const mH = Math.max(1, Math.sqrt(mid)  * halfH * 0.94);
+        const hH = Math.max(1, Math.sqrt(high) * halfH * 0.94);
+
+        ctx.fillStyle = `rgba(255,0,0,${a})`;
+        ctx.fillRect(px, halfH - bH, 1, bH); ctx.fillRect(px, halfH, 1, bH);
+
+        ctx.fillStyle = `rgba(0,255,0,${a})`;
+        ctx.fillRect(px, halfH - mH, 1, mH); ctx.fillRect(px, halfH, 1, mH);
+
+        ctx.fillStyle = `rgba(0,0,255,${a})`;
+        ctx.fillRect(px, halfH - hH, 1, hH); ctx.fillRect(px, halfH, 1, hH);
+
+        const maxH = Math.max(bH, mH, hH);
+        if (!played && maxH > halfH * 0.82) transients.push({ px, maxH });
       } else {
-        // Fallback: single-band Serato colors
+        // Legacy single-band fallback
         const [r, g, bv] = seratoRgb(bar0.freq);
         const h = Math.max(2, peak * H * 0.88);
-        const alpha = played ? 0.92 : 0.22;
-        ctx.fillStyle = `rgba(${r},${g},${bv},${alpha})`;
+        ctx.fillStyle = `rgba(${r},${g},${bv},${played ? 0.92 : 0.22})`;
         ctx.fillRect(px, (H - h) / 2, 1, h);
       }
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Transient peak caps
+    for (const { px, maxH } of transients) {
+      ctx.fillStyle = 'rgba(255,255,220,0.88)';
+      ctx.fillRect(px, halfH - maxH - 1, 1, 2);
+      ctx.fillRect(px, halfH + maxH - 1, 1, 2);
     }
 
     // Center line (subtle reference)

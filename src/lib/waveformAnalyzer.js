@@ -1,5 +1,5 @@
 // Client-side waveform analyzer using Web Audio API
-// Generates frequency-colored peak data for Serato-style visualization
+// Generates 3-band frequency data for layered spectral visualization
 
 import { UPLOAD_WORKER_URL, UPLOAD_SECRET } from "../config";
 
@@ -17,38 +17,14 @@ export const SERATO_COLORS = [
   "#E5E5E5", // white/grey
 ];
 
-// Frequency bands for Serato-style coloring
-const FREQ_BANDS = {
-  low: { color: "#1464dc" }, // bass — blue
-  mid: { color: "#14dc14" }, // mids — green
-  high: { color: "#e56020" }, // treble — orange
-};
-
-// Determine dominant frequency band from raw PCM samples using inter-sample
-// roughness. High-frequency signals oscillate rapidly → high normalized roughness.
-// Low-frequency signals are smooth → low normalized roughness.
-function getFreqColor(samples) {
-  if (samples.length < 2) return FREQ_BANDS.mid.color;
-  let energy = 0;
-  let roughness = 0;
-  for (let i = 0; i < samples.length; i++) {
-    energy += samples[i] * samples[i];
-    if (i > 0) roughness += (samples[i] - samples[i - 1]) ** 2;
-  }
-  energy = Math.sqrt(energy / samples.length);
-  if (energy < 0.001) return FREQ_BANDS.mid.color;
-  const normRoughness = Math.sqrt(roughness / (samples.length - 1)) / energy;
-  if (normRoughness < 0.6) return FREQ_BANDS.low.color;
-  if (normRoughness > 1.4) return FREQ_BANDS.high.color;
-  return FREQ_BANDS.mid.color;
-}
-
 /**
- * Analyze audio and generate waveform data
- * @param {string} audioUrl - URL to the audio file
- * @param {number} highResSamples - Number of samples for deck waveform
- * @param {number} lowResSamples - Number of samples for preview waveform
- * @returns {Promise<{high: Array, low: Array}>}
+ * Analyze audio and generate 3-band waveform data.
+ * Returns [{bass, mid, high, peak}] bars where all values are 0-1.
+ *
+ * Uses cascaded single-pole IIR lowpass filters:
+ *   LP-200Hz  → bass
+ *   LP-2500Hz → bass+mid; high = original − LP-2500Hz
+ *   mid = LP-2500Hz − LP-200Hz
  */
 export async function analyzeAudio(
   audioUrl,
@@ -63,32 +39,82 @@ export async function analyzeAudio(
   const audioContext = new OfflineAudioContext(2, 44100 * 30, 44100);
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-  const highRes = generateWaveformData(audioBuffer, highResSamples);
-  const lowRes = generateWaveformData(audioBuffer, lowResSamples);
+  const highRes = generateWaveformDataBands(audioBuffer, highResSamples);
+  const lowRes  = generateWaveformDataBands(audioBuffer, lowResSamples);
 
   return { high: highRes, low: lowRes, duration: audioBuffer.duration };
 }
 
-function generateWaveformData(audioBuffer, samples) {
+/**
+ * Generate 3-band waveform data using two cascaded single-pole IIR lowpass filters.
+ *
+ * Each band is independently normalized so quiet content stays visible.
+ * A 2% floor relative to the overall peak prevents absent bands from
+ * being amplified to full scale.
+ *
+ * Returns [{bass, mid, high, peak}] — all values 0-1.
+ */
+function generateWaveformDataBands(audioBuffer, barCount) {
   const channelData = audioBuffer.getChannelData(0);
-  const samplesPerBin = Math.floor(channelData.length / samples);
-  const waveform = [];
+  const sampleRate  = audioBuffer.sampleRate;
+  const total       = channelData.length;
+  const samplesPerBar = Math.floor(total / barCount);
 
-  for (let i = 0; i < samples; i++) {
-    const start = i * samplesPerBin;
-    const end = Math.min(start + samplesPerBin, channelData.length);
-    let peak = 0;
+  // Single-pole IIR coefficient: α = 1 − exp(−2π·fc/fs)
+  const aLow  = 1 - Math.exp(-2 * Math.PI * 200  / sampleRate);
+  const aHigh = 1 - Math.exp(-2 * Math.PI * 2500 / sampleRate);
+
+  let lpLowState  = 0;
+  let lpHighState = 0;
+
+  const bars = [];
+
+  for (let i = 0; i < barCount; i++) {
+    const start = i * samplesPerBar;
+    const end   = Math.min(start + samplesPerBar, total);
+
+    let bassPeak = 0, midPeak = 0, highPeak = 0, allPeak = 0;
 
     for (let j = start; j < end; j++) {
-      const abs = Math.abs(channelData[j]);
-      if (abs > peak) peak = abs;
+      const x = channelData[j];
+
+      lpLowState  = aLow  * x + (1 - aLow)  * lpLowState;
+      lpHighState = aHigh * x + (1 - aHigh) * lpHighState;
+
+      const absBass = Math.abs(lpLowState);
+      const absMid  = Math.abs(lpHighState - lpLowState);
+      const absHigh = Math.abs(x - lpHighState);
+      const absAll  = Math.abs(x);
+
+      if (absBass > bassPeak) bassPeak = absBass;
+      if (absMid  > midPeak)  midPeak  = absMid;
+      if (absHigh > highPeak) highPeak = absHigh;
+      if (absAll  > allPeak)  allPeak  = absAll;
     }
 
-    const binSamples = channelData.subarray(start, end);
-    waveform.push({ peak: Math.min(peak, 1), freq: getFreqColor(binSamples) });
+    bars.push({ bass: bassPeak, mid: midPeak, high: highPeak, peak: allPeak });
   }
 
-  return waveform;
+  let maxPeak = 0;
+  for (const b of bars) if (b.peak > maxPeak) maxPeak = b.peak;
+  maxPeak = Math.max(maxPeak, 0.0001);
+
+  let maxBass = 0, maxMid = 0, maxHigh = 0;
+  for (const b of bars) {
+    if (b.bass > maxBass) maxBass = b.bass;
+    if (b.mid  > maxMid)  maxMid  = b.mid;
+    if (b.high > maxHigh) maxHigh = b.high;
+  }
+  maxBass = Math.max(maxBass, maxPeak * 0.02);
+  maxMid  = Math.max(maxMid,  maxPeak * 0.02);
+  maxHigh = Math.max(maxHigh, maxPeak * 0.02);
+
+  return bars.map(b => ({
+    bass: Math.min(1, b.bass / maxBass),
+    mid:  Math.min(1, b.mid  / maxMid),
+    high: Math.min(1, b.high / maxHigh),
+    peak: Math.min(1, b.peak / maxPeak),
+  }));
 }
 
 /**
