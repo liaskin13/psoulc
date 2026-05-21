@@ -199,7 +199,8 @@ function EntrySequence({ onIgnite }) {
       </div>
 
       {/* Bottom-right — mystery code cells */}
-      <div className="entry-code-corner">
+      <div className="entry-code-corner" role="group" aria-label="Access code entry">
+        <p className="entry-code-hint">ENTER CODE</p>
         <div className="entry-cells">{cells}</div>
         <div className="entry-err" aria-live="polite">
           {lockoutRemaining > 0

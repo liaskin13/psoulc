@@ -150,6 +150,17 @@
   text-transform: uppercase;
 }
 
+.lvv-state--empty {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lvv-empty-sub {
+  font-size: 8px;
+  opacity: 0.45;
+  letter-spacing: 0.14em;
+}
+
 .lvv-state-dot {
   width: 5px;
   height: 5px;
@@ -469,6 +480,37 @@
 
 .lvv-transport-stop:hover {
   color: rgba(230, 230, 230, 0.92);
+}
+
+.lvv-transport-nav {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+.lvv-transport-nav-btn {
+  height: 100%;
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border, #1e1e1e);
+  font-family: var(--font-ui, 'Chakra Petch', sans-serif);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: rgba(160, 160, 160, 0.72);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 120ms;
+  border-radius: 0;
+}
+
+.lvv-transport-nav-btn:hover:not(:disabled) {
+  color: rgba(230, 230, 230, 0.92);
+}
+
+.lvv-transport-nav-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
 }
 
 /* ── Mini-transport (persistent playback strip in track list) ── */

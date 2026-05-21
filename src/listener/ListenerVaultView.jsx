@@ -388,6 +388,28 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
     setActiveTrack(null);
   }, []);
 
+  const handleNext = useCallback(() => {
+    if (!activeTrack || tracks.length === 0) return;
+    const idx = tracks.findIndex(t => t.id === activeTrack.id);
+    if (idx < tracks.length - 1) handleTrackSelect(tracks[idx + 1]);
+  }, [activeTrack, tracks, handleTrackSelect]);
+
+  const handlePrev = useCallback(() => {
+    if (!activeTrack || tracks.length === 0) return;
+    const idx = tracks.findIndex(t => t.id === activeTrack.id);
+    if (idx > 0) handleTrackSelect(tracks[idx - 1]);
+  }, [activeTrack, tracks, handleTrackSelect]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!activeTrack) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); handleNext(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); handlePrev(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [activeTrack, handleNext, handlePrev]);
+
   const handlePlayerBack = useCallback(() => {
     setPlayerState(null);
     // activeTrack stays set — music continues in background
@@ -532,6 +554,24 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
                     </span>
                   )}
                 </button>
+                <div className="lvv-transport-nav" aria-label="Track navigation">
+                  <button
+                    className="lvv-transport-nav-btn god-btn"
+                    onClick={handlePrev}
+                    aria-label="Previous track"
+                    disabled={tracks.findIndex(t => t.id === activeTrack?.id) <= 0}
+                  >
+                    ← PREV
+                  </button>
+                  <button
+                    className="lvv-transport-nav-btn god-btn"
+                    onClick={handleNext}
+                    aria-label="Next track"
+                    disabled={tracks.findIndex(t => t.id === activeTrack?.id) >= tracks.length - 1}
+                  >
+                    NEXT →
+                  </button>
+                </div>
                 <button
                   className="lvv-transport-stop"
                   onClick={handleStop}
@@ -562,7 +602,10 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
                 </div>
               )}
               {!loading && tracks.length === 0 && (
-                <div className="lvv-state">NO TRACKS PUBLISHED</div>
+                <div className="lvv-state lvv-state--empty">
+                  <span>NOTHING HERE YET</span>
+                  <span className="lvv-empty-sub">D HASN'T PUBLISHED TO THIS VAULT</span>
+                </div>
               )}
               {!loading && tracks.map((track, i) => (
                 <button
