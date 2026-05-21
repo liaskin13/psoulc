@@ -126,7 +126,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
   useEffect(() => { durRef.current = duration; }, [duration]);
 
   const parsedBars = useMemo(
-    () => parseWaveformBars(track, 400),
+    () => parseWaveformBars(track, 1000),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [track.id, track.waveform_data]
   );
@@ -171,11 +171,15 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
       return;
     }
 
-    // Full-track view — all bars visible, playhead sweeps left to right.
-    const startBar = 0;
-    const endBar   = totalBars;
-    const barCount = totalBars;
-    const playheadX = dur > 0 ? (ct / dur) * W : 0;
+    // Scrolling zoom: 200 bars centered on playhead — center is always "now",
+    // time spreads left (past) and right (future) symmetrically.
+    const VISIBLE = 200;
+    const centerBarIdx = dur > 0 ? Math.round((ct / dur) * totalBars) : 0;
+    const halfVis = Math.floor(VISIBLE / 2);
+    const startBar = Math.max(0, Math.min(centerBarIdx - halfVis, totalBars - VISIBLE));
+    const endBar   = Math.min(totalBars, startBar + VISIBLE);
+    const barCount = endBar - startBar;
+    const playheadX = barCount > 0 ? ((centerBarIdx - startBar) / barCount) * W : W / 2;
 
     // Pixel-resolution waveform: one bar per column, color encodes frequency.
     // Height = peak amplitude. Color = rgb(high, mid, bass).
@@ -258,9 +262,18 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
       return;
     }
 
-    // Full-track seek — click position maps directly to track position
+    // Scrolling zoom seek — map click to bar position within visible window
+    const VISIBLE = 200;
+    const bars = barsRef.current;
+    const totalBars = bars.length;
+    const centerBarIdx = Math.round((ctRef.current / dur) * totalBars);
+    const halfVis = Math.floor(VISIBLE / 2);
+    const startBar = Math.max(0, Math.min(centerBarIdx - halfVis, totalBars - VISIBLE));
+    const endBar = Math.min(totalBars, startBar + VISIBLE);
+    const barCount = endBar - startBar;
     const frac = (e.clientX - rect.left) / rect.width;
-    onSeek(Math.max(0, Math.min(frac * dur, dur)));
+    const clickedBar = startBar + Math.round(frac * barCount);
+    onSeek(Math.max(0, Math.min((clickedBar / totalBars) * dur, dur)));
   }, [onSeek, ghost]);
 
   const handleOverviewClick = useCallback((e) => {
