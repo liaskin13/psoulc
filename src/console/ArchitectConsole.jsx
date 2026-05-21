@@ -712,9 +712,6 @@ function ArchitectConsole({
     } else {
       audioEngine.play();
       announce(`Playing ${loadedTrack?.title || "track"}.`);
-      if (loadedTrack && !loadedTrack.waveform_data) {
-        ensureWaveformForTrack(loadedTrack);
-      }
     }
   };
 
@@ -996,7 +993,6 @@ function ArchitectConsole({
     setSelectedTrackId(track.id);
     setActiveVault(track.vault || null);
     announce(`${track.title || "Track"} selected.`);
-    if (!track.waveform_data) ensureWaveformForTrack(track);
   };
 
   const handleTrackRowKeyDown = (event, track) => {
@@ -1173,18 +1169,7 @@ function ArchitectConsole({
   };
 
   const handleRegenerateWaveform = async (track) => {
-    announce(`Regenerating waveform for ${track.title || "track"}…`);
-    try {
-      const res = await fetch(
-        `${UPLOAD_WORKER_URL}/tracks/${track.id}/regenerate-waveform`,
-        { method: "POST", headers: { "PSC-Secret": UPLOAD_SECRET } },
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      announce(`Waveform ready.`);
-      loadWaveformBinaryForDeck(track.id);
-    } catch (e) {
-      announce(`Waveform failed: ${e.message}`);
-    }
+    await ensureWaveformForTrack(track, true, true);
   };
 
   const handleNext = () => {
