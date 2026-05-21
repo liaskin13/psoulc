@@ -1,7 +1,7 @@
 // Canvas-based waveform renderer for deck view
 // Serato-style: frequency-colored peaks, playhead, zoom support
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { getWaveformBars } from "../utils/waveform";
 
 /**
@@ -17,6 +17,9 @@ import { getWaveformBars } from "../utils/waveform";
  * @param {Object} props.hotCues - Hot cues { 1: {time: 10.5}, 2: {time: 45.2}, ... }
  * @param {Array} props.cueColors - Array of 8 Serato colors for cue markers
  */
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 100;
+
 export default function DeckWaveform({
   waveformData = null,
   currentTime = 0,
@@ -28,12 +31,18 @@ export default function DeckWaveform({
   hotCues = {},
   cueColors = [],
   zoom = 1,
+  onZoomChange = null,
   loopRegion = null,
 }) {
   const canvasRef      = useRef(null);
   const overviewRef    = useRef(null);
   const animFrameRef   = useRef(null);
   const displayZoomRef = useRef(zoom); // smoothed zoom for lerp transition
+  const pinchRef       = useRef(null); // { dist, zoom } at pinch start
+  const zoomRef        = useRef(zoom); // always tracks latest zoom for wheel handler
+  zoomRef.current = zoom;
+  const onZoomChangeRef = useRef(onZoomChange);
+  onZoomChangeRef.current = onZoomChange;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -124,51 +133,55 @@ export default function DeckWaveform({
         }
       }
 
-      // Serato-style: three stacked bands per bar, tallest drawn first.
-      // Tallest band occupies the peak (outermost); shorter bands paint toward center.
-      // sqrt() applied per-band to boost quieter frequencies (orange/green visible even
-      // on bass-heavy mixes). Mirrors Serato's GEOB overview rendering.
+      // Continuous pixel-resolution rendering — no visible bars.
+      // Iterates one logical pixel column at a time, interpolating between adjacent
+      // data points so color and height transition smoothly (Serato-style).
       const halfH = height / 2;
+      const totalCols = Math.ceil(width);
 
-      for (let i = startBar; i < endBar; i++) {
-        const d = peaks[i];
-        const x = (i - startBar) * barWidth;
-        const bw = Math.max(barWidth - 1, 1);
-        const isPast = x < playheadX;
+      for (let px = 0; px < totalCols; px++) {
+        const isPast = px < playheadX;
         const alpha = isPast ? 0.25 : 1;
 
-        if (d.bass !== undefined) {
-          // sqrt boost: lifts quieter bands so all three colors stay visible
-          const bassH = Math.sqrt(d.bass) * halfH;
-          const midH  = Math.sqrt(d.mid)  * halfH;
-          const highH = Math.sqrt(d.high) * halfH;
+        // Map logical pixel to interpolated position between bars
+        const barFrac = startBar + (px / width) * (endBar - startBar);
+        const b0 = Math.max(startBar, Math.min(endBar - 2, Math.floor(barFrac)));
+        const b1 = Math.min(endBar - 1, b0 + 1);
+        const t = barFrac - b0;
+        const d0 = peaks[b0], d1 = peaks[b1] || d0;
+        if (!d0) continue;
 
-          // Sort tallest first so dominant frequency color shows at the peak
-          const bands = [
-            { h: bassH, r: 20,  g: 100, b: 220 },   // blue — bass (#1464dc, Serato)
-            { h: midH,  r: 20,  g: 220, b: 20  },   // green — mid (#14dc14, Serato)
-            { h: highH, r: 240, g: 237, b: 232 },   // cream-white — transient peaks
-          ].sort((a, b) => b.h - a.h);
-
-          for (const band of bands) {
-            if (band.h < 1) continue;
-            ctx.fillStyle = `rgba(${band.r},${band.g},${band.b},${alpha})`;
-            ctx.fillRect(x, halfH - band.h, bw, band.h);   // upper half
-            ctx.fillRect(x, halfH, bw, band.h);             // lower half (mirror)
-          }
-
-          // Transient peak cap: 2px bright line where tallest band exceeds 80% of halfH
-          const tallestH = Math.max(bassH, midH, highH);
-          if (tallestH > halfH * 0.80) {
-            ctx.fillStyle = `rgba(255, 255, 220, ${isPast ? 0.35 : 0.95})`;
-            ctx.fillRect(x, halfH - tallestH - 1, bw, 2);  // upper cap
-            ctx.fillRect(x, halfH + tallestH - 1, bw, 2);  // lower cap (mirror)
-          }
+        let cr, cg, cb, barH;
+        if (d0.bass !== undefined) {
+          // True additive RGB with linear interpolation between adjacent bars.
+          // bass→B, mid→G, high→R channels blend to produce the full Serato spectrum:
+          // blue, green, orange, cyan, yellow, purple, white.
+          const bass = d0.bass + (((d1.bass ?? d0.bass) - d0.bass) * t);
+          const mid  = d0.mid  + (((d1.mid  ?? d0.mid)  - d0.mid)  * t);
+          const high = d0.high + (((d1.high ?? d0.high) - d0.high) * t);
+          const peak = d0.peak + ((d1.peak - d0.peak) * t);
+          const bAmp = Math.sqrt(bass), mAmp = Math.sqrt(mid), hAmp = Math.sqrt(high);
+          cr = Math.min(255, Math.round(bAmp * 20  + mAmp * 20  + hAmp * 229));
+          cg = Math.min(255, Math.round(bAmp * 100 + mAmp * 220 + hAmp * 96));
+          cb = Math.min(255, Math.round(bAmp * 220 + mAmp * 20  + hAmp * 32));
+          barH = Math.max(1, peak * halfH);
         } else {
-          const barH = d.peak * halfH;
-          ctx.fillStyle = isPast ? d.freq + "40" : d.freq;
-          ctx.fillRect(x, halfH - barH, bw, barH);
-          ctx.fillRect(x, halfH, bw, barH);
+          const peak = d0.peak + ((d1.peak - d0.peak) * t);
+          barH = Math.max(1, peak * halfH);
+          cr = parseInt(d0.freq.slice(1, 3), 16);
+          cg = parseInt(d0.freq.slice(3, 5), 16);
+          cb = parseInt(d0.freq.slice(5, 7), 16);
+        }
+
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
+        ctx.fillRect(px, halfH - barH, 1, barH);   // upper half
+        ctx.fillRect(px, halfH, 1, barH);           // lower half (mirror)
+
+        // Transient peak cap: 2px bright flash at high-amplitude peaks
+        if (barH > halfH * 0.80 && !isPast) {
+          ctx.fillStyle = "rgba(255,255,220,0.95)";
+          ctx.fillRect(px, halfH - barH - 1, 1, 2);
+          ctx.fillRect(px, halfH + barH - 1, 1, 2);
         }
       }
 
@@ -272,6 +285,21 @@ export default function DeckWaveform({
     loopRegion,
   ]);
 
+  // Non-passive wheel listener so we can call preventDefault and block page scroll
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const onWheelNative = (e) => {
+      if (!onZoomChangeRef.current) return;
+      e.preventDefault();
+      const factor = e.deltaY > 0 ? 0.85 : 1 / 0.85;
+      const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomRef.current * factor));
+      onZoomChangeRef.current(Math.round(next * 10) / 10);
+    };
+    canvas.addEventListener("wheel", onWheelNative, { passive: false });
+    return () => canvas.removeEventListener("wheel", onWheelNative);
+  }, []); // mount/unmount only — reads latest values via refs
+
   // ── Overview strip drawing ────────────────────────────────────────────────
   // Full-track compressed miniature: 1px per horizontal pixel, same palette.
   useEffect(() => {
@@ -295,18 +323,27 @@ export default function DeckWaveform({
     for (let px = 0; px < w; px++) {
       const barStart = Math.floor(px * barsPerPx);
       const barEnd   = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
-      let maxPeak = 0, color = "#14dc14";
+      let maxPeak = 0, bestBar = null;
       for (let b = barStart; b < barEnd; b++) {
         if (bars[b] && bars[b].peak > maxPeak) {
-          maxPeak = bars[b].peak;
-          // Use band colors matching main waveform
-          if (bars[b].freq === "#1464dc") color = "rgba(226,88,20,0.8)";       // bass → orange
-          else if (bars[b].freq === "#e56020") color = "rgba(255,248,180,0.8)"; // high → yellow-white
-          else color = "rgba(20,220,20,0.8)";                                    // mid → green
+          maxPeak = bars[b].peak; bestBar = bars[b];
         }
       }
+      if (!bestBar) continue;
       const barH = Math.max(2, Math.round(maxPeak * OVERVIEW_H));
-      ctx.fillStyle = color;
+      let cr, cg, cb;
+      if (bestBar.bass !== undefined) {
+        // True additive RGB — same model as main waveform
+        const bAmp = Math.sqrt(bestBar.bass);
+        const mAmp = Math.sqrt(bestBar.mid);
+        const hAmp = Math.sqrt(bestBar.high);
+        cr = Math.min(255, Math.round(bAmp * 20  + mAmp * 20  + hAmp * 229));
+        cg = Math.min(255, Math.round(bAmp * 100 + mAmp * 220 + hAmp * 96));
+        cb = Math.min(255, Math.round(bAmp * 220 + mAmp * 20  + hAmp * 32));
+      } else if (bestBar.freq === "#1464dc") { [cr, cg, cb] = [20,  100, 220]; } // bass → blue
+      else if   (bestBar.freq === "#e56020") { [cr, cg, cb] = [229, 96,  32];  } // high → orange
+      else                                   { [cr, cg, cb] = [20,  220, 20];  } // mid → green
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},0.8)`;
       ctx.fillRect(px, OVERVIEW_H - barH, 1, barH);
     }
 
@@ -364,8 +401,29 @@ export default function DeckWaveform({
     onSeek(((e.clientX - rect.left) / rect.width) * duration);
   };
 
+  const pinchDist = (touches) =>
+    Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY,
+    );
+
+  const handleTouchStart = (e) => {
+    if (!onZoomChange || e.touches.length !== 2) return;
+    pinchRef.current = { dist: pinchDist(e.touches), zoom };
+  };
+
+  const handleTouchMove = (e) => {
+    if (!onZoomChange || e.touches.length !== 2 || !pinchRef.current) return;
+    e.preventDefault();
+    const scale = pinchDist(e.touches) / pinchRef.current.dist;
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchRef.current.zoom * scale));
+    onZoomChange(Math.round(next * 10) / 10);
+  };
+
+  const handleTouchEnd = () => { pinchRef.current = null; };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", width: "100%", position: "relative" }}>
       <canvas
         ref={overviewRef}
         onClick={handleOverviewClick}
@@ -380,14 +438,35 @@ export default function DeckWaveform({
       <canvas
         ref={canvasRef}
         onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{
           width: "100%",
           height: `${height}px`,
           cursor: onSeek ? "pointer" : "default",
           display: "block",
           flex: 1,
+          touchAction: onZoomChange ? "none" : "auto",
         }}
       />
+      {onZoomChange && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 4,
+            right: 6,
+            fontSize: "0.55rem",
+            fontFamily: "'Chakra Petch', monospace",
+            color: "rgba(255,255,255,0.35)",
+            letterSpacing: "0.06em",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          {zoom >= 10 ? `${Math.round(zoom)}×` : `${zoom.toFixed(1)}×`}
+        </div>
+      )}
     </div>
   );
 }

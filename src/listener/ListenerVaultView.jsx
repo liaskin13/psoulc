@@ -167,23 +167,54 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
     const playheadFrac = barCount > 0 ? (centerBarIdx - startBar) / barCount : 0.5;
     const playheadX = playheadFrac * W;
 
-    for (let i = startBar; i < endBar; i++) {
-      const bar = bars[i];
-      const x = (i - startBar) * step;
-      const played = (x + barW / 2) < playheadX;
+    // Continuous pixel-resolution rendering — same model as DeckWaveform.
+    const halfH = H / 2;
+    const totalCols = Math.ceil(W);
+
+    for (let px = 0; px < totalCols; px++) {
+      const played = px < playheadX;
+
+      // Interpolate between adjacent bars at pixel resolution
+      const barFrac = startBar + (px / W) * barCount;
+      const b0 = Math.max(startBar, Math.min(endBar - 2, Math.floor(barFrac)));
+      const b1 = Math.min(endBar - 1, b0 + 1);
+      const t = barFrac - b0;
+      const bar0 = bars[b0], bar1 = bars[b1] || bar0;
+      if (!bar0) continue;
+
+      const peak = bar0.peak + ((bar1.peak - bar0.peak) * t);
 
       if (mode === 'freq') {
-        const h = Math.max(2, bar.peak * H * 0.88);
+        const h = Math.max(2, peak * H * 0.88);
         const alpha = played ? 0.92 : 0.14;
-        ctx.fillStyle = heatColor(bar.peak, alpha);
-        ctx.fillRect(x, (H - h) / 2, barW, h);
+        ctx.fillStyle = heatColor(peak, alpha);
+        ctx.fillRect(px, (H - h) / 2, 1, h);
+      } else if (bar0.bass !== undefined) {
+        // True additive RGB with interpolation — matches DeckWaveform
+        const bass = bar0.bass + (((bar1.bass ?? bar0.bass) - bar0.bass) * t);
+        const mid  = bar0.mid  + (((bar1.mid  ?? bar0.mid)  - bar0.mid)  * t);
+        const high = bar0.high + (((bar1.high ?? bar0.high) - bar0.high) * t);
+        const bAmp = Math.sqrt(bass), mAmp = Math.sqrt(mid), hAmp = Math.sqrt(high);
+        const cr = Math.min(255, Math.round(bAmp * 20  + mAmp * 20  + hAmp * 229));
+        const cg = Math.min(255, Math.round(bAmp * 100 + mAmp * 220 + hAmp * 96));
+        const cb = Math.min(255, Math.round(bAmp * 220 + mAmp * 20  + hAmp * 32));
+        const barH = Math.max(1, peak * halfH * 0.88);
+        const alpha = played ? 1.0 : 0.22;
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
+        ctx.fillRect(px, halfH - barH, 1, barH);
+        ctx.fillRect(px, halfH, 1, barH);
+        if (barH > halfH * 0.80) {
+          ctx.fillStyle = `rgba(255,255,220,${played ? 0.95 : 0.35})`;
+          ctx.fillRect(px, halfH - barH - 1, 1, 2);
+          ctx.fillRect(px, halfH + barH - 1, 1, 2);
+        }
       } else {
-        // WAVE mode — Serato display colors
-        const [r, g, bv] = seratoRgb(bar.freq);
-        const h = Math.max(2, bar.peak * H * 0.88);
+        // Fallback: single-band Serato colors
+        const [r, g, bv] = seratoRgb(bar0.freq);
+        const h = Math.max(2, peak * H * 0.88);
         const alpha = played ? 0.92 : 0.22;
         ctx.fillStyle = `rgba(${r},${g},${bv},${alpha})`;
-        ctx.fillRect(x, (H - h) / 2, barW, h);
+        ctx.fillRect(px, (H - h) / 2, 1, h);
       }
     }
 

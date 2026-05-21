@@ -335,6 +335,7 @@ function ArchitectConsole({
   const [loopRegion, setLoopRegion] = useState({ start: null, end: null });
   const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
   const [loopPanelTrigger, setLoopPanelTrigger] = useState(0);
+  const [waveformZoom, setWaveformZoom] = useState(20);
   const loopActiveRef = useRef(false);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
@@ -1750,7 +1751,8 @@ function ArchitectConsole({
                   height={156}
                   hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
-                  zoom={isPlaying && loadedTrack?.id === deckTrack?.id ? 6 : 1}
+                  zoom={waveformZoom}
+                  onZoomChange={setWaveformZoom}
                   loopRegion={loopRegion}
                 />
               )}
