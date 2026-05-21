@@ -108,79 +108,40 @@ export default function DeckWaveform({
         }
       }
 
-      // ── Phase 1: waveform layers — screen blend for additive RGB mixing ──
-      // bass→RED, mid→GREEN, high→BLUE.
-      // Bars grow from center outward; each band has its own height.
-      // Where bands overlap, colors add: R+G=yellow, G+B=cyan, all=white.
-      // Played side is dimmed (a=0.20), future side is bright (a=0.88).
-      ctx.globalCompositeOperation = "screen";
-
-      const transients = [];
-      const totalCols  = Math.ceil(w);
+      // ── Waveform bars — one bar per pixel, color encodes frequency ──────
+      // Color = rgb(high, mid, bass) so each bar is a spectral snapshot:
+      // kick=red, snare=cyan, hihat=blue, full-mix=white.
+      // Height = peak amplitude so loud hits are tall, silence is flat.
+      // Played side dimmed to ~45%, future side full brightness.
+      const totalCols = Math.ceil(w);
 
       for (let px = 0; px < totalCols; px++) {
-        const isPast   = px < playheadX;
-        const a        = isPast ? 0.20 : 0.88;
+        const isPast  = px < playheadX;
+        const dimMult = isPast ? 0.45 : 1.0;
 
-        const barFrac = startBar + (px / w) * (endBar - startBar);
-        const b0 = Math.max(startBar, Math.min(endBar - 2, Math.floor(barFrac)));
-        const b1 = Math.min(endBar - 1, b0 + 1);
-        const t  = barFrac - b0;
-        const d0 = peaks[b0];
-        const d1 = peaks[b1] || d0;
-        if (!d0) continue;
+        const barIdx = Math.floor(startBar + (px / w) * (endBar - startBar));
+        const d = peaks[Math.max(0, Math.min(barCount - 1, barIdx))];
+        if (!d) continue;
 
-        if (d0.bass !== undefined) {
-          // 3-band format — layered per-frequency bars
-          const bass = d0.bass + (((d1.bass ?? d0.bass) - d0.bass) * t);
-          const mid  = d0.mid  + (((d1.mid  ?? d0.mid)  - d0.mid)  * t);
-          const high = d0.high + (((d1.high ?? d0.high) - d0.high) * t);
+        if (d.bass !== undefined) {
+          const barH = Math.max(1, d.peak * halfH * 0.96);
+          const r = Math.round(d.high * 255 * dimMult);
+          const g = Math.round(d.mid  * 255 * dimMult);
+          const b = Math.round(d.bass * 255 * dimMult);
 
-          // sqrt compresses dynamic range, keeping quiet elements visible
-          const bH = Math.max(1, Math.sqrt(bass) * halfH * 0.94);
-          const mH = Math.max(1, Math.sqrt(mid)  * halfH * 0.94);
-          const hH = Math.max(1, Math.sqrt(high) * halfH * 0.94);
-
-          // RED — bass
-          ctx.fillStyle = `rgba(255,0,0,${a})`;
-          ctx.fillRect(px, halfH - bH, 1, bH);
-          ctx.fillRect(px, halfH,      1, bH);
-
-          // GREEN — mid
-          ctx.fillStyle = `rgba(0,255,0,${a})`;
-          ctx.fillRect(px, halfH - mH, 1, mH);
-          ctx.fillRect(px, halfH,      1, mH);
-
-          // BLUE — high
-          ctx.fillStyle = `rgba(0,0,255,${a})`;
-          ctx.fillRect(px, halfH - hH, 1, hH);
-          ctx.fillRect(px, halfH,      1, hH);
-
-          // Collect transient positions for second-pass bright cap
-          const maxH = Math.max(bH, mH, hH);
-          if (!isPast && maxH > halfH * 0.82) transients.push({ px, maxH });
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          ctx.fillRect(px, halfH - barH, 1, barH);
+          ctx.fillRect(px, halfH,        1, barH);
 
         } else {
-          // Legacy {peak, freq} fallback — single color bar
-          const peak  = d0.peak + ((d1.peak - d0.peak) * t);
-          const barH  = Math.max(1, peak * halfH);
-          const cr    = parseInt(d0.freq.slice(1, 3), 16);
-          const cg    = parseInt(d0.freq.slice(3, 5), 16);
-          const cb    = parseInt(d0.freq.slice(5, 7), 16);
-          ctx.fillStyle = `rgba(${cr},${cg},${cb},${a})`;
+          const barH = Math.max(1, d.peak * halfH);
+          const cr   = Math.round(parseInt(d.freq.slice(1, 3), 16) * dimMult);
+          const cg   = Math.round(parseInt(d.freq.slice(3, 5), 16) * dimMult);
+          const cb   = Math.round(parseInt(d.freq.slice(5, 7), 16) * dimMult);
+          ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
           ctx.fillRect(px, halfH - barH, 1, barH);
           ctx.fillRect(px, halfH,        1, barH);
         }
-      }
-
-      // ── Phase 2: source-over for everything on top ──────────────────────
-      ctx.globalCompositeOperation = "source-over";
-
-      // Transient peak caps — bright white flash at loudest peaks
-      for (const { px, maxH } of transients) {
-        ctx.fillStyle = "rgba(255,255,220,0.90)";
-        ctx.fillRect(px, halfH - maxH - 1, 1, 2);
-        ctx.fillRect(px, halfH + maxH - 1, 1, 2);
       }
 
       // Center reference line
@@ -274,8 +235,6 @@ export default function DeckWaveform({
     const N         = bars.length;
     const barsPerPx = N / w;
 
-    ctx.globalCompositeOperation = "screen";
-
     for (let px = 0; px < w; px++) {
       const bStart = Math.floor(px * barsPerPx);
       const bEnd   = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
@@ -285,30 +244,22 @@ export default function DeckWaveform({
       }
       if (!best) continue;
 
-      const overallH = Math.max(2, Math.round(maxPeak * OVERVIEW_H));
+      const overallH = Math.max(1, Math.round(maxPeak * OVERVIEW_H));
 
       if (best.bass !== undefined) {
-        const bH = Math.max(1, Math.round(Math.sqrt(best.bass) * overallH));
-        const mH = Math.max(1, Math.round(Math.sqrt(best.mid)  * overallH));
-        const hH = Math.max(1, Math.round(Math.sqrt(best.high) * overallH));
-
-        ctx.fillStyle = "rgba(255,0,0,0.82)";
-        ctx.fillRect(px, OVERVIEW_H - bH, 1, bH);
-        ctx.fillStyle = "rgba(0,255,0,0.82)";
-        ctx.fillRect(px, OVERVIEW_H - mH, 1, mH);
-        ctx.fillStyle = "rgba(0,0,255,0.82)";
-        ctx.fillRect(px, OVERVIEW_H - hH, 1, hH);
+        const r = Math.round(best.high * 255);
+        const g = Math.round(best.mid  * 255);
+        const b = Math.round(best.bass * 255);
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(px, OVERVIEW_H - overallH, 1, overallH);
       } else {
-        // Legacy single-color fallback
         const cr = best.freq === "#1464dc" ? 20  : best.freq === "#e56020" ? 229 : 20;
         const cg = best.freq === "#1464dc" ? 100 : best.freq === "#e56020" ? 96  : 220;
         const cb = best.freq === "#1464dc" ? 220 : best.freq === "#e56020" ? 32  : 20;
-        ctx.fillStyle = `rgba(${cr},${cg},${cb},0.8)`;
+        ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
         ctx.fillRect(px, OVERVIEW_H - overallH, 1, overallH);
       }
     }
-
-    ctx.globalCompositeOperation = "source-over";
 
     // Hot cue marks
     if (hotCues && duration > 0) {
