@@ -508,7 +508,7 @@
   color: rgba(var(--arch-muted-rgb), 0.85);
   min-height: 26px;
   padding: 0 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Chakra Petch', sans-serif;
   font-size: 0.52rem;
   letter-spacing: var(--cmd-tracking);
   border-radius: 0;
