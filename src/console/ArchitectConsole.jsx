@@ -2071,6 +2071,13 @@ function ArchitectConsole({
               CLR
             </button>
           </div>
+          <button
+            className="arch-intake-tab-btn"
+            onClick={() => onIntake?.()}
+            aria-label="Upload music to vault"
+          >
+            + INTAKE
+          </button>
         </div>
       </div>
 
@@ -2318,14 +2325,6 @@ function ArchitectConsole({
               </button>
             </div>
 
-            {/* INTAKE — far right of tab row, singular, upload to library */}
-            <button
-              className="arch-intake-tab-btn"
-              onClick={() => onIntake?.()}
-              aria-label="Upload music to vault"
-            >
-              + INTAKE
-            </button>
           </div>
 
           {/* Track list — phosphor scan animation (Animation 1) */}
