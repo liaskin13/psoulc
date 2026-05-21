@@ -92,12 +92,6 @@ export default {
         if (!code) {
           return new Response(JSON.stringify({ error: "Missing code" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
-        // TEST CODE — remove before launch
-        if (code === "0000") {
-          return new Response(JSON.stringify({ valid: true, tier: "MEMBERS", grantedTo: "TEST" }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
         const row = await env.PSC_DB.prepare(
           "SELECT id, tier, granted_to, revoked, expires_at, redeemed_at FROM access_codes WHERE id = ?"
         ).bind(code).first();
