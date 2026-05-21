@@ -270,17 +270,12 @@ export async function uploadWaveformAssets(trackId, binaryBytes, pngBlob, onProg
 export async function generateAndUploadWaveformV2(trackId, audioUrl, onProgress) {
   if (onProgress) onProgress(5);
 
-  const { high: bars, duration } = await analyzeAudio(
-    audioUrl,
-    1000,
-    80,
-    50,
-  );
+  const { high: bars, duration } = await analyzeAudio(audioUrl, 1000, 80);
 
   if (onProgress) onProgress(60);
 
   const binaryBytes = packToBinary(bars);
-  const pngBlob = await renderWaveformPng(bars);
+  const pngBlob = null;
 
   if (onProgress) onProgress(75);
 

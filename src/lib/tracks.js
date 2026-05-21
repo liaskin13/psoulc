@@ -1,6 +1,4 @@
 import { UPLOAD_WORKER_URL, UPLOAD_SECRET, R2_PUBLIC_URL } from "../config";
-import { generateWaveformDataBands } from "./audioPreprocessor";
-import { packToBinary, uploadWaveformAssets, saveWaveform } from "./waveformAnalyzer";
 
 const IS_DEV = UPLOAD_WORKER_URL.includes("localhost");
 const TRACKS_STORAGE_KEY = "psc_dev_tracks";
@@ -100,23 +98,6 @@ export async function uploadTrack(file, metadata, onProgress) {
   };
 
   if (!IS_DEV) {
-    let binaryBytes = null;
-    let waveformDuration = null;
-    try {
-      reportProgress("analyzing", 5, "Analyzing audio...");
-      const arrayBuffer = await file.arrayBuffer();
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      audioContext.close();
-      const barCount = Math.min(Math.ceil(audioBuffer.duration * 50), 250000);
-      const bars = generateWaveformDataBands(audioBuffer, barCount);
-      binaryBytes = packToBinary(bars);
-      waveformDuration = audioBuffer.duration;
-      reportProgress("analyzing", 20, "Packing waveform...");
-    } catch (e) {
-      console.warn("[PSC] Waveform analysis failed, uploading without:", e);
-    }
-
     reportProgress("init", 28, "Initializing upload session");
 
     const initRes = await fetch(`${UPLOAD_WORKER_URL}/upload-init`, {
@@ -190,7 +171,6 @@ export async function uploadTrack(file, metadata, onProgress) {
         bpm: metadata.bpm || null,
         uploaded_by: metadata.uploaded_by,
         waveform_data: null,
-        duration: waveformDuration || null,
       }),
     });
 
@@ -199,17 +179,6 @@ export async function uploadTrack(file, metadata, onProgress) {
     }
 
     const completed = await completeRes.json();
-
-    const trackId = completed?.id;
-    if (trackId && binaryBytes) {
-      reportProgress("waveform", 95, "Uploading waveform...");
-      try {
-        await uploadWaveformAssets(trackId, binaryBytes, null);
-        await saveWaveform(trackId, "v2", waveformDuration);
-      } catch (e) {
-        console.warn("[PSC] Waveform upload failed:", e);
-      }
-    }
 
     reportProgress("done", 100, "Upload complete");
 
