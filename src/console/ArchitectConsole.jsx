@@ -2552,19 +2552,17 @@ function ArchitectConsole({
                         >
                           {prepareQueue.includes(t.id) ? "PREP ✓" : "PREP"}
                         </button>
-                        {!t.waveform_data && (
-                          <button
-                            className="arch-track-action-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRegenerateWaveform(t);
-                            }}
-                            disabled={!!regeneratingWaveforms[t.id]}
-                            title="Generate frequency-colored waveform"
-                          >
-                            {regeneratingWaveforms[t.id] ? "…" : "WVF"}
-                          </button>
-                        )}
+                        <button
+                          className="arch-track-action-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRegenerateWaveform(t);
+                          }}
+                          disabled={!!regeneratingWaveforms[t.id]}
+                          title="Generate frequency-colored waveform"
+                        >
+                          {regeneratingWaveforms[t.id] ? "…" : "WVF"}
+                        </button>
                       </span>
                     </div>
                   );
