@@ -217,7 +217,7 @@ export default {
       }
 
       // GET /tracks/:vault
-      if (request.method === "GET" && url.pathname.startsWith("/tracks/")) {
+      if (request.method === "GET" && url.pathname.startsWith("/tracks/") && !url.pathname.endsWith("/waveform-bin")) {
         const vault = url.pathname.split("/")[2];
         // Authenticated (console) gets all tracks; unauthenticated (listener) gets published only
         const publishClause = isAuthenticated ? "" : " AND is_published = 1";
