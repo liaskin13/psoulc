@@ -174,8 +174,8 @@ function EntrySequence({ onIgnite }) {
       />
 
       {/* Wordmark — top-left, locked forever */}
-      <div className="entry-wordmark" aria-label="Pleasant Soul Collective">
-        pleasant<span>soul</span>collective
+      <div className="entry-wordmark" aria-label="UOYnI">
+        UOYnI
       </div>
 
       {/* Center — request access */}

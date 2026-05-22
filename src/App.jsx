@@ -209,7 +209,7 @@ function App() {
             </Suspense>
           )}
           <div className="psc-wordmark-footer" aria-hidden="true">
-            PLEASANT SOUL COLLECTIVE
+            UOYnI
           </div>
         </div>
       </>
@@ -228,7 +228,7 @@ function App() {
         <div className="glitter-grain" />
         <div className="receded-logo">dp</div>
         <div className="psc-wordmark-footer" aria-hidden="true">
-          PLEASANT SOUL COLLECTIVE
+          UOYnI
         </div>
         {isBroadcasting && (
           <div className="system-broadcast-pulse" aria-live="polite">
