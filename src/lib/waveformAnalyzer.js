@@ -1,7 +1,17 @@
 // Client-side waveform analyzer using Web Audio API
 // Generates 3-band frequency data for layered spectral visualization
+//
+// V2 Architecture:
+//   binary: 4 bytes/bar (bass,mid,high,peak 0-255) → R2 waveform/{id}.bin → D's console
+//   PNG:    1200×60px spectral render              → R2 waveform/{id}.png → listener view art
+//   sentinel: waveform_data='v2' in D1             → track has V2 assets in R2
+//   proxy: GET /tracks/:id/waveform-bin            → worker endpoint (CORS-safe, no direct R2)
 
 import { UPLOAD_WORKER_URL, UPLOAD_SECRET } from "../config";
+
+// Sentinel value stored in D1 waveform_data when a track has V2 binary assets in R2.
+// Use this constant everywhere — never compare against the string literal 'v2'.
+export const WAVEFORM_V2_SENTINEL = "v2";
 
 const WORKER_URL = UPLOAD_WORKER_URL;
 
@@ -123,10 +133,11 @@ function generateWaveformDataBands(audioBuffer, barCount) {
 }
 
 /**
- * Save waveform data to database
+ * Save waveform data (and optional tracking fields) to database.
+ * Pass waveform_generated_at (ISO string) on success, waveform_error (string) on failure.
  */
-export async function saveWaveform(trackId, waveformData, duration) {
-  const body = { waveform_data: waveformData };
+export async function saveWaveform(trackId, waveformData, duration, extra = {}) {
+  const body = { waveform_data: waveformData, ...extra };
   if (duration != null) body.duration = duration;
   const res = await fetch(`${WORKER_URL}/tracks/${trackId}/waveform`, {
     method: "POST",
@@ -275,7 +286,9 @@ export async function generateAndUploadWaveformV2(trackId, audioUrl, onProgress)
   if (onProgress) onProgress(60);
 
   const binaryBytes = packToBinary(bars);
-  const pngBlob = null;
+  // PNG is the visual art for the listener view — render it from the same bars data.
+  // renderWaveformPng uses OffscreenCanvas (Chromium) and returns null on Safari.
+  const pngBlob = await renderWaveformPng(bars);
 
   if (onProgress) onProgress(75);
 

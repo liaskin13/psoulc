@@ -6,7 +6,6 @@
 // spectral structure is visible within every bar.
 
 import { useEffect, useRef } from "react";
-import { getWaveformBars } from "../utils/waveform";
 
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 100;
@@ -24,6 +23,8 @@ export default function DeckWaveform({
   zoom = 1,
   onZoomChange = null,
   loopRegion = null,
+  isGenerating = false,
+  generatingPct = null,
 }) {
   const canvasRef      = useRef(null);
   const overviewRef    = useRef(null);
@@ -65,15 +66,14 @@ export default function DeckWaveform({
 
       ctx.clearRect(0, 0, w, height);
 
-      let peaks;
-      if (waveformData && Array.isArray(waveformData)) {
-        peaks = waveformData;
-      } else {
-        peaks = getWaveformBars(trackId, 1000).map(pct => ({
-          peak: pct / 100,
-          freq: "#666666",
-        }));
+      // No data yet — draw a flat center line and bail; no fake bars
+      if (!waveformData || !Array.isArray(waveformData) || waveformData.length === 0) {
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, height / 2); ctx.lineTo(w, height / 2); ctx.stroke();
+        return;
       }
+      const peaks = waveformData;
 
       const barCount = peaks.length;
 
@@ -317,6 +317,17 @@ export default function DeckWaveform({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%", position: "relative" }}>
+      {isGenerating && (
+        <div style={{
+          position: "absolute", top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 2, pointerEvents: "none",
+          fontSize: "0.6rem", fontFamily: "'Chakra Petch', monospace",
+          color: "rgba(255,255,255,0.55)", letterSpacing: "0.12em",
+        }}>
+          {generatingPct != null ? `ANALYZING ${generatingPct}%` : "ANALYZING…"}
+        </div>
+      )}
       <canvas
         ref={overviewRef}
         onClick={handleOverviewClick}

@@ -28,7 +28,7 @@ import {
 } from "./matrixState";
 import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { generateCode, listCodes, revokeCode } from "../lib/accessCodes";
-import { generateAndUploadWaveformV2, unpackFromBinary, saveWaveform } from "../lib/waveformAnalyzer";
+import { generateAndUploadWaveformV2, unpackFromBinary, saveWaveform, WAVEFORM_V2_SENTINEL } from "../lib/waveformAnalyzer";
 import { R2_PUBLIC_URL } from "../config";
 
 const cleanBpm = (str) => String(str ?? "").replace(/\.0+$/, "").trim();
@@ -318,6 +318,9 @@ function ArchitectConsole({
   const [volume, setVolume] = useState(audioEngine.getVolume());
   const [loadedTrack, setLoadedTrack] = useState(null);
   const [regeneratingWaveforms, setRegeneratingWaveforms] = useState({});
+  const [waveformProgress, setWaveformProgress] = useState({}); // trackId → 0-100
+  const waveformQueueRef = useRef([]); // pending trackIds for sequential auto-gen
+  const waveformQueueRunning = useRef(false);
 
   // Hot cues: { trackId: { 1: { time: 10.5 }, 2: { time: 45.2 }, ... } }
   const [hotCues, setHotCues] = useState(() => {
@@ -409,6 +412,23 @@ function ArchitectConsole({
     };
   }, []);
 
+  // Run the waveform queue — one track at a time, pauses when audio is playing.
+  const runWaveformQueue = useCallback(async () => {
+    if (waveformQueueRunning.current) return;
+    waveformQueueRunning.current = true;
+    while (waveformQueueRef.current.length > 0) {
+      // Pause while audio is playing so generation doesn't compete for bandwidth
+      if (audioEngine.getState().isPlaying) {
+        await new Promise((r) => setTimeout(r, 3000));
+        continue;
+      }
+      const track = waveformQueueRef.current.shift();
+      if (!track || waveformBarsCache.current[track.id]) continue;
+      await ensureWaveformForTrack(track, true);
+    }
+    waveformQueueRunning.current = false;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Auto-load tracks on mount + listen for upload events
   useEffect(() => {
     const loadTracks = () => {
@@ -416,6 +436,14 @@ function ArchitectConsole({
         .then((tracks) => {
           setTrackListData(tracks);
           setTrackLoadError(null);
+          // Queue all tracks missing V2 binary for sequential background generation
+          const needsWaveform = tracks.filter(
+            (t) => !t.waveform_data || t.waveform_data !== WAVEFORM_V2_SENTINEL
+          );
+          if (needsWaveform.length > 0) {
+            waveformQueueRef.current = [...needsWaveform];
+            runWaveformQueue();
+          }
         })
         .catch((err) => {
           console.error("[PSC] Failed to load tracks:", err);
@@ -424,13 +452,17 @@ function ArchitectConsole({
     };
     loadTracks();
 
-    // Refresh when new track uploaded
-    const handleUpload = () => {
+    // Refresh library + trigger waveform gen for newly uploaded track
+    const handleUpload = (e) => {
       loadTracks();
+      const newTrack = e?.detail;
+      if (newTrack?.id && newTrack.audio_path) {
+        ensureWaveformForTrack(newTrack, true);
+      }
     };
     window.addEventListener("psc:track-uploaded", handleUpload);
     return () => window.removeEventListener("psc:track-uploaded", handleUpload);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const move = (e) => {
@@ -923,67 +955,88 @@ function ArchitectConsole({
 
   const handleBroadcast = () => setShowSignalPanel(true);
 
-  // Load high-res waveform binary from R2, decode, and cache in state.
-  // Falls back silently — D1 JSON waveform_data is still available as fallback.
+  // Load high-res waveform binary via the worker proxy (CORS-safe).
+  // Returns true if binary was loaded successfully.
   const loadWaveformBinaryForDeck = async (trackId) => {
-    if (!R2_PUBLIC_URL || waveformBarsCache.current[trackId]) {
-      if (waveformBarsCache.current[trackId]) {
-        setDeckHighResBars(waveformBarsCache.current[trackId]);
-      }
-      return;
+    if (waveformBarsCache.current[trackId]) {
+      setDeckHighResBars(waveformBarsCache.current[trackId]);
+      return true;
     }
     try {
-      const res = await fetch(`${R2_PUBLIC_URL}/waveform/${trackId}.bin`);
-      if (!res.ok) return; // not yet generated — D1 fallback stays
+      const res = await fetch(`${UPLOAD_WORKER_URL}/tracks/${trackId}/waveform-bin`);
+      if (!res.ok) return false;
       const buf = await res.arrayBuffer();
       const bytes = new Uint8Array(buf);
       const bars = unpackFromBinary(bytes);
       if (bars) {
         waveformBarsCache.current[trackId] = bars;
         setDeckHighResBars(bars);
-        // Auto-center zoom: target ~60s visible window
         setWaveformZoom(Math.max(1, Math.min(100, Math.round(bars.length / 3000))));
+        return true;
       }
-    } catch (_) {
-      // Network error — D1 fallback stays
+    } catch (err) {
+      console.error("[PSC] waveform binary load failed:", err.message);
     }
+    return false;
   };
 
   const ensureWaveformForTrack = async (track, shouldAnnounce = false, force = false) => {
     if (!track || regeneratingWaveforms[track.id]) return;
-    // Skip unless forced (Regenerate button) or track has no waveform at all
-    if (!force && (track.waveform_data || waveformBarsCache.current[track.id])) return;
+
+    // If track has sentinel, try the binary first — regenerate only if it's missing
+    if (!force && waveformBarsCache.current[track.id]) return;
+    if (!force && track.waveform_data === WAVEFORM_V2_SENTINEL) {
+      const loaded = await loadWaveformBinaryForDeck(track.id);
+      if (loaded) return;
+      // Binary missing or unreachable — fall through to regenerate
+    } else if (!force && track.waveform_data && track.waveform_data !== WAVEFORM_V2_SENTINEL) {
+      // Has V1 JSON data — still generate V2 binary unless forced
+      // (don't skip — V2 is strictly better; generate silently)
+    } else if (!force && !track.waveform_data) {
+      // No waveform at all — always generate
+    }
 
     const url = getAudioUrl(track.audio_path);
     if (!url) return;
 
     setRegeneratingWaveforms((prev) => ({ ...prev, [track.id]: true }));
+    setWaveformProgress((prev) => ({ ...prev, [track.id]: 0 }));
     if (shouldAnnounce) announce(`Analyzing waveform for ${track.title || "track"}…`);
 
     try {
       const { bars } = await generateAndUploadWaveformV2(track.id, url, (pct) => {
-        if (shouldAnnounce && pct % 20 === 0) {
+        setWaveformProgress((prev) => ({ ...prev, [track.id]: pct }));
+        if (shouldAnnounce && pct % 25 === 0 && pct > 0) {
           announce(`Waveform ${pct}% — ${track.title || "track"}`);
         }
       });
 
-      // Cache decoded bars and inject into deck if this is the loaded track
       waveformBarsCache.current[track.id] = bars;
       if (loadedDeckIdRef.current === track.id) {
         setDeckHighResBars(bars);
         setWaveformZoom(Math.max(1, Math.min(100, Math.round(bars.length / 3000))));
       }
       if (shouldAnnounce) announce(`Waveform ready for ${track.title || "track"}.`);
-      // Sentinel: mark track as having v2 waveform so auto-gen doesn't re-fire every session
-      try { await saveWaveform(track.id, 'v2', null); } catch (_) { /* non-critical */ }
+      try {
+        await saveWaveform(track.id, WAVEFORM_V2_SENTINEL, null, {
+          waveform_generated_at: new Date().toISOString(),
+          waveform_error: null,
+        });
+      } catch (_) { /* non-critical */ }
     } catch (err) {
-      if (shouldAnnounce) announce(`Waveform generation failed: ${err.message}`);
+      if (shouldAnnounce) announce(`Waveform failed: ${err.message}`);
       console.error("[PSC] waveform generation failed:", err);
+      try {
+        await saveWaveform(track.id, track.waveform_data ?? null, null, {
+          waveform_error: err.message?.slice(0, 200) ?? "unknown error",
+        });
+      } catch (_) { /* non-critical */ }
     } finally {
       setRegeneratingWaveforms((prev) => {
-        const next = { ...prev };
-        delete next[track.id];
-        return next;
+        const next = { ...prev }; delete next[track.id]; return next;
+      });
+      setWaveformProgress((prev) => {
+        const next = { ...prev }; delete next[track.id]; return next;
       });
     }
   };
@@ -1755,14 +1808,6 @@ function ArchitectConsole({
             <div className="arch-waveform-main">
               {!deckTrack ? (
                 <div className="arch-deck-empty-state">SELECT A TRACK</div>
-              ) : deckIsGenerating ? (
-                <div className="arch-deck-empty-state">
-                  GENERATING WAVEFORM…
-                </div>
-              ) : !deckTrackHasWaveform ? (
-                <div className="arch-deck-empty-state">
-                  NO WAVEFORM FOR SELECTED TRACK
-                </div>
               ) : (
                 <DeckWaveform
                   waveformData={deckWaveformHighData}
@@ -1781,6 +1826,8 @@ function ArchitectConsole({
                   zoom={waveformZoom}
                   onZoomChange={setWaveformZoom}
                   loopRegion={loopRegion}
+                  isGenerating={deckIsGenerating}
+                  generatingPct={waveformProgress[deckTrack.id] ?? null}
                 />
               )}
             </div>
@@ -2489,6 +2536,19 @@ function ArchitectConsole({
                       </span>
                       <span className="arch-track-plays" role="cell">
                         {trackPlayCounts[t.id] || 0}
+                      </span>
+                      <span className="arch-track-wf-status" role="cell" title="Waveform status">
+                        {regeneratingWaveforms[t.id] ? (
+                          <span style={{ color: "rgba(240,237,232,0.5)", fontSize: "0.55rem", fontFamily: "'Chakra Petch', monospace", letterSpacing: "0.08em" }}>
+                            {waveformProgress[t.id] != null ? `${waveformProgress[t.id]}%` : "…"}
+                          </span>
+                        ) : (waveformBarsCache.current[t.id] || t.waveform_data === WAVEFORM_V2_SENTINEL) ? (
+                          <span style={{ color: "rgba(0,204,102,0.7)", fontSize: "0.55rem" }}>▪</span>
+                        ) : t.waveform_data && t.waveform_data !== WAVEFORM_V2_SENTINEL ? (
+                          <span style={{ color: "rgba(240,237,232,0.3)", fontSize: "0.55rem" }} title="V1 only — V2 queued">▫</span>
+                        ) : (
+                          <span style={{ color: "rgba(240,237,232,0.2)", fontSize: "0.55rem" }}>—</span>
+                        )}
                       </span>
                     </div>
                   );

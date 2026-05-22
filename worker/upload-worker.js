@@ -492,20 +492,48 @@ export default {
         }
         const id = url.pathname.split("/")[2];
         const body = await request.json();
-        const { waveform_data, duration } = body;
+        const { waveform_data, duration, waveform_generated_at, waveform_error } = body;
         const waveformValue = waveform_data == null ? null : JSON.stringify(waveform_data);
-        const { success } = await env.PSC_DB.prepare(
-          duration != null
-            ? "UPDATE tracks SET waveform_data = ?, duration = ? WHERE id = ?"
-            : "UPDATE tracks SET waveform_data = ? WHERE id = ?",
-        )
-          .bind(...(duration != null
-            ? [waveformValue, duration, id]
-            : [waveformValue, id]))
-          .run();
+
+        let sql = "UPDATE tracks SET waveform_data = ?";
+        const params = [waveformValue];
+        if (duration != null) { sql += ", duration = ?"; params.push(duration); }
+        if (waveform_generated_at !== undefined) { sql += ", waveform_generated_at = ?"; params.push(waveform_generated_at); }
+        if (waveform_error !== undefined) { sql += ", waveform_error = ?"; params.push(waveform_error); }
+        sql += " WHERE id = ?";
+        params.push(id);
+
+        const { success } = await env.PSC_DB.prepare(sql).bind(...params).run();
 
         return new Response(JSON.stringify({ success }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // GET /tracks/:id/waveform-bin — proxy R2 binary through worker (CORS-safe)
+      // Public endpoint — waveform data is not sensitive.
+      if (
+        request.method === "GET" &&
+        url.pathname.match(/^\/tracks\/[^\/]+\/waveform-bin$/)
+      ) {
+        const rawId = url.pathname.split("/")[2];
+        const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
+        if (!id) {
+          return new Response(JSON.stringify({ error: "Invalid track id" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const obj = await env.PSC_AUDIO.get(`waveform/${id}.bin`);
+        if (!obj) {
+          return new Response(null, { status: 404, headers: corsHeaders });
+        }
+        return new Response(obj.body, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/octet-stream",
+            "Cache-Control": "public, max-age=86400",
+          },
         });
       }
 
