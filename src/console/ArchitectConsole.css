@@ -1965,7 +1965,7 @@
 
 .arch-track-list-head {
   display: grid;
-  grid-template-columns: 24px 2fr 0.7fr 1.1fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.7fr 0.5fr;
+  grid-template-columns: 24px 2fr 0.7fr 1.1fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.4fr;
   padding: 4px 16px;
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.14);
   align-items: center;
@@ -2050,7 +2050,7 @@
 
 .arch-track-row {
   display: grid;
-  grid-template-columns: 24px 2fr 0.7fr 1.1fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.8fr 0.7fr 0.5fr;
+  grid-template-columns: 24px 2fr 0.7fr 1.1fr 0.5fr 0.5fr 0.7fr 0.8fr 0.5fr 0.4fr;
   padding: 5px 16px;
   border-bottom: 1px solid rgba(var(--arch-accent-rgb), 0.035);
   cursor: pointer;

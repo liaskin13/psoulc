@@ -29,6 +29,14 @@ import {
 import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { generateCode, listCodes, revokeCode } from "../lib/accessCodes";
 import { generateAndUploadWaveformV2, unpackFromBinary, saveWaveform, WAVEFORM_V2_SENTINEL } from "../lib/waveformAnalyzer";
+
+// D1 stores waveform_data as JSON.stringify(value), so "v2" is stored as '"v2"'.
+// This helper checks both the raw sentinel and the JSON-encoded form.
+const isV2Sentinel = (waveformData) => {
+  if (!waveformData) return false;
+  if (waveformData === WAVEFORM_V2_SENTINEL) return true;
+  try { return JSON.parse(waveformData) === WAVEFORM_V2_SENTINEL; } catch { return false; }
+};
 import { R2_PUBLIC_URL } from "../config";
 
 const cleanBpm = (str) => String(str ?? "").replace(/\.0+$/, "").trim();
@@ -438,7 +446,7 @@ function ArchitectConsole({
           setTrackLoadError(null);
           // Queue all tracks missing V2 binary for sequential background generation
           const needsWaveform = tracks.filter(
-            (t) => !t.waveform_data || t.waveform_data !== WAVEFORM_V2_SENTINEL
+            (t) => !isV2Sentinel(t.waveform_data) && !waveformBarsCache.current[t.id]
           );
           if (needsWaveform.length > 0) {
             waveformQueueRef.current = [...needsWaveform];
@@ -985,15 +993,10 @@ function ArchitectConsole({
 
     // If track has sentinel, try the binary first — regenerate only if it's missing
     if (!force && waveformBarsCache.current[track.id]) return;
-    if (!force && track.waveform_data === WAVEFORM_V2_SENTINEL) {
+    if (!force && isV2Sentinel(track.waveform_data)) {
       const loaded = await loadWaveformBinaryForDeck(track.id);
       if (loaded) return;
       // Binary missing or unreachable — fall through to regenerate
-    } else if (!force && track.waveform_data && track.waveform_data !== WAVEFORM_V2_SENTINEL) {
-      // Has V1 JSON data — still generate V2 binary unless forced
-      // (don't skip — V2 is strictly better; generate silently)
-    } else if (!force && !track.waveform_data) {
-      // No waveform at all — always generate
     }
 
     const url = getAudioUrl(track.audio_path);
@@ -2378,6 +2381,7 @@ function ArchitectConsole({
               <span role="columnheader">LENGTH</span>
               <span role="columnheader">ADDED</span>
               <span role="columnheader">PLAYS</span>
+              <span role="columnheader" aria-label="Waveform status" />
             </div>
             <div className="arch-track-list-body">
               {trackListLoading ? (
@@ -2542,7 +2546,7 @@ function ArchitectConsole({
                           <span style={{ color: "rgba(240,237,232,0.5)", fontSize: "0.55rem", fontFamily: "'Chakra Petch', monospace", letterSpacing: "0.08em" }}>
                             {waveformProgress[t.id] != null ? `${waveformProgress[t.id]}%` : "…"}
                           </span>
-                        ) : (waveformBarsCache.current[t.id] || t.waveform_data === WAVEFORM_V2_SENTINEL) ? (
+                        ) : (waveformBarsCache.current[t.id] || isV2Sentinel(t.waveform_data)) ? (
                           <span style={{ color: "rgba(0,204,102,0.7)", fontSize: "0.55rem" }}>▪</span>
                         ) : t.waveform_data && t.waveform_data !== WAVEFORM_V2_SENTINEL ? (
                           <span style={{ color: "rgba(240,237,232,0.3)", fontSize: "0.55rem" }} title="V1 only — V2 queued">▫</span>
