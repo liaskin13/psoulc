@@ -118,7 +118,10 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         }
       }
       const vu = vuRef.current;
-      if (vu && vu.width > 0 && vu.height > 0) {
+      if (vu) {
+        const vuW = vu.offsetWidth || 120;
+        const vuH = vu.offsetHeight || 156;
+        if (vu.width !== vuW || vu.height !== vuH) { vu.width = vuW; vu.height = vuH; }
         drawVU(vu.getContext("2d"), vu.width, vu.height, 0, 0, 0, 0);
       }
 
@@ -169,6 +172,9 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       // ── VU (live FFT: bass bins → L, high bins → R) ──────────────────────
       const vu = vuRef.current;
       if (vu) {
+        const vuW = vu.offsetWidth || 120;
+        const vuH = vu.offsetHeight || 156;
+        if (vu.width !== vuW || vu.height !== vuH) { vu.width = vuW; vu.height = vuH; }
         const ctx = vu.getContext("2d");
         const W = vu.width, H = vu.height;
         ctx.clearRect(0, 0, W, H);
@@ -299,6 +305,14 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
             ctx.fillRect(x, H - FLOOR, bw, FLOOR);
           }
         }
+
+        // Subtle dB reference grid lines drawn after bars so they read through them
+        ctx.strokeStyle = "rgba(255,255,255,0.04)";
+        ctx.lineWidth = 1;
+        for (const frac of [0.25, 0.5, 0.75]) {
+          const gy = Math.round(H * (1 - frac));
+          ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+        }
       }
 
       // ── Energy Map (pre-analyzed only, throttled to ~4fps) ───────────────
@@ -421,7 +435,13 @@ function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
     for (let b = barStart; b < barEnd; b++) {
       if (bars[b] && bars[b].peak > maxPeak) {
         maxPeak = bars[b].peak;
-        color   = pscFreqColor(bars[b].freq || "#14dc14");
+        const bar = bars[b];
+        if (bar.bass !== undefined) {
+          // V2 binary: use spectral RGB directly
+          color = `rgb(${Math.round(bar.bass*255)},${Math.round(bar.mid*255)},${Math.round(bar.high*255)})`;
+        } else {
+          color = pscFreqColor(bar.freq || "#14dc14");
+        }
       }
     }
 

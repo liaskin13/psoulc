@@ -1799,8 +1799,6 @@ function ArchitectConsole({
             <canvas
               ref={vuRef}
               className="arch-vu-deck"
-              width={220}
-              height={156}
             />
             <canvas
               ref={energyRef}
