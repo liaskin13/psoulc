@@ -2379,7 +2379,7 @@ function ArchitectConsole({
               <span role="columnheader">LENGTH</span>
               <span role="columnheader">ADDED</span>
               <span role="columnheader">PLAYS</span>
-              <span role="columnheader" aria-label="Waveform status" />
+              <span role="columnheader" aria-label="Waveform status">WF</span>
             </div>
             <div className="arch-track-list-body">
               {trackListLoading ? (
