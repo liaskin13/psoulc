@@ -16,22 +16,9 @@ const FLOOR_PCT = 0.06; // minimum bar height as fraction of canvas height
 // bass=RED, mid=GREEN, high=BLUE — same spectral language as DeckWaveform V2 bars.
 // Exported for unit testing.
 export function specBarColor(normH, freqT, alpha = 1) {
-  let r, g, b;
-  if (freqT < 0.5) {
-    // Bass → mid: red fades, green rises
-    const f = freqT * 2;
-    r = Math.round(220 * (1 - f));
-    g = Math.round(215 * f);
-    b = 0;
-  } else {
-    // Mid → high: green fades, blue rises
-    const f = (freqT - 0.5) * 2;
-    r = 0;
-    g = Math.round(215 * (1 - f));
-    b = Math.round(210 * f);
-  }
-  const scale = 0.2 + normH * 0.8;
-  return `rgba(${Math.round(r * scale)}, ${Math.round(g * scale)}, ${Math.round(b * scale)}, ${alpha})`;
+  const hue        = Math.round(freqT * 280);        // red→orange→yellow→green→cyan→blue→violet
+  const lightness  = Math.round(12 + normH * 52);    // 12% at silence → 64% at peak
+  return `hsla(${hue}, 90%, ${lightness}%, ${alpha})`;
 }
 
 // Props: { isPlaying, waveformData, currentTime, duration, hotCues? }
@@ -439,28 +426,20 @@ function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
     ctx.fillRect(0, 0, playheadPx, H);
   }
 
+  // Smooth peak envelope — average nearby bars so it reads as a curve, not individual spikes
+  const smoothR = Math.max(1, Math.round(barsPerPx * 3));
   for (let px = 0; px < W; px++) {
-    const barStart = Math.floor(px * barsPerPx);
-    const barEnd   = Math.min(Math.floor((px + 1) * barsPerPx) + 1, N);
-    let   maxPeak  = 0;
-    let   color    = "#2840dc";
-
-    for (let b = barStart; b < barEnd; b++) {
-      if (bars[b] && bars[b].peak > maxPeak) {
-        maxPeak = bars[b].peak;
-        const bar = bars[b];
-        if (bar.bass !== undefined) {
-          // V2 binary: use spectral RGB directly
-          color = `rgb(${Math.round(bar.bass*255)},${Math.round(bar.mid*255)},${Math.round(bar.high*255)})`;
-        } else {
-          color = pscFreqColor(bar.freq || "#14dc14");
-        }
-      }
+    const center = Math.floor(px * barsPerPx + barsPerPx * 0.5);
+    let   sum    = 0;
+    let   count  = 0;
+    for (let b = Math.max(0, center - smoothR); b < Math.min(N, center + smoothR); b++) {
+      if (bars[b]) { sum += bars[b].peak; count++; }
     }
-
-    const barH = Math.max(2, Math.round(maxPeak * H));
-    ctx.fillStyle = color;
-    ctx.globalAlpha = px < playheadPx ? 0.45 : 0.75;
+    const avg  = count > 0 ? sum / count : 0;
+    const barH = Math.max(2, Math.round(Math.pow(avg, 0.7) * H));
+    const dim  = px < playheadPx ? 0.35 : 0.7;
+    ctx.fillStyle   = "rgba(20, 220, 20, 1)";
+    ctx.globalAlpha = dim;
     ctx.fillRect(px, H - barH, 1, barH);
   }
   ctx.globalAlpha = 1;
