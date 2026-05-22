@@ -28,7 +28,6 @@ import {
 } from "./matrixState";
 import { fetchAllTracks, getAudioUrl } from "../lib/tracks";
 import { generateCode, listCodes, revokeCode } from "../lib/accessCodes";
-import { getWaveformBars } from "../utils/waveform";
 import { generateAndUploadWaveformV2, unpackFromBinary, saveWaveform } from "../lib/waveformAnalyzer";
 import { R2_PUBLIC_URL } from "../config";
 
@@ -1133,10 +1132,6 @@ function ArchitectConsole({
     });
   };
 
-  const handlePreviewTrack = (track) => {
-    loadAndPlay(track);
-  };
-
   const handlePrepareSelected = () => {
     if (!selectedTrackId) {
       announce("Select a track before adding to prepare queue.");
@@ -1155,21 +1150,6 @@ function ArchitectConsole({
     }
     const track = trackListData.find((t) => t.id === selectedTrackId);
     if (track) loadToDeck(track);
-  };
-
-  const handleTrackAction = (track) => {
-    const inPrepare = prepareQueue.includes(track.id);
-    if (inPrepare) {
-      setPrepareQueue((prev) => prev.filter((id) => id !== track.id));
-      announce(`${track.title || "Track"} removed from prepare queue.`);
-    } else {
-      setPrepareQueue((prev) => [...prev, track.id]);
-      announce(`${track.title || "Track"} added to prepare queue.`);
-    }
-  };
-
-  const handleRegenerateWaveform = async (track) => {
-    await ensureWaveformForTrack(track, true, true);
   };
 
   const handleNext = () => {
@@ -2351,8 +2331,6 @@ function ArchitectConsole({
               <span role="columnheader">LENGTH</span>
               <span role="columnheader">ADDED</span>
               <span role="columnheader">PLAYS</span>
-              <span role="columnheader">PREVIEW</span>
-              <span role="columnheader">ACTIONS</span>
             </div>
             <div className="arch-track-list-body">
               {trackListLoading ? (
@@ -2379,22 +2357,6 @@ function ArchitectConsole({
                 <div className="arch-lib-vault-clear">VAULT CLEAR</div>
               ) : (
                 visibleTracks.map((t, i) => {
-                  // Get waveform preview data (low-res)
-                  let previewData = null;
-                  if (t.waveform_data) {
-                    try {
-                      const parsed = JSON.parse(t.waveform_data);
-                      previewData = parsed.low;
-                    } catch (_) {
-                      // Invalid JSON, use placeholder
-                    }
-                  }
-                  const previewBars =
-                    previewData ||
-                    getWaveformBars(String(t.id || t.title || i), 8).map(
-                      (h) => ({ peak: h / 100, freq: "#666666" }),
-                    );
-
                   const isLive = Boolean(t.is_published);
                   const isEditing = editingTrackId === t.id;
                   return (
@@ -2527,58 +2489,6 @@ function ArchitectConsole({
                       </span>
                       <span className="arch-track-plays" role="cell">
                         {trackPlayCounts[t.id] || 0}
-                      </span>
-                      <span className="arch-track-preview" role="cell">
-                        <span
-                          className="arch-track-wave-mini"
-                          aria-hidden="true"
-                        >
-                          {previewBars.map((d, pi) => {
-                            const height =
-                              typeof d === "object" ? d.peak * 100 : d;
-                            const color =
-                              typeof d === "object" ? d.freq : "#666666";
-                            return (
-                              <i
-                                key={`${t.id}-${pi}`}
-                                style={{
-                                  height: `${Math.max(12, height)}%`,
-                                  backgroundColor: color,
-                                }}
-                              />
-                            );
-                          })}
-                        </span>
-                      </span>
-                      <span className="arch-track-actions" role="cell">
-                        <button
-                          className="arch-track-action-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePreviewTrack(t);
-                          }}
-                        >
-                          ▶
-                        </button>
-                        <button
-                          className="arch-track-action-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTrackAction(t);
-                          }}
-                        >
-                          {prepareQueue.includes(t.id) ? "PREP ✓" : "PREP"}
-                        </button>
-                        <button
-                          className="arch-track-action-btn"
-                          title="Regenerate waveform"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRegenerateWaveform(t);
-                          }}
-                        >
-                          WVF
-                        </button>
                       </span>
                     </div>
                   );
