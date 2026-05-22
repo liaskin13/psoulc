@@ -10,15 +10,28 @@ const PEAK_TICK = "rgba(240,237,232,0.85)";
 const SPEC_N    = 150;
 const FLOOR_PCT = 0.06; // minimum bar height as fraction of canvas height
 
-// Pure function: maps normalized bar height (0-1) to a Tektronix-style solid color.
-// Each bar gets a single solid color based on amplitude — no global gradient.
+// Maps frequency position + amplitude to a color matching the V2 waveform palette.
+// freqT: 0 = lowest frequency bar (bass), 1 = highest (treble).
+// normH: 0-1 amplitude — scales brightness; 0.2 floor keeps bars visible when quiet.
+// bass=RED, mid=GREEN, high=BLUE — same spectral language as DeckWaveform V2 bars.
 // Exported for unit testing.
-export function specBarColor(normH, alpha = 1) {
-  if (normH > 0.88) return `rgba(210, 255, 248, ${alpha})`;  // cyan-white — peak
-  if (normH > 0.70) return `rgba(40, 235, 185, ${alpha})`;   // cyan-green
-  if (normH > 0.45) return `rgba(40, 215, 40, ${alpha})`;    // green
-  if (normH > 0.25) return `rgba(205, 148, 0, ${alpha})`;    // orange-gold
-  return `rgba(200, 28, 0, ${alpha})`;                       // deep red — floor
+export function specBarColor(normH, freqT, alpha = 1) {
+  let r, g, b;
+  if (freqT < 0.5) {
+    // Bass → mid: red fades, green rises
+    const f = freqT * 2;
+    r = Math.round(220 * (1 - f));
+    g = Math.round(215 * f);
+    b = 0;
+  } else {
+    // Mid → high: green fades, blue rises
+    const f = (freqT - 0.5) * 2;
+    r = 0;
+    g = Math.round(215 * (1 - f));
+    b = Math.round(210 * f);
+  }
+  const scale = 0.2 + normH * 0.8;
+  return `rgba(${Math.round(r * scale)}, ${Math.round(g * scale)}, ${Math.round(b * scale)}, ${alpha})`;
 }
 
 // Props: { isPlaying, waveformData, currentTime, duration, hotCues? }
@@ -268,7 +281,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
               ctx.fillRect(x, H - maxH, bw, 1);
             }
 
-            ctx.fillStyle = specBarColor(normH);
+            ctx.fillStyle = specBarColor(normH, i / (SPEC_N - 1));
             ctx.fillRect(x, H - liveH, bw, liveH);
           }
         } else if (hasPreAnalyzed) {
@@ -294,14 +307,14 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
               ctx.fillRect(x, H - maxH, bw, 1);
             }
 
-            ctx.fillStyle = specBarColor(normH);
+            ctx.fillStyle = specBarColor(normH, i / (SPEC_N - 1));
             ctx.fillRect(x, H - liveH, bw, liveH);
           }
         } else {
           // No data at all — draw idle floor bars
           for (let i = 0; i < SPEC_N; i++) {
             const x = Math.round(i * barStep);
-            ctx.fillStyle = specBarColor(FLOOR_PCT);
+            ctx.fillStyle = specBarColor(FLOOR_PCT, i / (SPEC_N - 1));
             ctx.fillRect(x, H - FLOOR, bw, FLOOR);
           }
         }

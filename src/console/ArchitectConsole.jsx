@@ -390,7 +390,7 @@ function ArchitectConsole({
 
   const { vuRef, specRef, energyRef } = useAudioAnalyzer({
     isPlaying,
-    waveformData: loadedWaveformHighData,
+    waveformData: deckHighResBars || loadedWaveformHighData,
     currentTime,
     duration: audioDuration,
     hotCues: deckTrack ? (hotCues[deckTrack.id] || {}) : {},

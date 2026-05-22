@@ -129,26 +129,18 @@ export default function DeckWaveform({
           const g = Math.round(d.mid  * 255 * dimMult);
           const b = Math.round(d.high * 255 * dimMult);
 
-          // Body: slightly transparent so individual peaks breathe
-          ctx.fillStyle = `rgba(${r},${g},${b},0.55)`;
-          ctx.fillRect(px, halfH - barH + 1, 1, barH - 1);
-          ctx.fillRect(px, halfH + 1,        1, barH - 1);
-          // Bright 1px cap at the outermost tip — creates clear peak separation
           ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.fillRect(px, halfH - barH, 1, 1);
-          if (barH > 1) ctx.fillRect(px, halfH + barH - 1, 1, 1);
+          ctx.fillRect(px, halfH - barH, 1, barH);
+          ctx.fillRect(px, halfH,        1, barH);
 
         } else {
           const barH = Math.max(1, d.peak * halfH);
           const cr   = Math.round(parseInt(d.freq.slice(1, 3), 16) * dimMult);
           const cg   = Math.round(parseInt(d.freq.slice(3, 5), 16) * dimMult);
           const cb   = Math.round(parseInt(d.freq.slice(5, 7), 16) * dimMult);
-          ctx.fillStyle = `rgba(${cr},${cg},${cb},0.55)`;
-          ctx.fillRect(px, halfH - barH + 1, 1, barH - 1);
-          ctx.fillRect(px, halfH + 1,        1, barH - 1);
           ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
-          ctx.fillRect(px, halfH - barH, 1, 1);
-          if (barH > 1) ctx.fillRect(px, halfH + barH - 1, 1, 1);
+          ctx.fillRect(px, halfH - barH, 1, barH);
+          ctx.fillRect(px, halfH,        1, barH);
         }
       }
 

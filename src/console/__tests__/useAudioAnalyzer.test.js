@@ -6,47 +6,40 @@ import { describe, it, expect, vi } from "vitest";
 import { specBarColor } from "../useAudioAnalyzer.js";
 
 describe("specBarColor", () => {
-  it("returns cyan-white for normH above 0.88 (peak)", () => {
-    const color = specBarColor(0.95, 1);
-    expect(color).toBe("rgba(210, 255, 248, 1)");
+  it("returns red at bass (freqT=0) full amplitude", () => {
+    expect(specBarColor(1.0, 0, 1)).toBe("rgba(220, 0, 0, 1)");
   });
 
-  it("returns cyan-green for normH between 0.70 and 0.88", () => {
-    expect(specBarColor(0.80, 1)).toBe("rgba(40, 235, 185, 1)");
-    expect(specBarColor(0.71, 1)).toBe("rgba(40, 235, 185, 1)");
+  it("returns green at mid (freqT=0.5) full amplitude", () => {
+    expect(specBarColor(1.0, 0.5, 1)).toBe("rgba(0, 215, 0, 1)");
   });
 
-  it("returns green for normH between 0.45 and 0.70", () => {
-    expect(specBarColor(0.60, 1)).toBe("rgba(40, 215, 40, 1)");
-    expect(specBarColor(0.46, 1)).toBe("rgba(40, 215, 40, 1)");
+  it("returns blue at treble (freqT=1.0) full amplitude", () => {
+    expect(specBarColor(1.0, 1.0, 1)).toBe("rgba(0, 0, 210, 1)");
   });
 
-  it("returns orange-gold for normH between 0.25 and 0.45", () => {
-    expect(specBarColor(0.35, 1)).toBe("rgba(205, 148, 0, 1)");
-    expect(specBarColor(0.26, 1)).toBe("rgba(205, 148, 0, 1)");
+  it("interpolates orange between bass and mid (freqT=0.25)", () => {
+    expect(specBarColor(1.0, 0.25, 1)).toBe("rgba(110, 108, 0, 1)");
   });
 
-  it("returns deep red for normH at or below 0.25 (floor)", () => {
-    expect(specBarColor(0.25, 1)).toBe("rgba(200, 28, 0, 1)");
-    expect(specBarColor(0.0, 1)).toBe("rgba(200, 28, 0, 1)");
+  it("interpolates cyan between mid and treble (freqT=0.75)", () => {
+    expect(specBarColor(1.0, 0.75, 1)).toBe("rgba(0, 108, 105, 1)");
+  });
+
+  it("amplitude scaling dims bars — low normH produces darker color than full", () => {
+    const dimColor  = specBarColor(0.1, 0, 1);
+    const fullColor = specBarColor(1.0, 0, 1);
+    expect(dimColor).toBe("rgba(62, 0, 0, 1)");
+    expect(fullColor).toBe("rgba(220, 0, 0, 1)");
   });
 
   it("embeds alpha correctly in output string", () => {
-    expect(specBarColor(0.95, 0.5)).toBe("rgba(210, 255, 248, 0.5)");
-    expect(specBarColor(0.10, 0.8)).toBe("rgba(200, 28, 0, 0.8)");
+    expect(specBarColor(1.0, 0, 0.5)).toBe("rgba(220, 0, 0, 0.5)");
   });
 
   it("defaults alpha to 1 when omitted", () => {
-    const color = specBarColor(0.50);
+    const color = specBarColor(0.5, 0.5);
     expect(color).toContain(", 1)");
-  });
-
-  it("boundary: 0.88 falls into cyan-green tier (not cyan-white)", () => {
-    expect(specBarColor(0.88, 1)).toBe("rgba(40, 235, 185, 1)");
-  });
-
-  it("boundary: 0.70 falls into green tier (not cyan-green)", () => {
-    expect(specBarColor(0.70, 1)).toBe("rgba(40, 215, 40, 1)");
   });
 });
 
