@@ -1,14 +1,9 @@
 // Canvas-based waveform renderer for deck view.
 // Physics-correct Serato model: bass→RED, mid→GREEN, high→BLUE.
-// Each band is drawn as its own semi-transparent layer at screen blend mode so
-// they combine additively: bass+mid=yellow, mid+high=cyan, all=white.
-// Each band's bar height is proportional to that band's own amplitude, so
-// spectral structure is visible within every bar.
+// Fixed time window centered on playhead — waveform scrolls in real time.
+// Three presets: 64s / 32s (default) / 16s.
 
-import { useEffect, useRef } from "react";
-
-const ZOOM_MIN = 1;
-const ZOOM_MAX = 100;
+import { useEffect, useRef, useState } from "react";
 
 export default function DeckWaveform({
   waveformData = null,
@@ -20,33 +15,25 @@ export default function DeckWaveform({
   height = 120,
   hotCues = {},
   cueColors = [],
-  zoom = 1,
-  onZoomChange = null,
   loopRegion = null,
   isGenerating = false,
   generatingPct = null,
 }) {
-  const canvasRef      = useRef(null);
-  const overviewRef    = useRef(null);
-  const animFrameRef   = useRef(null);
-  const displayZoomRef = useRef(zoom);
-  const pinchRef       = useRef(null);
+  const canvasRef    = useRef(null);
+  const overviewRef  = useRef(null);
+  const animFrameRef = useRef(null);
 
-  // Refs updated every render so the rAF loop always reads the latest value
-  // without restarting the animation on every prop change.
-  const currentTimeRef = useRef(currentTime);
-  const durationRef    = useRef(duration);
-  const zoomRef        = useRef(zoom);
-  const onZoomChangeRef = useRef(onZoomChange);
+  const currentTimeRef   = useRef(currentTime);
+  const durationRef      = useRef(duration);
+  const [windowSeconds, setWindowSeconds] = useState(32);
+  const windowSecondsRef = useRef(32);
 
-  currentTimeRef.current  = currentTime;
-  durationRef.current     = duration;
-  zoomRef.current         = zoom;
-  onZoomChangeRef.current = onZoomChange;
+  currentTimeRef.current   = currentTime;
+  durationRef.current      = duration;
+  windowSecondsRef.current = windowSeconds;
 
   // Main waveform draw + rAF loop.
-  // currentTime / duration intentionally excluded from deps — read via refs
-  // so the animation loop runs continuously without restarting every frame.
+  // currentTime / duration read via refs so the loop runs without restarting every frame.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -62,38 +49,30 @@ export default function DeckWaveform({
     function draw() {
       const ct  = currentTimeRef.current;
       const dur = durationRef.current;
-      const zTarget = zoomRef.current;
+      const win = windowSecondsRef.current;
 
       ctx.clearRect(0, 0, w, height);
 
-      // No data yet — draw a flat center line and bail; no fake bars
       if (!waveformData || !Array.isArray(waveformData) || waveformData.length === 0) {
         ctx.strokeStyle = "rgba(255,255,255,0.15)";
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(0, height / 2); ctx.lineTo(w, height / 2); ctx.stroke();
         return;
       }
-      const peaks = waveformData;
-
+      const peaks    = waveformData;
       const barCount = peaks.length;
+      const halfH    = height / 2;
+      const playheadX = w / 2;
 
-      // Smooth zoom lerp — ~300ms at 60fps
-      displayZoomRef.current += (zTarget - displayZoomRef.current) * 0.12;
-      const displayZoom = displayZoomRef.current;
-
-      const visibleBars  = Math.round(barCount / displayZoom);
-      const playheadFrac = dur > 0 ? ct / dur : 0;
-      const centerBar    = Math.round(playheadFrac * barCount);
-      const startBar     = centerBar - Math.round(visibleBars / 2);
-      const endBar       = startBar + visibleBars;
-      const playheadX    = w / 2;
-      const halfH        = height / 2;
+      // Time-window: viewStart → viewEnd, centered on playhead
+      const pixelsPerSec = w / win;
+      const viewStart    = ct - win / 2;
 
       // Loop region highlight
       if (loopRegion?.start != null && dur > 0) {
-        const lsx = (((loopRegion.start / dur) * barCount - startBar) / (endBar - startBar)) * w;
+        const lsx = (loopRegion.start - viewStart) * pixelsPerSec;
         const lex = loopRegion.end != null
-          ? (((loopRegion.end / dur) * barCount - startBar) / (endBar - startBar)) * w
+          ? (loopRegion.end - viewStart) * pixelsPerSec
           : playheadX;
         if (lex > lsx) {
           ctx.fillStyle = "rgba(0,204,204,0.12)";
@@ -107,41 +86,32 @@ export default function DeckWaveform({
         }
       }
 
-      // ── Waveform bars — one bar per pixel, color encodes frequency ──────
-      // Serato standard: Low=RED, Mid=GREEN, Hi=BLUE → rgb(bass, mid, high)
-      // kick=red, snare=green, hihat=blue, full-mix=white.
-      // Height = peak amplitude so loud hits are tall, silence is flat.
-      // Played side dimmed to ~45%, future side full brightness.
-      const totalCols = Math.ceil(w);
-
-      for (let px = 0; px < totalCols; px++) {
+      // Waveform bars — one column per pixel, time-mapped to bar index
+      for (let px = 0; px < Math.ceil(w); px++) {
         const isPast  = px < playheadX;
         const dimMult = isPast ? 0.45 : 1.0;
 
-        const barIdx = Math.floor(startBar + (px / w) * (endBar - startBar));
+        const barTime = viewStart + (px / w) * win;
+        const barIdx  = Math.floor((barTime / dur) * barCount);
         if (barIdx < 0 || barIdx >= barCount) continue;
         const d = peaks[barIdx];
         if (!d) continue;
 
+        const barH = Math.max(1, Math.pow(d.peak, 2.5) * halfH * 0.96);
+
         if (d.bass !== undefined) {
-          const barH = Math.max(1, Math.pow(d.peak, 2.5) * halfH * 0.96);
           const r = Math.round(d.bass * 255 * dimMult);
           const g = Math.round(d.mid  * 255 * dimMult);
           const b = Math.round(d.high * 255 * dimMult);
-
           ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.fillRect(px, halfH - barH, 1, barH);
-          ctx.fillRect(px, halfH,        1, barH);
-
         } else {
-          const barH = Math.max(1, d.peak * halfH);
-          const cr   = Math.round(parseInt(d.freq.slice(1, 3), 16) * dimMult);
-          const cg   = Math.round(parseInt(d.freq.slice(3, 5), 16) * dimMult);
-          const cb   = Math.round(parseInt(d.freq.slice(5, 7), 16) * dimMult);
+          const cr = Math.round(parseInt(d.freq.slice(1, 3), 16) * dimMult);
+          const cg = Math.round(parseInt(d.freq.slice(3, 5), 16) * dimMult);
+          const cb = Math.round(parseInt(d.freq.slice(5, 7), 16) * dimMult);
           ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
-          ctx.fillRect(px, halfH - barH, 1, barH);
-          ctx.fillRect(px, halfH,        1, barH);
         }
+        ctx.fillRect(px, halfH - barH, 1, barH);
+        ctx.fillRect(px, halfH,        1, barH);
       }
 
       // Center reference line
@@ -154,12 +124,13 @@ export default function DeckWaveform({
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(playheadX, 0); ctx.lineTo(playheadX, height); ctx.stroke();
 
-      // Hot cue markers
+      // Hot cue markers — time-based positioning
       ctx.textAlign = "center";
       Object.entries(hotCues).forEach(([num, cue]) => {
         if (!cue || typeof cue.time !== "number") return;
-        const n  = parseInt(num, 10);
-        const x  = (cue.time / dur) * w;
+        const n = parseInt(num, 10);
+        const x = Math.round((cue.time - viewStart) * pixelsPerSec);
+        if (x < -10 || x > w + 10) return;
         const color = cueColors[n - 1] || "#ffffff";
         const isB2  = n > 8;
 
@@ -186,7 +157,6 @@ export default function DeckWaveform({
       ctx.textAlign = "left";
     }
 
-    // Always run the rAF loop — zoom lerp needs it even when paused
     draw();
     let raf;
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -199,25 +169,9 @@ export default function DeckWaveform({
     return () => { if (raf) cancelAnimationFrame(raf); };
   // currentTime / duration intentionally omitted — handled via refs above
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waveformData, trackId, width, height, hotCues, cueColors, zoom, loopRegion]);
+  }, [waveformData, trackId, width, height, hotCues, cueColors, loopRegion, windowSeconds]);
 
-  // Non-passive wheel listener so preventDefault blocks page scroll
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const onWheel = (e) => {
-      if (!onZoomChangeRef.current) return;
-      e.preventDefault();
-      const factor = e.deltaY > 0 ? 0.85 : 1 / 0.85;
-      const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomRef.current * factor));
-      onZoomChangeRef.current(Math.round(next * 10) / 10);
-    };
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", onWheel);
-  }, []); // mount/unmount only — reads latest values via refs
-
-  // ── Overview strip ────────────────────────────────────────────────────────
-  // Compressed full-track view; same screen-blend layered colors.
+  // Overview strip — compressed full-track view, same spectral colors + power curve
   useEffect(() => {
     const canvas = overviewRef.current;
     if (!canvas || !waveformData?.length || !duration) return;
@@ -244,7 +198,8 @@ export default function DeckWaveform({
       }
       if (!best) continue;
 
-      const overallH = Math.max(1, Math.round(maxPeak * OVERVIEW_H));
+      // Same 2.5 power curve as main waveform — spiky, not block
+      const overallH = Math.max(1, Math.round(Math.pow(maxPeak, 2.5) * OVERVIEW_H));
 
       if (best.bass !== undefined) {
         const r = Math.round(best.bass * 255);
@@ -261,7 +216,6 @@ export default function DeckWaveform({
       }
     }
 
-    // Hot cue marks
     if (hotCues && duration > 0) {
       Object.entries(hotCues).forEach(([num, cue]) => {
         if (!cue || typeof cue.time !== "number") return;
@@ -271,7 +225,6 @@ export default function DeckWaveform({
       });
     }
 
-    // Playhead
     if (duration > 0) {
       const px = Math.round((currentTime / duration) * w);
       ctx.fillStyle = "rgba(255,255,255,0.9)";
@@ -281,16 +234,10 @@ export default function DeckWaveform({
 
   const handleClick = (e) => {
     if (!onSeek) return;
-    const canvas = canvasRef.current;
-    const rect   = canvas.getBoundingClientRect();
-    const frac   = (e.clientX - rect.left) / rect.width;
-    if (zoom <= 1) { onSeek(frac * duration); return; }
-    const totalBars  = waveformData?.length ?? 1000;
-    const visibleBars = Math.round(totalBars / zoom);
-    const centerBar   = Math.round((currentTime / duration) * totalBars);
-    const startBar    = centerBar - Math.round(visibleBars / 2);
-    const clickedBar  = startBar + Math.round(frac * visibleBars);
-    onSeek(Math.max(0, Math.min((clickedBar / totalBars) * duration, duration)));
+    const rect = canvasRef.current.getBoundingClientRect();
+    const frac = (e.clientX - rect.left) / rect.width;
+    const seekTime = windowSecondsRef.current * (frac - 0.5) + currentTimeRef.current;
+    onSeek(Math.max(0, Math.min(seekTime, duration)));
   };
 
   const handleOverviewClick = (e) => {
@@ -298,22 +245,6 @@ export default function DeckWaveform({
     const rect = overviewRef.current.getBoundingClientRect();
     onSeek(((e.clientX - rect.left) / rect.width) * duration);
   };
-
-  const pinchDist = (touches) =>
-    Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-
-  const handleTouchStart = (e) => {
-    if (!onZoomChange || e.touches.length !== 2) return;
-    pinchRef.current = { dist: pinchDist(e.touches), zoom };
-  };
-  const handleTouchMove = (e) => {
-    if (!onZoomChange || e.touches.length !== 2 || !pinchRef.current) return;
-    e.preventDefault();
-    const scale = pinchDist(e.touches) / pinchRef.current.dist;
-    const next  = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchRef.current.zoom * scale));
-    onZoomChange(Math.round(next * 10) / 10);
-  };
-  const handleTouchEnd = () => { pinchRef.current = null; };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%", position: "relative" }}>
@@ -336,28 +267,31 @@ export default function DeckWaveform({
       <canvas
         ref={canvasRef}
         onClick={handleClick}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         style={{
           width: "100%",
           height: `${height}px`,
           cursor: onSeek ? "pointer" : "default",
           display: "block",
           flex: 1,
-          touchAction: onZoomChange ? "none" : "auto",
         }}
       />
-      {onZoomChange && (
-        <div style={{
-          position: "absolute", bottom: 4, right: 6,
-          fontSize: "0.55rem", fontFamily: "'Chakra Petch', monospace",
-          color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em",
-          pointerEvents: "none", userSelect: "none",
-        }}>
-          {zoom >= 10 ? `${Math.round(zoom)}×` : `${zoom.toFixed(1)}×`}
-        </div>
-      )}
+      <div style={{ display: "flex", gap: 6, marginTop: 4, justifyContent: "flex-end" }}>
+        {[64, 32, 16].map(s => (
+          <button
+            key={s}
+            onClick={() => setWindowSeconds(s)}
+            style={{
+              fontSize: "0.55rem", padding: "2px 8px",
+              background: windowSeconds === s ? "rgba(255,255,255,0.15)" : "transparent",
+              color: "rgba(255,255,255,0.5)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 3, cursor: "pointer",
+              fontFamily: "'Chakra Petch', monospace",
+              letterSpacing: "0.06em",
+            }}
+          >{s}s</button>
+        ))}
+      </div>
     </div>
   );
 }

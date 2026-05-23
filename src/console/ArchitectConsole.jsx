@@ -347,7 +347,6 @@ function ArchitectConsole({
   const [loopRegion, setLoopRegion] = useState({ start: null, end: null });
   const [selectedLoopLengthId, setSelectedLoopLengthId] = useState("1-4");
   const [loopPanelTrigger, setLoopPanelTrigger] = useState(0);
-  const [waveformZoom, setWaveformZoom] = useState(20);
   const [deckHighResBars, setDeckHighResBars] = useState(null);
   const waveformBarsCache = useRef({}); // trackId → decoded bars array
   const loadedDeckIdRef = useRef(null);
@@ -979,7 +978,6 @@ function ArchitectConsole({
       if (bars) {
         waveformBarsCache.current[trackId] = bars;
         setDeckHighResBars(bars);
-        setWaveformZoom(Math.max(1, Math.min(100, Math.round(bars.length / 3000))));
         return true;
       }
     } catch (err) {
@@ -1017,7 +1015,6 @@ function ArchitectConsole({
       waveformBarsCache.current[track.id] = bars;
       if (loadedDeckIdRef.current === track.id) {
         setDeckHighResBars(bars);
-        setWaveformZoom(Math.max(1, Math.min(100, Math.round(bars.length / 3000))));
       }
       if (shouldAnnounce) announce(`Waveform ready for ${track.title || "track"}.`);
       try {
@@ -1824,8 +1821,6 @@ function ArchitectConsole({
                   height={156}
                   hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
-                  zoom={waveformZoom}
-                  onZoomChange={setWaveformZoom}
                   loopRegion={loopRegion}
                   isGenerating={deckIsGenerating}
                   generatingPct={waveformProgress[deckTrack.id] ?? null}
