@@ -124,7 +124,7 @@ export default function DeckWaveform({
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const barH = Math.max(1, Math.pow(d.peak, 0.65) * halfH * 0.96);
+          const barH = Math.max(1, Math.pow(d.peak, 2.5) * halfH * 0.96);
           const r = Math.round(d.bass * 255 * dimMult);
           const g = Math.round(d.mid  * 255 * dimMult);
           const b = Math.round(d.high * 255 * dimMult);
