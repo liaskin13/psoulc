@@ -349,7 +349,7 @@ function ArchitectConsole({
   const [loopPanelTrigger, setLoopPanelTrigger] = useState(0);
   const [waveformZoom, setWaveformZoom] = useState(20);
   const [waveformZoomPresets, setWaveformZoomPresets] = useState(null);
-  const TIME_WINDOWS_SEC = [64, 32, 16];
+  const TIME_WINDOWS_SEC = [64, 32, 16, 8];
   const stepZoom = (dir) => {
     if (!waveformZoomPresets?.length) return;
     const idx = waveformZoomPresets.findIndex(p => p >= waveformZoom);

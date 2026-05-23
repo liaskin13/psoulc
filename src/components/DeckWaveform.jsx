@@ -92,7 +92,6 @@ export default function DeckWaveform({
         }
       }
 
-      ctx.globalCompositeOperation = "screen";
       for (let px = 0; px < Math.ceil(w); px++) {
         const isPast  = px < playheadX;
         const dimMult = isPast ? 0.45 : 1.0;
@@ -106,20 +105,17 @@ export default function DeckWaveform({
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const bH = Math.max(1, Math.pow(d.bass, 2.5) * halfH * 0.96);
-          ctx.fillStyle = `rgb(${Math.round(d.bass * 255 * dimMult)},0,0)`;
-          ctx.fillRect(px, halfH - bH, 1, bH);
-          ctx.fillRect(px, halfH,      1, bH);
-
-          const mH = Math.max(1, Math.pow(d.mid, 2.5) * halfH * 0.96);
-          ctx.fillStyle = `rgb(0,${Math.round(d.mid * 255 * dimMult)},0)`;
-          ctx.fillRect(px, halfH - mH, 1, mH);
-          ctx.fillRect(px, halfH,      1, mH);
-
-          const hH = Math.max(1, Math.pow(d.high, 2.5) * halfH * 0.96);
-          ctx.fillStyle = `rgb(0,0,${Math.round(d.high * 255 * dimMult)})`;
-          ctx.fillRect(px, halfH - hH, 1, hH);
-          ctx.fillRect(px, halfH,      1, hH);
+          const barH = Math.max(1, Math.max(
+            Math.pow(d.bass, 2.5),
+            Math.pow(d.mid,  2.5),
+            Math.pow(d.high, 2.5)
+          ) * halfH * 0.96);
+          const r = Math.round(d.bass * 255 * dimMult);
+          const g = Math.round(d.mid  * 255 * dimMult);
+          const b = Math.round(d.high * 255 * dimMult);
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          ctx.fillRect(px, halfH - barH, 1, barH);
+          ctx.fillRect(px, halfH,        1, barH);
         } else {
           const barH = Math.max(1, d.peak * halfH);
           const cr = Math.round(parseInt(d.freq.slice(1,3),16) * dimMult);
@@ -130,7 +126,6 @@ export default function DeckWaveform({
           ctx.fillRect(px, halfH,        1, barH);
         }
       }
-      ctx.globalCompositeOperation = "source-over";
 
       // Time ruler ticks — no labels (left of playhead counts down, right counts up)
       const startTimeSec = startBar / 50;
