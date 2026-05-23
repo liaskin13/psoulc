@@ -1820,24 +1820,18 @@ function ArchitectConsole({
             />
           </div>
           <div className="arch-waveform-col">
+            {deckTrack && waveformZoomPresets && (
+              <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:2 }}>
+                <button className="arch-deck-tool-btn" onClick={() => stepZoom(-1)}>−</button>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:"0.52rem",
+                               letterSpacing:"0.04em", color:"rgba(210,225,235,0.55)",
+                               minWidth:26, textAlign:"center" }}>
+                  {deckHighResBars ? Math.round(deckHighResBars.length / (waveformZoom * 50)) + "s" : ""}
+                </span>
+                <button className="arch-deck-tool-btn" onClick={() => stepZoom(+1)}>+</button>
+              </div>
+            )}
             <div className="arch-waveform-main">
-              {deckTrack && waveformZoomPresets && (
-                <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center",
-                              gap:6, padding:"2px 8px 0" }}>
-                  <button onClick={() => stepZoom(-1)}
-                    style={{ background:"none", border:"1px solid rgba(255,255,255,0.2)",
-                             color:"rgba(255,255,255,0.55)", borderRadius:2, padding:"1px 7px",
-                             cursor:"pointer", fontFamily:"monospace", fontSize:"0.75rem" }}>−</button>
-                  <span style={{ color:"rgba(255,255,255,0.4)", fontSize:"0.6rem",
-                                 fontFamily:"'Chakra Petch',monospace", minWidth:28, textAlign:"center" }}>
-                    {deckHighResBars ? Math.round(deckHighResBars.length / (waveformZoom * 50)) + "s" : ""}
-                  </span>
-                  <button onClick={() => stepZoom(+1)}
-                    style={{ background:"none", border:"1px solid rgba(255,255,255,0.2)",
-                             color:"rgba(255,255,255,0.55)", borderRadius:2, padding:"1px 7px",
-                             cursor:"pointer", fontFamily:"monospace", fontSize:"0.75rem" }}>+</button>
-                </div>
-              )}
               {!deckTrack ? (
                 <div className="arch-deck-empty-state">SELECT A TRACK</div>
               ) : (
