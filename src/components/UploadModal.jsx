@@ -6,6 +6,7 @@ import {
   UPLOAD_WORKER_URL,
   UPLOAD_SECRET,
 } from "../config";
+import { uploadTrack } from "../lib/tracks";
 
 const VAULT_IDS = ["saturn", "venus", "mercury", "earth"];
 
@@ -269,23 +270,20 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
         setSuccess({ title: title.trim(), vault });
       } else {
         // Production mode: use worker
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("vault", vault);
-        formData.append("title", title.trim());
-        formData.append("artist", artist.trim() || "");
-        formData.append("bpm", String(Math.round(bpmNumeric * 100) / 100));
-        formData.append("uploaded_by", consoleOwner);
-
-        setUploadProgress(2);
-        await xhrUpload(
-          `${UPLOAD_WORKER_URL}/upload`,
-          formData,
-          UPLOAD_SECRET,
-          (pct) => setUploadProgress(pct),
+        await uploadTrack(
+          file,
+          {
+            vault,
+            title: title.trim(),
+            artist: artist.trim() || null,
+            bpm: String(Math.round(bpmNumeric * 100) / 100),
+            uploaded_by: consoleOwner,
+          },
+          ({ stage, percent }) => {
+            setUploadPhase(stage === "finalize" || stage === "db-write" ? "finalizing" : "uploading");
+            setUploadProgress(percent);
+          },
         );
-        setUploadPhase("finalizing");
-        setUploadProgress(97);
         dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
         await withTimeout(
           Promise.all(VAULT_IDS.map((id) => loadVaultTracks(id))),
