@@ -66,10 +66,10 @@ export default function DeckWaveform({
       displayZoomRef.current += (zTarget - displayZoomRef.current) * 0.12;
       const displayZoom = displayZoomRef.current;
 
-      const visibleBars  = Math.round(barCount / displayZoom);
+      const visibleBars  = barCount / displayZoom;
       const playheadFrac = dur > 0 ? ct / dur : 0;
-      const centerBar    = Math.round(playheadFrac * barCount);
-      const startBar     = centerBar - Math.round(visibleBars / 2);
+      const centerBar    = playheadFrac * barCount;
+      const startBar     = centerBar - visibleBars / 2;
       const endBar       = startBar + visibleBars;
       const playheadX    = w / 2;
       const halfH        = height / 2;
