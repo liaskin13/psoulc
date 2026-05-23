@@ -7,8 +7,6 @@
 
 import { useEffect, useRef } from "react";
 
-const ZOOM_MAX = 8000;
-
 export default function DeckWaveform({
   waveformData = null,
   currentTime = 0,
@@ -20,8 +18,6 @@ export default function DeckWaveform({
   hotCues = {},
   cueColors = [],
   zoom = 1,
-  onZoomChange = null,
-  zoomPresets = null,
   loopRegion = null,
   isGenerating = false,
   generatingPct = null,
@@ -30,19 +26,14 @@ export default function DeckWaveform({
   const overviewRef    = useRef(null);
   const animFrameRef   = useRef(null);
   const displayZoomRef = useRef(zoom);
-  const pinchRef       = useRef(null);
 
-  const currentTimeRef  = useRef(currentTime);
-  const durationRef     = useRef(duration);
-  const zoomRef         = useRef(zoom);
-  const onZoomChangeRef = useRef(onZoomChange);
-  const zoomPresetsRef  = useRef(zoomPresets);
+  const currentTimeRef = useRef(currentTime);
+  const durationRef    = useRef(duration);
+  const zoomRef        = useRef(zoom);
 
-  currentTimeRef.current  = currentTime;
-  durationRef.current     = duration;
-  zoomRef.current         = zoom;
-  onZoomChangeRef.current = onZoomChange;
-  zoomPresetsRef.current  = zoomPresets;
+  currentTimeRef.current = currentTime;
+  durationRef.current    = duration;
+  zoomRef.current        = zoom;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -101,10 +92,10 @@ export default function DeckWaveform({
         }
       }
 
+      ctx.globalCompositeOperation = "screen";
       for (let px = 0; px < Math.ceil(w); px++) {
         const isPast  = px < playheadX;
         const dimMult = isPast ? 0.45 : 1.0;
-
         const bLo = Math.floor(startBar + (px / w) * (endBar - startBar));
         const bHi = Math.ceil(startBar + ((px + 1) / w) * (endBar - startBar));
         let d = null, maxPeak = 0;
@@ -115,23 +106,43 @@ export default function DeckWaveform({
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const barH = Math.max(1, Math.pow(d.peak, 2.5) * halfH * 0.96);
-          const brightness = Math.pow(d.peak, 1.5);
-          const r = Math.round(d.bass * brightness * 255 * dimMult);
-          const g = Math.round(d.mid  * brightness * 255 * dimMult);
-          const b = Math.round(d.high * brightness * 255 * dimMult);
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.fillRect(px, halfH - barH, 1, barH);
-          ctx.fillRect(px, halfH,        1, barH);
+          const bH = Math.max(1, Math.pow(d.bass, 2.5) * halfH * 0.96);
+          ctx.fillStyle = `rgb(${Math.round(d.bass * 255 * dimMult)},0,0)`;
+          ctx.fillRect(px, halfH - bH, 1, bH);
+          ctx.fillRect(px, halfH,      1, bH);
+
+          const mH = Math.max(1, Math.pow(d.mid, 2.5) * halfH * 0.96);
+          ctx.fillStyle = `rgb(0,${Math.round(d.mid * 255 * dimMult)},0)`;
+          ctx.fillRect(px, halfH - mH, 1, mH);
+          ctx.fillRect(px, halfH,      1, mH);
+
+          const hH = Math.max(1, Math.pow(d.high, 2.5) * halfH * 0.96);
+          ctx.fillStyle = `rgb(0,0,${Math.round(d.high * 255 * dimMult)})`;
+          ctx.fillRect(px, halfH - hH, 1, hH);
+          ctx.fillRect(px, halfH,      1, hH);
         } else {
           const barH = Math.max(1, d.peak * halfH);
-          const cr   = Math.round(parseInt(d.freq.slice(1, 3), 16) * dimMult);
-          const cg   = Math.round(parseInt(d.freq.slice(3, 5), 16) * dimMult);
-          const cb   = Math.round(parseInt(d.freq.slice(5, 7), 16) * dimMult);
+          const cr = Math.round(parseInt(d.freq.slice(1,3),16) * dimMult);
+          const cg = Math.round(parseInt(d.freq.slice(3,5),16) * dimMult);
+          const cb = Math.round(parseInt(d.freq.slice(5,7),16) * dimMult);
           ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
           ctx.fillRect(px, halfH - barH, 1, barH);
           ctx.fillRect(px, halfH,        1, barH);
         }
+      }
+      ctx.globalCompositeOperation = "source-over";
+
+      // Time ruler ticks — no labels (left of playhead counts down, right counts up)
+      const startTimeSec = startBar / 50;
+      const endTimeSec   = endBar   / 50;
+      ctx.lineWidth = 1;
+      for (let sec = Math.ceil(startTimeSec); sec <= Math.floor(endTimeSec); sec++) {
+        const xPos  = ((sec * 50 - startBar) / (endBar - startBar)) * w;
+        const is5   = sec % 5 === 0;
+        const tickH = is5 ? 6 : 3;
+        ctx.strokeStyle = `rgba(255,255,255,${is5 ? 0.35 : 0.15})`;
+        ctx.beginPath(); ctx.moveTo(xPos, 0);      ctx.lineTo(xPos, tickH);          ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(xPos, height); ctx.lineTo(xPos, height - tickH); ctx.stroke();
       }
 
       // Center reference line
@@ -189,28 +200,11 @@ export default function DeckWaveform({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [waveformData, trackId, width, height, hotCues, cueColors, zoom, loopRegion]);
 
-  // Non-passive wheel listener
+  // Prevent page scroll when cursor is over waveform
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const onWheel = (e) => {
-      if (!onZoomChangeRef.current) return;
-      e.preventDefault();
-      const presets = zoomPresetsRef.current;
-      if (presets?.length) {
-        const cur = zoomRef.current;
-        let idx = presets.findIndex(p => p >= cur);
-        if (idx === -1) idx = presets.length - 1;
-        const next = e.deltaY > 0
-          ? presets[Math.min(idx + 1, presets.length - 1)]
-          : presets[Math.max(idx - 1, 0)];
-        onZoomChangeRef.current(next);
-      } else {
-        const factor = e.deltaY > 0 ? 0.85 : 1 / 0.85;
-        const next = Math.max(1, Math.min(ZOOM_MAX, zoomRef.current * factor));
-        onZoomChangeRef.current(Math.round(next * 10) / 10);
-      }
-    };
+    const onWheel = (e) => { e.preventDefault(); };
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => canvas.removeEventListener("wheel", onWheel);
   }, []);
@@ -295,22 +289,6 @@ export default function DeckWaveform({
     onSeek(((e.clientX - rect.left) / rect.width) * duration);
   };
 
-  const pinchDist = (touches) =>
-    Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-
-  const handleTouchStart = (e) => {
-    if (!onZoomChange || e.touches.length !== 2) return;
-    pinchRef.current = { dist: pinchDist(e.touches), zoom };
-  };
-  const handleTouchMove = (e) => {
-    if (!onZoomChange || e.touches.length !== 2 || !pinchRef.current) return;
-    e.preventDefault();
-    const scale = pinchDist(e.touches) / pinchRef.current.dist;
-    const next  = Math.max(1, Math.min(ZOOM_MAX, pinchRef.current.zoom * scale));
-    onZoomChange(Math.round(next * 10) / 10);
-  };
-  const handleTouchEnd = () => { pinchRef.current = null; };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%", position: "relative" }}>
       {isGenerating && (
@@ -332,30 +310,14 @@ export default function DeckWaveform({
       <canvas
         ref={canvasRef}
         onClick={handleClick}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         style={{
           width: "100%",
           height: `${height}px`,
           cursor: onSeek ? "pointer" : "default",
           display: "block",
           flex: 1,
-          touchAction: onZoomChange ? "none" : "auto",
         }}
       />
-      {onZoomChange && (
-        <div style={{
-          position: "absolute", bottom: 4, right: 6,
-          fontSize: "0.55rem", fontFamily: "'Chakra Petch', monospace",
-          color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em",
-          pointerEvents: "none", userSelect: "none",
-        }}>
-          {waveformData?.length && zoom > 1
-            ? `${Math.round(waveformData.length / (zoom * 50))}s`
-            : `${zoom >= 10 ? Math.round(zoom) : zoom.toFixed(1)}×`}
-        </div>
-      )}
     </div>
   );
 }

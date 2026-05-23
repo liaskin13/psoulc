@@ -350,6 +350,14 @@ function ArchitectConsole({
   const [waveformZoom, setWaveformZoom] = useState(20);
   const [waveformZoomPresets, setWaveformZoomPresets] = useState(null);
   const TIME_WINDOWS_SEC = [64, 32, 16];
+  const stepZoom = (dir) => {
+    if (!waveformZoomPresets?.length) return;
+    const idx = waveformZoomPresets.findIndex(p => p >= waveformZoom);
+    const safeIdx = idx === -1 ? waveformZoomPresets.length - 1 : idx;
+    setWaveformZoom(
+      waveformZoomPresets[Math.max(0, Math.min(waveformZoomPresets.length - 1, safeIdx + dir))]
+    );
+  };
   const [deckHighResBars, setDeckHighResBars] = useState(null);
   const waveformBarsCache = useRef({}); // trackId → decoded bars array
   const loadedDeckIdRef = useRef(null);
@@ -1813,6 +1821,23 @@ function ArchitectConsole({
           </div>
           <div className="arch-waveform-col">
             <div className="arch-waveform-main">
+              {deckTrack && waveformZoomPresets && (
+                <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center",
+                              gap:6, padding:"2px 8px 0" }}>
+                  <button onClick={() => stepZoom(-1)}
+                    style={{ background:"none", border:"1px solid rgba(255,255,255,0.2)",
+                             color:"rgba(255,255,255,0.55)", borderRadius:2, padding:"1px 7px",
+                             cursor:"pointer", fontFamily:"monospace", fontSize:"0.75rem" }}>−</button>
+                  <span style={{ color:"rgba(255,255,255,0.4)", fontSize:"0.6rem",
+                                 fontFamily:"'Chakra Petch',monospace", minWidth:28, textAlign:"center" }}>
+                    {deckHighResBars ? Math.round(deckHighResBars.length / (waveformZoom * 50)) + "s" : ""}
+                  </span>
+                  <button onClick={() => stepZoom(+1)}
+                    style={{ background:"none", border:"1px solid rgba(255,255,255,0.2)",
+                             color:"rgba(255,255,255,0.55)", borderRadius:2, padding:"1px 7px",
+                             cursor:"pointer", fontFamily:"monospace", fontSize:"0.75rem" }}>+</button>
+                </div>
+              )}
               {!deckTrack ? (
                 <div className="arch-deck-empty-state">SELECT A TRACK</div>
               ) : (
@@ -1831,8 +1856,6 @@ function ArchitectConsole({
                   hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
                   zoom={waveformZoom}
-                  onZoomChange={setWaveformZoom}
-                  zoomPresets={waveformZoomPresets}
                   loopRegion={loopRegion}
                   isGenerating={deckIsGenerating}
                   generatingPct={waveformProgress[deckTrack.id] ?? null}
