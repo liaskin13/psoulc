@@ -398,6 +398,9 @@ function ArchitectConsole({
     audioDuration > 0
   );
 
+  const vibeRef = useRef(null);
+  const waveformHoveredRef = useRef(false);
+
   const { vuRef, specRef, energyRef } = useAudioAnalyzer({
     isPlaying,
     waveformData: deckHighResBars || loadedWaveformHighData,
@@ -1652,7 +1655,7 @@ function ArchitectConsole({
   kbRef.current = {
     editingTrackId, editingCueNum, currentTime, audioDuration,
     handlePlayPause, handleLoadDeck, handleCue, handleHotCueClick, handleSeek,
-    setShowShortcuts,
+    setShowShortcuts, stepZoom, waveformHoveredRef,
   };
 
   // Performance keyboard shortcuts — registered once, reads live values via kbRef
@@ -1698,11 +1701,87 @@ function ArchitectConsole({
       if (e.code === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         kb.handleSeek(Math.min(kb.audioDuration, kb.currentTime + 5));
+        return;
+      }
+      if (e.code === "ArrowUp" && !e.ctrlKey && !e.metaKey) {
+        if (kb.waveformHoveredRef.current) {
+          e.preventDefault();
+          kb.stepZoom(+1);
+        }
+        return;
+      }
+      if (e.code === "ArrowDown" && !e.ctrlKey && !e.metaKey) {
+        if (kb.waveformHoveredRef.current) {
+          e.preventDefault();
+          kb.stepZoom(-1);
+        }
+        return;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // Vibe Meter: PSC-exclusive per-track energy score drawn on vibeRef canvas
+  useEffect(() => {
+    const canvas = vibeRef.current;
+    if (!canvas) return;
+    const bars = deckHighResBars || loadedWaveformHighData;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.getBoundingClientRect().width || canvas.offsetWidth || 120;
+    const h = 64;
+    canvas.width  = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    if (!bars || bars.length === 0) {
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+      return;
+    }
+
+    const mean = bars.reduce((s, b) => s + b.peak, 0) / bars.length;
+    const peakDensity = bars.filter(b => b.peak > 0.75).length / bars.length;
+    const score = Math.min(100, Math.round((mean * 0.6 + peakDensity * 0.4) * 200));
+
+    let vibeR, vibeG, vibeB;
+    let label;
+    if (score >= 67) {
+      vibeR = 200; vibeG = 50; vibeB = 40; label = "HIGH";
+    } else if (score >= 34) {
+      vibeR = 200; vibeG = 130; vibeB = 40; label = "MID";
+    } else {
+      vibeR = 80; vibeG = 110; vibeB = 140; label = "LOW";
+    }
+
+    // Background tint
+    ctx.fillStyle = `rgba(${vibeR},${vibeG},${vibeB},0.15)`;
+    ctx.fillRect(0, 0, w, h);
+
+    // Energy bar from bottom
+    const barH = Math.round((score / 100) * h);
+    ctx.fillStyle = `rgba(${vibeR},${vibeG},${vibeB},0.70)`;
+    ctx.fillRect(0, h - barH, w, barH);
+
+    // Score text
+    ctx.fillStyle = "rgba(255,255,255,0.90)";
+    ctx.font = `bold ${Math.round(w * 0.22)}px 'JetBrains Mono', monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(score, w / 2, h * 0.38);
+
+    // Label
+    ctx.fillStyle = `rgba(${vibeR},${vibeG},${vibeB},1)`;
+    ctx.font = `${Math.round(w * 0.13)}px 'Chakra Petch', monospace`;
+    ctx.letterSpacing = "0.08em";
+    ctx.fillText(label, w / 2, h * 0.70);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }, [deckHighResBars, loadedWaveformHighData]);
 
   const isD = viewer === "D";
 
@@ -1807,31 +1886,29 @@ function ArchitectConsole({
           </div>
         </div>
 
-        {/* Waveform row — VU + Energy Map left column, waveform + spectrum right */}
+        {/* Waveform row — VU + Vibe Meter | main WF | SA */}
         <div className="arch-waveform-row" aria-hidden="true">
           <div className="arch-vu-col">
-            <canvas
-              ref={vuRef}
-              className="arch-vu-deck"
-            />
-            <canvas
-              ref={energyRef}
-              className="arch-energy-map"
-            />
+            <canvas ref={vuRef} className="arch-vu-deck" />
+            <canvas ref={vibeRef} className="arch-vibe-meter" />
           </div>
           <div className="arch-waveform-col">
-            {deckTrack && waveformZoomPresets && (
-              <div style={{ display:"flex", justifyContent:"flex-end", alignItems:"center", gap:2 }}>
-                <button className="arch-deck-tool-btn" onClick={() => stepZoom(-1)}>−</button>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:"0.52rem",
-                               letterSpacing:"0.04em", color:"rgba(210,225,235,0.55)",
-                               minWidth:26, textAlign:"center" }}>
-                  {deckHighResBars ? Math.round(deckHighResBars.length / (waveformZoom * 50)) + "s" : ""}
-                </span>
-                <button className="arch-deck-tool-btn" onClick={() => stepZoom(+1)}>+</button>
-              </div>
-            )}
-            <div className="arch-waveform-main">
+            <div
+              className="arch-waveform-main"
+              onMouseEnter={() => { waveformHoveredRef.current = true; }}
+              onMouseLeave={() => { waveformHoveredRef.current = false; }}
+            >
+              {deckTrack && deckHighResBars && (
+                <div style={{
+                  position: "absolute", top: 4, right: 6, zIndex: 1,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "0.45rem", letterSpacing: "0.08em",
+                  color: "rgba(255,255,255,0.22)",
+                  pointerEvents: "none", userSelect: "none",
+                }}>
+                  {Math.round(deckHighResBars.length / (waveformZoom * 50))}s ↑↓
+                </div>
+              )}
               {!deckTrack ? (
                 <div className="arch-deck-empty-state">SELECT A TRACK</div>
               ) : (
@@ -1846,20 +1923,20 @@ function ArchitectConsole({
                   onSeek={deckCanSeek ? handleSeek : null}
                   trackId={deckTrack.id}
                   width={800}
-                  height={156}
+                  height={200}
                   hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
                   zoom={waveformZoom}
                   loopRegion={loopRegion}
                   isGenerating={deckIsGenerating}
                   generatingPct={waveformProgress[deckTrack.id] ?? null}
+                  bpm={resolveTrackBpm(deckTrack)}
                 />
               )}
             </div>
-            <canvas
-              ref={specRef}
-              className="arch-spectrum-deck"
-            />
+          </div>
+          <div className="arch-sa-col">
+            <canvas ref={specRef} className="arch-spectrum-deck" />
           </div>
         </div>
 

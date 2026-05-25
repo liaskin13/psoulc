@@ -596,12 +596,12 @@
     0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
-/* Left column: VU meter stacked above Energy Map */
+/* Left column: VU meter stacked above Vibe Meter */
 .arch-vu-col {
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
-  width: clamp(72px, 14%, 120px);
+  width: clamp(110px, 20%, 160px);
   gap: 4px;
 }
 
@@ -613,18 +613,18 @@
   background:
     linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.12) 0%, rgba(0, 0, 0, 0.78) 100%);
   width: 100%;
-  height: 156px;
+  height: 200px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 0 20px rgba(var(--arch-accent-rgb), 0.16);
 }
 
-/* Energy Map: full-track waveform envelope below VU */
-.arch-energy-map {
+/* Vibe Meter: PSC-exclusive per-track energy fingerprint */
+.arch-vibe-meter {
   display: block;
-  flex: 1;
-  min-height: 40px;
+  flex-shrink: 0;
   width: 100%;
+  height: 64px;
   image-rendering: pixelated;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.14);
   background: rgba(0, 0, 0, 0.5);
@@ -638,10 +638,20 @@
   gap: 4px;
 }
 
+/* SA column: live spectrum analyzer, slightly wider than vibe meter */
+.arch-sa-col {
+  width: clamp(120px, 22%, 175px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
 .arch-spectrum-deck {
   display: block;
   width: 100%;
-  height: 96px;
+  height: 64px;
   image-rendering: pixelated;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.22);
   background: linear-gradient(180deg, rgba(5, 8, 15, 1) 0%, rgba(0, 0, 0, 1) 100%);
@@ -676,7 +686,7 @@
   align-items: stretch;
   justify-content: stretch;
   gap: 1.5px;
-  height: 156px;
+  height: 224px;
   overflow: hidden;
   position: relative;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
@@ -788,16 +798,15 @@
   }
 
   .arch-vu-deck {
-    width: clamp(60px, 13%, 100px);
-    height: 134px;
+    height: 170px;
   }
 
   .arch-waveform-main {
-    height: 134px;
+    height: 194px;
   }
 
   .arch-spectrum-deck {
-    height: 80px;
+    height: 56px;
   }
 }
 
@@ -808,17 +817,16 @@
   }
 
   .arch-vu-deck {
-    width: clamp(52px, 12%, 84px);
-    height: 120px;
+    height: 150px;
   }
 
   .arch-waveform-main {
-    height: 120px;
+    height: 174px;
     gap: 1.2px;
   }
 
   .arch-spectrum-deck {
-    height: 68px;
+    height: 48px;
   }
 
 }

@@ -1,9 +1,8 @@
 // Canvas-based waveform renderer for deck view.
 // Physics-correct Serato model: bass→RED, mid→GREEN, high→BLUE.
-// Each band is drawn as its own semi-transparent layer at screen blend mode so
-// they combine additively: bass+mid=yellow, mid+high=cyan, all=white.
-// Each band's bar height is proportional to that band's own amplitude, so
-// spectral structure is visible within every bar.
+// Per-channel power curves suppress kick bleed into mid band:
+//   bass^2.0 (gentle), mid^3.5 (steep), high^1.8 (gentle → visible hi-hats)
+// Pinpoint peaks: dim body (60%) + bright 2px tip.
 
 import { useEffect, useRef } from "react";
 
@@ -14,13 +13,14 @@ export default function DeckWaveform({
   onSeek = null,
   trackId = "default",
   width = 800,
-  height = 120,
+  height = 200,
   hotCues = {},
   cueColors = [],
   zoom = 1,
   loopRegion = null,
   isGenerating = false,
   generatingPct = null,
+  bpm = null,
 }) {
   const canvasRef      = useRef(null);
   const overviewRef    = useRef(null);
@@ -41,11 +41,16 @@ export default function DeckWaveform({
 
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
-    const w   = canvas.offsetWidth || width;
+    let w = canvas.getBoundingClientRect().width || width;
 
-    canvas.width  = w * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
+    function setupCanvas() {
+      w = canvas.getBoundingClientRect().width || width;
+      canvas.width  = Math.round(w * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
+    setupCanvas();
 
     function draw() {
       const ct      = currentTimeRef.current;
@@ -74,6 +79,9 @@ export default function DeckWaveform({
       const playheadX    = w / 2;
       const halfH        = height / 2;
 
+      const startTimeSec = startBar / 50;
+      const endTimeSec   = endBar   / 50;
+
       // Loop region highlight
       if (loopRegion?.start != null && dur > 0) {
         const lsx = (((loopRegion.start / dur) * barCount - startBar) / (endBar - startBar)) * w;
@@ -92,6 +100,24 @@ export default function DeckWaveform({
         }
       }
 
+      // Beat grid — drawn before bars so bars render on top
+      if (bpm && bpm > 0) {
+        const beat4Sec = (60 / bpm) * 4;
+        const beat8Sec = (60 / bpm) * 8;
+        const firstBeat4 = Math.ceil(startTimeSec / beat4Sec) * beat4Sec;
+        for (let t = firstBeat4; t <= endTimeSec + beat4Sec; t += beat4Sec) {
+          const isEight = Math.abs((t / beat8Sec) - Math.round(t / beat8Sec)) < 0.01;
+          const xPos = ((t * 50 - startBar) / (endBar - startBar)) * w;
+          if (xPos < 0 || xPos > w) continue;
+          ctx.strokeStyle = isEight
+            ? "rgba(0,220,110,0.55)"
+            : "rgba(0,220,110,0.30)";
+          ctx.lineWidth = isEight ? 1.5 : 0.75;
+          ctx.beginPath(); ctx.moveTo(xPos, 0); ctx.lineTo(xPos, height); ctx.stroke();
+        }
+        ctx.lineWidth = 1;
+      }
+
       for (let px = 0; px < Math.ceil(w); px++) {
         const isPast  = px < playheadX;
         const dimMult = isPast ? 0.45 : 1.0;
@@ -105,17 +131,22 @@ export default function DeckWaveform({
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const barH = Math.max(1, Math.max(
-            Math.pow(d.bass, 2.5),
-            Math.pow(d.mid,  2.5),
-            Math.pow(d.high, 2.5)
-          ) * halfH * 0.96);
-          const r = Math.round(d.bass * 255 * dimMult);
-          const g = Math.round(d.mid  * 255 * dimMult);
-          const b = Math.round(d.high * 255 * dimMult);
+          const rawR = Math.pow(d.bass, 2.0);
+          const rawG = Math.pow(d.mid,  3.5);
+          const rawB = Math.pow(d.high, 1.8);
+          const barH = Math.max(2, Math.max(rawR, rawG, rawB) * halfH * 0.96);
+          const r = Math.round(rawR * 255 * dimMult);
+          const g = Math.round(rawG * 255 * dimMult);
+          const b = Math.round(rawB * 255 * dimMult);
+          const bodyH = Math.max(0, barH - 2);
+          // Dim body at 60%
+          ctx.fillStyle = `rgb(${Math.round(r*0.6)},${Math.round(g*0.6)},${Math.round(b*0.6)})`;
+          ctx.fillRect(px, halfH - barH, 1, bodyH);
+          ctx.fillRect(px, halfH + 2,    1, bodyH);
+          // Bright 2px tip
           ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.fillRect(px, halfH - barH, 1, barH);
-          ctx.fillRect(px, halfH,        1, barH);
+          ctx.fillRect(px, halfH - barH, 1, 2);
+          ctx.fillRect(px, halfH,        1, 2);
         } else {
           const barH = Math.max(1, d.peak * halfH);
           const cr = Math.round(parseInt(d.freq.slice(1,3),16) * dimMult);
@@ -127,15 +158,13 @@ export default function DeckWaveform({
         }
       }
 
-      // Time ruler ticks — no labels (left of playhead counts down, right counts up)
-      const startTimeSec = startBar / 50;
-      const endTimeSec   = endBar   / 50;
+      // Time ruler ticks — full height lines every second
       ctx.lineWidth = 1;
       for (let sec = Math.ceil(startTimeSec); sec <= Math.floor(endTimeSec); sec++) {
         const xPos  = ((sec * 50 - startBar) / (endBar - startBar)) * w;
         const is5   = sec % 5 === 0;
         const tickH = is5 ? 6 : 3;
-        ctx.strokeStyle = `rgba(255,255,255,${is5 ? 0.35 : 0.15})`;
+        ctx.strokeStyle = `rgba(255,255,255,${is5 ? 0.60 : 0.28})`;
         ctx.beginPath(); ctx.moveTo(xPos, 0);      ctx.lineTo(xPos, tickH);          ctx.stroke();
         ctx.beginPath(); ctx.moveTo(xPos, height); ctx.lineTo(xPos, height - tickH); ctx.stroke();
       }
@@ -150,12 +179,14 @@ export default function DeckWaveform({
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(playheadX, 0); ctx.lineTo(playheadX, height); ctx.stroke();
 
-      // Hot cue markers
+      // Hot cue markers — positioned in zoomed window coordinates
       ctx.textAlign = "center";
       Object.entries(hotCues).forEach(([num, cue]) => {
         if (!cue || typeof cue.time !== "number") return;
-        const n     = parseInt(num, 10);
-        const x     = (cue.time / dur) * w;
+        const n = parseInt(num, 10);
+        const cueBar = (cue.time / dur) * barCount;
+        const x = ((cueBar - startBar) / (endBar - startBar)) * w;
+        if (x < -10 || x > w + 10) return;
         const color = cueColors[n - 1] || "#ffffff";
         const isB2  = n > 8;
 
@@ -191,9 +222,12 @@ export default function DeckWaveform({
       animFrameRef.current = raf;
     }
 
-    return () => { if (raf) cancelAnimationFrame(raf); };
+    const ro = new ResizeObserver(() => { setupCanvas(); draw(); });
+    ro.observe(canvas);
+
+    return () => { if (raf) cancelAnimationFrame(raf); ro.disconnect(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waveformData, trackId, width, height, hotCues, cueColors, zoom, loopRegion]);
+  }, [waveformData, trackId, width, height, hotCues, cueColors, zoom, loopRegion, bpm]);
 
   // Prevent page scroll when cursor is over waveform
   useEffect(() => {
@@ -204,17 +238,18 @@ export default function DeckWaveform({
     return () => canvas.removeEventListener("wheel", onWheel);
   }, []);
 
-  // Overview strip — spiky power curve matches main waveform
+  // Overview strip — average peak (not max) for energy profile readability
   useEffect(() => {
     const canvas = overviewRef.current;
     if (!canvas || !waveformData?.length || !duration) return;
 
     const OVERVIEW_H = 24;
     const dpr = window.devicePixelRatio || 1;
-    const w   = canvas.offsetWidth || 800;
-    canvas.width  = w * dpr;
-    canvas.height = OVERVIEW_H * dpr;
+    const w   = canvas.getBoundingClientRect().width || 800;
+    canvas.width  = Math.round(w * dpr);
+    canvas.height = Math.round(OVERVIEW_H * dpr);
     const ctx = canvas.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, w, OVERVIEW_H);
 
@@ -225,18 +260,24 @@ export default function DeckWaveform({
     for (let px = 0; px < w; px++) {
       const bStart = Math.floor(px * barsPerPx);
       const bEnd   = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
-      let maxPeak = 0, best = null;
+      let sum = 0, count = 0, maxPeak = 0, best = null;
       for (let b = bStart; b < bEnd; b++) {
-        if (bars[b] && bars[b].peak > maxPeak) { maxPeak = bars[b].peak; best = bars[b]; }
+        if (!bars[b]) continue;
+        sum += bars[b].peak; count++;
+        if (bars[b].peak > maxPeak) { maxPeak = bars[b].peak; best = bars[b]; }
       }
       if (!best) continue;
 
-      const overallH = Math.max(1, Math.round(Math.pow(maxPeak, 2.5) * OVERVIEW_H));
+      const avgPeak  = sum / count;
+      const overallH = Math.max(1, Math.round(Math.pow(avgPeak, 1.5) * OVERVIEW_H));
 
       if (best.bass !== undefined) {
-        const r = Math.round(best.bass * 255);
-        const g = Math.round(best.mid  * 255);
-        const b = Math.round(best.high * 255);
+        const rawR = Math.pow(best.bass, 2.0);
+        const rawG = Math.pow(best.mid,  3.5);
+        const rawB = Math.pow(best.high, 1.8);
+        const r = Math.round(rawR * 255);
+        const g = Math.round(rawG * 255);
+        const b = Math.round(rawB * 255);
         ctx.fillStyle = `rgb(${r},${g},${b})`;
         ctx.fillRect(px, OVERVIEW_H - overallH, 1, overallH);
       } else {
@@ -298,11 +339,6 @@ export default function DeckWaveform({
         </div>
       )}
       <canvas
-        ref={overviewRef}
-        onClick={handleOverviewClick}
-        style={{ width: "100%", height: "24px", cursor: onSeek ? "pointer" : "default", display: "block", flexShrink: 0 }}
-      />
-      <canvas
         ref={canvasRef}
         onClick={handleClick}
         style={{
@@ -312,6 +348,11 @@ export default function DeckWaveform({
           display: "block",
           flex: 1,
         }}
+      />
+      <canvas
+        ref={overviewRef}
+        onClick={handleOverviewClick}
+        style={{ width: "100%", height: "24px", cursor: onSeek ? "pointer" : "default", display: "block", flexShrink: 0 }}
       />
     </div>
   );
