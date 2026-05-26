@@ -1,12 +1,21 @@
 {
-    "chat.tools.terminal.autoApprove": {
-        "npm install": true,
-        "/^node -e \"require\\('@supabase/supabase-js'\\); console\\.log\\('OK'\\)\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
-    },
-    "github.copilot.chat.rateLimitAutoSwitchToAuto": true,
-    "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true,
-    "github.copilot.chat.agent.autoFix": true
+  "chat.tools.terminal.autoApprove": {
+    "npm install": true,
+    "/^node -e \"require\\('@supabase/supabase-js'\\); console\\.log\\('OK'\\)\"$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  },
+  "github.copilot.chat.rateLimitAutoSwitchToAuto": true,
+  "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true,
+  "github.copilot.chat.agent.autoFix": true,
+  "github.copilot.chat.switchAgent.enabled": true,
+  "github.copilot.chat.languageContext.typescript.includeDocumentation": true,
+  "github.copilot.chat.languageContext.fix.typescript.enabled": true,
+  "github.copilot.chat.languageContext.inline.typescript.enabled": true,
+  "github.copilot.chat.anthropic.tools.websearch.enabled": true,
+  "github.copilot.chat.anthropic.contextEditing.mode": "clear-thinking",
+  "github.copilot.chat.alternateGeminiModelFPrompt.enabled": true,
+  "github.copilot.chat.codesearch.enabled": true,
+  "github.copilot.chat.claudeAgent.allowAutoPermissions": true
 }

@@ -601,7 +601,7 @@
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
-  width: clamp(110px, 20%, 160px);
+  width: clamp(72px, 14%, 120px);
   gap: 4px;
 }
 
@@ -613,7 +613,7 @@
   background:
     linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.12) 0%, rgba(0, 0, 0, 0.78) 100%);
   width: 100%;
-  height: 200px;
+  height: 156px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 0 20px rgba(var(--arch-accent-rgb), 0.16);
@@ -624,7 +624,7 @@
   display: block;
   flex-shrink: 0;
   width: 100%;
-  height: 64px;
+  height: 96px;
   image-rendering: pixelated;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.14);
   background: rgba(0, 0, 0, 0.5);
@@ -638,20 +638,28 @@
   gap: 4px;
 }
 
-/* SA column: live spectrum analyzer, slightly wider than vibe meter */
-.arch-sa-col {
-  width: clamp(120px, 22%, 175px);
-  flex-shrink: 0;
+/* Analyzer row: Vibe Meter (1/3) + SA (2/3) */
+.arch-analyzer-row {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 4px;
+  gap: 8px;
+  height: 96px;
+  margin-top: 8px;
+}
+
+.arch-vibe-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.arch-sa-col {
+  flex: 2;
+  min-width: 0;
 }
 
 .arch-spectrum-deck {
   display: block;
   width: 100%;
-  height: 64px;
+  height: 96px;
   image-rendering: pixelated;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.22);
   background: linear-gradient(180deg, rgba(5, 8, 15, 1) 0%, rgba(0, 0, 0, 1) 100%);
@@ -686,7 +694,7 @@
   align-items: stretch;
   justify-content: stretch;
   gap: 1.5px;
-  height: 224px;
+  height: 116px;
   overflow: hidden;
   position: relative;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
@@ -785,6 +793,7 @@
   display: flex;
   align-items: center;
   height: 40px;
+  min-height: 40px;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.12);
   background: oklch(0.04 0.006 220);
   overflow: hidden;
@@ -798,15 +807,15 @@
   }
 
   .arch-vu-deck {
-    height: 170px;
+    height: 134px;
   }
 
   .arch-waveform-main {
-    height: 194px;
+    height: 94px;
   }
 
   .arch-spectrum-deck {
-    height: 56px;
+    height: 80px;
   }
 }
 
@@ -817,16 +826,16 @@
   }
 
   .arch-vu-deck {
-    height: 150px;
+    height: 120px;
   }
 
   .arch-waveform-main {
-    height: 174px;
+    height: 80px;
     gap: 1.2px;
   }
 
   .arch-spectrum-deck {
-    height: 48px;
+    height: 68px;
   }
 
 }
@@ -995,31 +1004,38 @@
   transition: border-color 80ms, color 80ms;
   white-space: nowrap;
 }
+
 .arch-btn:hover {
   border-color: rgba(255, 255, 255, 0.22);
   color: rgba(255, 255, 255, 0.70);
 }
+
 .arch-btn.active {
   border-color: transparent;
   border-bottom: 2px solid var(--arch-accent);
   color: var(--arch-accent);
 }
+
 .arch-btn.primary {
   border-color: rgba(255, 255, 255, 0.20);
   color: rgba(255, 255, 255, 0.72);
 }
+
 .arch-btn.primary:hover {
   border-color: rgba(255, 255, 255, 0.45);
   color: #fff;
 }
+
 .arch-btn.danger {
   color: rgba(200, 40, 20, 0.70);
   border-color: rgba(200, 40, 20, 0.25);
 }
+
 .arch-btn.danger:hover {
   color: rgba(220, 60, 40, 0.90);
   border-color: rgba(200, 40, 20, 0.55);
 }
+
 .arch-btn:disabled {
   opacity: 0.25;
   cursor: not-allowed;
@@ -1246,8 +1262,13 @@
 }
 
 @keyframes arch-cue-clear-pulse {
-  from { box-shadow: inset 0 -2px 0 rgba(0,0,0,0.55), 0 0 0 1.5px oklch(0.62 0.22 25 / 0.4); }
-  to   { box-shadow: inset 0 -2px 0 rgba(0,0,0,0.55), 0 0 0 1.5px oklch(0.62 0.22 25 / 0.9); }
+  from {
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.55), 0 0 0 1.5px oklch(0.62 0.22 25 / 0.4);
+  }
+
+  to {
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.55), 0 0 0 1.5px oklch(0.62 0.22 25 / 0.9);
+  }
 }
 
 /* Keyboard shortcut legend — toggled by ? key */
@@ -1499,7 +1520,7 @@
   scrollbar-width: none;
   z-index: 50;
   transition: width 220ms cubic-bezier(0.25, 1, 0.5, 1),
-              padding 220ms cubic-bezier(0.25, 1, 0.5, 1);
+    padding 220ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .arch-rail--open {
@@ -2249,8 +2270,13 @@
 }
 
 @keyframes arch-retract-pulse {
-  from { border-color: oklch(0.72 0.18 30 / 0.35); }
-  to   { border-color: oklch(0.72 0.18 30 / 0.75); }
+  from {
+    border-color: oklch(0.72 0.18 30 / 0.35);
+  }
+
+  to {
+    border-color: oklch(0.72 0.18 30 / 0.75);
+  }
 }
 
 .arch-track-wave-mini {
@@ -3289,6 +3315,7 @@
     box-shadow: none;
   }
 }
+
 /* ── PSC DISPLAY BAR ────────────────────────────────────────────────────── */
 .arch-display-bar {
   position: relative;
