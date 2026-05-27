@@ -22,6 +22,7 @@ export default function DeckWaveform({
   isGenerating = false,
   generatingPct = null,
   bpm = null,
+  getTime = null,
 }) {
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
@@ -30,6 +31,10 @@ export default function DeckWaveform({
   const currentTimeRef = useRef(currentTime);
   const durationRef = useRef(duration);
   const zoomRef = useRef(zoom);
+  // Live time function — updated every render so rAF closure always has latest.
+  // When provided, bypasses React state for 60fps-smooth playhead positioning.
+  const getTimeRef = useRef(getTime);
+  getTimeRef.current = getTime;
 
   currentTimeRef.current = currentTime;
   durationRef.current = duration;
@@ -53,7 +58,7 @@ export default function DeckWaveform({
     setupCanvas();
 
     function draw() {
-      const ct = currentTimeRef.current;
+      const ct = getTimeRef.current ? getTimeRef.current() : currentTimeRef.current;
       const dur = durationRef.current;
       const zTarget = zoomRef.current;
 

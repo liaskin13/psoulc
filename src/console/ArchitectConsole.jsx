@@ -705,27 +705,6 @@ function ArchitectConsole({
     return unsub;
   }, []);
 
-  useEffect(() => {
-    if (!isPlaying) {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-      return;
-    }
-    const tick = () => {
-      const s = audioEngine.getState();
-      setCurrentTime(s.currentTime);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-    };
-  }, [isPlaying]);
 
   const handleVaultSelect = (vaultId) => {
     const next = vaultId === activeVault ? null : vaultId;
@@ -2188,6 +2167,7 @@ function ArchitectConsole({
                   isGenerating={deckIsGenerating}
                   generatingPct={waveformProgress[deckTrack.id] ?? null}
                   bpm={resolveTrackBpm(deckTrack)}
+                  getTime={loadedTrack?.id === deckTrack?.id ? () => audioEngine.getState().currentTime : null}
                 />
               )}
             </div>
