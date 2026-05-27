@@ -4,11 +4,12 @@
 import { useEffect, useRef } from "react";
 import { getAudioElement, getAudioContext } from "../lib/audioEngine.js";
 
-const BASS_HEX  = "#1464dc";
-const MID_HEX   = "#14dc14";
-const PEAK_TICK = "rgba(240,237,232,0.85)";
-const SPEC_N    = 150;
-const FLOOR_PCT = 0.06; // minimum bar height as fraction of canvas height
+const BASS_HEX    = "#1464dc";
+const MID_HEX     = "#14dc14";
+const PEAK_TICK   = "rgba(240,237,232,0.85)";
+const SPEC_N      = 150;
+const FLOOR_PCT   = 0.06; // minimum bar height as fraction of canvas height
+const BPM_BUF_SIZE = 240; // 4 seconds × ~60 Hz rAF rate
 
 // Maps frequency position + amplitude to a color matching the V2 waveform palette.
 // freqT: 0 = lowest frequency bar (bass), 1 = highest (treble).
@@ -23,7 +24,7 @@ export function specBarColor(normH, freqT, alpha = 1) {
 
 // Props: { isPlaying, waveformData, currentTime, duration, hotCues? }
 // waveformData = array of { peak: 0-1, freq: "#rrggbb", bass?: 0-1, high?: 0-1 }
-// Returns: { vuRef, specRef, energyRef }
+// Returns: { vuRef, specRef, energyRef, bpmResultRef }
 export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime, duration, hotCues }) {
   const vuRef       = useRef(null);
   const specRef     = useRef(null);
@@ -41,6 +42,19 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
 
   // Frame counter for throttling energy map redraws (4fps on 60fps RAF)
   const frameCountRef = useRef(0);
+
+  // BPM ring buffer — one bass-bin RMS sample per rAF frame (~60 Hz effective rate)
+  const bpmBufferRef = useRef(new Float32Array(BPM_BUF_SIZE));
+  const bpmWriteRef  = useRef(0);
+  const bpmResultRef = useRef({ bpm: null, confidence: 0 });
+
+  // Needle/arc gauge canvases
+  const loudnessRef = useRef(null);
+
+  // EMA state for smooth needle gauges
+  const vuEmaRef         = useRef(0);
+  const loudnessEmaRef   = useRef(0);
+  const lastFrameTimeRef = useRef(performance.now());
 
   // liveRef carries values into the RAF loop without re-triggering the effect
   const liveRef = useRef({ waveformData, currentTime, duration, hotCues, isPlaying });
@@ -119,10 +133,21 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       }
       const vu = vuRef.current;
       if (vu) {
-        const vuW = vu.offsetWidth || 120;
-        const vuH = vu.offsetHeight || 156;
+        const vuW = vu.offsetWidth || 72;
+        const vuH = vu.offsetHeight || 96;
         if (vu.width !== vuW || vu.height !== vuH) { vu.width = vuW; vu.height = vuH; }
-        drawVU(vu.getContext("2d"), vu.width, vu.height, 0, 0, 0, 0);
+        drawNeedleGauge(vu.getContext("2d"), vu.width, vu.height, {
+          value: 0, scale: VU_SCALE, arcColor: "#c8860a", redZone: 0.87, label: "VU",
+        });
+      }
+      const loudnessIdle = loudnessRef.current;
+      if (loudnessIdle) {
+        const lW = loudnessIdle.offsetWidth || 72;
+        const lH = loudnessIdle.offsetHeight || 96;
+        if (loudnessIdle.width !== lW || loudnessIdle.height !== lH) { loudnessIdle.width = lW; loudnessIdle.height = lH; }
+        drawNeedleGauge(loudnessIdle.getContext("2d"), loudnessIdle.width, loudnessIdle.height, {
+          value: 0, scale: LOUDNESS_SCALE, arcColor: "#c8860a", redZone: 0.90, label: "dBFS",
+        });
       }
 
       // Draw energy map using available waveformData, or ghost grid if none loaded
@@ -169,36 +194,36 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         freqBins = freqDataRef.current;
       }
 
-      // ── VU (live FFT: bass bins → L, high bins → R) ──────────────────────
+      // EMA dt clamp: prevents spike on first frame or after tab backgrounded
+      const now = performance.now();
+      const dt = Math.min(now - lastFrameTimeRef.current, 50);
+      lastFrameTimeRef.current = now;
+      const alpha = 1 - Math.exp(-dt / 300);
+
+      // ── VU needle gauge ──────────────────────────────────────────────────
       const vu = vuRef.current;
       if (vu) {
-        const vuW = vu.offsetWidth || 120;
-        const vuH = vu.offsetHeight || 156;
+        const vuW = vu.offsetWidth || 72;
+        const vuH = vu.offsetHeight || 96;
         if (vu.width !== vuW || vu.height !== vuH) { vu.width = vuW; vu.height = vuH; }
         const ctx = vu.getContext("2d");
-        const W = vu.width, H = vu.height;
-        ctx.clearRect(0, 0, W, H);
 
         let rL, rR;
         if (freqBins) {
-          // Bass: bins 0–40 (~0–1.7kHz), High: bins 500–900 (~20–37kHz)
-          const bassEnd  = Math.min(40, freqBins.length);
+          const bassEnd   = Math.min(40, freqBins.length);
           const highStart = Math.min(500, freqBins.length - 1);
           const highEnd   = Math.min(900, freqBins.length);
-
           let bassSum = 0;
           for (let i = 0; i < bassEnd; i++) bassSum += freqBins[i];
           rL = bassSum / (bassEnd * 255);
-
           let highSum = 0;
           for (let i = highStart; i < highEnd; i++) highSum += freqBins[i];
           rR = highSum / ((highEnd - highStart) * 255);
         } else if (hasPreAnalyzed) {
-          // Pre-analyzed fallback
-          const barIndex  = Math.min(Math.floor((t / dur) * bars.length), bars.length - 1);
-          const W_HALF    = 7;
+          const barIndex   = Math.min(Math.floor((t / dur) * bars.length), bars.length - 1);
+          const W_HALF     = 7;
           const windowBars = bars.slice(Math.max(0, barIndex - W_HALF), Math.min(bars.length, barIndex + W_HALF + 1));
-          const avgPeak = windowBars.reduce((s, b) => s + b.peak, 0) / (windowBars.length || 1);
+          const avgPeak    = windowBars.reduce((s, b) => s + b.peak, 0) / (windowBars.length || 1);
           if (windowBars[0]?.bass !== undefined) {
             rL = windowBars.reduce((s, b) => s + b.bass, 0) / windowBars.length;
             rR = windowBars.reduce((s, b) => s + b.high, 0) / windowBars.length;
@@ -219,7 +244,64 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         peakL.current = Math.max(peakL.current * 0.97, rL);
         peakR.current = Math.max(peakR.current * 0.97, rR);
 
-        drawVU(ctx, W, H, rL, rR, peakL.current, peakR.current);
+        const monoRms = Math.sqrt((rL * rL + rR * rR) / 2);
+        const vuDb    = monoRms > 0 ? Math.max(-20, Math.min(3, 20 * Math.log10(monoRms / 0.7))) : -20;
+        const vuNorm  = (vuDb + 20) / 23;
+        vuEmaRef.current = vuEmaRef.current + alpha * (vuNorm - vuEmaRef.current);
+
+        drawNeedleGauge(ctx, vu.width, vu.height, {
+          value: vuEmaRef.current,
+          scale: VU_SCALE,
+          arcColor: "#c8860a",
+          redZone: 0.87,
+          label: "VU",
+        });
+
+        // BPM ring: write bass-bin RMS each frame; detect every 30 frames (~500ms)
+        if (freqBins) {
+          const bassEnd = Math.min(40, freqBins.length);
+          let bassSum = 0;
+          for (let i = 0; i < bassEnd; i++) bassSum += freqBins[i];
+          const bassRms = bassSum / (bassEnd * 255);
+          bpmBufferRef.current[bpmWriteRef.current % BPM_BUF_SIZE] = bassRms;
+          bpmWriteRef.current++;
+          if (frameCountRef.current % 30 === 0) {
+            bpmResultRef.current = detectBpm(bpmBufferRef.current, 60);
+          }
+        }
+      }
+
+      // ── Loudness needle gauge ─────────────────────────────────────────────
+      const loudness = loudnessRef.current;
+      if (loudness) {
+        const lW = loudness.offsetWidth || 72;
+        const lH = loudness.offsetHeight || 96;
+        if (loudness.width !== lW || loudness.height !== lH) { loudness.width = lW; loudness.height = lH; }
+        const ctx = loudness.getContext("2d");
+
+        let rms = 0;
+        if (freqBins) {
+          let sum = 0;
+          for (let i = 0; i < freqBins.length; i++) sum += (freqBins[i] / 255) ** 2;
+          rms = Math.sqrt(sum / freqBins.length);
+        } else if (hasPreAnalyzed) {
+          const barIndex   = Math.min(Math.floor((t / dur) * bars.length), bars.length - 1);
+          const W_HALF     = 7;
+          const windowBars = bars.slice(Math.max(0, barIndex - W_HALF), Math.min(bars.length, barIndex + W_HALF + 1));
+          rms = windowBars.reduce((s, b) => s + b.peak, 0) / (windowBars.length || 1);
+        }
+
+        const dbFS      = rms > 0 ? Math.max(-40, Math.min(0, 20 * Math.log10(rms))) : -40;
+        const loudNorm  = Math.max(0, Math.min(1, (dbFS + 40) / 40));
+        loudnessEmaRef.current = loudnessEmaRef.current + alpha * (loudNorm - loudnessEmaRef.current);
+
+        drawNeedleGauge(ctx, loudness.width, loudness.height, {
+          value: loudnessEmaRef.current,
+          scale: LOUDNESS_SCALE,
+          arcColor: "#c8860a",
+          redZone: 0.90,
+          label: "dBFS",
+        });
       }
 
       // ── Spectrum (live FFT → per-bar color; pre-analyzed fallback when no FFT) ──
@@ -363,10 +445,150 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
     }
   }, [waveformData, currentTime, duration, hotCues, isPlaying]);
 
-  return { vuRef, specRef, energyRef };
+  return { vuRef, specRef, energyRef, loudnessRef, bpmResultRef };
+}
+
+// ── Gauge scale definitions ──────────────────────────────────────────────────
+
+const VU_SCALE = [
+  {l:"-20",p:0},{l:"-10",p:0.43},{l:"-7",p:0.56},{l:"-5",p:0.65},
+  {l:"-3",p:0.74},{l:"-1",p:0.83},{l:"0",p:0.87},{l:"+1",p:0.91},{l:"+3",p:1},
+];
+
+const LOUDNESS_SCALE = [
+  {l:"-40",p:0},{l:"-30",p:0.25},{l:"-20",p:0.5},{l:"-10",p:0.75},{l:"-6",p:0.85},{l:"0",p:1},
+];
+
+// ── BPM detection ────────────────────────────────────────────────────────────
+
+// Autocorrelation BPM detector on a ring buffer sampled at ~60 Hz (one sample per rAF frame).
+// Beat period in frames = sampleRate * 60 / BPM:
+//   180 BPM → 60*60/180 = 20 frames  (minPeriod)
+//    60 BPM → 60*60/60  = 60 frames  (maxPeriod)
+// ~7200 multiplications per call, runs every 500ms — trivially fast.
+// Exported for unit testing.
+export function detectBpm(buffer, sampleRate = 60) {
+  const minPeriod = Math.floor(sampleRate * 60 / 180);
+  const maxPeriod = Math.floor(sampleRate * 60 / 60);
+  let bestLag = -1, bestCorr = 0;
+  const n = buffer.length;
+  for (let lag = minPeriod; lag <= Math.min(maxPeriod, n / 2); lag++) {
+    let corr = 0, norm = 0;
+    for (let i = 0; i < n - lag; i++) {
+      corr += buffer[i] * buffer[i + lag];
+      norm += buffer[i] * buffer[i] + buffer[i + lag] * buffer[i + lag];
+    }
+    const r = norm > 0 ? 2 * corr / norm : 0;
+    if (r > bestCorr) { bestCorr = r; bestLag = lag; }
+  }
+  if (bestLag < 0) return { bpm: null, confidence: 0 };
+  return { bpm: Math.round(sampleRate / bestLag * 60), confidence: bestCorr };
 }
 
 // ── Drawing helpers ──────────────────────────────────────────────────────────
+
+// Needle/arc analog gauge. opts: { value 0-1, scale [{l,p}], arcColor, redZone 0-1|null, label }
+function drawNeedleGauge(ctx, W, H, opts) {
+  const { value = 0, scale = [], arcColor = "#c8860a", redZone = null, label = "" } = opts;
+
+  const START_DEG = 205;
+  const END_DEG   = 335;
+  const SPAN_DEG  = END_DEG - START_DEG; // 130°
+  const toRad     = (d) => (d * Math.PI) / 180;
+
+  const cx = W / 2;
+  const cy = H * 0.88;
+  const r  = Math.min(W, H) * 0.78;
+
+  // Background
+  ctx.fillStyle = "rgba(12, 8, 4, 0.92)";
+  ctx.fillRect(0, 0, W, H);
+
+  // Arc backdrop glow
+  const grd = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 1.1);
+  grd.addColorStop(0, "rgba(200,134,10,0.08)");
+  grd.addColorStop(1, "rgba(200,134,10,0)");
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Scale arc (dim amber track)
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, toRad(START_DEG), toRad(END_DEG));
+  ctx.strokeStyle = "rgba(200,134,10,0.25)";
+  ctx.lineWidth   = 3;
+  ctx.stroke();
+
+  // Red zone arc
+  if (redZone != null) {
+    const rzStart = toRad(START_DEG + redZone * SPAN_DEG);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, rzStart, toRad(END_DEG));
+    ctx.strokeStyle = "rgba(220,50,30,0.55)";
+    ctx.lineWidth   = 3;
+    ctx.stroke();
+  }
+
+  // Tick marks + labels
+  ctx.save();
+  ctx.font = `${Math.max(7, Math.round(W * 0.13))}px 'JetBrains Mono', monospace`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for (const {l, p} of scale) {
+    const angDeg = START_DEG + p * SPAN_DEG;
+    const angRad = toRad(angDeg);
+    const cos = Math.cos(angRad), sin = Math.sin(angRad);
+    const outer = r + 2;
+    const inner = r - 6;
+    const isRed = redZone != null && p >= redZone;
+    ctx.strokeStyle = isRed ? "rgba(220,80,50,0.8)" : "rgba(200,134,10,0.6)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + cos * inner, cy + sin * inner);
+    ctx.lineTo(cx + cos * outer, cy + sin * outer);
+    ctx.stroke();
+    const lx = cx + cos * (r - 14);
+    const ly = cy + sin * (r - 14);
+    ctx.fillStyle = isRed ? "rgba(220,80,50,0.9)" : "rgba(200,180,120,0.75)";
+    ctx.fillText(l, lx, ly);
+  }
+  ctx.restore();
+
+  // Needle
+  const clampedVal = Math.max(0, Math.min(1, value));
+  const needleAngle = toRad(START_DEG + clampedVal * SPAN_DEG);
+  const needleCos = Math.cos(needleAngle), needleSin = Math.sin(needleAngle);
+  const needleLen = r - 4;
+  const pivotBack = 6;
+
+  ctx.beginPath();
+  ctx.moveTo(cx - needleCos * pivotBack, cy - needleSin * pivotBack);
+  ctx.lineTo(cx + needleCos * needleLen * 0.7, cy + needleSin * needleLen * 0.7);
+  ctx.strokeStyle = "rgba(240,237,232,0.35)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(cx + needleCos * needleLen * 0.7, cy + needleSin * needleLen * 0.7);
+  ctx.lineTo(cx + needleCos * needleLen, cy + needleSin * needleLen);
+  ctx.strokeStyle = clampedVal >= (redZone ?? 2) ? "rgba(220,60,40,0.95)" : "rgba(200,134,10,0.95)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Center hub
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = arcColor;
+  ctx.fill();
+
+  // Label
+  if (label) {
+    ctx.font = `${Math.max(7, Math.round(W * 0.12))}px 'Chakra Petch', monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "rgba(200,134,10,0.5)";
+    ctx.fillText(label, cx, cy - r * 0.35);
+  }
+}
 
 function drawVU(ctx, W, H, rL, rR, peakLVal, peakRVal) {
   const bw      = Math.floor((W - 6) / 2);

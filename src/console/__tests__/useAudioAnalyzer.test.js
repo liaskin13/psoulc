@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 
 // ── specBarColor ──────────────────────────────────────────────────────────────
 
-import { specBarColor } from "../useAudioAnalyzer.js";
+import { specBarColor, detectBpm } from "../useAudioAnalyzer.js";
 
 describe("specBarColor", () => {
   it("returns red hue at bass (freqT=0)", () => {
@@ -97,6 +97,33 @@ describe("analyser singleton guard", () => {
     }
     expect(createMediaElementSource).toHaveBeenCalledTimes(1);
     expect(setupRef.current).toBe(true);
+  });
+});
+
+// ── detectBpm ─────────────────────────────────────────────────────────────────
+
+describe("detectBpm", () => {
+  it("detects ~120 BPM from a synthetic 240-sample buffer at 60 Hz", () => {
+    // 120 BPM at 60 Hz = period of 30 frames. Peaks at indices 0,30,60,...,210.
+    const buf = new Float32Array(240);
+    for (let i = 0; i < 240; i += 30) buf[i] = 1.0;
+    const { bpm, confidence } = detectBpm(buf, 60);
+    expect(bpm).toBeGreaterThanOrEqual(115);
+    expect(bpm).toBeLessThanOrEqual(125);
+    expect(confidence).toBeGreaterThan(0.3);
+  });
+
+  it("returns confidence < 0.3 for all-zeros buffer", () => {
+    const buf = new Float32Array(240); // all zeros
+    const { confidence } = detectBpm(buf, 60);
+    expect(confidence).toBeLessThan(0.3);
+  });
+
+  it("returns confidence < 0.3 for single-peak buffer (no repeating pattern)", () => {
+    const buf = new Float32Array(240);
+    buf[0] = 1.0; // only one peak — no period to detect
+    const { confidence } = detectBpm(buf, 60);
+    expect(confidence).toBeLessThan(0.3);
   });
 });
 

@@ -444,17 +444,26 @@ function ArchitectConsole({
     audioDuration > 0
   );
 
-  const vibeRef = useRef(null);
   const overviewRef = useRef(null);
   const waveformHoveredRef = useRef(false);
 
-  const { vuRef, specRef, energyRef } = useAudioAnalyzer({
+  const { vuRef, specRef, energyRef, loudnessRef, bpmResultRef } = useAudioAnalyzer({
     isPlaying,
     waveformData: deckHighResBars || loadedWaveformHighData,
     currentTime,
     duration: audioDuration,
     hotCues: deckTrack ? hotCues[deckTrack.id] || {} : {},
   });
+
+  const [liveBpm, setLiveBpm] = useState(null);
+  useEffect(() => {
+    if (!isPlaying) { setLiveBpm(null); return; }
+    const id = setInterval(() => {
+      const r = bpmResultRef.current;
+      setLiveBpm(r.confidence >= 0.3 ? r.bpm : null);
+    }, 500);
+    return () => clearInterval(id);
+  }, [isPlaying, bpmResultRef]);
 
   // Sync REACH messages for display bar
   useEffect(() => {
@@ -1263,13 +1272,12 @@ function ArchitectConsole({
 
   const handleEditSave = async (trackId) => {
     const vals = editingValues;
-    // Close and apply optimistic update immediately — no waiting for the server.
+    const originalTrack = trackListData.find((t) => t.id === trackId);
     setEditingTrackId((curr) => (curr === trackId ? null : curr));
     setEditingValues({});
     setTrackListData((prev) =>
       prev.map((t) => (t.id === trackId ? { ...t, ...vals } : t)),
     );
-    // Fire and forget — sync to server in background.
     fetch(`${UPLOAD_WORKER_URL}/tracks/${trackId}`, {
       method: "PATCH",
       headers: {
@@ -1278,10 +1286,20 @@ function ArchitectConsole({
       },
       body: JSON.stringify(vals),
     })
-      .then((res) => {
+      .then(async (res) => {
         if (!res.ok) throw new Error(`[PSC] edit PATCH ${res.status}`);
+        const result = await res.json().catch(() => ({}));
+        if (!result.success) throw new Error("[PSC] edit save: D1 returned success=false");
       })
-      .catch((err) => console.error("[PSC] edit save failed:", err));
+      .catch((err) => {
+        console.error("[PSC] edit save failed:", err);
+        if (originalTrack) {
+          setTrackListData((prev) =>
+            prev.map((t) => (t.id === trackId ? originalTrack : t)),
+          );
+        }
+        announce("Save failed — check console for details.");
+      });
   };
 
   const handleEditKeyDown = (e, trackId) => {
@@ -1843,82 +1861,6 @@ function ArchitectConsole({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Vibe Meter: PSC-exclusive per-track energy score drawn on vibeRef canvas
-  useEffect(() => {
-    const canvas = vibeRef.current;
-    if (!canvas) return;
-    const bars = deckHighResBars || loadedWaveformHighData;
-    const ctx = canvas.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.getBoundingClientRect().width || canvas.offsetWidth || 120;
-    const h = 96;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, w, h);
-
-    if (!bars || bars.length === 0) {
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, h / 2);
-      ctx.lineTo(w, h / 2);
-      ctx.stroke();
-      return;
-    }
-
-    const mean = bars.reduce((s, b) => s + b.peak, 0) / bars.length;
-    const peakDensity = bars.filter((b) => b.peak > 0.75).length / bars.length;
-    const score = Math.min(
-      100,
-      Math.round((mean * 0.6 + peakDensity * 0.4) * 200),
-    );
-
-    let vibeR, vibeG, vibeB;
-    let label;
-    if (score >= 67) {
-      vibeR = 200;
-      vibeG = 50;
-      vibeB = 40;
-      label = "HIGH";
-    } else if (score >= 34) {
-      vibeR = 200;
-      vibeG = 130;
-      vibeB = 40;
-      label = "MID";
-    } else {
-      vibeR = 80;
-      vibeG = 110;
-      vibeB = 140;
-      label = "LOW";
-    }
-
-    // Background tint
-    ctx.fillStyle = `rgba(${vibeR},${vibeG},${vibeB},0.15)`;
-    ctx.fillRect(0, 0, w, h);
-
-    // Energy bar from bottom
-    const barH = Math.round((score / 100) * h);
-    ctx.fillStyle = `rgba(${vibeR},${vibeG},${vibeB},0.70)`;
-    ctx.fillRect(0, h - barH, w, barH);
-
-    // Score text
-    ctx.fillStyle = "rgba(255,255,255,0.90)";
-    ctx.font = `bold ${Math.round(w * 0.22)}px 'JetBrains Mono', monospace`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(score, w / 2, h * 0.38);
-
-    // Label
-    ctx.fillStyle = `rgba(${vibeR},${vibeG},${vibeB},1)`;
-    ctx.font = `${Math.round(w * 0.13)}px 'Chakra Petch', monospace`;
-    ctx.letterSpacing = "0.08em";
-    ctx.fillText(label, w / 2, h * 0.7);
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-  }, [deckHighResBars, loadedWaveformHighData]);
-
   // Full-width track overview strip — spectral colors, hot cues, playhead
   useEffect(() => {
     const canvas = overviewRef.current;
@@ -2079,6 +2021,14 @@ function ArchitectConsole({
                 <strong>--</strong>
               )}
             </span>
+            {isPlaying && (
+              <span className="arch-stat arch-live-bpm">
+                LIVE{" "}
+                <strong style={{ color: "var(--accent-green, #00cc66)" }}>
+                  {liveBpm ?? "—"}
+                </strong>
+              </span>
+            )}
             <span
               className={`arch-stat arch-elapsed${isPlaying ? " arch-elapsed--playing" : ""}`}
             >
@@ -2175,16 +2125,16 @@ function ArchitectConsole({
           </div>
         </div>
 
-        {/* Analyzer row — VU (left) + Vibe Meter (center) + Spectrum Analyzer (right) */}
+        {/* Analyzer row — VU (left) + Spectrum Analyzer (center) + Loudness (right) */}
         <div className="arch-analyzer-row" aria-hidden="true">
           <div className="arch-vu-col">
             <canvas ref={vuRef} className="arch-vu-deck" />
           </div>
-          <div className="arch-vibe-col">
-            <canvas ref={vibeRef} className="arch-vibe-meter" />
-          </div>
           <div className="arch-sa-col">
             <canvas ref={specRef} className="arch-spectrum-deck" />
+          </div>
+          <div className="arch-loudness-col">
+            <canvas ref={loudnessRef} className="arch-loudness-meter" />
           </div>
         </div>
       </section>
