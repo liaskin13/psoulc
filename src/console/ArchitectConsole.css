@@ -581,6 +581,21 @@
 }
 
 /* ── WAVEFORM ROW — VU left, waveform+spectrum right ───────────────────── */
+/* Full-width track overview strip — Rekordbox-style minimap above main waveform */
+.arch-overview-row {
+  margin-bottom: 4px;
+}
+
+.arch-overview-strip {
+  display: block;
+  width: 100%;
+  height: 32px;
+  image-rendering: pixelated;
+  border: 1px solid rgba(var(--arch-accent-rgb), 0.18);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 .arch-waveform-row {
   display: flex;
   align-items: stretch;
@@ -596,24 +611,20 @@
     0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
-/* Left column: VU meter stacked above Vibe Meter */
+/* VU meter column — now lives in analyzer row */
 .arch-vu-col {
-  display: flex;
-  flex-direction: column;
   flex: 0 0 auto;
-  width: clamp(72px, 14%, 120px);
-  gap: 4px;
+  width: clamp(48px, 8%, 72px);
 }
 
 .arch-vu-deck {
   display: block;
-  flex-shrink: 0;
   image-rendering: pixelated;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.24);
   background:
     linear-gradient(180deg, rgba(var(--arch-accent-rgb), 0.12) 0%, rgba(0, 0, 0, 0.78) 100%);
   width: 100%;
-  height: 156px;
+  height: 96px;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 0 20px rgba(var(--arch-accent-rgb), 0.16);
@@ -638,9 +649,10 @@
   gap: 4px;
 }
 
-/* Analyzer row: Vibe Meter (1/3) + SA (2/3) */
+/* Analyzer row: VU (auto) + Vibe Meter (flex:1) + SA (flex:2) */
 .arch-analyzer-row {
   display: flex;
+  align-items: stretch;
   gap: 8px;
   height: 96px;
   margin-top: 8px;
@@ -694,7 +706,7 @@
   align-items: stretch;
   justify-content: stretch;
   gap: 1.5px;
-  height: 116px;
+  height: 200px;
   overflow: hidden;
   position: relative;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.2);
@@ -806,12 +818,8 @@
     gap: 5px;
   }
 
-  .arch-vu-deck {
-    height: 134px;
-  }
-
   .arch-waveform-main {
-    height: 94px;
+    height: 160px;
   }
 
   .arch-spectrum-deck {
@@ -825,12 +833,8 @@
     gap: 4px;
   }
 
-  .arch-vu-deck {
-    height: 120px;
-  }
-
   .arch-waveform-main {
-    height: 80px;
+    height: 130px;
     gap: 1.2px;
   }
 
@@ -981,6 +985,23 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.arch-track-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+}
+
+.arch-track-nav-btn {
+  padding: 7px 8px !important;
+  font-size: 0.7rem !important;
+  opacity: 0.55;
+}
+
+.arch-track-nav-btn:hover {
+  opacity: 1;
 }
 
 /* ── arch-btn: canonical button class for the entire console ──────────────── */

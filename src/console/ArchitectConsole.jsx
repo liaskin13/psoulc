@@ -445,6 +445,7 @@ function ArchitectConsole({
   );
 
   const vibeRef = useRef(null);
+  const overviewRef = useRef(null);
   const waveformHoveredRef = useRef(false);
 
   const { vuRef, specRef, energyRef } = useAudioAnalyzer({
@@ -823,6 +824,25 @@ function ArchitectConsole({
     if (!audioEngine.isLoaded()) return;
     audioEngine.seek(seconds);
     announce(`Seek to ${formatTime(seconds)}.`);
+  };
+
+  const skipTapRef = useRef({ dir: 0, count: 0, timer: null });
+  const handleBarSkip = (dir) => {
+    if (!audioEngine.isLoaded()) return;
+    const t = skipTapRef.current;
+    clearTimeout(t.timer);
+    if (t.dir !== dir) t.count = 0;
+    t.dir = dir;
+    t.count++;
+    t.timer = setTimeout(() => {
+      const bpm = resolveTrackBpm(loadedTrack);
+      const barSec = bpm ? (4 * 60) / bpm : 8;
+      const bars = t.count >= 2 ? 8 : 4;
+      const dest = Math.max(0, Math.min(currentTime + dir * bars * barSec, audioDuration));
+      handleSeek(dest);
+      announce(`Skip ${dir > 0 ? "forward" : "back"} ${bars} bars.`);
+      t.count = 0;
+    }, 400);
   };
 
   const handleCue = () => {
@@ -1774,6 +1794,7 @@ function ArchitectConsole({
     setShowShortcuts,
     stepZoom,
     waveformHoveredRef,
+    loadedTrackBpm: resolveTrackBpm(loadedTrack),
   };
 
   // Performance keyboard shortcuts — registered once, reads live values via kbRef
@@ -1813,12 +1834,14 @@ function ArchitectConsole({
       }
       if (e.code === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        kb.handleSeek(Math.max(0, kb.currentTime - 5));
+        const beatSec = kb.loadedTrackBpm ? 60 / kb.loadedTrackBpm : 0.5;
+        kb.handleSeek(Math.max(0, kb.currentTime - beatSec));
         return;
       }
       if (e.code === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        kb.handleSeek(Math.min(kb.audioDuration, kb.currentTime + 5));
+        const beatSec = kb.loadedTrackBpm ? 60 / kb.loadedTrackBpm : 0.5;
+        kb.handleSeek(Math.min(kb.audioDuration, kb.currentTime + beatSec));
         return;
       }
       if (e.code === "ArrowUp" && !e.ctrlKey && !e.metaKey) {
@@ -1915,6 +1938,71 @@ function ArchitectConsole({
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
   }, [deckHighResBars, loadedWaveformHighData]);
+
+  // Full-width track overview strip — spectral colors, hot cues, playhead
+  useEffect(() => {
+    const canvas = overviewRef.current;
+    if (!canvas) return;
+    const bars = deckWaveformHighData;
+    const OVERVIEW_H = 32;
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.getBoundingClientRect().width || 800;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(OVERVIEW_H * dpr);
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, OVERVIEW_H);
+
+    if (!bars || bars.length === 0 || !audioDuration) return;
+
+    const N = bars.length;
+    const barsPerPx = N / w;
+    for (let px = 0; px < w; px++) {
+      const bStart = Math.floor(px * barsPerPx);
+      const bEnd = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
+      let sum = 0, count = 0, maxPeak = 0, best = null;
+      for (let b = bStart; b < bEnd; b++) {
+        if (!bars[b]) continue;
+        sum += bars[b].peak;
+        count++;
+        if (bars[b].peak > maxPeak) { maxPeak = bars[b].peak; best = bars[b]; }
+      }
+      if (!best) continue;
+      const avgPeak = sum / count;
+      const overallH = Math.max(1, Math.round(Math.pow(avgPeak, 1.5) * OVERVIEW_H));
+      if (best.bass !== undefined) {
+        const rawR = Math.pow(best.bass, 1.5);
+        const rawG = Math.pow(best.mid, 1.8);
+        const rawB = Math.pow(best.high, 1.2);
+        const wc = Math.min(rawR, rawG, rawB) * 0.85;
+        const r = Math.round(Math.min(1, rawR + wc) * 255);
+        const g = Math.round(Math.min(1, rawG + wc) * 255);
+        const b = Math.round(Math.min(1, rawB + wc) * 255);
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+      } else {
+        const cr = best.freq === "#1464dc" ? 20 : best.freq === "#e56020" ? 229 : 20;
+        const cg = best.freq === "#1464dc" ? 100 : best.freq === "#e56020" ? 96 : 220;
+        const cb = best.freq === "#1464dc" ? 220 : best.freq === "#e56020" ? 32 : 20;
+        ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+      }
+      ctx.fillRect(px, OVERVIEW_H - overallH, 1, overallH);
+    }
+
+    // Hot cue pins
+    const deckCues = deckTrack ? hotCues[deckTrack.id] || {} : {};
+    Object.entries(deckCues).forEach(([num, cue]) => {
+      if (!cue || typeof cue.time !== "number") return;
+      const cx = Math.round((cue.time / audioDuration) * w);
+      ctx.fillStyle = ALL_CUE_COLORS[parseInt(num, 10) - 1] || "rgba(255,255,255,0.7)";
+      ctx.fillRect(cx, 0, 1, OVERVIEW_H);
+    });
+
+    // Playhead dot
+    const playheadPx = Math.round((currentTime / audioDuration) * w);
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.fillRect(playheadPx, 0, 2, OVERVIEW_H);
+  }, [deckWaveformHighData, currentTime, audioDuration, hotCues, deckTrack]);
 
   const isD = viewer === "D";
 
@@ -2033,11 +2121,21 @@ function ArchitectConsole({
           </div>
         </div>
 
-        {/* Waveform row — VU left | main WF right */}
+        {/* Full-width track overview strip */}
+        <div className="arch-overview-row" aria-hidden="true">
+          <canvas
+            ref={overviewRef}
+            className="arch-overview-strip"
+            onClick={deckCanSeek ? (e) => {
+              const rect = overviewRef.current.getBoundingClientRect();
+              handleSeek(((e.clientX - rect.left) / rect.width) * audioDuration);
+            } : undefined}
+            style={{ cursor: deckCanSeek ? "pointer" : "default" }}
+          />
+        </div>
+
+        {/* Waveform row — full width (VU moved to analyzer row) */}
         <div className="arch-waveform-row" aria-hidden="true">
-          <div className="arch-vu-col">
-            <canvas ref={vuRef} className="arch-vu-deck" />
-          </div>
           <div className="arch-waveform-col">
             <div
               className="arch-waveform-main"
@@ -2082,7 +2180,7 @@ function ArchitectConsole({
                   onSeek={deckCanSeek ? handleSeek : null}
                   trackId={deckTrack.id}
                   width={800}
-                  height={156}
+                  height={200}
                   hotCues={hotCues[deckTrack.id] || {}}
                   cueColors={ALL_CUE_COLORS}
                   zoom={waveformZoom}
@@ -2096,8 +2194,11 @@ function ArchitectConsole({
           </div>
         </div>
 
-        {/* Analyzer row — Vibe Meter (1/3) + Spectrum Analyzer (2/3) */}
+        {/* Analyzer row — VU (left) + Vibe Meter (center) + Spectrum Analyzer (right) */}
         <div className="arch-analyzer-row" aria-hidden="true">
+          <div className="arch-vu-col">
+            <canvas ref={vuRef} className="arch-vu-deck" />
+          </div>
           <div className="arch-vibe-col">
             <canvas ref={vibeRef} className="arch-vibe-meter" />
           </div>
@@ -2303,11 +2404,12 @@ function ArchitectConsole({
         >
           <button
             className="arch-transport-btn arch-skip-btn"
-            aria-label="Previous track"
-            onClick={handlePrev}
-            disabled={!visibleTracks.length}
+            aria-label="Skip back (1 tap: 4 bars, 2 taps: 8 bars)"
+            title="1 tap: −4 bars · 2 taps: −8 bars"
+            onClick={() => handleBarSkip(-1)}
+            disabled={!audioEngine.isLoaded()}
           >
-            ⏮ PREV
+            ◄◄
           </button>
           <button
             className={`arch-transport-btn arch-play-btn${isPlaying ? " active" : ""}${audioLoading ? " loading" : ""}`}
@@ -2330,11 +2432,32 @@ function ArchitectConsole({
           </button>
           <button
             className="arch-transport-btn arch-skip-btn"
+            aria-label="Skip forward (1 tap: 4 bars, 2 taps: 8 bars)"
+            title="1 tap: +4 bars · 2 taps: +8 bars"
+            onClick={() => handleBarSkip(+1)}
+            disabled={!audioEngine.isLoaded()}
+          >
+            ►►
+          </button>
+        </div>
+
+        {/* Track navigation — separate from in-track skip */}
+        <div className="arch-track-nav" role="group" aria-label="Track navigation">
+          <button
+            className="arch-transport-btn arch-skip-btn arch-track-nav-btn"
+            aria-label="Previous track"
+            onClick={handlePrev}
+            disabled={!visibleTracks.length}
+          >
+            ⏮
+          </button>
+          <button
+            className="arch-transport-btn arch-skip-btn arch-track-nav-btn"
             aria-label="Next track"
             onClick={handleNext}
             disabled={!visibleTracks.length}
           >
-            NEXT ⏭
+            ⏭
           </button>
         </div>
 
