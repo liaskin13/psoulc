@@ -1825,13 +1825,17 @@ function ArchitectConsole({
         return;
       }
       if (e.code === "ArrowUp" && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        kb.stepZoom(+1);
+        if (kb.waveformHoveredRef.current) {
+          e.preventDefault();
+          kb.stepZoom(+1);
+        }
         return;
       }
       if (e.code === "ArrowDown" && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        kb.stepZoom(-1);
+        if (kb.waveformHoveredRef.current) {
+          e.preventDefault();
+          kb.stepZoom(-1);
+        }
         return;
       }
     };
@@ -2380,7 +2384,7 @@ function ArchitectConsole({
           aria-label="Playback"
         >
           <button
-            className="arch-transport-btn arch-bar-skip-btn"
+            className="arch-transport-btn arch-skip-btn"
             aria-label="Skip back (1 tap: 4 bars, 2 taps: 8 bars)"
             title="1 tap: −4 bars · 2 taps: −8 bars"
             onClick={() => handleBarSkip(-1)}
@@ -2408,7 +2412,7 @@ function ArchitectConsole({
             ■ CUE
           </button>
           <button
-            className="arch-transport-btn arch-bar-skip-btn"
+            className="arch-transport-btn arch-skip-btn"
             aria-label="Skip forward (1 tap: 4 bars, 2 taps: 8 bars)"
             title="1 tap: +4 bars · 2 taps: +8 bars"
             onClick={() => handleBarSkip(+1)}

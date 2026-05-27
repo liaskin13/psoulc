@@ -1111,25 +1111,6 @@
   cursor: not-allowed;
 }
 
-/* Bar-skip buttons ◄◄ ►► — same visual weight as PLAY/CUE */
-.arch-bar-skip-btn {
-  border-color: rgba(var(--arch-accent-rgb), 0.40);
-  color: rgba(var(--arch-accent-rgb), 0.85);
-  padding: 8px 20px;
-  font-size: 0.68rem;
-  box-shadow:
-    0 4px 0 #000,
-    0 6px 14px rgba(0, 0, 0, 0.9),
-    0 0 8px rgba(var(--arch-accent-rgb), 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-}
-
-.arch-bar-skip-btn:disabled {
-  opacity: 0.25;
-  cursor: not-allowed;
-}
-
 .arch-play-icon {
   font-size: 0.7rem;
 }
