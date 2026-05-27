@@ -476,8 +476,11 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
 // ── Gauge scale definitions ──────────────────────────────────────────────────
 
 const VU_SCALE = [
-  {l:"-20",p:0},{l:"-10",p:0.43},{l:"-7",p:0.56},{l:"-5",p:0.65},
-  {l:"-3",p:0.74},{l:"-1",p:0.83},{l:"0",p:0.87},{l:"+1",p:0.91},{l:"+3",p:1},
+  { l: "-20", p: 0.00 },
+  { l: "-10", p: 0.38 },
+  { l: "-3",  p: 0.72 },
+  { l: "0",   p: 0.87 },
+  { l: "+3",  p: 1.00 },
 ];
 
 const LOUDNESS_SCALE = [
@@ -551,62 +554,69 @@ function drawNeedleGauge(ctx, W, H, opts) {
   ctx.beginPath();
   ctx.arc(cx, cy, r, toRad(START_DEG), toRad(END_DEG));
   if (isGradient) {
-    // Linear gradient along the horizontal extent of the arc
     const lx0 = cx + r * Math.cos(toRad(START_DEG));
     const lx1 = cx + r * Math.cos(toRad(END_DEG));
     const arcGrd = ctx.createLinearGradient(lx0, cy, lx1, cy);
-    arcGrd.addColorStop(0, "rgba(20,220,20,0.28)");
-    arcGrd.addColorStop(1, "rgba(0,204,255,0.28)");
+    arcGrd.addColorStop(0, "rgba(20,220,20,0.35)");
+    arcGrd.addColorStop(1, "rgba(0,204,255,0.35)");
     ctx.strokeStyle = arcGrd;
   } else {
-    ctx.strokeStyle = hexToRgba(arcColor, 0.28);
+    ctx.strokeStyle = hexToRgba(arcColor, 0.35);
   }
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 4.5;
   ctx.stroke();
 
-  // Red zone arc (stays as a hot accent in all modes)
+  // Red zone arc
   if (redZone != null) {
     const rzStart = toRad(START_DEG + redZone * SPAN_DEG);
     ctx.beginPath();
     ctx.arc(cx, cy, r, rzStart, toRad(END_DEG));
-    ctx.strokeStyle = "rgba(220,50,30,0.50)";
-    ctx.lineWidth   = 2.5;
+    ctx.strokeStyle = "rgba(220,50,30,0.60)";
+    ctx.lineWidth   = 4.5;
     ctx.stroke();
   }
 
-  // Tick marks + labels — skip crowded interior labels at narrow widths
-  const skipMiddle = W < 58;
+  // Inner bezel ring — subtle depth
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.87, toRad(START_DEG), toRad(END_DEG));
+  ctx.strokeStyle = "rgba(255,255,255,0.05)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Tick marks + labels — labels sit at 70% radius (clean, off the arc)
+  const skipMiddle = W < 90;
   const SKIP_LABELS = new Set(skipMiddle ? ["-7", "-5", "-1"] : []);
   ctx.save();
-  ctx.font = `${Math.max(6, Math.round(W * 0.11))}px 'Chakra Petch', sans-serif`;
+  ctx.font = `${Math.max(8, Math.round(W * 0.095))}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   for (const { l, p } of scale) {
     const angDeg = START_DEG + p * SPAN_DEG;
     const angRad = toRad(angDeg);
     const cos = Math.cos(angRad), sin = Math.sin(angRad);
-    const outer = r + 2;
-    const inner = r - 5;
+    const outer = r + 3;
+    const inner = r - 6;
     const isHot = redZone != null && p >= redZone;
     let tickColor;
     if (isGradient) {
-      tickColor = isHot ? "rgba(0,204,255,0.75)" : "rgba(20,220,20,0.55)";
+      tickColor = isHot ? "rgba(0,204,255,0.80)" : "rgba(20,220,20,0.60)";
     } else {
-      tickColor = isHot ? "rgba(220,80,50,0.80)" : hexToRgba(arcColor, 0.55);
+      tickColor = isHot ? "rgba(220,80,50,0.85)" : hexToRgba(arcColor, 0.60);
     }
     ctx.strokeStyle = tickColor;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(cx + cos * inner, cy + sin * inner);
     ctx.lineTo(cx + cos * outer, cy + sin * outer);
     ctx.stroke();
     if (!SKIP_LABELS.has(l)) {
-      const lx = cx + cos * (r - 11);
-      const ly = cy + sin * (r - 11);
+      const labelR = r * 0.70;
+      const lx = cx + cos * labelR;
+      const ly = cy + sin * labelR;
       if (isGradient) {
-        ctx.fillStyle = isHot ? "rgba(0,204,255,0.85)" : "rgba(20,220,20,0.70)";
+        ctx.fillStyle = isHot ? "rgba(0,204,255,0.90)" : "rgba(20,220,20,0.75)";
       } else {
-        ctx.fillStyle = isHot ? "rgba(220,80,50,0.90)" : hexToRgba(arcColor, 0.70);
+        ctx.fillStyle = isHot ? "rgba(220,80,50,0.95)" : hexToRgba(arcColor, 0.75);
       }
       ctx.fillText(l, lx, ly);
     }
@@ -618,17 +628,9 @@ function drawNeedleGauge(ctx, W, H, opts) {
   const needleAngle = toRad(START_DEG + clampedVal * SPAN_DEG);
   const needleCos = Math.cos(needleAngle), needleSin = Math.sin(needleAngle);
   const needleLen = r - 3;
-  const pivotBack = 5;
+  const pivotBack = 6;
 
-  // Shaft (dim)
-  ctx.beginPath();
-  ctx.moveTo(cx - needleCos * pivotBack, cy - needleSin * pivotBack);
-  ctx.lineTo(cx + needleCos * needleLen * 0.72, cy + needleSin * needleLen * 0.72);
-  ctx.strokeStyle = "rgba(200,200,200,0.28)";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Tip: identity color, turns hot-red when in red zone
+  // Tip color resolved early (used by glow pass too)
   let tipColor;
   if (clampedVal >= (redZone ?? 2)) {
     tipColor = "rgba(220,60,40,0.95)";
@@ -637,22 +639,54 @@ function drawNeedleGauge(ctx, W, H, opts) {
   } else {
     tipColor = hexToRgba(arcColor, 0.95);
   }
+
+  // Glow pass — soft halo behind full needle length
+  const glowColor = clampedVal >= (redZone ?? 2)
+    ? "rgba(220,60,40,0.12)"
+    : isGradient
+      ? lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal).replace(")", ",0.18)").replace("rgb", "rgba")
+      : hexToRgba(arcColor, 0.18);
+  ctx.beginPath();
+  ctx.moveTo(cx - needleCos * pivotBack, cy - needleSin * pivotBack);
+  ctx.lineTo(cx + needleCos * needleLen, cy + needleSin * needleLen);
+  ctx.strokeStyle = glowColor;
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  // Shaft (dim)
+  ctx.beginPath();
+  ctx.moveTo(cx - needleCos * pivotBack, cy - needleSin * pivotBack);
+  ctx.lineTo(cx + needleCos * needleLen * 0.72, cy + needleSin * needleLen * 0.72);
+  ctx.strokeStyle = "rgba(200,200,200,0.30)";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Tip: identity color, turns hot-red in red zone
   ctx.beginPath();
   ctx.moveTo(cx + needleCos * needleLen * 0.72, cy + needleSin * needleLen * 0.72);
   ctx.lineTo(cx + needleCos * needleLen, cy + needleSin * needleLen);
   ctx.strokeStyle = tipColor;
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 2;
   ctx.stroke();
 
   // Hub
   ctx.beginPath();
-  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 5, 0, Math.PI * 2);
   ctx.fillStyle = isGradient ? lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal) : arcColor;
   ctx.fill();
 
+  // Hub outer ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+  ctx.strokeStyle = isGradient
+    ? lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal).replace(")", ",0.30)").replace("rgb", "rgba")
+    : hexToRgba(arcColor, 0.30);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
   // Channel label
   if (label) {
-    ctx.font = `500 ${Math.max(7, Math.round(W * 0.11))}px 'Chakra Petch', sans-serif`;
+    ctx.font = `500 ${Math.max(9, Math.round(W * 0.095))}px 'Chakra Petch', sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = isGradient

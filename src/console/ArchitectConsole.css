@@ -616,7 +616,7 @@
   flex: 0 0 auto;
   display: flex;
   gap: 3px;
-  width: clamp(100px, 13%, 148px);
+  width: clamp(210px, 24%, 300px);
 }
 
 .arch-vu-deck {
@@ -640,7 +640,7 @@
 
 .arch-loudness-col {
   flex: 0 0 auto;
-  width: clamp(52px, 7%, 72px);
+  width: clamp(130px, 14%, 190px);
 }
 
 .arch-loudness-meter {
@@ -838,6 +838,9 @@
   .arch-vu-deck {
     height: 100px;
   }
+
+  .arch-vu-col { width: clamp(180px, 22%, 260px); }
+  .arch-loudness-col { width: clamp(110px, 12%, 160px); }
 }
 
 @media (max-width: 900px) {
@@ -860,6 +863,9 @@
   .arch-vu-deck {
     height: 84px;
   }
+
+  .arch-vu-col { width: clamp(150px, 20%, 220px); }
+  .arch-loudness-col { width: clamp(90px, 10%, 130px); }
 }
 
 .arch-display-reach {
