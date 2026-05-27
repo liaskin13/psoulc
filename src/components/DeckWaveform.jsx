@@ -86,9 +86,27 @@ export default function DeckWaveform({
       const visibleBars = barCount / displayZoom;
       const playheadFrac = dur > 0 ? ct / dur : 0;
       const centerBar = playheadFrac * barCount;
-      const startBar = centerBar - visibleBars / 2;
-      const endBar = startBar + visibleBars;
-      const playheadX = w / 2;
+
+      // Serato-style track-aware viewport: at track start/end, bars hug the
+      // edge and the playhead moves toward center rather than showing empty space.
+      const halfVisible = visibleBars / 2;
+      let startBar, endBar, playheadX;
+      if (centerBar < halfVisible) {
+        // Near track start — left-align bars, playhead drifts from left
+        startBar = 0;
+        endBar = visibleBars;
+        playheadX = (centerBar / visibleBars) * w;
+      } else if (centerBar > barCount - halfVisible) {
+        // Near track end — right-align bars, playhead drifts toward right
+        endBar = barCount;
+        startBar = barCount - visibleBars;
+        playheadX = ((centerBar - startBar) / visibleBars) * w;
+      } else {
+        // Mid-track — centered playhead
+        startBar = centerBar - halfVisible;
+        endBar = centerBar + halfVisible;
+        playheadX = w / 2;
+      }
       const halfH = height / 2;
 
       const startTimeSec = startBar / 50;
@@ -374,7 +392,11 @@ export default function DeckWaveform({
     const totalBars = waveformData?.length ?? 1000;
     const visibleBars = Math.round(totalBars / zoom);
     const centerBar = Math.round((currentTime / duration) * totalBars);
-    const startBar = centerBar - Math.round(visibleBars / 2);
+    const halfVisible = visibleBars / 2;
+    let startBar;
+    if (centerBar < halfVisible) startBar = 0;
+    else if (centerBar > totalBars - halfVisible) startBar = totalBars - visibleBars;
+    else startBar = centerBar - Math.round(halfVisible);
     const clickedBar = startBar + Math.round(frac * visibleBars);
     onSeek(
       Math.max(0, Math.min((clickedBar / totalBars) * duration, duration)),
