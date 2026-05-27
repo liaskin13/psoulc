@@ -134,6 +134,9 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         }
       }
       const dpr = window.devicePixelRatio || 1;
+      // Session identity color — both VU channels use the current console identity
+      const identityColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--arch-identity').trim() || '#14dc14';
       const vu = vuRef.current;
       if (vu) {
         const vuW = vu.offsetWidth || 60;
@@ -142,7 +145,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: "#00ccff", redZone: 0.87, label: "L" });
+        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: identityColor, redZone: 0.87, label: "L" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -152,7 +155,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: "#14dc14", redZone: 0.87, label: "R" });
+        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: identityColor, redZone: 0.87, label: "R" });
       }
       const loudnessIdle = loudnessRef.current;
       if (loudnessIdle) {
@@ -162,7 +165,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (loudnessIdle.width !== bsW || loudnessIdle.height !== bsH) { loudnessIdle.width = bsW; loudnessIdle.height = bsH; }
         const ctx = loudnessIdle.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawNeedleGauge(ctx, lW, lH, { value: 0, scale: LOUDNESS_SCALE, arcColor: "gradient", redZone: 0.90, label: "dBFS" });
+        drawNeedleGauge(ctx, lW, lH, { value: 0, scale: LOUDNESS_SCALE, arcColor: "#f0ede8", redZone: 0.90, label: "dBFS" });
       }
 
       // Draw energy map using available waveformData, or ghost grid if none loaded
@@ -217,6 +220,8 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
 
       // ── VU needle gauges (L + R) ─────────────────────────────────────────
       const dprLive = window.devicePixelRatio || 1;
+      const identityColorLive = getComputedStyle(document.documentElement)
+        .getPropertyValue('--arch-identity').trim() || '#14dc14';
       let rL = 0, rR = 0;
       if (freqBins) {
         const bassEnd   = Math.min(40, freqBins.length);
@@ -266,7 +271,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: vuLEmaRef.current, scale: VU_SCALE, arcColor: "#00ccff", redZone: 0.87, label: "L" });
+        drawNeedleGauge(ctx, vuW, vuH, { value: vuLEmaRef.current, scale: VU_SCALE, arcColor: identityColorLive, redZone: 0.87, label: "L" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -276,7 +281,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: vuREmaRef.current, scale: VU_SCALE, arcColor: "#14dc14", redZone: 0.87, label: "R" });
+        drawNeedleGauge(ctx, vuW, vuH, { value: vuREmaRef.current, scale: VU_SCALE, arcColor: identityColorLive, redZone: 0.87, label: "R" });
       }
       {  // BPM ring: separate block so it still runs after the canvas split
 
@@ -323,7 +328,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         drawNeedleGauge(ctx, lW, lH, {
           value: loudnessEmaRef.current,
           scale: LOUDNESS_SCALE,
-          arcColor: "gradient",
+          arcColor: "#f0ede8",
           redZone: 0.90,
           label: "dBFS",
         });
@@ -515,10 +520,12 @@ export function detectBpm(buffer, sampleRate = 60) {
 
 // ── Drawing helpers ──────────────────────────────────────────────────────────
 
-// Needle/arc analog gauge.
-// arcColor: hex string OR "gradient" (green→cyan for loudness meter).
+// Analog needle gauge — achromatic face, identity-colored needle tip only.
+// arcColor: hex "#rrggbb" — used for needle tip + subtle glow only.
+//   VU L/R: pass current --arch-identity value.
+//   Loudness: pass "#f0ede8" (warm off-white, neutral combined signal).
 function drawNeedleGauge(ctx, W, H, opts) {
-  const { value = 0, scale = [], arcColor = "#888888", redZone = null, label = "" } = opts;
+  const { value = 0, scale = [], arcColor = "#b9b9b9", redZone = null, label = "" } = opts;
 
   const START_DEG = 205;
   const END_DEG   = 335;
@@ -526,185 +533,121 @@ function drawNeedleGauge(ctx, W, H, opts) {
   const toRad     = (d) => (d * Math.PI) / 180;
 
   const cx = W / 2;
-  const cy = H * 0.91;
-  // Geometry fix: clamp radius so needle never clips canvas edges at extreme angles.
-  // cos(205°) ≈ -0.906, so arc extends r*0.906 to the left of cx.
-  // Keeping r ≤ cx*0.90/0.906 ≈ cx*0.993 would be exact, but cx*0.88 is safe and clean.
-  const r  = Math.min(cx * 0.88, H * 0.60);
+  const cy = H * 0.88;
+  const r  = Math.min(cx * 0.90, cy * 0.94);
 
-  const isGradient = arcColor === "gradient";
-  // gradient = green (#14dc14) at quiet end → cyan (#00ccff) at hot end
-  const GRAD_GREEN = "#14dc14";
-  const GRAD_CYAN  = "#00ccff";
+  const clampedVal = Math.max(0, Math.min(1, value));
+  const inRedZone  = redZone != null && clampedVal >= redZone;
 
-  // Resolve the effective color for non-gradient arcs
-  const resolvedColor = isGradient ? GRAD_GREEN : arcColor;
-
-  // Radial glow
-  const glowRgb = isGradient ? "20,220,20" : hexToRgbStr(arcColor);
-  const bgGrd = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 1.15);
-  bgGrd.addColorStop(0, `rgba(${glowRgb},0.07)`);
-  bgGrd.addColorStop(1, `rgba(${glowRgb},0)`);
-  ctx.fillStyle = "rgba(8, 5, 2, 0.94)";
-  ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = bgGrd;
+  // Background — cold flat fill, void-aligned
+  ctx.fillStyle = "rgba(5, 5, 8, 0.97)";
   ctx.fillRect(0, 0, W, H);
 
-  // Arc track
+  // Tight glow halo along arc path (not a full-canvas wash)
   ctx.beginPath();
   ctx.arc(cx, cy, r, toRad(START_DEG), toRad(END_DEG));
-  if (isGradient) {
-    const lx0 = cx + r * Math.cos(toRad(START_DEG));
-    const lx1 = cx + r * Math.cos(toRad(END_DEG));
-    const arcGrd = ctx.createLinearGradient(lx0, cy, lx1, cy);
-    arcGrd.addColorStop(0, "rgba(20,220,20,0.35)");
-    arcGrd.addColorStop(1, "rgba(0,204,255,0.35)");
-    ctx.strokeStyle = arcGrd;
-  } else {
-    ctx.strokeStyle = hexToRgba(arcColor, 0.35);
-  }
-  ctx.lineWidth = 4.5;
+  ctx.strokeStyle = hexToRgba(arcColor, 0.06);
+  ctx.lineWidth = 20;
   ctx.stroke();
 
-  // Red zone arc
+  // Scale rail — full range, achromatic off-white
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, toRad(START_DEG), toRad(END_DEG));
+  ctx.strokeStyle = "rgba(185, 185, 185, 0.22)";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Red zone segment on rail
   if (redZone != null) {
     const rzStart = toRad(START_DEG + redZone * SPAN_DEG);
     ctx.beginPath();
     ctx.arc(cx, cy, r, rzStart, toRad(END_DEG));
-    ctx.strokeStyle = "rgba(220,50,30,0.60)";
-    ctx.lineWidth   = 4.5;
+    ctx.strokeStyle = "rgba(204, 34, 0, 0.70)";
+    ctx.lineWidth = 4;
     ctx.stroke();
   }
 
-  // Inner bezel ring — subtle depth
-  ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.87, toRad(START_DEG), toRad(END_DEG));
-  ctx.strokeStyle = "rgba(255,255,255,0.05)";
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  // Subtle signal sweep — dim brightening of swept area
+  if (clampedVal > 0.02) {
+    const signalEnd = toRad(START_DEG + clampedVal * SPAN_DEG);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, toRad(START_DEG), signalEnd);
+    ctx.strokeStyle = "rgba(185, 185, 185, 0.10)";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  }
 
-  // Tick marks + labels — labels sit at 70% radius (clean, off the arc)
+  // Tick marks + labels — achromatic; red zone ticks in record-red
   const skipMiddle = W < 90;
-  const SKIP_LABELS = new Set(skipMiddle ? ["-7", "-5", "-1"] : []);
+  const SKIP_LABELS = new Set(skipMiddle ? ["-10", "-3"] : []);
   ctx.save();
-  ctx.font = `${Math.max(8, Math.round(W * 0.095))}px 'Chakra Petch', sans-serif`;
+  ctx.font = `${Math.max(7, Math.round(W * 0.09))}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   for (const { l, p } of scale) {
     const angDeg = START_DEG + p * SPAN_DEG;
     const angRad = toRad(angDeg);
-    const cos = Math.cos(angRad), sin = Math.sin(angRad);
-    const outer = r + 3;
-    const inner = r - 6;
-    const isHot = redZone != null && p >= redZone;
-    let tickColor;
-    if (isGradient) {
-      tickColor = isHot ? "rgba(0,204,255,0.80)" : "rgba(20,220,20,0.60)";
-    } else {
-      tickColor = isHot ? "rgba(220,80,50,0.85)" : hexToRgba(arcColor, 0.60);
-    }
-    ctx.strokeStyle = tickColor;
+    const cos    = Math.cos(angRad);
+    const sin    = Math.sin(angRad);
+    const isHot  = redZone != null && p >= redZone;
+    ctx.strokeStyle = isHot ? "rgba(204, 34, 0, 0.75)" : "rgba(185, 185, 185, 0.55)";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(cx + cos * inner, cy + sin * inner);
-    ctx.lineTo(cx + cos * outer, cy + sin * outer);
+    ctx.moveTo(cx + cos * (r - 5), cy + sin * (r - 5));
+    ctx.lineTo(cx + cos * (r + 3), cy + sin * (r + 3));
     ctx.stroke();
     if (!SKIP_LABELS.has(l)) {
-      const labelR = r * 0.70;
-      const lx = cx + cos * labelR;
-      const ly = cy + sin * labelR;
-      if (isGradient) {
-        ctx.fillStyle = isHot ? "rgba(0,204,255,0.90)" : "rgba(20,220,20,0.75)";
-      } else {
-        ctx.fillStyle = isHot ? "rgba(220,80,50,0.95)" : hexToRgba(arcColor, 0.75);
-      }
+      const lx = cx + cos * (r * 0.72);
+      const ly = cy + sin * (r * 0.72);
+      ctx.fillStyle = isHot ? "rgba(204, 34, 0, 0.85)" : "rgba(185, 185, 185, 0.65)";
       ctx.fillText(l, lx, ly);
     }
   }
   ctx.restore();
 
-  // Needle
-  const clampedVal = Math.max(0, Math.min(1, value));
+  // Needle geometry
   const needleAngle = toRad(START_DEG + clampedVal * SPAN_DEG);
-  const needleCos = Math.cos(needleAngle), needleSin = Math.sin(needleAngle);
-  const needleLen = r - 3;
-  const pivotBack = 6;
+  const needleCos   = Math.cos(needleAngle);
+  const needleSin   = Math.sin(needleAngle);
+  const needleLen   = r - 2;
+  const pivotBack   = 5;
+  const splitFrac   = 0.65; // shaft covers bottom 65%, tip covers top 35%
 
-  // Tip color resolved early (used by glow pass too)
-  let tipColor;
-  if (clampedVal >= (redZone ?? 2)) {
-    tipColor = "rgba(220,60,40,0.95)";
-  } else if (isGradient) {
-    tipColor = lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal);
-  } else {
-    tipColor = hexToRgba(arcColor, 0.95);
-  }
+  // Tip color: record-red in hot zone, else arcColor at full opacity
+  const tipColor = inRedZone ? "rgba(204, 34, 0, 0.95)" : hexToRgba(arcColor, 0.95);
 
-  // Glow pass — soft halo behind full needle length
-  const glowColor = clampedVal >= (redZone ?? 2)
-    ? "rgba(220,60,40,0.12)"
-    : isGradient
-      ? lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal).replace(")", ",0.18)").replace("rgb", "rgba")
-      : hexToRgba(arcColor, 0.18);
+  // Needle shaft — off-white, dim
   ctx.beginPath();
   ctx.moveTo(cx - needleCos * pivotBack, cy - needleSin * pivotBack);
-  ctx.lineTo(cx + needleCos * needleLen, cy + needleSin * needleLen);
-  ctx.strokeStyle = glowColor;
-  ctx.lineWidth = 6;
+  ctx.lineTo(cx + needleCos * needleLen * splitFrac, cy + needleSin * needleLen * splitFrac);
+  ctx.strokeStyle = "rgba(185, 185, 185, 0.55)";
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Shaft (dim)
+  // Needle tip — identity color (or record-red when hot)
   ctx.beginPath();
-  ctx.moveTo(cx - needleCos * pivotBack, cy - needleSin * pivotBack);
-  ctx.lineTo(cx + needleCos * needleLen * 0.72, cy + needleSin * needleLen * 0.72);
-  ctx.strokeStyle = "rgba(200,200,200,0.30)";
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
-  // Tip: identity color, turns hot-red in red zone
-  ctx.beginPath();
-  ctx.moveTo(cx + needleCos * needleLen * 0.72, cy + needleSin * needleLen * 0.72);
+  ctx.moveTo(cx + needleCos * needleLen * splitFrac, cy + needleSin * needleLen * splitFrac);
   ctx.lineTo(cx + needleCos * needleLen, cy + needleSin * needleLen);
   ctx.strokeStyle = tipColor;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Hub
+  // Hub — small, achromatic
   ctx.beginPath();
-  ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-  ctx.fillStyle = isGradient ? lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal) : arcColor;
+  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(185, 185, 185, 0.70)";
   ctx.fill();
 
-  // Hub outer ring
-  ctx.beginPath();
-  ctx.arc(cx, cy, 8, 0, Math.PI * 2);
-  ctx.strokeStyle = isGradient
-    ? lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal).replace(")", ",0.30)").replace("rgb", "rgba")
-    : hexToRgba(arcColor, 0.30);
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // Channel label
+  // Channel label — off-white, lifted into arc throat
   if (label) {
-    ctx.font = `500 ${Math.max(9, Math.round(W * 0.095))}px 'Chakra Petch', sans-serif`;
+    ctx.font = `500 ${Math.max(8, Math.round(W * 0.09))}px 'Chakra Petch', sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = isGradient
-      ? lerpColor(GRAD_GREEN, GRAD_CYAN, 0.5).replace(")", ",0.55)").replace("rgb", "rgba")
-      : hexToRgba(arcColor, 0.55);
-    ctx.fillText(label, cx, cy - r * 0.28);
+    ctx.fillStyle = "rgba(185, 185, 185, 0.50)";
+    ctx.fillText(label, cx, cy - r * 0.40);
   }
 }
 
-// Interpolate between two hex colors (both "#rrggbb") at t=0..1
-function lerpColor(a, b, t) {
-  const ar = parseInt(a.slice(1,3),16), ag = parseInt(a.slice(3,5),16), ab = parseInt(a.slice(5,7),16);
-  const br = parseInt(b.slice(1,3),16), bg = parseInt(b.slice(3,5),16), bb = parseInt(b.slice(5,7),16);
-  const r = Math.round(ar + (br-ar)*t);
-  const g = Math.round(ag + (bg-ag)*t);
-  const bv = Math.round(ab + (bb-ab)*t);
-  return `rgb(${r},${g},${bv})`;
-}
 
 // Convert hex (#rrggbb) to rgba() string
 function hexToRgba(hex, alpha) {

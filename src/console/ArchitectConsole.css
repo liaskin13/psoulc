@@ -611,7 +611,7 @@
     0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
-/* VU meter column — two canvases side by side (L=cyan, R=green) */
+/* VU meter column — two canvases side by side (L + R, both in session identity) */
 .arch-vu-col {
   flex: 0 0 auto;
   display: flex;
@@ -621,21 +621,21 @@
 
 .arch-vu-deck {
   display: block;
-  image-rendering: pixelated;
-  background: rgba(8, 5, 2, 0.94);
+  image-rendering: auto;
+  background: rgba(5, 5, 8, 0.97);
   width: calc(50% - 2px);
   height: 120px;
   flex-shrink: 0;
 }
 
 .arch-vu-deck--l {
-  border: 1px solid rgba(0, 204, 255, 0.22);
-  box-shadow: 0 0 12px rgba(0, 204, 255, 0.14);
+  border: 1px solid rgba(var(--arch-identity-rgb), 0.18);
+  box-shadow: 0 0 10px rgba(var(--arch-identity-rgb), 0.10);
 }
 
 .arch-vu-deck--r {
-  border: 1px solid rgba(20, 220, 20, 0.22);
-  box-shadow: 0 0 12px rgba(20, 220, 20, 0.14);
+  border: 1px solid rgba(var(--arch-identity-rgb), 0.18);
+  box-shadow: 0 0 10px rgba(var(--arch-identity-rgb), 0.10);
 }
 
 .arch-loudness-col {
@@ -645,12 +645,12 @@
 
 .arch-loudness-meter {
   display: block;
-  image-rendering: pixelated;
-  border: 1px solid rgba(20, 220, 20, 0.18);
-  background: rgba(8, 5, 2, 0.94);
+  image-rendering: auto;
+  border: 1px solid rgba(185, 185, 185, 0.16);
+  background: rgba(5, 5, 8, 0.97);
   width: 100%;
   height: 120px;
-  box-shadow: 0 0 12px rgba(0, 204, 255, 0.10);
+  box-shadow: 0 0 10px rgba(185, 185, 185, 0.06);
 }
 
 .arch-waveform-col {
