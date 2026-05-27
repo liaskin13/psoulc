@@ -24,9 +24,10 @@ export function specBarColor(normH, freqT, alpha = 1) {
 
 // Props: { isPlaying, waveformData, currentTime, duration, hotCues? }
 // waveformData = array of { peak: 0-1, freq: "#rrggbb", bass?: 0-1, high?: 0-1 }
-// Returns: { vuRef, specRef, energyRef, bpmResultRef }
+// Returns: { vuRef, vuRRef, specRef, energyRef, loudnessRef, bpmResultRef }
 export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime, duration, hotCues }) {
   const vuRef       = useRef(null);
+  const vuRRef      = useRef(null);
   const specRef     = useRef(null);
   const energyRef   = useRef(null);
   const rafRef      = useRef(null);
@@ -52,7 +53,8 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
   const loudnessRef = useRef(null);
 
   // EMA state for smooth needle gauges
-  const vuEmaRef         = useRef(0);
+  const vuLEmaRef        = useRef(0);
+  const vuREmaRef        = useRef(0);
   const loudnessEmaRef   = useRef(0);
   const lastFrameTimeRef = useRef(performance.now());
 
@@ -131,23 +133,36 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
           ctx.fillRect(Math.round(i * barStep), H - FLOOR, bw, FLOOR);
         }
       }
+      const dpr = window.devicePixelRatio || 1;
       const vu = vuRef.current;
       if (vu) {
-        const vuW = vu.offsetWidth || 72;
-        const vuH = vu.offsetHeight || 96;
-        if (vu.width !== vuW || vu.height !== vuH) { vu.width = vuW; vu.height = vuH; }
-        drawNeedleGauge(vu.getContext("2d"), vu.width, vu.height, {
-          value: 0, scale: VU_SCALE, arcColor: "#c8860a", redZone: 0.87, label: "VU",
-        });
+        const vuW = vu.offsetWidth || 60;
+        const vuH = vu.offsetHeight || 120;
+        const bsW = Math.round(vuW * dpr), bsH = Math.round(vuH * dpr);
+        if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
+        const ctx = vu.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: "#00ccff", redZone: 0.87, label: "L" });
+      }
+      const vuR = vuRRef.current;
+      if (vuR) {
+        const vuW = vuR.offsetWidth || 60;
+        const vuH = vuR.offsetHeight || 120;
+        const bsW = Math.round(vuW * dpr), bsH = Math.round(vuH * dpr);
+        if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
+        const ctx = vuR.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: "#14dc14", redZone: 0.87, label: "R" });
       }
       const loudnessIdle = loudnessRef.current;
       if (loudnessIdle) {
         const lW = loudnessIdle.offsetWidth || 72;
-        const lH = loudnessIdle.offsetHeight || 96;
-        if (loudnessIdle.width !== lW || loudnessIdle.height !== lH) { loudnessIdle.width = lW; loudnessIdle.height = lH; }
-        drawNeedleGauge(loudnessIdle.getContext("2d"), loudnessIdle.width, loudnessIdle.height, {
-          value: 0, scale: LOUDNESS_SCALE, arcColor: "#c8860a", redZone: 0.90, label: "dBFS",
-        });
+        const lH = loudnessIdle.offsetHeight || 120;
+        const bsW = Math.round(lW * dpr), bsH = Math.round(lH * dpr);
+        if (loudnessIdle.width !== bsW || loudnessIdle.height !== bsH) { loudnessIdle.width = bsW; loudnessIdle.height = bsH; }
+        const ctx = loudnessIdle.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawNeedleGauge(ctx, lW, lH, { value: 0, scale: LOUDNESS_SCALE, arcColor: "gradient", redZone: 0.90, label: "dBFS" });
       }
 
       // Draw energy map using available waveformData, or ghost grid if none loaded
@@ -200,62 +215,70 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       lastFrameTimeRef.current = now;
       const alpha = 1 - Math.exp(-dt / 300);
 
-      // ── VU needle gauge ──────────────────────────────────────────────────
+      // ── VU needle gauges (L + R) ─────────────────────────────────────────
+      const dprLive = window.devicePixelRatio || 1;
+      let rL = 0, rR = 0;
+      if (freqBins) {
+        const bassEnd   = Math.min(40, freqBins.length);
+        const highStart = Math.min(500, freqBins.length - 1);
+        const highEnd   = Math.min(900, freqBins.length);
+        let bassSum = 0;
+        for (let i = 0; i < bassEnd; i++) bassSum += freqBins[i];
+        rL = bassSum / (bassEnd * 255);
+        let highSum = 0;
+        for (let i = highStart; i < highEnd; i++) highSum += freqBins[i];
+        rR = highSum / ((highEnd - highStart) * 255);
+      } else if (hasPreAnalyzed) {
+        const barIndex   = Math.min(Math.floor((t / dur) * bars.length), bars.length - 1);
+        const W_HALF     = 7;
+        const windowBars = bars.slice(Math.max(0, barIndex - W_HALF), Math.min(bars.length, barIndex + W_HALF + 1));
+        const avgPeak    = windowBars.reduce((s, b) => s + b.peak, 0) / (windowBars.length || 1);
+        if (windowBars[0]?.bass !== undefined) {
+          rL = windowBars.reduce((s, b) => s + b.bass, 0) / windowBars.length;
+          rR = windowBars.reduce((s, b) => s + b.high, 0) / windowBars.length;
+        } else {
+          let bassSum = 0, bassCount = 0, highSum = 0, highCount = 0;
+          for (const b of windowBars) {
+            if (b.freq === BASS_HEX) { bassSum += b.peak; bassCount++; }
+            else if (b.freq !== MID_HEX) { highSum += b.peak; highCount++; }
+          }
+          rL = bassCount > 0 ? bassSum / bassCount : avgPeak * 0.85;
+          rR = highCount > 0 ? highSum / highCount : avgPeak * 0.70;
+        }
+      }
+
+      peakL.current = Math.max(peakL.current * 0.97, rL);
+      peakR.current = Math.max(peakR.current * 0.97, rR);
+
+      const vuLDb   = rL > 0 ? Math.max(-20, Math.min(3, 20 * Math.log10(rL / 0.7))) : -20;
+      const vuLNorm = (vuLDb + 20) / 23;
+      vuLEmaRef.current = vuLEmaRef.current + alpha * (vuLNorm - vuLEmaRef.current);
+
+      const vuRDb   = rR > 0 ? Math.max(-20, Math.min(3, 20 * Math.log10(rR / 0.7))) : -20;
+      const vuRNorm = (vuRDb + 20) / 23;
+      vuREmaRef.current = vuREmaRef.current + alpha * (vuRNorm - vuREmaRef.current);
+
       const vu = vuRef.current;
       if (vu) {
-        const vuW = vu.offsetWidth || 72;
-        const vuH = vu.offsetHeight || 96;
-        if (vu.width !== vuW || vu.height !== vuH) { vu.width = vuW; vu.height = vuH; }
+        const vuW = vu.offsetWidth || 60;
+        const vuH = vu.offsetHeight || 120;
+        const bsW = Math.round(vuW * dprLive), bsH = Math.round(vuH * dprLive);
+        if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
-
-        let rL, rR;
-        if (freqBins) {
-          const bassEnd   = Math.min(40, freqBins.length);
-          const highStart = Math.min(500, freqBins.length - 1);
-          const highEnd   = Math.min(900, freqBins.length);
-          let bassSum = 0;
-          for (let i = 0; i < bassEnd; i++) bassSum += freqBins[i];
-          rL = bassSum / (bassEnd * 255);
-          let highSum = 0;
-          for (let i = highStart; i < highEnd; i++) highSum += freqBins[i];
-          rR = highSum / ((highEnd - highStart) * 255);
-        } else if (hasPreAnalyzed) {
-          const barIndex   = Math.min(Math.floor((t / dur) * bars.length), bars.length - 1);
-          const W_HALF     = 7;
-          const windowBars = bars.slice(Math.max(0, barIndex - W_HALF), Math.min(bars.length, barIndex + W_HALF + 1));
-          const avgPeak    = windowBars.reduce((s, b) => s + b.peak, 0) / (windowBars.length || 1);
-          if (windowBars[0]?.bass !== undefined) {
-            rL = windowBars.reduce((s, b) => s + b.bass, 0) / windowBars.length;
-            rR = windowBars.reduce((s, b) => s + b.high, 0) / windowBars.length;
-          } else {
-            let bassSum = 0, bassCount = 0, highSum = 0, highCount = 0;
-            for (const b of windowBars) {
-              if (b.freq === BASS_HEX) { bassSum += b.peak; bassCount++; }
-              else if (b.freq !== MID_HEX) { highSum += b.peak; highCount++; }
-            }
-            rL = bassCount > 0 ? bassSum / bassCount : avgPeak * 0.85;
-            rR = highCount > 0 ? highSum / highCount : avgPeak * 0.70;
-          }
-        } else {
-          rL = 0;
-          rR = 0;
-        }
-
-        peakL.current = Math.max(peakL.current * 0.97, rL);
-        peakR.current = Math.max(peakR.current * 0.97, rR);
-
-        const monoRms = Math.sqrt((rL * rL + rR * rR) / 2);
-        const vuDb    = monoRms > 0 ? Math.max(-20, Math.min(3, 20 * Math.log10(monoRms / 0.7))) : -20;
-        const vuNorm  = (vuDb + 20) / 23;
-        vuEmaRef.current = vuEmaRef.current + alpha * (vuNorm - vuEmaRef.current);
-
-        drawNeedleGauge(ctx, vu.width, vu.height, {
-          value: vuEmaRef.current,
-          scale: VU_SCALE,
-          arcColor: "#c8860a",
-          redZone: 0.87,
-          label: "VU",
-        });
+        ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
+        drawNeedleGauge(ctx, vuW, vuH, { value: vuLEmaRef.current, scale: VU_SCALE, arcColor: "#00ccff", redZone: 0.87, label: "L" });
+      }
+      const vuR = vuRRef.current;
+      if (vuR) {
+        const vuW = vuR.offsetWidth || 60;
+        const vuH = vuR.offsetHeight || 120;
+        const bsW = Math.round(vuW * dprLive), bsH = Math.round(vuH * dprLive);
+        if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
+        const ctx = vuR.getContext("2d");
+        ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
+        drawNeedleGauge(ctx, vuW, vuH, { value: vuREmaRef.current, scale: VU_SCALE, arcColor: "#14dc14", redZone: 0.87, label: "R" });
+      }
+      {  // BPM ring: separate block so it still runs after the canvas split
 
         // BPM ring: write bass-bin RMS each frame; detect every 30 frames (~500ms)
         if (freqBins) {
@@ -275,9 +298,11 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       const loudness = loudnessRef.current;
       if (loudness) {
         const lW = loudness.offsetWidth || 72;
-        const lH = loudness.offsetHeight || 96;
-        if (loudness.width !== lW || loudness.height !== lH) { loudness.width = lW; loudness.height = lH; }
+        const lH = loudness.offsetHeight || 120;
+        const bsLW = Math.round(lW * dprLive), bsLH = Math.round(lH * dprLive);
+        if (loudness.width !== bsLW || loudness.height !== bsLH) { loudness.width = bsLW; loudness.height = bsLH; }
         const ctx = loudness.getContext("2d");
+        ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
 
         let rms = 0;
         if (freqBins) {
@@ -295,10 +320,10 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         const loudNorm  = Math.max(0, Math.min(1, (dbFS + 40) / 40));
         loudnessEmaRef.current = loudnessEmaRef.current + alpha * (loudNorm - loudnessEmaRef.current);
 
-        drawNeedleGauge(ctx, loudness.width, loudness.height, {
+        drawNeedleGauge(ctx, lW, lH, {
           value: loudnessEmaRef.current,
           scale: LOUDNESS_SCALE,
-          arcColor: "#c8860a",
+          arcColor: "gradient",
           redZone: 0.90,
           label: "dBFS",
         });
@@ -445,7 +470,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
     }
   }, [waveformData, currentTime, duration, hotCues, isPlaying]);
 
-  return { vuRef, specRef, energyRef, loudnessRef, bpmResultRef };
+  return { vuRef, vuRRef, specRef, energyRef, loudnessRef, bpmResultRef };
 }
 
 // ── Gauge scale definitions ──────────────────────────────────────────────────
@@ -487,9 +512,10 @@ export function detectBpm(buffer, sampleRate = 60) {
 
 // ── Drawing helpers ──────────────────────────────────────────────────────────
 
-// Needle/arc analog gauge. opts: { value 0-1, scale [{l,p}], arcColor, redZone 0-1|null, label }
+// Needle/arc analog gauge.
+// arcColor: hex string OR "gradient" (green→cyan for loudness meter).
 function drawNeedleGauge(ctx, W, H, opts) {
-  const { value = 0, scale = [], arcColor = "#c8860a", redZone = null, label = "" } = opts;
+  const { value = 0, scale = [], arcColor = "#888888", redZone = null, label = "" } = opts;
 
   const START_DEG = 205;
   const END_DEG   = 335;
@@ -497,59 +523,93 @@ function drawNeedleGauge(ctx, W, H, opts) {
   const toRad     = (d) => (d * Math.PI) / 180;
 
   const cx = W / 2;
-  const cy = H * 0.88;
-  const r  = Math.min(W, H) * 0.78;
+  const cy = H * 0.91;
+  // Geometry fix: clamp radius so needle never clips canvas edges at extreme angles.
+  // cos(205°) ≈ -0.906, so arc extends r*0.906 to the left of cx.
+  // Keeping r ≤ cx*0.90/0.906 ≈ cx*0.993 would be exact, but cx*0.88 is safe and clean.
+  const r  = Math.min(cx * 0.88, H * 0.60);
 
-  // Background
-  ctx.fillStyle = "rgba(12, 8, 4, 0.92)";
+  const isGradient = arcColor === "gradient";
+  // gradient = green (#14dc14) at quiet end → cyan (#00ccff) at hot end
+  const GRAD_GREEN = "#14dc14";
+  const GRAD_CYAN  = "#00ccff";
+
+  // Resolve the effective color for non-gradient arcs
+  const resolvedColor = isGradient ? GRAD_GREEN : arcColor;
+
+  // Radial glow
+  const glowRgb = isGradient ? "20,220,20" : hexToRgbStr(arcColor);
+  const bgGrd = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r * 1.15);
+  bgGrd.addColorStop(0, `rgba(${glowRgb},0.07)`);
+  bgGrd.addColorStop(1, `rgba(${glowRgb},0)`);
+  ctx.fillStyle = "rgba(8, 5, 2, 0.94)";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = bgGrd;
   ctx.fillRect(0, 0, W, H);
 
-  // Arc backdrop glow
-  const grd = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 1.1);
-  grd.addColorStop(0, "rgba(200,134,10,0.08)");
-  grd.addColorStop(1, "rgba(200,134,10,0)");
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, W, H);
-
-  // Scale arc (dim amber track)
+  // Arc track
   ctx.beginPath();
   ctx.arc(cx, cy, r, toRad(START_DEG), toRad(END_DEG));
-  ctx.strokeStyle = "rgba(200,134,10,0.25)";
-  ctx.lineWidth   = 3;
+  if (isGradient) {
+    // Linear gradient along the horizontal extent of the arc
+    const lx0 = cx + r * Math.cos(toRad(START_DEG));
+    const lx1 = cx + r * Math.cos(toRad(END_DEG));
+    const arcGrd = ctx.createLinearGradient(lx0, cy, lx1, cy);
+    arcGrd.addColorStop(0, "rgba(20,220,20,0.28)");
+    arcGrd.addColorStop(1, "rgba(0,204,255,0.28)");
+    ctx.strokeStyle = arcGrd;
+  } else {
+    ctx.strokeStyle = hexToRgba(arcColor, 0.28);
+  }
+  ctx.lineWidth = 2.5;
   ctx.stroke();
 
-  // Red zone arc
+  // Red zone arc (stays as a hot accent in all modes)
   if (redZone != null) {
     const rzStart = toRad(START_DEG + redZone * SPAN_DEG);
     ctx.beginPath();
     ctx.arc(cx, cy, r, rzStart, toRad(END_DEG));
-    ctx.strokeStyle = "rgba(220,50,30,0.55)";
-    ctx.lineWidth   = 3;
+    ctx.strokeStyle = "rgba(220,50,30,0.50)";
+    ctx.lineWidth   = 2.5;
     ctx.stroke();
   }
 
-  // Tick marks + labels
+  // Tick marks + labels — skip crowded interior labels at narrow widths
+  const skipMiddle = W < 58;
+  const SKIP_LABELS = new Set(skipMiddle ? ["-7", "-5", "-1"] : []);
   ctx.save();
-  ctx.font = `${Math.max(7, Math.round(W * 0.13))}px 'JetBrains Mono', monospace`;
+  ctx.font = `${Math.max(6, Math.round(W * 0.11))}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  for (const {l, p} of scale) {
+  for (const { l, p } of scale) {
     const angDeg = START_DEG + p * SPAN_DEG;
     const angRad = toRad(angDeg);
     const cos = Math.cos(angRad), sin = Math.sin(angRad);
     const outer = r + 2;
-    const inner = r - 6;
-    const isRed = redZone != null && p >= redZone;
-    ctx.strokeStyle = isRed ? "rgba(220,80,50,0.8)" : "rgba(200,134,10,0.6)";
+    const inner = r - 5;
+    const isHot = redZone != null && p >= redZone;
+    let tickColor;
+    if (isGradient) {
+      tickColor = isHot ? "rgba(0,204,255,0.75)" : "rgba(20,220,20,0.55)";
+    } else {
+      tickColor = isHot ? "rgba(220,80,50,0.80)" : hexToRgba(arcColor, 0.55);
+    }
+    ctx.strokeStyle = tickColor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(cx + cos * inner, cy + sin * inner);
     ctx.lineTo(cx + cos * outer, cy + sin * outer);
     ctx.stroke();
-    const lx = cx + cos * (r - 14);
-    const ly = cy + sin * (r - 14);
-    ctx.fillStyle = isRed ? "rgba(220,80,50,0.9)" : "rgba(200,180,120,0.75)";
-    ctx.fillText(l, lx, ly);
+    if (!SKIP_LABELS.has(l)) {
+      const lx = cx + cos * (r - 11);
+      const ly = cy + sin * (r - 11);
+      if (isGradient) {
+        ctx.fillStyle = isHot ? "rgba(0,204,255,0.85)" : "rgba(20,220,20,0.70)";
+      } else {
+        ctx.fillStyle = isHot ? "rgba(220,80,50,0.90)" : hexToRgba(arcColor, 0.70);
+      }
+      ctx.fillText(l, lx, ly);
+    }
   }
   ctx.restore();
 
@@ -557,37 +617,75 @@ function drawNeedleGauge(ctx, W, H, opts) {
   const clampedVal = Math.max(0, Math.min(1, value));
   const needleAngle = toRad(START_DEG + clampedVal * SPAN_DEG);
   const needleCos = Math.cos(needleAngle), needleSin = Math.sin(needleAngle);
-  const needleLen = r - 4;
-  const pivotBack = 6;
+  const needleLen = r - 3;
+  const pivotBack = 5;
 
+  // Shaft (dim)
   ctx.beginPath();
   ctx.moveTo(cx - needleCos * pivotBack, cy - needleSin * pivotBack);
-  ctx.lineTo(cx + needleCos * needleLen * 0.7, cy + needleSin * needleLen * 0.7);
-  ctx.strokeStyle = "rgba(240,237,232,0.35)";
+  ctx.lineTo(cx + needleCos * needleLen * 0.72, cy + needleSin * needleLen * 0.72);
+  ctx.strokeStyle = "rgba(200,200,200,0.28)";
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
+  // Tip: identity color, turns hot-red when in red zone
+  let tipColor;
+  if (clampedVal >= (redZone ?? 2)) {
+    tipColor = "rgba(220,60,40,0.95)";
+  } else if (isGradient) {
+    tipColor = lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal);
+  } else {
+    tipColor = hexToRgba(arcColor, 0.95);
+  }
   ctx.beginPath();
-  ctx.moveTo(cx + needleCos * needleLen * 0.7, cy + needleSin * needleLen * 0.7);
+  ctx.moveTo(cx + needleCos * needleLen * 0.72, cy + needleSin * needleLen * 0.72);
   ctx.lineTo(cx + needleCos * needleLen, cy + needleSin * needleLen);
-  ctx.strokeStyle = clampedVal >= (redZone ?? 2) ? "rgba(220,60,40,0.95)" : "rgba(200,134,10,0.95)";
+  ctx.strokeStyle = tipColor;
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Center hub
+  // Hub
   ctx.beginPath();
-  ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
-  ctx.fillStyle = arcColor;
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fillStyle = isGradient ? lerpColor(GRAD_GREEN, GRAD_CYAN, clampedVal) : arcColor;
   ctx.fill();
 
-  // Label
+  // Channel label
   if (label) {
-    ctx.font = `${Math.max(7, Math.round(W * 0.12))}px 'Chakra Petch', monospace`;
+    ctx.font = `500 ${Math.max(7, Math.round(W * 0.11))}px 'Chakra Petch', sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "rgba(200,134,10,0.5)";
-    ctx.fillText(label, cx, cy - r * 0.35);
+    ctx.fillStyle = isGradient
+      ? lerpColor(GRAD_GREEN, GRAD_CYAN, 0.5).replace(")", ",0.55)").replace("rgb", "rgba")
+      : hexToRgba(arcColor, 0.55);
+    ctx.fillText(label, cx, cy - r * 0.28);
   }
+}
+
+// Interpolate between two hex colors (both "#rrggbb") at t=0..1
+function lerpColor(a, b, t) {
+  const ar = parseInt(a.slice(1,3),16), ag = parseInt(a.slice(3,5),16), ab = parseInt(a.slice(5,7),16);
+  const br = parseInt(b.slice(1,3),16), bg = parseInt(b.slice(3,5),16), bb = parseInt(b.slice(5,7),16);
+  const r = Math.round(ar + (br-ar)*t);
+  const g = Math.round(ag + (bg-ag)*t);
+  const bv = Math.round(ab + (bb-ab)*t);
+  return `rgb(${r},${g},${bv})`;
+}
+
+// Convert hex (#rrggbb) to rgba() string
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// Convert hex (#rrggbb) to "r,g,b" string for use inside rgba()
+function hexToRgbStr(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
 }
 // Pass Serato freq hex values through unchanged.
 function pscFreqColor(hexColor) {

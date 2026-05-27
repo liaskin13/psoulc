@@ -447,7 +447,7 @@ function ArchitectConsole({
   const overviewRef = useRef(null);
   const waveformHoveredRef = useRef(false);
 
-  const { vuRef, specRef, energyRef, loudnessRef, bpmResultRef } = useAudioAnalyzer({
+  const { vuRef, vuRRef, specRef, energyRef, loudnessRef, bpmResultRef } = useAudioAnalyzer({
     isPlaying,
     waveformData: deckHighResBars || loadedWaveformHighData,
     currentTime,
@@ -2125,10 +2125,11 @@ function ArchitectConsole({
           </div>
         </div>
 
-        {/* Analyzer row — VU (left) + Spectrum Analyzer (center) + Loudness (right) */}
+        {/* Analyzer row — VU L+R (left) + Spectrum Analyzer (center) + Loudness (right) */}
         <div className="arch-analyzer-row" aria-hidden="true">
           <div className="arch-vu-col">
-            <canvas ref={vuRef} className="arch-vu-deck" />
+            <canvas ref={vuRef} className="arch-vu-deck arch-vu-deck--l" />
+            <canvas ref={vuRRef} className="arch-vu-deck arch-vu-deck--r" />
           </div>
           <div className="arch-sa-col">
             <canvas ref={specRef} className="arch-spectrum-deck" />

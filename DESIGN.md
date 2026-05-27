@@ -470,6 +470,58 @@ INTAKE is a console-level action. The button lives in the browser utility bar (`
 | 2026-05-20 | DeckWaveform: Serato frequency-band rendering (orange/green/yellow-white) | Three bands stacked per bar, sqrt boost, 0.25 alpha past playhead. Mirrors Serato DJ Pro GEOB overview. The waveform IS the artwork. |
 | 2026-05-20 | ListenerVaultView waveform: unplayed bars rgba(240,237,232,0.55) not cold grey | Off-white is warm and legible. Cold grey (rgba(160,160,160,0.13)) was wrong — too invisible on void background. |
 | 2026-05-20 | Mini-transport strip: persists above vault dock during playback while in tracklist | Guest navigated away from player — their choice. Music plays until they stop it. Strip is the bridge back. |
+| 2026-05-27 | Stereo VU: two canvases, L=cyan, R=green | Identity colors on the most live instrument in the console. The stereo field as a collaboration metaphor: L's eye on the left, D's soul on the right. Amber officially retired. |
+| 2026-05-27 | Loudness meter: green→cyan gradient arc (the fused mix) | Neither L nor D — the combined signal. Completes the trio: cyan / green / gradient. |
+| 2026-05-27 | Waveform 200px → 160px, analyzer row 96px → 120px | Brings waveform:meters ratio from 2.08x to 1.33x, matching pro DJ software proportions. Net deck: −16px. |
+| 2026-05-27 | Arc geometry fix: r = min(cx×0.88, H×0.60) | Previous formula Math.min(W,H)×0.78 caused needle to clip off canvas edge at 205°/335° extremes. |
+| 2026-05-27 | DPR fix: canvas backing store × devicePixelRatio, ctx.setTransform(dpr,0,0,dpr,0,0) | All needle gauges were rendering at 1x on Retina displays. setTransform before draw; coordinates remain in CSS pixels. |
+
+---
+
+## Stereo VU Meter (Analyzer Row — Left Column)
+
+The analyzer row holds three instruments: VU (left), Spectrum Analyzer (center), Loudness (right). All three are canvas-drawn at 120px height (upgraded from 96px).
+
+### VU Meter — L + R Channels
+
+Two separate canvases side by side in `.arch-vu-col`. Each canvas is `calc(50% - 2px)` wide, 120px tall.
+
+| Channel | Canvas | Arc color | Needle/hub | Label | Glow |
+|---------|--------|-----------|------------|-------|------|
+| L (Left) | `vuRef` | `#00ccff` cyan | `#00ccff` | "L" in cyan | `0 0 12px rgba(0,204,255,0.28)` |
+| R (Right) | `vuRRef` | `#14dc14` green | `#14dc14` | "R" in green | `0 0 12px rgba(20,220,20,0.28)` |
+
+**Signal routing:** L canvas = bass-frequency energy (rL). R canvas = high-frequency energy (rR). This mirrors the stereo split approximation already computed in `useAudioAnalyzer.js`.
+
+**The trio metaphor:** L (cyan = the architect) | R (green = the artist) | Loudness (green→cyan gradient = the mix)
+
+### Arc Geometry (applies to all needle gauges)
+
+- `START_DEG = 205°`, `END_DEG = 335°`, `SPAN = 130°` (classic VU sweep)
+- Pivot: `cx = W/2`, `cy = H * 0.91`
+- **Radius fix:** `r = Math.min(cx * 0.90, H * 0.60)` — prevents needle clipping at narrow canvas widths (the old `Math.min(W,H)*0.78` formula caused the needle to extend off-canvas at the extreme positions)
+- **DPR fix:** canvas backing store multiplied by `window.devicePixelRatio`, then `ctx.scale(dpr, dpr)` before drawing — ensures sharp rendering at 2x displays
+
+### Loudness Meter — Gradient Arc (Green → Cyan)
+
+Single canvas, `~72px` wide × `120px` tall. Represents overall RMS (neither L nor D — the fused mix).
+
+- **Arc track gradient:** linear from `#14dc14` (green, at quiet/left end) → `#00ccff` (cyan, at hot/right end)
+- **Needle tip:** `lerpHex(green, cyan, value)` — the tip color tracks the needle's position on the gradient arc
+- **Red zone:** remains at `0.90` but in the gradient palette (cyan end reads "collision" naturally)
+- **Label:** "dBFS"
+
+### Sizing (waveform + analyzer proportions)
+
+| Element | Before | After | Reason |
+|---------|--------|-------|--------|
+| `.arch-waveform-main` | 200px | 160px | Proportional to pro DJ software (Serato/Rekordbox ~130-140px) |
+| `.arch-analyzer-row` | 96px | 120px | Meters now 43% of combined height vs 32% before |
+| `.arch-spectrum-deck` | 96px | 120px | Matches analyzer row |
+| `.arch-loudness-meter` | 96px | 120px | Matches analyzer row |
+| Waveform : meters ratio | 2.08x | 1.33x | From amateurish to pro-grade proportions |
+
+Net deck height change: −16px (tighter on 13" screens).
 
 ---
 
