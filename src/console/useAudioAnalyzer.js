@@ -589,43 +589,6 @@ function drawNeedleGauge(ctx, W, H, opts) {
     ctx.fillText(label, cx, cy - r * 0.35);
   }
 }
-
-function drawVU(ctx, W, H, rL, rR, peakLVal, peakRVal) {
-  const bw      = Math.floor((W - 6) / 2);
-  const N_SEGS  = 24;
-  const segH    = Math.floor(H / N_SEGS);
-  const segGap  = 2;
-  const segFill = segH - segGap;
-
-  function segColor(segFrac) {
-    if (segFrac >= 0.88) return "#e52020"; // clip
-    if (segFrac >= 0.70) return "#e56020"; // hot
-    if (segFrac >= 0.45) return "#14dc14"; // mid (Serato green)
-    return "#1464dc";                       // low (bass blue)
-  }
-
-  function drawSegBar(x, level, peak) {
-    const lit = Math.round(level * N_SEGS);
-    for (let s = 0; s < N_SEGS; s++) {
-      const segFrac = s / N_SEGS;
-      const y = H - (s + 1) * segH + segGap;
-      ctx.fillStyle = segColor(segFrac);
-      ctx.globalAlpha = s < lit ? 1 : 0.1;
-      ctx.fillRect(x, y, bw, segFill);
-    }
-    ctx.globalAlpha = 1;
-    if (peak > 0.03) {
-      const peakSeg = Math.min(Math.round(peak * N_SEGS), N_SEGS - 1);
-      const py = H - (peakSeg + 1) * segH + segGap;
-      ctx.fillStyle = PEAK_TICK;
-      ctx.fillRect(x, py, bw, 2);
-    }
-  }
-
-  drawSegBar(0, rL, peakLVal);
-  drawSegBar(bw + 6, rR, peakRVal);
-}
-
 // Pass Serato freq hex values through unchanged.
 function pscFreqColor(hexColor) {
   return hexColor;
