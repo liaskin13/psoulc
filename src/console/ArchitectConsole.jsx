@@ -2384,7 +2384,7 @@ function ArchitectConsole({
           aria-label="Playback"
         >
           <button
-            className="arch-transport-btn arch-skip-btn"
+            className="arch-transport-btn arch-bar-skip-btn"
             aria-label="Skip back (1 tap: 4 bars, 2 taps: 8 bars)"
             title="1 tap: −4 bars · 2 taps: −8 bars"
             onClick={() => handleBarSkip(-1)}
@@ -2412,7 +2412,7 @@ function ArchitectConsole({
             ■ CUE
           </button>
           <button
-            className="arch-transport-btn arch-skip-btn"
+            className="arch-transport-btn arch-bar-skip-btn"
             aria-label="Skip forward (1 tap: 4 bars, 2 taps: 8 bars)"
             title="1 tap: +4 bars · 2 taps: +8 bars"
             onClick={() => handleBarSkip(+1)}
