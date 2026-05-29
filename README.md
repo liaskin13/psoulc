@@ -1,50 +1,34 @@
-# Pleasant Soul Collective
+# UOYnI
 
-A cinematic, artist-first music streaming and sharing platform built for
-the independent creator.
-
+A cinematic, artist-first music ecosystem built for the independent creator.
 ---
 
 ## Why this exists
 
-Art sustains the world.  It shapes our collective destiny.  The 
-independent artists who create deserve infrastructure worthy of that role.
+Art sustains the world; it shapes our collective destiny. The independent creators who anchor this reality deserve an infrastructure worthy of their calling.
 
-This platform is built around one radical premise: the creator holds
-sovereign control. Who hears their work, when, where, how it's shared,
-and how it generates income — all of it belongs to the artist. No
-gatekeepers. No algorithmic compromise. No platform taking what isn't theirs.
+This platform is built on a singular, radical premise: the artist holds absolute sovereignty. What, when, where, and with whom their work is shared—and exactly how it generates value—belongs entirely to them. 
+* No gatekeepers. * No algorithmic compromises. * No platform extraction.
 
-We believe that when artists have the freedom and tools to focus entirely
-on their craft, the world becomes a more beautiful place for all of us.
-
-That's not a value proposition. That's the whole point.
-
----
+We believe that when creators are given the sanctuary, tools, and freedom to focus entirely on their craft, the world aligns into a more beautiful resonance. That isn’t a value proposition. It’s the whole point.
 
 ## What we're building
 
-A visually stunning, high-fidelity platform where skill and authenticity
-reign supreme. The stack is built for cinematic quality — React, Three.js,
-and the Web Audio API — because the experience should be as exceptional
-as the music it carries.
+A visually striking, high-fidelity environment where skill, authenticity, and intentional design reign supreme.
 
-The artist console gives creators godlike control over their catalog:
-access permissions, sharing rules, release timing, revenue settings,
-and audience management. All of it in their hands.
+The Tech Stack: Engineered for cinematic presence using React, Three.js, and the Web Audio API. The digital architecture is crafted to be as exceptional as the music it houses.
 
+The Artist Console: Grants creators granular, absolute control over their catalog. Seamlessly manage access permissions, sharing rules, release timing, revenue structures, and audience relationships—completely in your hands.
 ---
 
-## Stack
+Stack & Architecture
+Frontend: React, Three.js, Web Audio API
 
-- **Frontend** — React, Three.js, Web Audio API
-- **Backend** — Supabase (audio storage, track metadata, real-time presence)
-- **Task tracking** — `tasks/todo.md`, `tasks/lessons.md`, `tasks/plan.active.md`
-- **Workflow** — See `CLAUDE.md` for AI-assisted development conventions
+Backend: Supabase (audio storage, track metadata, real-time presence)
 
----
+Task Management: Tracked via tasks/todo.md, tasks/lessons.md, and tasks/plan.active.md
 
-## Contributing
+Workflow: See CLAUDE.md for AI-assisted development conventions and guidelines.
 
-Read `CLAUDE.md` before opening a PR. Every decision runs through one
-filter first: does this serve the artist?
+Contributing
+Please thoroughly review CLAUDE.md before opening a pull request. Every architectural and design decision runs through a single filter: Does this serve the sovereignty of the artist?
