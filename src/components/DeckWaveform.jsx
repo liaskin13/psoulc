@@ -1,8 +1,5 @@
-// Canvas-based waveform renderer for deck view.
-// Physics-correct Serato model: bass→RED, mid→GREEN, high→BLUE.
-// Per-band additive (lighter) blend: each frequency drawn at its own height.
-// High-freq transients spike above the bass body → Serato-style pointy crests.
-// Steep power curve on bass (2.5) gives body; shallow on high (1.5) gives crests.
+// Canvas waveform renderer. Serato model: bass→RED, mid→GREEN, high→BLUE.
+// Single mixed-color bar per pixel; d.high drives height (hi-hat transient range).
 
 import { useEffect, useRef } from "react";
 
@@ -63,8 +60,8 @@ export default function DeckWaveform({
     // Maps p5→min height, p95→85% halfH so the full visual range is used
     // regardless of how compressed the source audio is.
     let p5 = 0, pRange = 1;
-    if (waveformData && waveformData.length > 0 && waveformData[0]?.peak !== undefined) {
-      const sorted = waveformData.map(d => d.peak).sort((a, b) => a - b);
+    if (waveformData && waveformData.length > 0 && waveformData[0]?.high !== undefined) {
+      const sorted = waveformData.map(d => d.high).sort((a, b) => a - b);
       p5  = sorted[Math.floor(sorted.length * 0.05)];
       const p95 = sorted[Math.floor(sorted.length * 0.95)];
       pRange = Math.max(0.001, p95 - p5);
@@ -188,19 +185,15 @@ export default function DeckWaveform({
         const dimMult = isPast ? 0.62 : 1.0;
         const bLo = Math.floor(startBar + (px / w) * (endBar - startBar));
         const bHi = Math.ceil(startBar + ((px + 1) / w) * (endBar - startBar));
-        let d = null,
-          maxPeak = 0;
+        let d = null, maxHigh = 0;
         for (let bi = bLo; bi <= bHi; bi++) {
-          if (bi < 0 || bi >= barCount) continue;
-          if (peaks[bi] && peaks[bi].peak > maxPeak) {
-            maxPeak = peaks[bi].peak;
-            d = peaks[bi];
-          }
+          if (bi < 0 || bi >= barCount || !peaks[bi]) continue;
+          if (peaks[bi].high > maxHigh) { maxHigh = peaks[bi].high; d = peaks[bi]; }
         }
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const barH = Math.max(2, Math.min(halfH * 0.85, ((d.peak - p5) / pRange) * halfH * 0.85));
+          const barH = Math.max(2, Math.min(halfH * 0.85, ((d.high - p5) / pRange) * halfH * 0.85));
           const rawR = Math.pow(d.bass, 1.5);
           const rawG = Math.pow(d.mid,  1.8);
           const rawB = Math.pow(d.high, 1.2);
