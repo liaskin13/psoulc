@@ -110,8 +110,6 @@ export default function DeckWaveform({
         playheadX = w / 2;
       }
       const halfH = h / 2;
-      const trackMax = peaks.reduce((m, b) => Math.max(m, b.peak), 0) || 1;
-
       const startTimeSec = startBar / 50;
       const endTimeSec = endBar / 50;
 
@@ -191,7 +189,7 @@ export default function DeckWaveform({
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const barH = Math.max(2, Math.pow(d.peak / trackMax, 2.0) * halfH);
+          const barH = Math.max(2, Math.pow(d.peak, 2.0) * halfH);
           const rawR = Math.pow(d.bass, 1.5);
           const rawG = Math.pow(d.mid,  1.8);
           const rawB = Math.pow(d.high, 1.2);
