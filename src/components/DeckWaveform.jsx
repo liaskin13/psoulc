@@ -46,11 +46,14 @@ export default function DeckWaveform({
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
     let w = canvas.getBoundingClientRect().width || width;
+    let h = canvas.getBoundingClientRect().height || height;
 
     function setupCanvas() {
-      w = canvas.getBoundingClientRect().width || width;
+      const rect = canvas.getBoundingClientRect();
+      w = rect.width || width;
+      h = rect.height || height;
       canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(height * dpr);
+      canvas.height = Math.round(h * dpr);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
     }
@@ -61,7 +64,7 @@ export default function DeckWaveform({
       const dur = durationRef.current;
       const zTarget = zoomRef.current;
 
-      ctx.clearRect(0, 0, w, height);
+      ctx.clearRect(0, 0, w, h);
 
       if (
         !waveformData ||
@@ -71,8 +74,8 @@ export default function DeckWaveform({
         ctx.strokeStyle = "rgba(255,255,255,0.15)";
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(0, height / 2);
-        ctx.lineTo(w, height / 2);
+        ctx.moveTo(0, h / 2);
+        ctx.lineTo(w, h / 2);
         ctx.stroke();
         return;
       }
@@ -106,7 +109,7 @@ export default function DeckWaveform({
         endBar = centerBar + halfVisible;
         playheadX = w / 2;
       }
-      const halfH = height / 2;
+      const halfH = h / 2;
 
       const startTimeSec = startBar / 50;
       const endTimeSec = endBar / 50;
@@ -125,17 +128,17 @@ export default function DeckWaveform({
             : playheadX;
         if (lex > lsx) {
           ctx.fillStyle = "rgba(0,204,204,0.12)";
-          ctx.fillRect(Math.max(0, lsx), 0, Math.min(lex - lsx, w), height);
+          ctx.fillRect(Math.max(0, lsx), 0, Math.min(lex - lsx, w), h);
           ctx.strokeStyle = "rgba(0,204,204,0.5)";
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(Math.max(0, lsx), 0);
-          ctx.lineTo(Math.max(0, lsx), height);
+          ctx.lineTo(Math.max(0, lsx), h);
           ctx.stroke();
           if (loopRegion.end != null) {
             ctx.beginPath();
             ctx.moveTo(Math.min(lex, w), 0);
-            ctx.lineTo(Math.min(lex, w), height);
+            ctx.lineTo(Math.min(lex, w), h);
             ctx.stroke();
           }
         }
@@ -164,13 +167,12 @@ export default function DeckWaveform({
           }
           ctx.beginPath();
           ctx.moveTo(xPos, 0);
-          ctx.lineTo(xPos, height);
+          ctx.lineTo(xPos, h);
           ctx.stroke();
         }
         ctx.lineWidth = 1;
       }
 
-      ctx.globalCompositeOperation = "lighter";
       for (let px = 0; px < Math.ceil(w); px++) {
         const isPast = px < playheadX;
         const dimMult = isPast ? 0.45 : 1.0;
@@ -188,21 +190,17 @@ export default function DeckWaveform({
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const bH = Math.max(2, Math.pow(d.bass, 2.5) * halfH);
-          const mH = Math.max(2, Math.pow(d.mid,  2.0) * halfH);
-          const hH = Math.max(1, Math.pow(d.high, 1.5) * halfH);
-          // Bass — RED
-          ctx.fillStyle = `rgb(${Math.round(255 * dimMult)},0,0)`;
-          ctx.fillRect(px, halfH - bH, 1, bH);
-          ctx.fillRect(px, halfH,      1, bH);
-          // Mid — GREEN
-          ctx.fillStyle = `rgb(0,${Math.round(255 * dimMult)},0)`;
-          ctx.fillRect(px, halfH - mH, 1, mH);
-          ctx.fillRect(px, halfH,      1, mH);
-          // High — BLUE (spikes above orange body on transients)
-          ctx.fillStyle = `rgb(0,0,${Math.round(255 * dimMult)})`;
-          ctx.fillRect(px, halfH - hH, 1, hH);
-          ctx.fillRect(px, halfH,      1, hH);
+          const barH = Math.max(2, Math.pow(d.peak, 2.0) * halfH);
+          const rawR = Math.pow(d.bass, 1.5);
+          const rawG = Math.pow(d.mid,  1.8);
+          const rawB = Math.pow(d.high, 1.2);
+          const wc   = Math.min(rawR, rawG, rawB) * 0.85;
+          const r = Math.round(Math.min(1, rawR + wc) * 255 * dimMult);
+          const g = Math.round(Math.min(1, rawG + wc) * 255 * dimMult);
+          const b = Math.round(Math.min(1, rawB + wc) * 255 * dimMult);
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          ctx.fillRect(px, halfH - barH, 1, barH);
+          ctx.fillRect(px, halfH,        1, barH);
         } else {
           const barH = Math.max(1, d.peak * halfH);
           const cr = Math.round(parseInt(d.freq.slice(1, 3), 16) * dimMult);
@@ -213,7 +211,6 @@ export default function DeckWaveform({
           ctx.fillRect(px, halfH, 1, barH);
         }
       }
-      ctx.globalCompositeOperation = "source-over";
 
       // Time ruler ticks + labels — drawn after bars so they're always visible
       ctx.lineWidth = 1;
@@ -233,14 +230,14 @@ export default function DeckWaveform({
         ctx.lineTo(xPos, tickH);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(xPos, height);
-        ctx.lineTo(xPos, height - tickH);
+        ctx.moveTo(xPos, h);
+        ctx.lineTo(xPos, h - tickH);
         ctx.stroke();
         if (is5 && sec > 0 && xPos > 14 && xPos < w - 14) {
           const mm = Math.floor(sec / 60);
           const ss = String(sec % 60).padStart(2, "0");
           ctx.fillStyle = "rgba(255,255,255,0.50)";
-          ctx.fillText(`${mm}:${ss}`, xPos, height - tickH - 2);
+          ctx.fillText(`${mm}:${ss}`, xPos, h - tickH - 2);
         }
       }
 
@@ -275,7 +272,7 @@ export default function DeckWaveform({
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(playheadX, 0);
-      ctx.lineTo(playheadX, height);
+      ctx.lineTo(playheadX, h);
       ctx.stroke();
 
       // Hot cue markers — positioned in zoomed window coordinates
@@ -295,7 +292,7 @@ export default function DeckWaveform({
         else ctx.setLineDash([]);
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
+        ctx.lineTo(x, h);
         ctx.stroke();
         ctx.setLineDash([]);
 
@@ -303,14 +300,14 @@ export default function DeckWaveform({
           ctx.strokeStyle = color;
           ctx.lineWidth = 1.5;
           ctx.beginPath();
-          ctx.moveTo(x - 6, height);
-          ctx.lineTo(x + 6, height);
-          ctx.lineTo(x, height - 12);
+          ctx.moveTo(x - 6, h);
+          ctx.lineTo(x + 6, h);
+          ctx.lineTo(x, h - 12);
           ctx.closePath();
           ctx.stroke();
           ctx.fillStyle = color;
           ctx.font = "bold 7px JetBrains Mono, monospace";
-          ctx.fillText(num, x, height - 4);
+          ctx.fillText(num, x, h - 4);
         } else {
           ctx.fillStyle = color;
           ctx.beginPath();
@@ -431,7 +428,7 @@ export default function DeckWaveform({
         onClick={handleClick}
         style={{
           width: "100%",
-          height: `${height}px`,
+          height: "100%",
           cursor: onSeek ? "pointer" : "default",
           display: "block",
           flex: 1,
