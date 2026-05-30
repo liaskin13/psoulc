@@ -59,6 +59,17 @@ export default function DeckWaveform({
     }
     setupCanvas();
 
+    // Percentile contrast stretch — computed once per waveformData change.
+    // Maps p5→min height, p95→85% halfH so the full visual range is used
+    // regardless of how compressed the source audio is.
+    let p5 = 0, pRange = 1;
+    if (waveformData && waveformData.length > 0 && waveformData[0]?.peak !== undefined) {
+      const sorted = waveformData.map(d => d.peak).sort((a, b) => a - b);
+      p5  = sorted[Math.floor(sorted.length * 0.05)];
+      const p95 = sorted[Math.floor(sorted.length * 0.95)];
+      pRange = Math.max(0.001, p95 - p5);
+    }
+
     function draw() {
       const ct = getTimeRef.current ? getTimeRef.current() : currentTimeRef.current;
       const dur = durationRef.current;
@@ -174,7 +185,7 @@ export default function DeckWaveform({
 
       for (let px = 0; px < Math.ceil(w); px++) {
         const isPast = px < playheadX;
-        const dimMult = isPast ? 0.45 : 1.0;
+        const dimMult = isPast ? 0.62 : 1.0;
         const bLo = Math.floor(startBar + (px / w) * (endBar - startBar));
         const bHi = Math.ceil(startBar + ((px + 1) / w) * (endBar - startBar));
         let d = null,
@@ -189,7 +200,7 @@ export default function DeckWaveform({
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const barH = Math.max(2, Math.pow(d.peak, 2.0) * halfH);
+          const barH = Math.max(2, Math.min(halfH * 0.85, ((d.peak - p5) / pRange) * halfH * 0.85));
           const rawR = Math.pow(d.bass, 1.5);
           const rawG = Math.pow(d.mid,  1.8);
           const rawB = Math.pow(d.high, 1.2);
