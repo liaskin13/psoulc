@@ -1,9 +1,8 @@
 // Canvas-based waveform renderer for deck view.
 // Physics-correct Serato model: bass→RED, mid→GREEN, high→BLUE.
-// Gentle per-channel curves preserve intermediate colors (cyan, yellow, purple).
-// White component: min(r,g,b)*0.85 added to all channels so full-spectrum
-// content (builds, drops) approaches white — the Serato hallmark.
-// Pinpoint peaks: dim body (60%) + bright 2px tip at OUTER edge (both halves).
+// Per-band additive (lighter) blend: each frequency drawn at its own height.
+// High-freq transients spike above the bass body → Serato-style pointy crests.
+// Steep power curve on bass (2.5) gives body; shallow on high (1.5) gives crests.
 
 import { useEffect, useRef } from "react";
 
@@ -171,6 +170,7 @@ export default function DeckWaveform({
         ctx.lineWidth = 1;
       }
 
+      ctx.globalCompositeOperation = "lighter";
       for (let px = 0; px < Math.ceil(w); px++) {
         const isPast = px < playheadX;
         const dimMult = isPast ? 0.45 : 1.0;
@@ -188,26 +188,21 @@ export default function DeckWaveform({
         if (!d) continue;
 
         if (d.bass !== undefined) {
-          const rawR = Math.pow(d.bass, 1.5);
-          const rawG = Math.pow(d.mid, 1.8);
-          const rawB = Math.pow(d.high, 1.2);
-          const w = Math.min(rawR, rawG, rawB) * 0.85;
-          const mixR = Math.min(1, rawR + w);
-          const mixG = Math.min(1, rawG + w);
-          const mixB = Math.min(1, rawB + w);
-          const barH = Math.max(2, Math.max(mixR, mixG, mixB) * halfH * 0.96);
-          const r = Math.round(mixR * 255 * dimMult);
-          const g = Math.round(mixG * 255 * dimMult);
-          const b = Math.round(mixB * 255 * dimMult);
-          const bodyH = Math.max(0, barH - 2);
-          // Dim body at 60%
-          ctx.fillStyle = `rgb(${Math.round(r * 0.6)},${Math.round(g * 0.6)},${Math.round(b * 0.6)})`;
-          ctx.fillRect(px, halfH - barH, 1, bodyH);
-          ctx.fillRect(px, halfH + 2, 1, bodyH);
-          // Bright 2px tip at outer edge of each half (symmetric)
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.fillRect(px, halfH - barH, 1, 2);
-          ctx.fillRect(px, halfH + barH - 2, 1, 2);
+          const bH = Math.max(2, Math.pow(d.bass, 2.5) * halfH);
+          const mH = Math.max(2, Math.pow(d.mid,  2.0) * halfH);
+          const hH = Math.max(1, Math.pow(d.high, 1.5) * halfH);
+          // Bass — RED
+          ctx.fillStyle = `rgb(${Math.round(255 * dimMult)},0,0)`;
+          ctx.fillRect(px, halfH - bH, 1, bH);
+          ctx.fillRect(px, halfH,      1, bH);
+          // Mid — GREEN
+          ctx.fillStyle = `rgb(0,${Math.round(255 * dimMult)},0)`;
+          ctx.fillRect(px, halfH - mH, 1, mH);
+          ctx.fillRect(px, halfH,      1, mH);
+          // High — BLUE (spikes above orange body on transients)
+          ctx.fillStyle = `rgb(0,0,${Math.round(255 * dimMult)})`;
+          ctx.fillRect(px, halfH - hH, 1, hH);
+          ctx.fillRect(px, halfH,      1, hH);
         } else {
           const barH = Math.max(1, d.peak * halfH);
           const cr = Math.round(parseInt(d.freq.slice(1, 3), 16) * dimMult);
@@ -218,6 +213,7 @@ export default function DeckWaveform({
           ctx.fillRect(px, halfH, 1, barH);
         }
       }
+      ctx.globalCompositeOperation = "source-over";
 
       // Time ruler ticks + labels — drawn after bars so they're always visible
       ctx.lineWidth = 1;
