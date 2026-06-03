@@ -3,8 +3,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-const PLAYHEAD_X_FRAC = 0.25;
-const BARS_PER_SEC    = 50; // Rekordbox standard
+const PLAYHEAD_X_FRAC = 0.5;  // center — past left, future right
+const BARS_PER_SEC    = 50;   // Rekordbox standard
 
 // ─── IIR 3-band analysis, single global normalization ─────────────────────────
 // Runs in a single O(N_samples) pass — fast regardless of bar count.
@@ -15,7 +15,7 @@ function analyzeBands(channelData, sampleRate, barCount) {
   const samplesPerBar = Math.floor(total / barCount);
   const dt  = 1 / sampleRate;
   const aL  = dt / (1 / (2 * Math.PI * 250)  + dt); // LP at 250Hz  → bass
-  const aM  = dt / (1 / (2 * Math.PI * 4000) + dt); // LP at 4000Hz → mid
+  const aM  = dt / (1 / (2 * Math.PI * 2500) + dt); // LP at 2500Hz → mid (Serato standard)
 
   let lpL = 0, lpM = 0;
   const lowRms  = new Float32Array(barCount);
@@ -42,19 +42,23 @@ function analyzeBands(channelData, sampleRate, barCount) {
     highRms[bar] = Math.sqrt(hs / n);
   }
 
-  // Single global max across all three bands
-  let gMax = 0;
+  // Per-band independent normalization — each band fills its own visual range.
+  // This is what Serato/Rekordbox do: kicks show as red at their peak, hi-hats
+  // as cyan at their peak, independent of how much total energy each band carries.
+  let maxL = 0, maxM = 0, maxH = 0;
   for (let i = 0; i < barCount; i++) {
-    if (lowRms[i]  > gMax) gMax = lowRms[i];
-    if (midRms[i]  > gMax) gMax = midRms[i];
-    if (highRms[i] > gMax) gMax = highRms[i];
+    if (lowRms[i]  > maxL) maxL = lowRms[i];
+    if (midRms[i]  > maxM) maxM = midRms[i];
+    if (highRms[i] > maxH) maxH = highRms[i];
   }
-  gMax = Math.max(gMax, 1e-6);
+  maxL = Math.max(maxL, 1e-6);
+  maxM = Math.max(maxM, 1e-6);
+  maxH = Math.max(maxH, 1e-6);
 
   return {
-    lowAmps:  Float32Array.from(lowRms,  v => v / gMax),
-    midAmps:  Float32Array.from(midRms,  v => v / gMax),
-    highAmps: Float32Array.from(highRms, v => v / gMax),
+    lowAmps:  Float32Array.from(lowRms,  v => v / maxL),
+    midAmps:  Float32Array.from(midRms,  v => v / maxM),
+    highAmps: Float32Array.from(highRms, v => v / maxH),
   };
 }
 
@@ -68,6 +72,8 @@ export default function WaveformSandbox() {
   const drawFnRef     = useRef(null);   // stable draw ref for handlers outside useEffect
   const bpmRef        = useRef(120);
   const zoomBarsRef   = useRef(32);
+  const isDraggingRef = useRef(false);
+  const lastDragXRef  = useRef(0);
 
   const [bpm,       setBpm]       = useState(120);
   const [zoomBars,  setZoomBars]  = useState(32);
@@ -237,8 +243,32 @@ export default function WaveformSandbox() {
     applyZoom(bars, bpmRef.current);
   }, [applyZoom]);
 
-  // ─── Click-to-seek ────────────────────────────────────────────────────────────
+  // ─── Drag-to-scrub + click-to-seek ───────────────────────────────────────────
+  const handleMouseDown = useCallback((e) => {
+    isDraggingRef.current = true;
+    lastDragXRef.current  = e.clientX;
+    e.preventDefault();
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDraggingRef.current) return;
+    const audio  = audioRef.current;
+    const bands  = bandsRef.current;
+    const canvas = canvasRef.current;
+    if (!audio || !bands || !canvas) return;
+    const dx       = e.clientX - lastDragXRef.current;
+    lastDragXRef.current = e.clientX;
+    const W        = canvas.getBoundingClientRect().width;
+    const virtualW = W * zoomRef.current;
+    // drag left = forward, drag right = backward (Serato convention)
+    const dt = -(dx / virtualW) * bands.duration;
+    audio.currentTime = Math.max(0, Math.min(bands.duration, audio.currentTime + dt));
+  }, []);
+
+  const handleMouseUp = useCallback(() => { isDraggingRef.current = false; }, []);
+
   const handleCanvasClick = useCallback((e) => {
+    if (Math.abs(e.clientX - lastDragXRef.current) > 4) return; // was a drag, not a click
     const audio  = audioRef.current;
     const bands  = bandsRef.current;
     const canvas = canvasRef.current;
@@ -306,10 +336,14 @@ export default function WaveformSandbox() {
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
         style={{
           width: '100%', height: '220px', display: 'block',
-          background: '#000', cursor: 'crosshair', borderRadius: '3px',
-          border: '1px solid #0f0f0f',
+          background: '#000', cursor: 'ew-resize', borderRadius: '3px',
+          border: '1px solid #0f0f0f', userSelect: 'none',
         }}
       />
 
