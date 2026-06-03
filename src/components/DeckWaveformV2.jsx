@@ -30,6 +30,9 @@ export default function DeckWaveformV2({
   const canvasRef      = useRef(null);
   const rafRef         = useRef(null);
   const displayZoomRef = useRef(zoom);
+  const isDraggingRef  = useRef(false);
+  const lastDragXRef   = useRef(0);
+  const seekedTimeRef  = useRef(0); // tracks accumulated seek during drag
 
   // All live values kept in refs — RAF closure reads them without stale captures.
   // No live prop goes in the useEffect dep array; only structural deps do.
@@ -323,7 +326,35 @@ export default function DeckWaveformV2({
     return () => canvas.removeEventListener("wheel", onWheel);
   }, []);
 
+  const handleMouseDown = (e) => {
+    isDraggingRef.current  = true;
+    lastDragXRef.current   = e.clientX;
+    seekedTimeRef.current  = ctRef.current;
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current || !onSeek) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dx            = e.clientX - lastDragXRef.current;
+    lastDragXRef.current = e.clientX;
+    const W             = canvas.getBoundingClientRect().width;
+    const barCount      = bandsRef.current?.barCount ?? 1000;
+    const visibleBars   = barCount / (displayZoomRef.current || 1);
+    const secondsVisible = visibleBars / BARS_PER_SEC;
+    // drag left = forward, drag right = backward (Serato convention)
+    const dt  = -(dx / W) * secondsVisible;
+    const next = Math.max(0, Math.min(durRef.current, seekedTimeRef.current + dt));
+    seekedTimeRef.current = next;
+    onSeek(next);
+  };
+
+  const handleMouseUp = () => { isDraggingRef.current = false; };
+
   const handleClick = (e) => {
+    // Ignore if the user was dragging (moved more than 4px)
+    if (Math.abs(e.clientX - lastDragXRef.current) > 4) return;
     if (!onSeek) return;
     const canvas    = canvasRef.current;
     const rect      = canvas.getBoundingClientRect();
@@ -356,7 +387,11 @@ export default function DeckWaveformV2({
       <canvas
         ref={canvasRef}
         onClick={handleClick}
-        style={{ width: "100%", height: "100%", cursor: onSeek ? "pointer" : "default", display: "block", flex: 1 }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{ width: "100%", height: "100%", cursor: onSeek ? "ew-resize" : "default", display: "block", flex: 1, userSelect: "none" }}
       />
     </div>
   );
