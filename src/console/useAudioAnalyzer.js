@@ -127,6 +127,9 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
   }
 
   // ── Main effect ─────────────────────────────────────────────────────────────
+  // WCAG 2.3.3: Skip all animation (RAF loop) when prefers-reduced-motion is active.
+  // This disables: VU bar EMA smoothing, spectrum peak decay, phase correlation EMA,
+  // energy map animation. Phase meter still renders static state in idle/paused modes.
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -642,9 +645,9 @@ function drawCorrelationMeter(ctx, W, H, correlation) {
   }
   ctx.restore();
 
-  // Phi label (φ symbol)
+  // Phi label (φ symbol) — same size/style as VU labels (L/R) for visual consistency
   ctx.save();
-  ctx.font = "500 12px 'Chakra Petch', sans-serif";
+  ctx.font = "500 9px 'Chakra Petch', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
   ctx.fillStyle = "rgba(185,185,185,0.50)";

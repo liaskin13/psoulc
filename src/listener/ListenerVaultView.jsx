@@ -123,6 +123,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
   const ctRef = useRef(currentTime);
   const durRef = useRef(duration);
   const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => { ctRef.current = currentTime; }, [currentTime]);
   useEffect(() => { durRef.current = duration; }, [duration]);
@@ -284,6 +285,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
   const handleMainMouseDown = useCallback((e) => {
     if (!onSeek) return;
     isDraggingRef.current = true;
+    setIsDragging(true);
   }, [onSeek]);
 
   const handleMainMouseMove = useCallback((e) => {
@@ -293,15 +295,18 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
 
   const handleMainMouseUp = useCallback(() => {
     isDraggingRef.current = false;
+    setIsDragging(false);
   }, []);
 
   const handleMainMouseLeave = useCallback(() => {
     isDraggingRef.current = false;
+    setIsDragging(false);
   }, []);
 
   const handleMainTouchStart = useCallback((e) => {
     if (!onSeek) return;
     isDraggingRef.current = true;
+    setIsDragging(true);
   }, [onSeek]);
 
   const handleMainTouchMove = useCallback((e) => {
@@ -312,6 +317,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
 
   const handleMainTouchEnd = useCallback(() => {
     isDraggingRef.current = false;
+    setIsDragging(false);
   }, []);
 
   const handleOverviewClick = useCallback((e) => {
@@ -337,7 +343,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
       )}
       <canvas
         ref={mainRef}
-        className="lvv-waveform-canvas"
+        className={`lvv-waveform-canvas${isDragging ? ' is-dragging' : ''}`}
         aria-hidden="true"
         onClick={onSeek ? handleMainClick : undefined}
         onMouseDown={onSeek ? handleMainMouseDown : undefined}

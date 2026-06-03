@@ -276,6 +276,11 @@
   width: 100%;
   flex: 1;
   min-height: clamp(140px, 38vh, 260px);
+  transition: filter 60ms ease;
+}
+
+.lvv-waveform-canvas.is-dragging {
+  filter: brightness(1.12);
 }
 
 .lvv-waveform-ghost-wrap .lvv-waveform-canvas {
