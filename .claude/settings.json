@@ -5,11 +5,7 @@
       "Bash(grep -n \"sun-orb\\\\|black-star-orb\\\\|sun-node\\\\|black-star-node\" /workspaces/psoulc/src/**/*.jsx /workspaces/psoulc/src/**/*.css)",
       "Bash(npm run dev > /tmp/dev.log 2>&1 & *)",
       "Read(//workspacesl/psoulc/src/console/**)",
-      "Bash(git commit -m ' *)",
-      "Bash(npx wrangler *)",
-      "Bash(pkill -9 -f \"npm run dev\")",
-      "Bash(pkill -9 -f \"node\")",
-      "Bash(git commit -m 'fix: idle state meter rendering — show new design when paused *)"
+      "Bash(git commit -m ' *)"
     ],
     "additionalDirectories": [
       "/tmp"

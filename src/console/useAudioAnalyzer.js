@@ -167,7 +167,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawVerticalScreenBlendColumn(ctx, vuW, vuH, { value: 0, color: "#00ccff", label: "L" });
+        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: identityColor, redZone: 0.87, label: "L" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -177,7 +177,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawVerticalScreenBlendColumn(ctx, vuW, vuH, { value: 0, color: "#14dc14", label: "R" });
+        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: identityColor, redZone: 0.87, label: "R" });
       }
       const loudnessIdle = loudnessRef.current;
       if (loudnessIdle) {
@@ -187,20 +187,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (loudnessIdle.width !== bsW || loudnessIdle.height !== bsH) { loudnessIdle.width = bsW; loudnessIdle.height = bsH; }
         const ctx = loudnessIdle.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, lW, lH);
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(0, 0, lW, lH);
-        ctx.fillStyle = "rgba(255,255,255,0.4)";
-        ctx.font = "9px 'Space Mono', monospace";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "top";
-        ctx.fillText("RMS", 4, 4);
-        ctx.fillText("–∞", 4, 14);
-        ctx.fillText("PEAK", 4, 30);
-        ctx.fillText("–∞", 4, 40);
-        ctx.fillStyle = "rgba(255,255,255,0.2)";
-        ctx.font = "7px 'Chakra Petch', sans-serif";
-        ctx.fillText("CORR", 4, 50);
+        drawNeedleGauge(ctx, lW, lH, { value: 0, scale: LOUDNESS_SCALE, arcColor: "#f0ede8", redZone: 0.90, label: "dBFS" });
       }
 
       // Draw energy map using available waveformData, or ghost grid if none loaded
