@@ -14,6 +14,7 @@ import CommandPalette from "./components/CommandPalette";
 // ── LAZY IMPORTS ─────────────────────────────────────────────────────────────
 const ArchitectConsole = lazy(() => import("./console/ArchitectConsole"));
 const ListenerShell = lazy(() => import("./listener/ListenerShell"));
+const WaveformSandbox = lazy(() => import("./components/WaveformSandbox"));
 
 const UploadModal = lazy(() => import("./components/UploadModal"));
 
@@ -134,6 +135,11 @@ function App() {
       SIGNAL LOST — ARCHIVE CACHED LOCALLY
     </div>
   );
+
+  // ── SANDBOX — dev-only waveform engine prototype ─────────────────────────
+  if (new URLSearchParams(window.location.search).has("sandbox")) {
+    return <Suspense fallback={null}><WaveformSandbox /></Suspense>;
+  }
 
   // ── CODE ENTRY — listener arriving via access code link ─────────────────
   if (stage === "code-entry") {
