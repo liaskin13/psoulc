@@ -71,12 +71,12 @@ export default function WaveformSandbox() {
   const scrollLeftRef = useRef(0);      // current pixel scroll — click-to-seek reads this
   const drawFnRef     = useRef(null);   // stable draw ref for handlers outside useEffect
   const bpmRef        = useRef(120);
-  const zoomBarsRef   = useRef(32);
+  const zoomBarsRef   = useRef(8);
   const isDraggingRef = useRef(false);
   const lastDragXRef  = useRef(0);
 
   const [bpm,       setBpm]       = useState(120);
-  const [zoomBars,  setZoomBars]  = useState(32);
+  const [zoomBars,  setZoomBars]  = useState(8);
   const [analyzing, setAnalyzing] = useState(false);
   const [progress,  setProgress]  = useState(0);
   const [audioSrc,  setAudioSrc]  = useState(null);
@@ -154,8 +154,70 @@ export default function WaveformSandbox() {
       drawBand(midAmps,  'rgba(0,255,0,0.8)',   OFF_MID);
       drawBand(highAmps, 'rgba(0,255,255,0.8)', OFF_HIGH);
 
-      // Stationary playhead — drawn after resetting composite
+      // ─── Beat grid + bar numbers + time ruler ─────────────────────────────
       ctx.globalCompositeOperation = 'source-over';
+
+      const secondsVisible = duration / zoom;
+      const secPerBeat     = 60 / Math.max(bpmRef.current, 1);
+      const secPerBar      = secPerBeat * 4;
+      const tStart         = ct - PLAYHEAD_X_FRAC * secondsVisible;
+      const tEnd           = ct + (1 - PLAYHEAD_X_FRAC) * secondsVisible;
+
+      // Beat + bar grid lines
+      const firstBeat = Math.floor(tStart / secPerBeat) * secPerBeat;
+      for (let t = firstBeat; t <= tEnd + secPerBeat; t += secPerBeat) {
+        const x         = PLAYHEAD_X + ((t - ct) / secondsVisible) * W;
+        if (x < -1 || x > W + 1) continue;
+        const beatIdx   = Math.round(t / secPerBeat);
+        const isBar     = beatIdx % 4 === 0;
+        const isPhrase  = beatIdx % 16 === 0;
+
+        ctx.strokeStyle = isPhrase ? 'rgba(255,255,255,0.2)'
+                        : isBar    ? 'rgba(255,255,255,0.1)'
+                                   : 'rgba(255,255,255,0.04)';
+        ctx.lineWidth   = isPhrase ? 1 : 0.5;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H * 0.88); ctx.stroke();
+
+        // Bar number on each downbeat
+        if (isBar && beatIdx >= 0) {
+          const barNum = Math.round(beatIdx / 4) + 1;
+          ctx.fillStyle = isPhrase ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.18)';
+          ctx.font      = '9px monospace';
+          ctx.fillText(String(barNum), x + 3, 11);
+        }
+      }
+
+      // Time ruler — adaptive tick interval
+      const tickSec  = secondsVisible > 120 ? 60
+                     : secondsVisible > 40  ? 15
+                     : secondsVisible > 15  ? 5
+                     : secondsVisible > 5   ? 2 : 1;
+      const firstTick = Math.ceil(tStart / tickSec) * tickSec;
+      ctx.fillStyle   = 'rgba(255,255,255,0.22)';
+      ctx.font        = '9px monospace';
+      for (let t = firstTick; t <= tEnd; t += tickSec) {
+        const x = PLAYHEAD_X + ((t - ct) / secondsVisible) * W;
+        if (x < 2 || x > W - 2) continue;
+        const m = Math.floor(t / 60);
+        const s = Math.floor(t % 60);
+        ctx.fillText(`${m}:${String(s).padStart(2, '0')}`, x + 2, H - 5);
+      }
+
+      // Current + remaining time at playhead
+      const cm = Math.floor(ct / 60), cs = Math.floor(ct % 60);
+      const rem = Math.max(0, duration - ct);
+      const rm  = Math.floor(rem / 60), rs = Math.floor(rem % 60);
+      ctx.font      = 'bold 11px monospace';
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${cm}:${String(cs).padStart(2,'0')}`, PLAYHEAD_X, H - 5);
+      ctx.font      = '9px monospace';
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      ctx.textAlign = 'right';
+      ctx.fillText(`-${rm}:${String(rs).padStart(2,'0')}`, W - 4, H - 5);
+      ctx.textAlign = 'left';
+
+      // ─── Stationary playhead ───────────────────────────────────────────────
       ctx.strokeStyle = 'rgba(255,255,255,0.85)';
       ctx.lineWidth   = 1;
       ctx.beginPath();
@@ -349,7 +411,7 @@ export default function WaveformSandbox() {
 
       {/* ── Controls row ── */}
       <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {[8, 16, 32].map(n => (
+        {[2, 4, 8, 16, 32].map(n => (
           <button key={n} onClick={() => handleZoomBars(n)} style={btnStyle(zoomBars === n)}>
             {n} BAR
           </button>
