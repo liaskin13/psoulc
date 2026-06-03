@@ -244,33 +244,36 @@ Persists when a guest navigates from the player back to the track list during pl
 
 ---
 
-## Waveform (Canonical — DeckWaveform)
+## Waveform (Canonical — DeckWaveformV2)
 
 **The waveform is not decoration. It is the visual identity of the mix.**
 
 PSC has no album art concept. The waveform shape is how a mix is recognized before it plays. This is not a limitation — it is the principle. Every rendering decision reinforces it.
 
-### Serato Frequency-Band Rendering
+### Screen-Blend Outline Rendering (Production)
 
-Used by `DeckWaveform.jsx` (console). Mirrors Serato DJ Pro's GEOB overview. Three frequency bands stacked per bar, tallest drawn first so the dominant color shows at the peak.
+Used by `DeckWaveformV2.jsx` (console). A three-layer vector outline approach using screen composite blending on a black canvas. Replaces the old Serato bar renderer.
 
-| Band | Color | Role |
-|------|-------|------|
-| Bass | `rgba(226, 88, 20, α)` | Warm orange — the groove |
-| Mid  | `rgba(20, 220, 20, α)` | Serato green — the melody |
-| High | `rgba(255, 248, 180, α)` | Bright yellow-white — transients, attack |
+**Three continuous outline paths per frame:**
 
-**Alpha:** Unplayed bars at 1.0. Played (past playhead) bars at 0.25.
+| Layer | Color | Frequency Range | Role |
+|-------|-------|-----------------|------|
+| Bass  | `rgba(255, 0, 0, 0.8)` | 0–250 Hz | The groove — the lowest harmonic |
+| Mid   | `rgba(0, 255, 0, 0.8)` | 250 Hz–2.5 kHz | The melody — the vocal/harmony range |
+| High  | `rgba(0, 255, 255, 0.8)` | 2.5 kHz+ | Transients, attack, air — brightness |
 
-**Transient peak cap:** 2px bright line `rgba(255, 255, 220, α)` drawn where the tallest band exceeds 80% of half-height. Marks drum hits and loud transients.
+**Rendering pipeline:**
+1. Black background (alpha 0)
+2. Three closed outline paths rendered with `globalCompositeOperation = 'screen'`
+3. At crossings where two or more paths overlap, screen blending produces white (`#ffffff`)
+4. Playhead drifts naturally at track edges (Serato convention)
+5. Past-portion dimmed via black overlay (plays through, visual weight on future)
+6. All production features preserved: hot cues (colored markers), loop regions (cyan highlight), beat grid (phrase/bar/beat opacities), time ruler (MM:SS labels), zoom (6 levels: 2s→64s windows)
 
-**Playhead:** `rgba(255, 255, 255, 0.9)` — 2px white vertical line. No glow. Precise.
+**Why screen composite:**
+Screen blending (multiply light intensities) on a black canvas creates natural white at band crossings, visualizing frequency overlap. A kick hitting a hi-hat shows white at the intersection — the physics of sound made visible.
 
-**Center reference:** `rgba(255, 255, 255, 0.10)` — 1px horizontal midline. Subtle axis.
-
-**sqrt boost:** Each band height = `Math.sqrt(band_value) * halfHeight`. Lifts quieter frequencies so orange and yellow remain visible on bass-heavy mixes. Without it, only green shows.
-
-**Waveform is symmetric:** bars mirror above and below the center line. Same height both directions.
+**Data source:** Pre-computed waveform at 50 bars/sec (Rekordbox standard), stored as `{bass, mid, high, peak}` per bar. Generated via single-pole IIR filtering (250 Hz bass cutoff, 2.5 kHz mid cutoff) with per-band independent normalization.
 
 ### Seeded Placeholder (No Real Waveform Data)
 

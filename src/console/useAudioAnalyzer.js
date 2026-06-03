@@ -17,9 +17,15 @@ const BPM_BUF_SIZE = 240; // 4 seconds × ~60 Hz rAF rate
 // bass=RED, mid=GREEN, high=BLUE — same spectral language as DeckWaveform V2 bars.
 // Exported for unit testing.
 export function specBarColor(normH, freqT, alpha = 1) {
-  const hue        = Math.round(freqT * 280);        // red→orange→yellow→green→cyan→blue→violet
-  const lightness  = Math.round(12 + normH * 52);    // 12% at silence → 64% at peak
-  return `hsla(${hue}, 90%, ${lightness}%, ${alpha})`;
+  let r, g, b;
+  if (freqT < 0.18) {
+    r = 255; g = 0; b = 0;           // RED: bass
+  } else if (freqT < 0.70) {
+    r = 0; g = 255; b = 0;           // GREEN: mid
+  } else {
+    r = 0; g = 255; b = 255;         // CYAN: high
+  }
+  return `rgba(${r},${g},${b},${alpha * 0.8})`;
 }
 
 // Props: { isPlaying, waveformData, currentTime, duration, hotCues? }
@@ -38,6 +44,8 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
   // Live FFT state — created once, never recreated
   const audioCtxRef       = useRef(null);
   const analyserRef       = useRef(null);
+  const analyserLRef      = useRef(null);  // Left channel for correlation
+  const analyserRRef      = useRef(null);  // Right channel for correlation
   const freqDataRef       = useRef(null);
   const analyserSetupRef  = useRef(false); // guard: createMediaElementSource can only be called once
 
@@ -56,6 +64,8 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
   const vuLEmaRef        = useRef(0);
   const vuREmaRef        = useRef(0);
   const loudnessEmaRef   = useRef(0);
+  const peakLoudnessRef  = useRef(0);    // Peak hold with 0.97 decay
+  const corrRef          = useRef(1);    // Stereo correlation (-1 to +1)
   const lastFrameTimeRef = useRef(performance.now());
 
   // liveRef carries values into the RAF loop without re-triggering the effect
@@ -98,8 +108,20 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       source.connect(audioCtx.destination);
       source.connect(analyser);
 
+      // Stereo correlation — split L/R and analyze each channel
+      const splitter = audioCtx.createChannelSplitter(2);
+      const analyserL = audioCtx.createAnalyser();
+      const analyserR = audioCtx.createAnalyser();
+      analyserL.fftSize = analyserR.fftSize = 2048;
+      analyserL.smoothingTimeConstant = analyserR.smoothingTimeConstant = 0.5;
+      source.connect(splitter);
+      splitter.connect(analyserL, 0);
+      splitter.connect(analyserR, 1);
+
       audioCtxRef.current      = audioCtx;
       analyserRef.current      = analyser;
+      analyserLRef.current     = analyserL;
+      analyserRRef.current     = analyserR;
       freqDataRef.current      = new Uint8Array(analyser.frequencyBinCount);
       analyserSetupRef.current = true;
     } catch (err) {
@@ -271,7 +293,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: vuLEmaRef.current, scale: VU_SCALE, arcColor: identityColorLive, redZone: 0.87, label: "L" });
+        drawVerticalScreenBlendColumn(ctx, vuW, vuH, { value: vuLEmaRef.current, color: "#00ccff", label: "L" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -281,7 +303,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: vuREmaRef.current, scale: VU_SCALE, arcColor: identityColorLive, redZone: 0.87, label: "R" });
+        drawVerticalScreenBlendColumn(ctx, vuW, vuH, { value: vuREmaRef.current, color: "#14dc14", label: "R" });
       }
       {  // BPM ring: separate block so it still runs after the canvas split
 
@@ -299,7 +321,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         }
       }
 
-      // ── Loudness needle gauge ─────────────────────────────────────────────
+      // ── Loudness: RMS/PEAK text + Stereo Correlation bar ───────────────────
       const loudness = loudnessRef.current;
       if (loudness) {
         const lW = loudness.offsetWidth || 72;
@@ -308,7 +330,11 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (loudness.width !== bsLW || loudness.height !== bsLH) { loudness.width = bsLW; loudness.height = bsLH; }
         const ctx = loudness.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
+        ctx.clearRect(0, 0, lW, lH);
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, lW, lH);
 
+        // Compute RMS
         let rms = 0;
         if (freqBins) {
           let sum = 0;
@@ -320,18 +346,65 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
           const windowBars = bars.slice(Math.max(0, barIndex - W_HALF), Math.min(bars.length, barIndex + W_HALF + 1));
           rms = windowBars.reduce((s, b) => s + b.peak, 0) / (windowBars.length || 1);
         }
+        const dbFS = rms > 0 ? Math.max(-40, Math.min(0, 20 * Math.log10(rms))) : -40;
+        loudnessEmaRef.current = loudnessEmaRef.current + alpha * ((dbFS + 40) / 40 - loudnessEmaRef.current);
 
-        const dbFS      = rms > 0 ? Math.max(-40, Math.min(0, 20 * Math.log10(rms))) : -40;
-        const loudNorm  = Math.max(0, Math.min(1, (dbFS + 40) / 40));
-        loudnessEmaRef.current = loudnessEmaRef.current + alpha * (loudNorm - loudnessEmaRef.current);
+        // Update peak with decay
+        peakLoudnessRef.current = Math.max(peakLoudnessRef.current * 0.97, loudnessEmaRef.current);
+        const peakDbFS = peakLoudnessRef.current > 0 ? (peakLoudnessRef.current * 40) - 40 : -40;
 
-        drawNeedleGauge(ctx, lW, lH, {
-          value: loudnessEmaRef.current,
-          scale: LOUDNESS_SCALE,
-          arcColor: "#f0ede8",
-          redZone: 0.90,
-          label: "dBFS",
-        });
+        // Compute stereo correlation
+        const analyserL = analyserLRef.current;
+        const analyserR = analyserRRef.current;
+        if (analyserL && analyserR) {
+          const bufL = new Float32Array(analyserL.fftSize);
+          const bufR = new Float32Array(analyserR.fftSize);
+          analyserL.getFloatTimeDomainData(bufL);
+          analyserR.getFloatTimeDomainData(bufR);
+          let sumLR = 0, sumLL = 0, sumRR = 0;
+          for (let i = 0; i < bufL.length; i++) {
+            sumLR += bufL[i] * bufR[i];
+            sumLL += bufL[i] * bufL[i];
+            sumRR += bufR[i] * bufR[i];
+          }
+          corrRef.current = (sumLL * sumRR > 0) ? sumLR / Math.sqrt(sumLL * sumRR) : 1;
+        }
+
+        // Draw RMS / PEAK text
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.font = "9px 'Space Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText("RMS", 4, 4);
+        ctx.fillText(dbFS.toFixed(1), 4, 14);
+        ctx.fillText("PEAK", 4, 30);
+        ctx.fillText(peakDbFS.toFixed(1), 4, 40);
+
+        // Correlation bar (horizontal, below text)
+        const corrY = 56;
+        const corrH = 16;
+        const corrW = lW - 8;
+        const corrX = 4;
+        const corrMarkerX = corrX + (corrRef.current + 1) / 2 * corrW;
+
+        // Bar background (screen blend on black)
+        ctx.globalCompositeOperation = 'screen';
+        // Left half (anti-phase, red)
+        ctx.fillStyle = "rgba(255,0,0,0.6)";
+        ctx.fillRect(corrX, corrY, corrW / 2, corrH);
+        // Right half (in-phase, green + cyan = white tint)
+        ctx.fillStyle = "rgba(0,255,0,0.6)";
+        ctx.fillRect(corrX + corrW / 2, corrY, corrW / 2, corrH);
+
+        // Marker dot
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.fillRect(corrMarkerX - 1, corrY + corrH / 2 - 2, 2, 4);
+
+        // Label
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.font = "7px 'Chakra Petch', sans-serif";
+        ctx.fillText("CORR", 4, corrY - 6);
       }
 
       // ── Spectrum (live FFT → per-bar color; pre-analyzed fallback when no FFT) ──
@@ -347,6 +420,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         const ctx = spec.getContext("2d");
         const W = spec.width, H = spec.height;
         ctx.clearRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'screen';
 
         const barStep  = W / SPEC_N;
         const bw       = Math.max(1, Math.floor(barStep) - 1); // 1px gap between bars
@@ -519,6 +593,37 @@ export function detectBpm(buffer, sampleRate = 60) {
 }
 
 // ── Drawing helpers ──────────────────────────────────────────────────────────
+
+// Screen-blend vertical amplitude column — digital aesthetic for VU L/R meters
+function drawVerticalScreenBlendColumn(ctx, W, H, opts) {
+  const { value = 0, color = "#00ffff", label = "" } = opts;
+
+  // Black background
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, W, H);
+
+  // Screen-blend composite mode
+  ctx.globalCompositeOperation = 'screen';
+
+  // Vertical column grows from bottom, clamped to [0, 1]
+  const clampedVal = Math.max(0, Math.min(1, value));
+  const colH = Math.round(clampedVal * (H * 0.85)); // 85% of height for visual breathing room
+
+  if (colH > 0) {
+    ctx.fillStyle = color;
+    ctx.fillRect(2, H - colH, W - 4, colH);
+  }
+
+  // Reset composite for label
+  ctx.globalCompositeOperation = 'source-over';
+
+  // Small label at bottom
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.font = "8px 'Chakra Petch', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(label, W / 2, H - 1);
+}
 
 // Analog needle gauge — achromatic face, identity-colored needle tip only.
 // arcColor: hex "#rrggbb" — used for needle tip + subtle glow only.
