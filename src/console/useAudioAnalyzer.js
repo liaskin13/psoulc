@@ -11,6 +11,17 @@ const SPEC_N      = 150;
 const FLOOR_PCT   = 0.06; // minimum bar height as fraction of canvas height
 const BPM_BUF_SIZE = 240; // 4 seconds × ~60 Hz rAF rate
 
+// Convert linear amplitude (0-1+) to decibels full-scale (dBFS).
+// reference=1.0: 0 dBFS = peak digital headroom
+// floor=-60: values below -60 dBFS clamp to floor (silence threshold)
+// 20*log10(x) undefined at x=0, so Math.max(v, 1e-6) prevents -Infinity.
+// Exported for unit testing and VU calculation.
+export function amplitudeTodBFS(value, floor = -60) {
+  if (value <= 0) return floor;
+  const dbfs = 20 * Math.log10(value);
+  return Math.max(floor, dbfs);
+}
+
 // Maps frequency position + amplitude to a color matching the V2 waveform palette.
 // freqT: 0 = lowest frequency bar (bass), 1 = highest (treble).
 // normH: 0-1 amplitude — scales brightness; 0.2 floor keeps bars visible when quiet.
@@ -34,6 +45,12 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
   const rafRef      = useRef(null);
   const peakL       = useRef(0);
   const peakR       = useRef(0);
+  const peakHeldL   = useRef(0);  // 1.5s hold timer value for VU peak hold
+  const peakHeldR   = useRef(0);
+  const peakHoldTimeL = useRef(0); // timestamp when peakHeld was last updated
+  const peakHoldTimeR = useRef(0);
+  const clipHeldL   = useRef(0);  // performance.now() timestamp of last clip event (value > 0.99)
+  const clipHeldR   = useRef(0);
   const specPeakRef = useRef(new Float32Array(SPEC_N));
 
   // Live FFT state — created once, never recreated
@@ -138,6 +155,10 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
       peakL.current = 0;
       peakR.current = 0;
+      peakHeldL.current = 0;
+      peakHeldR.current = 0;
+      clipHeldL.current = 0;
+      clipHeldR.current = 0;
       specPeakRef.current = new Float32Array(SPEC_N);
       frameCountRef.current = 0;
 
@@ -164,7 +185,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawVuBar(ctx, vuW, vuH, { value: 0, channel: "L", barColor: "rgba(255,0,0,0.8)" });
+        drawVuBar(ctx, vuW, vuH, { value: 0, peakValue: 0, showClip: false, channel: "L", barColor: "rgba(255,0,0,0.8)" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -174,7 +195,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawVuBar(ctx, vuW, vuH, { value: 0, channel: "R", barColor: "rgba(0,255,255,0.8)" });
+        drawVuBar(ctx, vuW, vuH, { value: 0, peakValue: 0, showClip: false, channel: "R", barColor: "rgba(0,255,255,0.8)" });
       }
 
       // Idle phi meter
@@ -274,13 +295,40 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       peakL.current = Math.max(peakL.current * 0.97, rL);
       peakR.current = Math.max(peakR.current * 0.97, rR);
 
-      const vuLDb   = rL > 0 ? Math.max(-20, Math.min(3, 20 * Math.log10(rL / 0.7))) : -20;
-      const vuLNorm = (vuLDb + 20) / 23;
+      const vuLDb   = amplitudeTodBFS(rL, -60);
+      const vuLNorm = (vuLDb - (-60)) / (0 - (-60)); // maps -60..0 dBFS to 0..1 screen height
       vuLEmaRef.current = vuLEmaRef.current + alpha * (vuLNorm - vuLEmaRef.current);
 
-      const vuRDb   = rR > 0 ? Math.max(-20, Math.min(3, 20 * Math.log10(rR / 0.7))) : -20;
-      const vuRNorm = (vuRDb + 20) / 23;
+      const vuRDb   = amplitudeTodBFS(rR, -60);
+      const vuRNorm = (vuRDb - (-60)) / (0 - (-60));
       vuREmaRef.current = vuREmaRef.current + alpha * (vuRNorm - vuREmaRef.current);
+
+      // ── Peak hold logic (1.5s hold, then ~8dB/sec decay) ────────────────────
+      const PEAK_HOLD_TIME = 1500; // milliseconds
+      const PEAK_DECAY_MULTIPLIER = Math.pow(10, -8 / (20 * 60)); // ~0.9857 per frame at 60fps
+
+      // L channel peak hold
+      if (vuLNorm > peakHeldL.current) {
+        peakHeldL.current = vuLNorm;
+        peakHoldTimeL.current = now;
+      } else if (now - peakHoldTimeL.current > PEAK_HOLD_TIME) {
+        peakHeldL.current *= PEAK_DECAY_MULTIPLIER;
+        if (peakHeldL.current < 0.001) peakHeldL.current = 0;
+      }
+
+      // R channel peak hold
+      if (vuRNorm > peakHeldR.current) {
+        peakHeldR.current = vuRNorm;
+        peakHoldTimeR.current = now;
+      } else if (now - peakHoldTimeR.current > PEAK_HOLD_TIME) {
+        peakHeldR.current *= PEAK_DECAY_MULTIPLIER;
+        if (peakHeldR.current < 0.001) peakHeldR.current = 0;
+      }
+
+      // ── Clip indicator logic (2s hold after value > 0.99) ──────────────────
+      const CLIP_HOLD_TIME = 2000;
+      if (rL > 0.99) clipHeldL.current = now;
+      if (rR > 0.99) clipHeldR.current = now;
 
       // ── Phase correlation (mono compatibility, -1 to +1) ─────────────────────
       let phiRaw = 0;
@@ -303,6 +351,10 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         phiEmaRef.current = phiEmaRef.current + alpha * (phiRaw - phiEmaRef.current);
       }
 
+      // Clip indicator: shows if within 2s of clip event
+      const clipShowL = clipHeldL.current > 0 && (now - clipHeldL.current) < CLIP_HOLD_TIME;
+      const clipShowR = clipHeldR.current > 0 && (now - clipHeldR.current) < CLIP_HOLD_TIME;
+
       const vu = vuRef.current;
       if (vu) {
         const vuW = vu.offsetWidth || 60;
@@ -311,7 +363,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawVuBar(ctx, vuW, vuH, { value: vuLEmaRef.current, channel: "L", barColor: "rgba(255,0,0,0.8)" });
+        drawVuBar(ctx, vuW, vuH, { value: vuLEmaRef.current, peakValue: peakHeldL.current, showClip: clipShowL, channel: "L", barColor: "rgba(255,0,0,0.8)" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -321,7 +373,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawVuBar(ctx, vuW, vuH, { value: vuREmaRef.current, channel: "R", barColor: "rgba(0,255,255,0.8)" });
+        drawVuBar(ctx, vuW, vuH, { value: vuREmaRef.current, peakValue: peakHeldR.current, showClip: clipShowR, channel: "R", barColor: "rgba(0,255,255,0.8)" });
       }
 
       // ── Phase Correlation Meter (φ) ───────────────────────────────────────
@@ -358,13 +410,16 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       if (spec) {
         const dispW = spec.offsetWidth;
         const dispH = spec.offsetHeight;
-        if (dispW > 0 && dispH > 0 && (spec.width !== dispW || spec.height !== dispH)) {
-          spec.width  = dispW;
-          spec.height = dispH;
+        const specW = Math.round(dispW * dprLive);
+        const specH = Math.round(dispH * dprLive);
+        if (dispW > 0 && dispH > 0 && (spec.width !== specW || spec.height !== specH)) {
+          spec.width  = specW;
+          spec.height = specH;
         }
 
         const ctx = spec.getContext("2d");
-        const W = spec.width, H = spec.height;
+        ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
+        const W = dispW, H = dispH; // use display dimensions for drawing (DPR is handled by setTransform)
         ctx.clearRect(0, 0, W, H);
 
         const barStep  = W / SPEC_N;
@@ -527,38 +582,71 @@ export function detectBpm(buffer, sampleRate = 60) {
 
 // ── Drawing helpers ──────────────────────────────────────────────────────────
 
-// Screen-blend vertical bar (pro DJ meter aesthetic — matches DeckWaveformV2)
+// Screen-blend vertical bar with pro-grade dBFS scale, peak hold, and clip indicator.
+// Matches DeckWaveformV2 forward-thinking aesthetic.
 function drawVuBar(ctx, W, H, opts) {
-  const { value = 0, channel = "L", barColor = "#ff0000" } = opts;
+  const { value = 0, peakValue = 0, showClip = false, channel = "L", barColor = "rgba(255,0,0,0.8)" } = opts;
   const clamped = Math.max(0, Math.min(1, value));
+  const peakClamped = Math.max(0, Math.min(1, peakValue));
 
   // Black background (screen composite requires dark ground)
   ctx.fillStyle = "rgba(0,0,0,0.97)";
   ctx.fillRect(0, 0, W, H);
 
-  // Subtle grid reference line
-  ctx.strokeStyle = "rgba(255,255,255,0.06)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, H / 2);
-  ctx.lineTo(W, H / 2);
-  ctx.stroke();
+  // dBFS scale markers and reference lines — drawn behind bars
+  const dBFS_MARKERS = [-24, -18, -12, -6, -3, 0]; // dBFS values
+  const SCALE_FLOOR = -60;
+  const SCALE_RANGE = 0 - SCALE_FLOOR; // 60 dB
 
-  // Bar fill height (inverted: grows upward from bottom)
+  ctx.save();
+  ctx.font = "500 6px 'Space Mono', monospace";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(185,185,185,0.30)";
+  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = "rgba(255,255,255,0.05)";
+
+  for (const dbVal of dBFS_MARKERS) {
+    const norm = (dbVal - SCALE_FLOOR) / SCALE_RANGE; // normalize to 0..1
+    const y = H - norm * H * 0.85; // inverted: 0 dB at top
+    // Grid line
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    // Label (e.g., "-12")
+    ctx.fillText(String(dbVal), W - 2, y);
+  }
+  ctx.restore();
+
+  // Ghost bar outline (idle state indicator) — faint segments at each dB marker
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  const ghostBH = Math.round(H * 0.85 / dBFS_MARKERS.length); // height per marker
+  for (let i = 0; i < dBFS_MARKERS.length; i++) {
+    const segY = H - (i + 1) * ghostBH;
+    ctx.fillRect(0, segY, W, Math.max(1, ghostBH - 1));
+  }
+
+  // Current bar fill height (inverted: grows upward from bottom)
   const barH = Math.round(clamped * H * 0.85);
   const barY = H - barH;
 
   // Screen-blend bar (grows from white at peaks)
   ctx.globalCompositeOperation = "screen";
-  ctx.fillStyle = barColor; // rgba(255,0,0,0.8) for bass, rgba(0,255,255,0.8) for high
+  ctx.fillStyle = barColor;
   if (barH > 0) ctx.fillRect(0, barY, W, barH);
   ctx.globalCompositeOperation = "source-over";
 
-  // Peak hold tick (white line at peak position)
-  if (clamped > 0.05) {
-    const peakY = Math.round(barY - 2);
+  // Peak hold tick (white line at peak position, separate from current bar)
+  if (peakClamped > 0.02) {
+    const peakH = Math.round(peakClamped * H * 0.85);
+    const peakY = H - peakH;
     ctx.fillStyle = "rgba(240,237,232,0.85)";
-    if (peakY >= 0 && peakY < H) ctx.fillRect(0, peakY, W, 2);
+    ctx.fillRect(0, peakY - 1, W, 2);
+  }
+
+  // Clip indicator (block above 0 dBFS when clipped)
+  if (showClip) {
+    const clipY = H - H * 0.85; // just above the top of scale
+    ctx.fillStyle = "rgba(255,100,100,0.9)";
+    ctx.fillRect(0, clipY - 6, W, 5);
   }
 
   // Channel label at bottom

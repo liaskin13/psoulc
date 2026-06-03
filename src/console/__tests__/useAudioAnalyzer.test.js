@@ -3,7 +3,32 @@ import { describe, it, expect, vi } from "vitest";
 
 // ── specBarColor ──────────────────────────────────────────────────────────────
 
-import { specBarColor, detectBpm } from "../useAudioAnalyzer.js";
+import { amplitudeTodBFS, specBarColor, detectBpm } from "../useAudioAnalyzer.js";
+
+// ── amplitudeTodBFS ──────────────────────────────────────────────────────────
+
+describe("amplitudeTodBFS", () => {
+  it("maps amplitude 1.0 to 0 dBFS", () => {
+    expect(amplitudeTodBFS(1.0)).toBeCloseTo(0, 1);
+  });
+
+  it("maps amplitude 0.001 to -60 dBFS (floor)", () => {
+    expect(amplitudeTodBFS(0.001, -60)).toBeCloseTo(-60, 0);
+  });
+
+  it("maps amplitude 0 to floor (not -Infinity)", () => {
+    expect(amplitudeTodBFS(0, -60)).toBe(-60);
+  });
+
+  it("maps amplitude above 1.0 to positive dBFS (clip region)", () => {
+    expect(amplitudeTodBFS(1.1)).toBeGreaterThan(0);
+  });
+
+  it("clamps values below floor to the floor value", () => {
+    const result = amplitudeTodBFS(1e-8, -60);
+    expect(result).toBe(-60);
+  });
+});
 
 describe("specBarColor", () => {
   it("returns red hue at bass (freqT=0)", () => {
