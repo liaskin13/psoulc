@@ -24,12 +24,13 @@ export function specBarColor(normH, freqT, alpha = 1) {
 
 // Props: { isPlaying, waveformData, currentTime, duration, hotCues? }
 // waveformData = array of { peak: 0-1, freq: "#rrggbb", bass?: 0-1, high?: 0-1 }
-// Returns: { vuRef, vuRRef, specRef, energyRef, loudnessRef, bpmResultRef }
+// Returns: { vuRef, vuRRef, specRef, energyRef, phiRef, bpmResultRef }
 export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime, duration, hotCues }) {
   const vuRef       = useRef(null);
   const vuRRef      = useRef(null);
   const specRef     = useRef(null);
   const energyRef   = useRef(null);
+  const phiRef      = useRef(null);
   const rafRef      = useRef(null);
   const peakL       = useRef(0);
   const peakR       = useRef(0);
@@ -155,9 +156,6 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         }
       }
       const dpr = window.devicePixelRatio || 1;
-      // Session identity color — both VU channels use the current console identity
-      const identityColor = getComputedStyle(document.documentElement)
-        .getPropertyValue('--arch-identity').trim() || '#14dc14';
       const vu = vuRef.current;
       if (vu) {
         const vuW = vu.offsetWidth || 60;
@@ -243,8 +241,6 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
 
       // ── VU needle gauges (L + R) ─────────────────────────────────────────
       const dprLive = window.devicePixelRatio || 1;
-      const identityColorLive = getComputedStyle(document.documentElement)
-        .getPropertyValue('--arch-identity').trim() || '#14dc14';
       let rL = 0, rR = 0;
       if (freqBins) {
         const bassEnd   = Math.min(40, freqBins.length);
@@ -498,24 +494,10 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
     }
   }, [waveformData, currentTime, duration, hotCues, isPlaying]);
 
-  const phiRef = useRef(null);
-
   return { vuRef, vuRRef, specRef, energyRef, phiRef, bpmResultRef };
 }
 
 // ── Gauge scale definitions ──────────────────────────────────────────────────
-
-const VU_SCALE = [
-  { l: "-20", p: 0.00 },
-  { l: "-10", p: 0.38 },
-  { l: "-3",  p: 0.72 },
-  { l: "0",   p: 0.87 },
-  { l: "+3",  p: 1.00 },
-];
-
-const LOUDNESS_SCALE = [
-  {l:"-40",p:0},{l:"-30",p:0.25},{l:"-20",p:0.5},{l:"-10",p:0.75},{l:"-6",p:0.85},{l:"0",p:1},
-];
 
 // ── BPM detection ────────────────────────────────────────────────────────────
 
@@ -662,151 +644,6 @@ function drawCorrelationMeter(ctx, W, H, correlation) {
 // arcColor: hex "#rrggbb" — used for needle tip + subtle glow only.
 //   VU L/R: pass current --arch-identity value.
 //   Loudness: pass "#f0ede8" (warm off-white, neutral combined signal).
-function drawNeedleGauge(ctx, W, H, opts) {
-  const { value = 0, scale = [], arcColor = "#b9b9b9", redZone = null, label = "" } = opts;
-
-  const START_DEG = 205;
-  const END_DEG   = 335;
-  const SPAN_DEG  = END_DEG - START_DEG; // 130°
-  const toRad     = (d) => (d * Math.PI) / 180;
-
-  const cx = W / 2;
-  const cy = H * 0.88;
-  const r  = Math.min(cx * 0.90, cy * 0.94);
-
-  const clampedVal = Math.max(0, Math.min(1, value));
-  const inRedZone  = redZone != null && clampedVal >= redZone;
-
-  // Background — cold flat fill, void-aligned
-  ctx.fillStyle = "rgba(5, 5, 8, 0.97)";
-  ctx.fillRect(0, 0, W, H);
-
-  // Tight glow halo along arc path (not a full-canvas wash)
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, toRad(START_DEG), toRad(END_DEG));
-  ctx.strokeStyle = hexToRgba(arcColor, 0.06);
-  ctx.lineWidth = 20;
-  ctx.stroke();
-
-  // Scale rail — full range, achromatic off-white
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, toRad(START_DEG), toRad(END_DEG));
-  ctx.strokeStyle = "rgba(185, 185, 185, 0.22)";
-  ctx.lineWidth = 4;
-  ctx.stroke();
-
-  // Red zone segment on rail
-  if (redZone != null) {
-    const rzStart = toRad(START_DEG + redZone * SPAN_DEG);
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, rzStart, toRad(END_DEG));
-    ctx.strokeStyle = "rgba(204, 34, 0, 0.70)";
-    ctx.lineWidth = 4;
-    ctx.stroke();
-  }
-
-  // Subtle signal sweep — dim brightening of swept area
-  if (clampedVal > 0.02) {
-    const signalEnd = toRad(START_DEG + clampedVal * SPAN_DEG);
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, toRad(START_DEG), signalEnd);
-    ctx.strokeStyle = "rgba(185, 185, 185, 0.10)";
-    ctx.lineWidth = 4;
-    ctx.stroke();
-  }
-
-  // Tick marks + labels — achromatic; red zone ticks in record-red
-  const skipMiddle = W < 90;
-  const SKIP_LABELS = new Set(skipMiddle ? ["-10", "-3"] : []);
-  ctx.save();
-  ctx.font = `${Math.max(7, Math.round(W * 0.09))}px 'Chakra Petch', sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  for (const { l, p } of scale) {
-    const angDeg = START_DEG + p * SPAN_DEG;
-    const angRad = toRad(angDeg);
-    const cos    = Math.cos(angRad);
-    const sin    = Math.sin(angRad);
-    const isHot  = redZone != null && p >= redZone;
-    ctx.strokeStyle = isHot ? "rgba(204, 34, 0, 0.75)" : "rgba(185, 185, 185, 0.55)";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(cx + cos * (r - 5), cy + sin * (r - 5));
-    ctx.lineTo(cx + cos * (r + 3), cy + sin * (r + 3));
-    ctx.stroke();
-    if (!SKIP_LABELS.has(l)) {
-      const lx = cx + cos * (r * 0.72);
-      const ly = cy + sin * (r * 0.72);
-      ctx.fillStyle = isHot ? "rgba(204, 34, 0, 0.85)" : "rgba(185, 185, 185, 0.65)";
-      ctx.fillText(l, lx, ly);
-    }
-  }
-  ctx.restore();
-
-  // Needle geometry
-  const needleAngle = toRad(START_DEG + clampedVal * SPAN_DEG);
-  const needleCos   = Math.cos(needleAngle);
-  const needleSin   = Math.sin(needleAngle);
-  const needleLen   = r - 2;
-  const pivotBack   = 5;
-  const splitFrac   = 0.65; // shaft covers bottom 65%, tip covers top 35%
-
-  // Tip color: record-red in hot zone, else arcColor at full opacity
-  const tipColor = inRedZone ? "rgba(204, 34, 0, 0.95)" : hexToRgba(arcColor, 0.95);
-
-  // Needle shaft — off-white, dim
-  ctx.beginPath();
-  ctx.moveTo(cx - needleCos * pivotBack, cy - needleSin * pivotBack);
-  ctx.lineTo(cx + needleCos * needleLen * splitFrac, cy + needleSin * needleLen * splitFrac);
-  ctx.strokeStyle = "rgba(185, 185, 185, 0.55)";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Needle tip — identity color (or record-red when hot)
-  ctx.beginPath();
-  ctx.moveTo(cx + needleCos * needleLen * splitFrac, cy + needleSin * needleLen * splitFrac);
-  ctx.lineTo(cx + needleCos * needleLen, cy + needleSin * needleLen);
-  ctx.strokeStyle = tipColor;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Hub — small, achromatic
-  ctx.beginPath();
-  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(185, 185, 185, 0.70)";
-  ctx.fill();
-
-  // Channel label — off-white, lifted into arc throat
-  if (label) {
-    ctx.font = `500 ${Math.max(8, Math.round(W * 0.09))}px 'Chakra Petch', sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "rgba(185, 185, 185, 0.50)";
-    ctx.fillText(label, cx, cy - r * 0.40);
-  }
-}
-
-
-// Convert hex (#rrggbb) to rgba() string
-function hexToRgba(hex, alpha) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-// Convert hex (#rrggbb) to "r,g,b" string for use inside rgba()
-function hexToRgbStr(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `${r},${g},${b}`;
-}
-// Pass Serato freq hex values through unchanged.
-function pscFreqColor(hexColor) {
-  return hexColor;
-}
-
 // Full energy map redraw: full-track waveform envelope, playhead, hot cue marks.
 function drawEnergyMap(canvas, bars, currentTime, duration, hotCues) {
   const ctx = canvas.getContext("2d");
