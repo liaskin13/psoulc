@@ -478,48 +478,91 @@ INTAKE is a console-level action. The button lives in the browser utility bar (`
 
 ---
 
-## Stereo VU Meter (Analyzer Row — Left Column)
+## Pro-Grade Analyzer Row (VU + φ + Spectrum)
 
-The analyzer row holds three instruments: VU (left), Spectrum Analyzer (center), Loudness (right). All three are canvas-drawn at 120px height (upgraded from 96px).
+The analyzer row holds three instruments: **VU meters** (left), **Phase Correlation** (center), **Spectrum** (right). All three are canvas-drawn at 120px height, using screen-blend compositing for cinematic PSC aesthetic.
 
-### VU Meter — L + R Channels
+### VU Meter — Stereo L + R (Pro DJ Level Display)
 
-Two separate canvases side by side in `.arch-vu-col`. Each canvas is `calc(50% - 2px)` wide, 120px tall.
+Two side-by-side canvases in `.arch-vu-col`. Each canvas is `calc(50% - 2px)` wide, 120px tall.
 
-| Channel | Canvas | Arc color | Needle/hub | Label | Glow |
-|---------|--------|-----------|------------|-------|------|
-| L (Left) | `vuRef` | `#00ccff` cyan | `#00ccff` | "L" in cyan | `0 0 12px rgba(0,204,255,0.28)` |
-| R (Right) | `vuRRef` | `#14dc14` green | `#14dc14` | "R" in green | `0 0 12px rgba(20,220,20,0.28)` |
+**Scale:** dBFS reference (0 dBFS = amplitude 1.0), floor at -60 dBFS.
+- Maps linear amplitude → dBFS: `db = 20*log10(max(v, 1e-6))`
+- On-screen: -60 dBFS at bottom, 0 dBFS at top of scale (85% of canvas height)
 
-**Signal routing:** L canvas = bass-frequency energy (rL, cyan #00ccff). R canvas = high-frequency energy (rR, green #14dc14). Fixed colors (Serato standard), not identity-themed. This mirrors the stereo split approximation already computed in `useAudioAnalyzer.js`.
+**Visual components:**
+- **Background:** Black (rgba(0,0,0,0.97)) to support screen-blend composite
+- **Ghost bar outline:** Faint segments (rgba(255,255,255,0.08)) at each dB marker (-24, -18, -12, -6, -3, 0) — idle state indicator
+- **Current level bar:** Screen-blend fill (globalCompositeOperation='screen')
+  - L channel: rgba(255,0,0,0.8) — red (bass energy)
+  - R channel: rgba(0,255,255,0.8) — cyan (high energy)
+- **Peak hold tick:** White line (rgba(240,237,232,0.85)) at peak level, held 1.5s then decay ~8dB/sec
+- **Clip indicator:** Red block above 0 dBFS, holds 2s after clipping event (value > 0.99)
+- **dBFS labels:** Monospace text at each marker (-24, -18, -12, -6, -3, 0), muted gray
 
-### Arc Geometry (applies to all needle gauges)
+**Signal routing:** L = bass-frequency energy (FFT bins 0-40 or waveform `.bass` field). R = high-frequency energy (FFT bins 500-900 or waveform `.high` field).
 
-- `START_DEG = 205°`, `END_DEG = 335°`, `SPAN = 130°` (classic VU sweep)
-- Pivot: `cx = W/2`, `cy = H * 0.91`
-- **Radius fix:** `r = Math.min(cx * 0.90, H * 0.60)` — prevents needle clipping at narrow canvas widths (the old `Math.min(W,H)*0.78` formula caused the needle to extend off-canvas at the extreme positions)
-- **DPR fix:** canvas backing store multiplied by `window.devicePixelRatio`, then `ctx.scale(dpr, dpr)` before drawing — ensures sharp rendering at 2x displays
+**DPR scaling:** Canvas backing store = `canvas.width = dispW * dprLive`, then `ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0)` for sharp retina rendering.
 
-### Loudness Meter — Serato Gradient Arc (Green → Cyan)
+### Phase Correlation Meter (φ) — Mono Compatibility (Center Column)
 
-Single canvas, `~72px` wide × `120px` tall. Represents overall RMS (neither L nor R — the fused mix).
+Single canvas, ~60px wide × 120px tall. Indicates stereo width and phase coherence.
 
-- **Arc track gradient:** linear from `#14dc14` (green, at quiet/left end) → `#00ccff` (cyan, at hot/right end). Fixed colors (Serato standard), not identity-themed.
-- **Needle tip:** `lerpHex(green, cyan, value)` — the tip color tracks the needle's position on the gradient arc
-- **Red zone:** remains at `0.90` but in the gradient palette (cyan end reads "collision" naturally)
-- **Label:** "dBFS"
+**Scale:** -1 (fully anti-phase, cancels in mono) to +1 (mono-correlated, safe).
+- Computed via Pearson correlation on time-domain L/R buffers (ChannelSplitterNode).
+- Range visual: -1 at bottom, +1 at top (center axis = 0).
 
-### Sizing (waveform + analyzer proportions)
+**Visual components:**
+- **Background:** Black (rgba(0,0,0,0.97))
+- **Ghost segments:** Faint horizontal lines at -1, -0.5, 0, +0.5, +1 (idle state)
+- **In-phase fill:** Green (rgba(20,220,20,0.8)) upward from center (positive values)
+- **Anti-phase fill:** Red-orange (rgba(229,96,32,0.8)) downward from center (negative values)
+- **Pointer:** White line at current correlation value
+- **Scale markers:** Small tick marks and numeric labels at -1, -0.5, 0, +0.5, +1
+- **Label:** φ symbol, monospace style
+- **Tooltip:** "Phase Correlation — +1: mono-safe, -1: cancels in mono"
 
-| Element | Before | After | Reason |
-|---------|--------|-------|--------|
-| `.arch-waveform-main` | 200px | 160px | Proportional to pro DJ software (Serato/Rekordbox ~130-140px) |
-| `.arch-analyzer-row` | 96px | 120px | Meters now 43% of combined height vs 32% before |
-| `.arch-spectrum-deck` | 96px | 120px | Matches analyzer row |
-| `.arch-loudness-meter` | 96px | 120px | Matches analyzer row |
-| Waveform : meters ratio | 2.08x | 1.33x | From amateurish to pro-grade proportions |
+### Spectrum Analyzer (3-Band RGB) — Right Column
 
-Net deck height change: −16px (tighter on 13" screens).
+Single canvas, remaining width × 120px tall. Live FFT or pre-analyzed fallback.
+
+**Band assignment (PSC original, forward-thinking):**
+- **Bins 0–N/3 (bass):** RED rgba(255,0,0,0.8) — low frequencies, kick energy
+- **Bins N/3–2N/3 (mid):** GREEN rgba(0,255,0,0.8) — midrange, vocal/snare energy
+- **Bins 2N/3–N (high):** CYAN rgba(0,255,255,0.8) — treble, hi-hat/shimmer energy
+
+**Visual components:**
+- **150 bars** (SPEC_N=150), one per frequency band
+- **Bar height:** Proportional to frequency-bin energy (clamped to minimum visible floor)
+- **Live path:** FFT data from analyser.getByteFrequencyData (bin averaging)
+- **Fallback path:** Pre-analyzed waveform data when paused or FFT unavailable
+- **Peak hold:** White line (rgba(255,255,220,0.9)) at peak position, decays per-bar
+- **Ghost floor:** When idle, all bars show at floor height (subtle baseline)
+- **Compositing:** Screen-blend globalCompositeOperation for cinematic crossover blending
+
+**DPR scaling:** Canvas backing store = `canvas.width = dispW * dprLive`, then `ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0)`.
+
+**Visual language coherence:** The 3-band RGB model (red/green/cyan) directly mirrors DeckWaveformV2 waveform bands, making the spectrum and waveform speak the same visual dialect. Kicks hitting the red section of both waveform and spectrum reinforce each other. Cyan hi-hats spike both. This unified language replaces the old rainbow spectrum and positions the console as a coherent instrument, not a patchwork interface.
+
+### Analyzer Row Layout & Proportions
+
+| Element | Width | Height | Reason |
+|---------|-------|--------|--------|
+| `.arch-vu-col` (L+R) | ~42% | 120px | VU is primary meter for audio engineers |
+| `.arch-phi-meter` | ~16% | 120px | Narrow vertical bar (mono compatibility check) |
+| `.arch-spectrum-deck` | ~42% | 120px | Context indicator (full frequency picture) |
+| Total deck height | — | 120px | Pro DJ software proportion (waveform:meter = 1.33:1) |
+
+---
+
+## Idle States (Critical for First Impression)
+
+When no track is loaded or playback is paused:
+- **VU meters:** Show ghost bar outlines (faint segments), no peak hold, no clip indicator
+- **φ meter:** Show ghost segment grid, pointer returns to 0, no fill bar
+- **Spectrum:** Show bars at floor level (minimal visibility), all colors equally dim
+
+These idle states are intentionally designed as backgrounds, not errors. They communicate "ready for input" not "broken."
 
 ---
 
