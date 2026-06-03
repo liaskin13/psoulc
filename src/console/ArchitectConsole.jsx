@@ -453,7 +453,7 @@ function ArchitectConsole({
   const stepOverviewStyle = (dir) =>
     setOverviewStyle(s => (s + dir + OVERVIEW_STYLES.length) % OVERVIEW_STYLES.length);
 
-  const { vuRef, vuRRef, specRef, energyRef, loudnessRef, bpmResultRef } = useAudioAnalyzer({
+  const { vuRef, vuRRef, specRef, energyRef, phiRef, bpmResultRef } = useAudioAnalyzer({
     isPlaying,
     waveformData: deckHighResBars || loadedWaveformHighData,
     currentTime,
@@ -2200,7 +2200,7 @@ function ArchitectConsole({
           </div>
         </div>
 
-        {/* Analyzer row — VU L+R (left) + Spectrum Analyzer (center) + Loudness (right) */}
+        {/* Analyzer row — VU L+R (left) + Spectrum Analyzer (center) + Phase Correlation (right) */}
         <div className="arch-analyzer-row" aria-hidden="true">
           <div className="arch-vu-col">
             <canvas ref={vuRef} className="arch-vu-deck arch-vu-deck--l" />
@@ -2209,8 +2209,8 @@ function ArchitectConsole({
           <div className="arch-sa-col">
             <canvas ref={specRef} className="arch-spectrum-deck" />
           </div>
-          <div className="arch-loudness-col">
-            <canvas ref={loudnessRef} className="arch-loudness-meter" />
+          <div className="arch-phi-col">
+            <canvas ref={phiRef} className="arch-phi-meter" />
           </div>
         </div>
       </section>

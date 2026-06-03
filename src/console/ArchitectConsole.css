@@ -12,7 +12,7 @@
   --arch-accent: rgb(185, 195, 200);
   --arch-neutral-rgb: 210, 220, 225;
   --arch-neutral: rgb(210, 220, 225);
-  --arch-muted: rgba(165, 175, 180, 0.5);
+  --arch-muted: rgba(165, 175, 180, 0.65);
   --arch-muted-rgb: 165, 175, 180;
   --arch-fg-rgb: 240, 237, 232;
   --arch-cool-muted-rgb: 160, 180, 190;
@@ -638,21 +638,6 @@
   box-shadow: 0 0 10px rgba(var(--arch-identity-rgb), 0.10);
 }
 
-.arch-loudness-col {
-  flex: 0 0 auto;
-  width: clamp(130px, 14%, 190px);
-}
-
-.arch-loudness-meter {
-  display: block;
-  image-rendering: auto;
-  border: 1px solid rgba(185, 185, 185, 0.16);
-  background: rgba(5, 5, 8, 0.97);
-  width: 100%;
-  height: 120px;
-  box-shadow: 0 0 10px rgba(185, 185, 185, 0.06);
-}
-
 .arch-waveform-col {
   flex: 1;
   display: flex;
@@ -661,7 +646,7 @@
   gap: 4px;
 }
 
-/* Analyzer row: VU L+R (fixed) + SA (flex:1, center) + Loudness (fixed) */
+/* Analyzer row: VU L+R (fixed) + Spectrum Analyzer (flex:1, center) + Phase Correlation (fixed) */
 .arch-analyzer-row {
   display: flex;
   align-items: stretch;
@@ -685,6 +670,21 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
     0 0 16px rgba(var(--arch-accent-rgb), 0.10);
+}
+
+.arch-phi-col {
+  flex: 0 0 auto;
+  width: clamp(55px, 7%, 85px);
+}
+
+.arch-phi-meter {
+  display: block;
+  image-rendering: auto;
+  border: 1px solid rgba(185, 185, 185, 0.16);
+  background: rgba(5, 5, 8, 0.97);
+  width: 100%;
+  height: 120px;
+  box-shadow: 0 0 10px rgba(185, 185, 185, 0.06);
 }
 
 /* ── WAVEFORM — Animation 2: Standing Wave ──────────────────────────────── */
@@ -834,13 +834,13 @@
   }
 
   .arch-spectrum-deck,
-  .arch-loudness-meter,
-  .arch-vu-deck {
+  .arch-vu-deck,
+  .arch-phi-meter {
     height: 100px;
   }
 
   .arch-vu-col { width: clamp(180px, 22%, 260px); }
-  .arch-loudness-col { width: clamp(110px, 12%, 160px); }
+  .arch-phi-col { width: clamp(55px, 7%, 80px); }
 }
 
 @media (max-width: 900px) {
@@ -859,13 +859,13 @@
   }
 
   .arch-spectrum-deck,
-  .arch-loudness-meter,
-  .arch-vu-deck {
+  .arch-vu-deck,
+  .arch-phi-meter {
     height: 84px;
   }
 
   .arch-vu-col { width: clamp(150px, 20%, 220px); }
-  .arch-loudness-col { width: clamp(90px, 10%, 130px); }
+  .arch-phi-col { width: clamp(50px, 6%, 75px); }
 }
 
 .arch-display-reach {
@@ -3377,6 +3377,19 @@
   .arch-top-dot,
   .arch-panel-dot {
     box-shadow: none;
+  }
+
+  /* Guard remaining infinite animations */
+  .arch-cue-btn.armed {
+    animation: none !important;
+  }
+
+  .arch-blink {
+    animation: none !important;
+  }
+
+  .arch-loop-retract {
+    animation: none !important;
   }
 }
 

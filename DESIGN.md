@@ -491,9 +491,7 @@ Two separate canvases side by side in `.arch-vu-col`. Each canvas is `calc(50% -
 | L (Left) | `vuRef` | `#00ccff` cyan | `#00ccff` | "L" in cyan | `0 0 12px rgba(0,204,255,0.28)` |
 | R (Right) | `vuRRef` | `#14dc14` green | `#14dc14` | "R" in green | `0 0 12px rgba(20,220,20,0.28)` |
 
-**Signal routing:** L canvas = bass-frequency energy (rL). R canvas = high-frequency energy (rR). This mirrors the stereo split approximation already computed in `useAudioAnalyzer.js`.
-
-**The trio metaphor:** L (cyan = the architect) | R (green = the artist) | Loudness (green→cyan gradient = the mix)
+**Signal routing:** L canvas = bass-frequency energy (rL, cyan #00ccff). R canvas = high-frequency energy (rR, green #14dc14). Fixed colors (Serato standard), not identity-themed. This mirrors the stereo split approximation already computed in `useAudioAnalyzer.js`.
 
 ### Arc Geometry (applies to all needle gauges)
 
@@ -502,11 +500,11 @@ Two separate canvases side by side in `.arch-vu-col`. Each canvas is `calc(50% -
 - **Radius fix:** `r = Math.min(cx * 0.90, H * 0.60)` — prevents needle clipping at narrow canvas widths (the old `Math.min(W,H)*0.78` formula caused the needle to extend off-canvas at the extreme positions)
 - **DPR fix:** canvas backing store multiplied by `window.devicePixelRatio`, then `ctx.scale(dpr, dpr)` before drawing — ensures sharp rendering at 2x displays
 
-### Loudness Meter — Gradient Arc (Green → Cyan)
+### Loudness Meter — Serato Gradient Arc (Green → Cyan)
 
-Single canvas, `~72px` wide × `120px` tall. Represents overall RMS (neither L nor D — the fused mix).
+Single canvas, `~72px` wide × `120px` tall. Represents overall RMS (neither L nor R — the fused mix).
 
-- **Arc track gradient:** linear from `#14dc14` (green, at quiet/left end) → `#00ccff` (cyan, at hot/right end)
+- **Arc track gradient:** linear from `#14dc14` (green, at quiet/left end) → `#00ccff` (cyan, at hot/right end). Fixed colors (Serato standard), not identity-themed.
 - **Needle tip:** `lerpHex(green, cyan, value)` — the tip color tracks the needle's position on the gradient arc
 - **Red zone:** remains at `0.90` but in the gradient palette (cyan end reads "collision" naturally)
 - **Label:** "dBFS"

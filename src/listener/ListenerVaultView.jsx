@@ -122,6 +122,7 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
   const overviewRef = useRef(null);
   const ctRef = useRef(currentTime);
   const durRef = useRef(duration);
+  const isDraggingRef = useRef(false);
 
   useEffect(() => { ctRef.current = currentTime; }, [currentTime]);
   useEffect(() => { durRef.current = duration; }, [duration]);
@@ -249,21 +250,24 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
   }, [draw]);
 
   const handleMainClick = useCallback((e) => {
+    performSeekFromEvent(e);
+  }, [performSeekFromEvent]);
+
+  const performSeekFromEvent = useCallback((e) => {
     if (!onSeek) return;
     const dur = durRef.current;
     if (!dur) return;
     const canvas = mainRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
 
     if (ghost) {
-      // Ghost: full-track seek — tapping seeks + triggers play via onSeek
-      const frac = (e.clientX - rect.left) / rect.width;
+      const frac = (clientX - rect.left) / rect.width;
       onSeek(Math.max(0, Math.min(frac * dur, dur)));
       return;
     }
 
-    // Scrolling zoom seek — map click to bar position within visible window
     const VISIBLE = 200;
     const bars = barsRef.current;
     const totalBars = bars.length;
@@ -272,10 +276,43 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
     const startBar = Math.max(0, Math.min(centerBarIdx - halfVis, totalBars - VISIBLE));
     const endBar = Math.min(totalBars, startBar + VISIBLE);
     const barCount = endBar - startBar;
-    const frac = (e.clientX - rect.left) / rect.width;
+    const frac = (clientX - rect.left) / rect.width;
     const clickedBar = startBar + Math.round(frac * barCount);
     onSeek(Math.max(0, Math.min((clickedBar / totalBars) * dur, dur)));
   }, [onSeek, ghost]);
+
+  const handleMainMouseDown = useCallback((e) => {
+    if (!onSeek) return;
+    isDraggingRef.current = true;
+  }, [onSeek]);
+
+  const handleMainMouseMove = useCallback((e) => {
+    if (!isDraggingRef.current) return;
+    performSeekFromEvent(e);
+  }, [performSeekFromEvent]);
+
+  const handleMainMouseUp = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
+
+  const handleMainMouseLeave = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
+
+  const handleMainTouchStart = useCallback((e) => {
+    if (!onSeek) return;
+    isDraggingRef.current = true;
+  }, [onSeek]);
+
+  const handleMainTouchMove = useCallback((e) => {
+    if (!isDraggingRef.current) return;
+    e.preventDefault();
+    performSeekFromEvent(e);
+  }, [performSeekFromEvent]);
+
+  const handleMainTouchEnd = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
 
   const handleOverviewClick = useCallback((e) => {
     if (!onSeek) return;
@@ -303,7 +340,15 @@ function WaveformCanvas({ track, currentTime, duration, ghost = false, onSeek, m
         className="lvv-waveform-canvas"
         aria-hidden="true"
         onClick={onSeek ? handleMainClick : undefined}
-        style={onSeek ? { cursor: 'pointer' } : undefined}
+        onMouseDown={onSeek ? handleMainMouseDown : undefined}
+        onMouseMove={onSeek ? handleMainMouseMove : undefined}
+        onMouseUp={onSeek ? handleMainMouseUp : undefined}
+        onMouseLeave={onSeek ? handleMainMouseLeave : undefined}
+        onTouchStart={onSeek ? handleMainTouchStart : undefined}
+        onTouchMove={onSeek ? handleMainTouchMove : undefined}
+        onTouchEnd={onSeek ? handleMainTouchEnd : undefined}
+        onTouchCancel={onSeek ? handleMainTouchEnd : undefined}
+        style={onSeek ? { cursor: 'pointer', touchAction: 'none' } : undefined}
       />
     </div>
   );
@@ -350,7 +395,7 @@ function ThumbnailCanvas({ track }) {
 // Waveform display for the guest player.
 // If a pre-rendered PNG exists in R2, renders it as <img> with a CSS playhead line.
 // Falls back to WaveformCanvas if the PNG is unavailable or fails to load.
-function WaveformImg({ track, currentTime, duration, ghost, onSeek }) {
+function WaveformImg({ track, currentTime, duration, ghost, onSeek, mode = 'wave' }) {
   const [useFallback, setUseFallback] = useState(false);
   const pngUrl = R2_PUBLIC_URL && track?.id
     ? `${R2_PUBLIC_URL}/waveform/${track.id}.png`
@@ -366,6 +411,7 @@ function WaveformImg({ track, currentTime, duration, ghost, onSeek }) {
         duration={duration}
         ghost={ghost}
         onSeek={onSeek}
+        mode={mode}
       />
     );
   }
@@ -594,6 +640,7 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
                   duration={audioState.duration}
                   ghost
                   onSeek={handleGhostSeek}
+                  mode={vizMode}
                 />
               ) : (
                 <WaveformImg
@@ -601,6 +648,7 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
                   currentTime={audioState.currentTime}
                   duration={audioState.duration}
                   onSeek={(t) => audioEngine.seek(t)}
+                  mode={vizMode}
                 />
               )}
               {playerState === 'paused' && (

@@ -131,16 +131,26 @@ function DPWallpaper({ opacity = 1 }) {
     };
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Size canvas immediately (before fonts.ready)
+    resize();
+    drawBase(ctx, W, H);
+
+    // Once fonts load, start the glow loop
     document.fonts.ready.then(() => {
-      paint();
       if (!prefersReduced) {
         timerRef.current = setTimeout(() => runLoop(0), 1200);
       }
     });
 
+    // Resize observer for responsive canvas
+    const ro = new ResizeObserver(() => paint());
+    ro.observe(document.documentElement);
+
     window.addEventListener('resize', paint);
     return () => {
       window.removeEventListener('resize', paint);
+      ro.disconnect();
       clearTimeout(timerRef.current);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };

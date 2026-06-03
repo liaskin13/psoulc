@@ -49,14 +49,18 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
   const bpmWriteRef  = useRef(0);
   const bpmResultRef = useRef({ bpm: null, confidence: 0 });
 
-  // Needle/arc gauge canvases
-  const loudnessRef = useRef(null);
 
   // EMA state for smooth needle gauges
   const vuLEmaRef        = useRef(0);
   const vuREmaRef        = useRef(0);
-  const loudnessEmaRef   = useRef(0);
+  const phiEmaRef        = useRef(0); // phase correlation smoothing
   const lastFrameTimeRef = useRef(performance.now());
+
+  // Phase correlation state — left/right channel analysers for mono compatibility detection
+  const lChannelAnalyserRef = useRef(null);
+  const rChannelAnalyserRef = useRef(null);
+  const lChannelDataRef     = useRef(null);
+  const rChannelDataRef     = useRef(null);
 
   // liveRef carries values into the RAF loop without re-triggering the effect
   const liveRef = useRef({ waveformData, currentTime, duration, hotCues, isPlaying });
@@ -93,14 +97,28 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       analyser.fftSize               = 2048; // 1024 frequency bins
       analyser.smoothingTimeConstant = 0.75;
 
-      // KEY: source → destination (audio still plays) AND source → analyser (side-chain tap).
-      // Analyser is NOT inserted into the playback path — no dropout risk.
+      // Phase correlation: split stereo into L/R channels for mono compatibility detection
+      const splitter = audioCtx.createChannelSplitter(2);
+      const lAnalyser = audioCtx.createAnalyser();
+      const rAnalyser = audioCtx.createAnalyser();
+      lAnalyser.fftSize = rAnalyser.fftSize = 512; // smaller window for real-time correlation
+      lAnalyser.smoothingTimeConstant = rAnalyser.smoothingTimeConstant = 0.3;
+
+      // KEY: source → destination (audio still plays) AND source → analysers (side-chain taps).
+      // Analysers are NOT inserted into the playback path — no dropout risk.
       source.connect(audioCtx.destination);
       source.connect(analyser);
+      source.connect(splitter);
+      splitter.connect(lAnalyser, 0);
+      splitter.connect(rAnalyser, 1);
 
-      audioCtxRef.current      = audioCtx;
-      analyserRef.current      = analyser;
-      freqDataRef.current      = new Uint8Array(analyser.frequencyBinCount);
+      audioCtxRef.current         = audioCtx;
+      analyserRef.current         = analyser;
+      freqDataRef.current         = new Uint8Array(analyser.frequencyBinCount);
+      lChannelAnalyserRef.current = lAnalyser;
+      rChannelAnalyserRef.current = rAnalyser;
+      lChannelDataRef.current     = new Float32Array(lAnalyser.fftSize);
+      rChannelDataRef.current     = new Float32Array(rAnalyser.fftSize);
       analyserSetupRef.current = true;
     } catch (err) {
       // AudioContext unavailable or blocked — fall back to pre-analyzed data silently
@@ -145,7 +163,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: identityColor, redZone: 0.87, label: "L" });
+        drawVuBar(ctx, vuW, vuH, { value: 0, channel: "L", barColor: "rgba(255,0,0,0.8)" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -155,17 +173,19 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: 0, scale: VU_SCALE, arcColor: identityColor, redZone: 0.87, label: "R" });
+        drawVuBar(ctx, vuW, vuH, { value: 0, channel: "R", barColor: "rgba(0,255,255,0.8)" });
       }
-      const loudnessIdle = loudnessRef.current;
-      if (loudnessIdle) {
-        const lW = loudnessIdle.offsetWidth || 72;
-        const lH = loudnessIdle.offsetHeight || 120;
-        const bsW = Math.round(lW * dpr), bsH = Math.round(lH * dpr);
-        if (loudnessIdle.width !== bsW || loudnessIdle.height !== bsH) { loudnessIdle.width = bsW; loudnessIdle.height = bsH; }
-        const ctx = loudnessIdle.getContext("2d");
+
+      // Idle phi meter
+      const phi = phiRef.current;
+      if (phi) {
+        const phiW = phi.offsetWidth || 60;
+        const phiH = phi.offsetHeight || 120;
+        const bsW = Math.round(phiW * dpr), bsH = Math.round(phiH * dpr);
+        if (phi.width !== bsW || phi.height !== bsH) { phi.width = bsW; phi.height = bsH; }
+        const ctx = phi.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawNeedleGauge(ctx, lW, lH, { value: 0, scale: LOUDNESS_SCALE, arcColor: "#f0ede8", redZone: 0.90, label: "dBFS" });
+        drawCorrelationMeter(ctx, phiW, phiH, 0);
       }
 
       // Draw energy map using available waveformData, or ghost grid if none loaded
@@ -263,6 +283,24 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       const vuRNorm = (vuRDb + 20) / 23;
       vuREmaRef.current = vuREmaRef.current + alpha * (vuRNorm - vuREmaRef.current);
 
+      // ── Phase correlation (mono compatibility, -1 to +1) ─────────────────────
+      let phiRaw = 0;
+      if (lChannelAnalyserRef.current && rChannelAnalyserRef.current && lChannelDataRef.current && rChannelDataRef.current) {
+        lChannelAnalyserRef.current.getFloatTimeDomainData(lChannelDataRef.current);
+        rChannelAnalyserRef.current.getFloatTimeDomainData(rChannelDataRef.current);
+        const lData = lChannelDataRef.current;
+        const rData = rChannelDataRef.current;
+        let dotProd = 0, lNorm = 0, rNorm = 0;
+        for (let i = 0; i < lData.length; i++) {
+          dotProd += lData[i] * rData[i];
+          lNorm += lData[i] * lData[i];
+          rNorm += rData[i] * rData[i];
+        }
+        const denom = Math.sqrt(lNorm * rNorm);
+        phiRaw = denom > 0.0001 ? dotProd / denom : 0;
+      }
+      phiEmaRef.current = phiEmaRef.current + alpha * (phiRaw - phiEmaRef.current);
+
       const vu = vuRef.current;
       if (vu) {
         const vuW = vu.offsetWidth || 60;
@@ -271,7 +309,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: vuLEmaRef.current, scale: VU_SCALE, arcColor: identityColorLive, redZone: 0.87, label: "L" });
+        drawVuBar(ctx, vuW, vuH, { value: vuLEmaRef.current, channel: "L", barColor: "rgba(255,0,0,0.8)" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -281,8 +319,21 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawNeedleGauge(ctx, vuW, vuH, { value: vuREmaRef.current, scale: VU_SCALE, arcColor: identityColorLive, redZone: 0.87, label: "R" });
+        drawVuBar(ctx, vuW, vuH, { value: vuREmaRef.current, channel: "R", barColor: "rgba(0,255,255,0.8)" });
       }
+
+      // ── Phase Correlation Meter (φ) ───────────────────────────────────────
+      const phi = phiRef.current;
+      if (phi) {
+        const phiW = phi.offsetWidth || 60;
+        const phiH = phi.offsetHeight || 120;
+        const bsW = Math.round(phiW * dprLive), bsH = Math.round(phiH * dprLive);
+        if (phi.width !== bsW || phi.height !== bsH) { phi.width = bsW; phi.height = bsH; }
+        const ctx = phi.getContext("2d");
+        ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
+        drawCorrelationMeter(ctx, phiW, phiH, phiEmaRef.current);
+      }
+
       {  // BPM ring: separate block so it still runs after the canvas split
 
         // BPM ring: write bass-bin RMS each frame; detect every 30 frames (~500ms)
@@ -299,40 +350,6 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         }
       }
 
-      // ── Loudness needle gauge ─────────────────────────────────────────────
-      const loudness = loudnessRef.current;
-      if (loudness) {
-        const lW = loudness.offsetWidth || 72;
-        const lH = loudness.offsetHeight || 120;
-        const bsLW = Math.round(lW * dprLive), bsLH = Math.round(lH * dprLive);
-        if (loudness.width !== bsLW || loudness.height !== bsLH) { loudness.width = bsLW; loudness.height = bsLH; }
-        const ctx = loudness.getContext("2d");
-        ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-
-        let rms = 0;
-        if (freqBins) {
-          let sum = 0;
-          for (let i = 0; i < freqBins.length; i++) sum += (freqBins[i] / 255) ** 2;
-          rms = Math.sqrt(sum / freqBins.length);
-        } else if (hasPreAnalyzed) {
-          const barIndex   = Math.min(Math.floor((t / dur) * bars.length), bars.length - 1);
-          const W_HALF     = 7;
-          const windowBars = bars.slice(Math.max(0, barIndex - W_HALF), Math.min(bars.length, barIndex + W_HALF + 1));
-          rms = windowBars.reduce((s, b) => s + b.peak, 0) / (windowBars.length || 1);
-        }
-
-        const dbFS      = rms > 0 ? Math.max(-40, Math.min(0, 20 * Math.log10(rms))) : -40;
-        const loudNorm  = Math.max(0, Math.min(1, (dbFS + 40) / 40));
-        loudnessEmaRef.current = loudnessEmaRef.current + alpha * (loudNorm - loudnessEmaRef.current);
-
-        drawNeedleGauge(ctx, lW, lH, {
-          value: loudnessEmaRef.current,
-          scale: LOUDNESS_SCALE,
-          arcColor: "#f0ede8",
-          redZone: 0.90,
-          label: "dBFS",
-        });
-      }
 
       // ── Spectrum (live FFT → per-bar color; pre-analyzed fallback when no FFT) ──
       const spec = specRef.current;
@@ -475,7 +492,9 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
     }
   }, [waveformData, currentTime, duration, hotCues, isPlaying]);
 
-  return { vuRef, vuRRef, specRef, energyRef, loudnessRef, bpmResultRef };
+  const phiRef = useRef(null);
+
+  return { vuRef, vuRRef, specRef, energyRef, phiRef, bpmResultRef };
 }
 
 // ── Gauge scale definitions ──────────────────────────────────────────────────
@@ -519,6 +538,119 @@ export function detectBpm(buffer, sampleRate = 60) {
 }
 
 // ── Drawing helpers ──────────────────────────────────────────────────────────
+
+// Screen-blend vertical bar (pro DJ meter aesthetic — matches DeckWaveformV2)
+function drawVuBar(ctx, W, H, opts) {
+  const { value = 0, channel = "L", barColor = "#ff0000" } = opts;
+  const clamped = Math.max(0, Math.min(1, value));
+
+  // Black background (screen composite requires dark ground)
+  ctx.fillStyle = "rgba(0,0,0,0.97)";
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle grid reference line
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, H / 2);
+  ctx.lineTo(W, H / 2);
+  ctx.stroke();
+
+  // Bar fill height (inverted: grows upward from bottom)
+  const barH = Math.round(clamped * H * 0.85);
+  const barY = H - barH;
+
+  // Screen-blend bar (grows from white at peaks)
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = barColor; // rgba(255,0,0,0.8) for bass, rgba(0,255,255,0.8) for high
+  if (barH > 0) ctx.fillRect(0, barY, W, barH);
+  ctx.globalCompositeOperation = "source-over";
+
+  // Peak hold tick (white line at peak position)
+  if (clamped > 0.05) {
+    const peakY = Math.round(barY - 2);
+    ctx.fillStyle = "rgba(240,237,232,0.85)";
+    if (peakY >= 0 && peakY < H) ctx.fillRect(0, peakY, W, 2);
+  }
+
+  // Channel label at bottom
+  ctx.save();
+  ctx.font = "500 9px 'Chakra Petch', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillStyle = "rgba(185,185,185,0.50)";
+  ctx.fillText(channel, W / 2, H - 2);
+  ctx.restore();
+}
+
+// Phase correlation meter (φ) — mono compatibility indicator (-1 to +1).
+// -1 = fully anti-phase (cancels in mono), 0 = uncorrelated, +1 = mono-correlated (safe).
+// Positive (in-phase) fills upward with green; negative (anti-phase) fills downward with red-orange.
+function drawCorrelationMeter(ctx, W, H, correlation) {
+  const clamped = Math.max(-1, Math.min(1, correlation));
+
+  // Black background
+  ctx.fillStyle = "rgba(0,0,0,0.97)";
+  ctx.fillRect(0, 0, W, H);
+
+  const midY = H / 2;
+
+  // Center axis line
+  ctx.strokeStyle = "rgba(185,185,185,0.3)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, midY);
+  ctx.lineTo(W, midY);
+  ctx.stroke();
+
+  // Fill bars from center
+  const barH = Math.abs(clamped) * (H / 2) * 0.85;
+  if (clamped > 0) {
+    // Positive (in-phase): green fill upward
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = "rgba(20, 220, 20, 0.8)";
+    ctx.fillRect(0, midY - barH, W, barH);
+    ctx.globalCompositeOperation = "source-over";
+  } else if (clamped < 0) {
+    // Negative (anti-phase): red-orange fill downward
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = "rgba(229, 96, 32, 0.8)";
+    ctx.fillRect(0, midY, W, barH);
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  // Current pointer (off-white line at position)
+  const pointerY = midY - clamped * (H / 2) * 0.85;
+  ctx.fillStyle = "rgba(240,237,232,0.85)";
+  ctx.fillRect(0, pointerY - 1, W, 2);
+
+  // Scale marks at -1, -0.5, 0, +0.5, +1
+  ctx.save();
+  ctx.font = "500 7px 'Space Mono', 'SF Mono', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(185,185,185,0.40)";
+  const marks = [-1, -0.5, 0, 0.5, 1];
+  for (const val of marks) {
+    const y = midY - val * (H / 2) * 0.85;
+    // Tick mark
+    ctx.fillRect(W / 2 - 3, y - 0.5, 6, 1);
+    // Label at small mark
+    if (val !== 0) {
+      ctx.fillText(val === 0.5 || val === -0.5 ? val.toFixed(1) : val.toFixed(0), W * 0.75, y);
+    }
+  }
+  ctx.restore();
+
+  // Phi label (φ symbol)
+  ctx.save();
+  ctx.font = "500 12px 'Chakra Petch', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillStyle = "rgba(185,185,185,0.50)";
+  ctx.fillText("φ", W / 2, H - 2);
+  ctx.restore();
+}
 
 // Analog needle gauge — achromatic face, identity-colored needle tip only.
 // arcColor: hex "#rrggbb" — used for needle tip + subtle glow only.
