@@ -302,7 +302,10 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         const denom = Math.sqrt(lNorm * rNorm);
         phiRaw = denom > 0.0001 ? dotProd / denom : 0;
       }
-      phiEmaRef.current = phiEmaRef.current + alpha * (phiRaw - phiEmaRef.current);
+      // Guard against NaN propagation in EMA smoothing (defensive; audio should always be valid)
+      if (!isNaN(phiRaw)) {
+        phiEmaRef.current = phiEmaRef.current + alpha * (phiRaw - phiEmaRef.current);
+      }
 
       const vu = vuRef.current;
       if (vu) {
