@@ -31,39 +31,46 @@ describe("amplitudeTodBFS", () => {
 });
 
 describe("specBarColor", () => {
-  it("returns red hue at bass (freqT=0)", () => {
-    expect(specBarColor(1.0, 0, 1)).toBe("hsla(0, 90%, 64%, 1)");
+  it("returns red RGB at bass (freqT < 0.33)", () => {
+    expect(specBarColor(1.0, 0, 1)).toContain("255, 0, 0");
   });
 
-  it("returns green hue at mid (freqT=0.5)", () => {
-    expect(specBarColor(1.0, 0.5, 1)).toBe("hsla(140, 90%, 64%, 1)");
+  it("returns green RGB at mid (freqT 0.33-0.67)", () => {
+    expect(specBarColor(1.0, 0.5, 1)).toContain("0, 255, 0");
   });
 
-  it("returns blue-violet hue at treble (freqT=1.0)", () => {
-    expect(specBarColor(1.0, 1.0, 1)).toBe("hsla(280, 90%, 64%, 1)");
+  it("returns cyan RGB at treble (freqT >= 0.67)", () => {
+    expect(specBarColor(1.0, 1.0, 1)).toContain("0, 255, 255");
   });
 
-  it("returns yellow-orange hue at freqT=0.25", () => {
-    expect(specBarColor(1.0, 0.25, 1)).toBe("hsla(70, 90%, 64%, 1)");
+  it("bass region includes freqT=0.15", () => {
+    expect(specBarColor(1.0, 0.15, 1)).toContain("255, 0, 0");
   });
 
-  it("returns cyan hue at freqT=0.75", () => {
-    expect(specBarColor(1.0, 0.75, 1)).toBe("hsla(210, 90%, 64%, 1)");
+  it("high/cyan region includes freqT=0.75", () => {
+    expect(specBarColor(1.0, 0.75, 1)).toContain("0, 255, 255");
   });
 
-  it("amplitude dims bars — low normH has lower lightness", () => {
-    const dim  = specBarColor(0.0, 0.5, 1);
+  it("amplitude modulates opacity — low normH has floor at 0.2", () => {
+    const dim  = specBarColor(0.1, 0.5, 1);
     const full = specBarColor(1.0, 0.5, 1);
-    expect(dim).toBe("hsla(140, 90%, 12%, 1)");
-    expect(full).toBe("hsla(140, 90%, 64%, 1)");
+    // Both should contain green, but dim should have lower opacity
+    expect(dim).toContain("0, 255, 0");
+    expect(full).toContain("0, 255, 0");
+    expect(dim).toContain("0.2"); // floor opacity
+    expect(full).toContain("1"); // full opacity
   });
 
-  it("embeds alpha correctly", () => {
-    expect(specBarColor(1.0, 0, 0.5)).toBe("hsla(0, 90%, 64%, 0.5)");
+  it("embeds alpha correctly when passed as param", () => {
+    const result = specBarColor(1.0, 0, 0.5);
+    expect(result).toContain("255, 0, 0");
+    expect(result).toContain("0.5");
   });
 
-  it("defaults alpha to 1 when omitted", () => {
-    expect(specBarColor(0.5, 0.5)).toContain(", 1)");
+  it("when alpha=1 and normH=1.0, final opacity is 1", () => {
+    // With normH=1.0, opacity = max(0.2, 1.0) = 1.0, and alpha defaults to 1
+    // So final opacity = 1 * 1 = 1
+    expect(specBarColor(1.0, 0.5, 1)).toContain("rgba(0, 255, 0, 1)");
   });
 });
 

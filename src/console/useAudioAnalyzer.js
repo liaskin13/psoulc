@@ -22,15 +22,33 @@ export function amplitudeTodBFS(value, floor = -60) {
   return Math.max(floor, dbfs);
 }
 
-// Maps frequency position + amplitude to a color matching the V2 waveform palette.
-// freqT: 0 = lowest frequency bar (bass), 1 = highest (treble).
-// normH: 0-1 amplitude — scales brightness; 0.2 floor keeps bars visible when quiet.
-// bass=RED, mid=GREEN, high=BLUE — same spectral language as DeckWaveform V2 bars.
+// Maps frequency position + amplitude to 3-band RGB color (PSC original, screen-blend aesthetic).
+// freqT: 0 = bass (red), 0.5 = mid (green), 1.0 = high (cyan).
+// normH: 0-1 amplitude — scales opacity; brighter = louder.
+// bass=RED #ff0000, mid=GREEN #00ff00, high=CYAN #00ffff — matches DeckWaveformV2 waveform bands.
 // Exported for unit testing.
 export function specBarColor(normH, freqT, alpha = 1) {
-  const hue        = Math.round(freqT * 280);        // red→orange→yellow→green→cyan→blue→violet
-  const lightness  = Math.round(12 + normH * 52);    // 12% at silence → 64% at peak
-  return `hsla(${hue}, 90%, ${lightness}%, ${alpha})`;
+  // 3-band RGB model (PSC forward-thinking)
+  let r, g, b;
+  if (freqT < 0.33) {
+    // Bass: red
+    r = 255;
+    g = 0;
+    b = 0;
+  } else if (freqT < 0.67) {
+    // Mid: green
+    r = 0;
+    g = 255;
+    b = 0;
+  } else {
+    // High: cyan
+    r = 0;
+    g = 255;
+    b = 255;
+  }
+  // Amplitude modulates opacity: low amp = dim, high amp = bright
+  const opacity = Math.max(0.2, normH); // floor at 0.2 to keep quiet bars visible
+  return `rgba(${r}, ${g}, ${b}, ${alpha * opacity})`;
 }
 
 // Props: { isPlaying, waveformData, currentTime, duration, hotCues? }
@@ -662,6 +680,7 @@ function drawVuBar(ctx, W, H, opts) {
 // Phase correlation meter (φ) — mono compatibility indicator (-1 to +1).
 // -1 = fully anti-phase (cancels in mono), 0 = uncorrelated, +1 = mono-correlated (safe).
 // Positive (in-phase) fills upward with green; negative (anti-phase) fills downward with red-orange.
+// Tooltip: "Phase Correlation — +1: mono-safe, -1: cancels in mono"
 function drawCorrelationMeter(ctx, W, H, correlation) {
   const clamped = Math.max(-1, Math.min(1, correlation));
 
@@ -678,6 +697,14 @@ function drawCorrelationMeter(ctx, W, H, correlation) {
   ctx.moveTo(0, midY);
   ctx.lineTo(W, midY);
   ctx.stroke();
+
+  // Ghost segments when idle (faint outline structure)
+  const segH = Math.round(H / 4);
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  for (let i = 1; i <= 3; i++) {
+    ctx.fillRect(0, midY - i * segH, W, 1);
+    ctx.fillRect(0, midY + i * segH - 1, W, 1);
+  }
 
   // Fill bars from center
   const barH = Math.abs(clamped) * (H / 2) * 0.85;
