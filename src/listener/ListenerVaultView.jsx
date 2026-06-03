@@ -621,6 +621,7 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
                     className={`lvv-viz-btn${vizMode === 'wave' ? ' is-active' : ''}`}
                     onClick={() => setVizMode('wave')}
                     aria-pressed={vizMode === 'wave'}
+                    aria-label="Wave visualization mode"
                   >
                     WAVE
                   </button>
@@ -628,6 +629,7 @@ function ListenerVaultView({ vault, vaultColor, vaultLabel, onBack, onExitSystem
                     className={`lvv-viz-btn${vizMode === 'freq' ? ' is-active' : ''}`}
                     onClick={() => setVizMode('freq')}
                     aria-pressed={vizMode === 'freq'}
+                    aria-label="Frequency visualization mode"
                   >
                     FREQ
                   </button>

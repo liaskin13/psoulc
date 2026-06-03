@@ -2203,14 +2203,14 @@ function ArchitectConsole({
         {/* Analyzer row — VU L+R (left) + Spectrum Analyzer (center) + Phase Correlation (right) */}
         <div className="arch-analyzer-row" aria-hidden="true">
           <div className="arch-vu-col">
-            <canvas ref={vuRef} className="arch-vu-deck arch-vu-deck--l" />
-            <canvas ref={vuRRef} className="arch-vu-deck arch-vu-deck--r" />
+            <canvas ref={vuRef} className="arch-vu-deck arch-vu-deck--l" aria-label="Left channel VU meter (bass frequencies)" />
+            <canvas ref={vuRRef} className="arch-vu-deck arch-vu-deck--r" aria-label="Right channel VU meter (high frequencies)" />
           </div>
           <div className="arch-sa-col">
-            <canvas ref={specRef} className="arch-spectrum-deck" />
+            <canvas ref={specRef} className="arch-spectrum-deck" aria-label="Spectrum analyzer (frequency distribution)" />
           </div>
           <div className="arch-phi-col">
-            <canvas ref={phiRef} className="arch-phi-meter" />
+            <canvas ref={phiRef} className="arch-phi-meter" aria-label="Phase correlation meter (mono compatibility)" />
           </div>
         </div>
       </section>
