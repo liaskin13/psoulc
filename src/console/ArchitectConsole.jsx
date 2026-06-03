@@ -11,7 +11,8 @@ import "./ArchitectConsole.css";
 import InboxPanel from "./InboxPanel";
 import DirectLinePanel from "./DirectLinePanel";
 import ContextStrip from "./ContextStrip";
-import DeckWaveform from "../components/DeckWaveform";
+// import DeckWaveform from "../components/DeckWaveform"; // kept as fallback
+import DeckWaveform from "../components/DeckWaveformV2";
 import {
   LOCKBOX_PREFIX,
   VAULT_DISPLAY_NAMES,
