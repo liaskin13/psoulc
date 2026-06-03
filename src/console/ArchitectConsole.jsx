@@ -446,7 +446,12 @@ function ArchitectConsole({
   );
 
   const overviewRef = useRef(null);
-  const waveformHoveredRef = useRef(false);
+  const waveformHoveredRef  = useRef(false);
+  const overviewHoveredRef  = useRef(false);
+  const [overviewStyle, setOverviewStyle] = useState(0); // 0=LAYERS 1=OUTLINE 2=TRACES
+  const OVERVIEW_STYLES = ['LAYERS', 'OUTLINE', 'TRACES'];
+  const stepOverviewStyle = (dir) =>
+    setOverviewStyle(s => (s + dir + OVERVIEW_STYLES.length) % OVERVIEW_STYLES.length);
 
   const { vuRef, vuRRef, specRef, energyRef, loudnessRef, bpmResultRef } = useAudioAnalyzer({
     isPlaying,
@@ -1793,6 +1798,8 @@ function ArchitectConsole({
     setShowShortcuts,
     stepZoom,
     waveformHoveredRef,
+    overviewHoveredRef,
+    stepOverviewStyle,
     loadedTrackBpm: resolveTrackBpm(loadedTrack),
   };
 
@@ -1844,14 +1851,20 @@ function ArchitectConsole({
         return;
       }
       if (e.code === "ArrowUp" && !e.ctrlKey && !e.metaKey) {
-        if (kb.waveformHoveredRef.current) {
+        if (kb.overviewHoveredRef.current) {
+          e.preventDefault();
+          kb.stepOverviewStyle(+1);
+        } else if (kb.waveformHoveredRef.current) {
           e.preventDefault();
           kb.stepZoom(+1);
         }
         return;
       }
       if (e.code === "ArrowDown" && !e.ctrlKey && !e.metaKey) {
-        if (kb.waveformHoveredRef.current) {
+        if (kb.overviewHoveredRef.current) {
+          e.preventDefault();
+          kb.stepOverviewStyle(-1);
+        } else if (kb.waveformHoveredRef.current) {
           e.preventDefault();
           kb.stepZoom(-1);
         }
@@ -1862,7 +1875,7 @@ function ArchitectConsole({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Full-width track overview strip — spectral colors, hot cues, playhead
+  // Full-width track overview strip — three switchable render modes
   useEffect(() => {
     const canvas = overviewRef.current;
     if (!canvas) return;
@@ -1870,46 +1883,93 @@ function ArchitectConsole({
     const OVERVIEW_H = 32;
     const dpr = window.devicePixelRatio || 1;
     const w = canvas.getBoundingClientRect().width || 800;
-    canvas.width = Math.round(w * dpr);
+    canvas.width  = Math.round(w * dpr);
     canvas.height = Math.round(OVERVIEW_H * dpr);
     const ctx = canvas.getContext("2d");
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, w, OVERVIEW_H);
 
-    if (!bars || bars.length === 0 || !audioDuration) return;
+    // Black base — required for screen composite
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, w, OVERVIEW_H);
 
-    const N = bars.length;
-    const barsPerPx = N / w;
-    for (let px = 0; px < w; px++) {
-      const bStart = Math.floor(px * barsPerPx);
-      const bEnd = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
-      let sum = 0, count = 0, maxPeak = 0, best = null;
-      for (let b = bStart; b < bEnd; b++) {
-        if (!bars[b]) continue;
-        sum += bars[b].peak;
-        count++;
-        if (bars[b].peak > maxPeak) { maxPeak = bars[b].peak; best = bars[b]; }
+    if (!bars || bars.length === 0 || !audioDuration || bars[0]?.bass === undefined) {
+      // Hot cues + playhead even with no data
+    } else {
+      const N = bars.length;
+
+      // Precompute per-pixel best bar (used by all three modes)
+      const best = new Array(Math.ceil(w));
+      const barsPerPx = N / w;
+      for (let px = 0; px < w; px++) {
+        const bStart = Math.floor(px * barsPerPx);
+        const bEnd   = Math.min(Math.ceil((px + 1) * barsPerPx) + 1, N);
+        let maxPeak = 0, b = null;
+        for (let i = bStart; i < bEnd; i++) {
+          if (bars[i] && bars[i].peak > maxPeak) { maxPeak = bars[i].peak; b = bars[i]; }
+        }
+        best[px] = b;
       }
-      if (!best) continue;
-      const avgPeak = sum / count;
-      const overallH = Math.max(1, Math.round(Math.pow(avgPeak, 1.5) * OVERVIEW_H));
-      if (best.bass !== undefined) {
-        const rawR = Math.pow(best.bass, 1.5);
-        const rawG = Math.pow(best.mid, 1.8);
-        const rawB = Math.pow(best.high, 1.2);
-        const wc = Math.min(rawR, rawG, rawB) * 0.85;
-        const r = Math.round(Math.min(1, rawR + wc) * 255);
-        const g = Math.round(Math.min(1, rawG + wc) * 255);
-        const b = Math.round(Math.min(1, rawB + wc) * 255);
-        ctx.fillStyle = `rgb(${r},${g},${b})`;
+
+      ctx.globalCompositeOperation = "screen";
+
+      if (overviewStyle === 0) {
+        // ── LAYERS: three filled silhouettes stacked from bottom, screen blend ──
+        // Each band fills from the bottom up to its amplitude height.
+        // Where all three overlap the bottom → white. Top edge → pure cyan (high).
+        for (let px = 0; px < w; px++) {
+          const d = best[px]; if (!d) continue;
+          const bassH = Math.max(1, Math.round(d.bass * (OVERVIEW_H - 1)));
+          const midH  = Math.max(1, Math.round(d.mid  * (OVERVIEW_H - 1)));
+          const highH = Math.max(1, Math.round(d.high * (OVERVIEW_H - 1)));
+          ctx.fillStyle = "rgba(255,0,0,0.85)";
+          ctx.fillRect(px, OVERVIEW_H - bassH, 1, bassH);
+          ctx.fillStyle = "rgba(0,255,0,0.85)";
+          ctx.fillRect(px, OVERVIEW_H - midH,  1, midH);
+          ctx.fillStyle = "rgba(0,255,255,0.85)";
+          ctx.fillRect(px, OVERVIEW_H - highH, 1, highH);
+        }
+
+      } else if (overviewStyle === 1) {
+        // ── OUTLINE: top outline arc per band, screen blend — top half of main wf ──
+        const drawOutline = (getAmp, color) => {
+          ctx.beginPath();
+          let first = true;
+          for (let px = 0; px < w; px++) {
+            const d = best[px]; if (!d) continue;
+            const y = OVERVIEW_H - Math.max(2, Math.round(getAmp(d) * (OVERVIEW_H - 2)));
+            if (first) { ctx.moveTo(px, y); first = false; }
+            else ctx.lineTo(px, y);
+          }
+          ctx.strokeStyle = color;
+          ctx.lineWidth   = 1.5;
+          ctx.stroke();
+        };
+        drawOutline(d => d.bass, "rgba(255,0,0,0.85)");
+        drawOutline(d => d.mid,  "rgba(0,255,0,0.85)");
+        drawOutline(d => d.high, "rgba(0,255,255,0.85)");
+
       } else {
-        const cr = best.freq === "#1464dc" ? 20 : best.freq === "#e56020" ? 229 : 20;
-        const cg = best.freq === "#1464dc" ? 100 : best.freq === "#e56020" ? 96 : 220;
-        const cb = best.freq === "#1464dc" ? 220 : best.freq === "#e56020" ? 32 : 20;
-        ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+        // ── TRACES: three oscilloscope lines, full-height, screen blend at crossings ──
+        const drawTrace = (getAmp, color) => {
+          ctx.beginPath();
+          let first = true;
+          for (let px = 0; px < w; px++) {
+            const d = best[px]; if (!d) continue;
+            const y = OVERVIEW_H - 1 - Math.round(getAmp(d) * (OVERVIEW_H - 3));
+            if (first) { ctx.moveTo(px, y); first = false; }
+            else ctx.lineTo(px, y);
+          }
+          ctx.strokeStyle = color;
+          ctx.lineWidth   = 1.5;
+          ctx.stroke();
+        };
+        drawTrace(d => d.bass, "rgba(255,0,0,0.9)");
+        drawTrace(d => d.mid,  "rgba(0,255,0,0.9)");
+        drawTrace(d => d.high, "rgba(0,255,255,0.9)");
       }
-      ctx.fillRect(px, OVERVIEW_H - overallH, 1, overallH);
+
+      ctx.globalCompositeOperation = "source-over";
     }
 
     // Hot cue pins
@@ -1921,11 +1981,11 @@ function ArchitectConsole({
       ctx.fillRect(cx, 0, 1, OVERVIEW_H);
     });
 
-    // Playhead dot
+    // Playhead
     const playheadPx = Math.round((currentTime / audioDuration) * w);
     ctx.fillStyle = "rgba(255,255,255,0.92)";
     ctx.fillRect(playheadPx, 0, 2, OVERVIEW_H);
-  }, [deckWaveformHighData, currentTime, audioDuration, hotCues, deckTrack]);
+  }, [deckWaveformHighData, currentTime, audioDuration, hotCues, deckTrack, overviewStyle]);
 
   const isD = viewer === "D";
 
@@ -2053,7 +2113,13 @@ function ArchitectConsole({
         </div>
 
         {/* Full-width track overview strip */}
-        <div className="arch-overview-row" aria-hidden="true">
+        <div
+          className="arch-overview-row"
+          aria-hidden="true"
+          style={{ position: "relative" }}
+          onMouseEnter={() => { overviewHoveredRef.current = true; }}
+          onMouseLeave={() => { overviewHoveredRef.current = false; }}
+        >
           <canvas
             ref={overviewRef}
             className="arch-overview-strip"
@@ -2063,6 +2129,14 @@ function ArchitectConsole({
             } : undefined}
             style={{ cursor: deckCanSeek ? "pointer" : "default" }}
           />
+          <span style={{
+            position: "absolute", top: 2, right: 6,
+            fontSize: "8px", letterSpacing: "0.12em",
+            color: "rgba(255,255,255,0.25)", pointerEvents: "none",
+            fontFamily: "'JetBrains Mono', monospace",
+          }}>
+            {OVERVIEW_STYLES[overviewStyle]} ↑↓
+          </span>
         </div>
 
         {/* Waveform row — full width (VU moved to analyzer row) */}
