@@ -9,7 +9,7 @@ export const RESIDENT_REGISTRY = [
   {
     residentId: 1,
     name: "D",
-    accessCode: "0528",
+    accessCode: "3865",
     vaultId: "saturn",
     tier: "A", // Master / Sun
     palette: { primary: "#14dc14", accent: "#14dc14" },

@@ -70,7 +70,7 @@ export default {
           return new Response(JSON.stringify({ error: "expires_at must be a valid ISO-8601 date" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         // Reserved resident PINs — regenerate if collision
-        const RESERVED = new Set(["0528", "7677", "0000"]); // 0000 is test-only
+        const RESERVED = new Set(["3865", "7677", "0000"]); // 0000 is test-only
         let code;
         do {
           const n = crypto.getRandomValues(new Uint32Array(1))[0] % 10000;

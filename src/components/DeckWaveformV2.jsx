@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useRef } from "react";
 
 const BARS_PER_SEC = 50;
+const BEAT_OFFSET_BARS = 0;  // Tune if beat grid appears offset from waveform. Positive = shift forward.
 const OFF_LOW  = 2;   // idle stacking offsets (px) — bass closest to center
 const OFF_MID  = 5;
 const OFF_HIGH = 9;   // high furthest out
@@ -45,6 +46,10 @@ export default function DeckWaveformV2({
   const loopRef      = useRef(loopRegion);
   const bpmRef       = useRef(bpm);
   const bandsRef     = useRef(null);
+
+  // Playback smoothing: interpolate between currentTime updates
+  const lastTimeRef       = useRef(0);
+  const lastTimeUpdateRef = useRef(Date.now());
 
   getTimeRef.current   = getTime;
   ctRef.current        = currentTime;
@@ -93,9 +98,25 @@ export default function DeckWaveformV2({
     displayZoomRef.current = zoomRef.current;
 
     function draw() {
-      const ct  = getTimeRef.current ? getTimeRef.current() : ctRef.current;
+      const rawTime = getTimeRef.current ? getTimeRef.current() : ctRef.current;
       const dur = durRef.current;
       const bds = bandsRef.current;
+
+      // Playback smoothing: interpolate currentTime between audio engine updates
+      // If rawTime has changed by >100ms, it's a real update; otherwise estimate based on elapsed time
+      const now = Date.now();
+      const timeDelta = rawTime - lastTimeRef.current;
+      let ct = rawTime;
+      if (Math.abs(timeDelta) < 0.1 && !isDraggingRef.current) {
+        // Small or no change: interpolate from last known time
+        const wallDelta = (now - lastTimeUpdateRef.current) / 1000; // convert to seconds
+        ct = lastTimeRef.current + wallDelta;
+      } else {
+        // Big change or drag: reset interpolation baseline
+        lastTimeRef.current = rawTime;
+        lastTimeUpdateRef.current = now;
+        ct = rawTime;
+      }
 
       // Black base — screen composite requires a dark ground
       ctx.fillStyle = "#000";
@@ -118,7 +139,7 @@ export default function DeckWaveformV2({
 
       const visibleBars = barCount / displayZoom;
       const playFrac    = dur > 0 ? ct / dur : 0;
-      const centerBar   = playFrac * barCount;
+      const centerBar   = playFrac * barCount + BEAT_OFFSET_BARS;
       const halfVisible = visibleBars / 2;
 
       // Serato-aware viewport: playhead drifts at track start/end rather than

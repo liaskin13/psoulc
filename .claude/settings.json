@@ -3,7 +3,29 @@
     "allow": [
       "Bash(wc -l /workspaces/psoulc/src/*.jsx /workspaces/psoulc/src/*.css /workspaces/psoulc/src/*.js /workspaces/psoulc/src/state/*.jsx /workspaces/psoulc/src/entry/*.jsx /workspaces/psoulc/src/console/*.jsx /workspaces/psoulc/src/data/*.js /workspaces/psoulc/src/saturn/*.jsx /workspaces/psoulc/src/mercury/*.jsx /workspaces/psoulc/src/venus/*.jsx /workspaces/psoulc/src/earth/*.jsx /workspaces/psoulc/src/components/*.jsx)",
       "Bash(grep -n \"sun-orb\\\\|black-star-orb\\\\|sun-node\\\\|black-star-node\" /workspaces/psoulc/src/**/*.jsx /workspaces/psoulc/src/**/*.css)",
-      "Bash(npx wrangler *)"
+      "Bash(npx wrangler *)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(cat > *)",
+      "Bash(ls -la /home/codespace/.gstack/projects/liaskin13-psoulc/designs/ 2>/dev/null || mkdir -p /home/codespace/.gstack/projects/liaskin13-psoulc/designs)",
+      "Bash(/home/codespace/.claude/skills/gstack/design/dist/design generate *)",
+      "Skill(design-shotgun)",
+      "Skill(design-shotgun:*)",
+      "Bash(wait)",
+      "Bash(npm list *)",
+      "Bash(node generate-meter-mockups.mjs)",
+      "Bash(/home/codespace/.claude/skills/gstack/design/dist/design)",
+      "Bash(ls -lh /tmp/meter_designs/ && cp /tmp/meter_designs/*.png /home/codespace/.gstack/projects/liaskin13-psoulc/designs/vu-spectrum-redesign-20260608/ && ls -lh /home/codespace/.gstack/projects/liaskin13-psoulc/designs/vu-spectrum-redesign-20260608/)",
+      "Bash(file /home/codespace/.gstack/projects/liaskin13-psoulc/designs/vu-spectrum-redesign-20260608/variant_*.png)",
+      "Bash(/home/codespace/.claude/skills/gstack/design/dist/design compare *)",
+      "Bash(tee /tmp/board-output.txt)",
+      "Skill(browse)",
+      "Skill(browse:*)"
+    ],
+    "additionalDirectories": [
+      "/tmp",
+      "/home/codespace/.gstack/projects/liaskin13-psoulc/designs",
+      "/tmp/meter_designs"
     ]
   }
 }

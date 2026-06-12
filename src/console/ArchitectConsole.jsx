@@ -1801,6 +1801,9 @@ function ArchitectConsole({
     overviewHoveredRef,
     stepOverviewStyle,
     loadedTrackBpm: resolveTrackBpm(loadedTrack),
+    trackListData,
+    announce,
+    ensureWaveformForTrack,
   };
 
   // Performance keyboard shortcuts — registered once, reads live values via kbRef
@@ -1868,6 +1871,26 @@ function ArchitectConsole({
           e.preventDefault();
           kb.stepZoom(-1);
         }
+        return;
+      }
+      // Shift+R — regenerate all waveforms with V2
+      if (e.code === "KeyR" && e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        const tracksToRegen = kb.trackListData || [];
+        if (tracksToRegen.length === 0) {
+          kb.announce("No tracks to regenerate");
+          return;
+        }
+        kb.announce(`Regenerating waveforms for ${tracksToRegen.length} track(s)…`);
+        (async () => {
+          for (let i = 0; i < tracksToRegen.length; i++) {
+            const track = tracksToRegen[i];
+            await kb.ensureWaveformForTrack(track, true, true);
+            // Small pause between tracks
+            await new Promise((r) => setTimeout(r, 500));
+          }
+          kb.announce("Waveform regeneration complete");
+        })();
         return;
       }
     };
