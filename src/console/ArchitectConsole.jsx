@@ -2194,6 +2194,7 @@ function ArchitectConsole({
                   generatingPct={waveformProgress[deckTrack.id] ?? null}
                   bpm={resolveTrackBpm(deckTrack)}
                   getTime={loadedTrack?.id === deckTrack?.id ? () => audioEngine.getState().currentTime : null}
+                  getIsPlaying={loadedTrack?.id === deckTrack?.id ? () => audioEngine.getState().isPlaying : null}
                 />
               )}
             </div>

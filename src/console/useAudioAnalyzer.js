@@ -446,11 +446,18 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         const FLOOR    = Math.round(H * FLOOR_PCT);
 
         if (freqBins) {
-          // Live FFT path: map 1024 frequency bins to SPEC_N bars
-          const binsPerBar = freqBins.length / SPEC_N;
+          // Live FFT path: map 1024 frequency bins to SPEC_N bars using logarithmic frequency spacing
+          // Human hearing is logarithmic: 20Hz–18kHz should occupy bars evenly in perceived frequency
+          const MIN_FREQ = 20;    // Hz — bottom of human hearing
+          const MAX_FREQ = 18000; // Hz — top of useful music range (below Nyquist for 44.1kHz)
+          const nyquist  = 44100 / 2;
+          const totalBins = freqBins.length;
           for (let i = 0; i < SPEC_N; i++) {
-            const binStart = Math.floor(i * binsPerBar);
-            const binEnd   = Math.floor((i + 1) * binsPerBar);
+            // Log-spaced frequency edges for this bar
+            const freqLo = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, i / SPEC_N);
+            const freqHi = MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, (i + 1) / SPEC_N);
+            const binStart = Math.max(0, Math.floor(freqLo / nyquist * totalBins));
+            const binEnd   = Math.min(totalBins, Math.ceil(freqHi / nyquist * totalBins));
             let sum = 0;
             for (let b = binStart; b < binEnd; b++) sum += freqBins[b];
             const avg    = sum / (binEnd - binStart || 1);

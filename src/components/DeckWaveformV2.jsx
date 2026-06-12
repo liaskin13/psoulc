@@ -27,6 +27,7 @@ export default function DeckWaveformV2({
   generatingPct   = null,
   bpm             = null,
   getTime         = null,
+  getIsPlaying    = null,
 }) {
   const canvasRef      = useRef(null);
   const rafRef         = useRef(null);
@@ -47,7 +48,13 @@ export default function DeckWaveformV2({
   const bpmRef       = useRef(bpm);
   const bandsRef     = useRef(null);
 
-  getTimeRef.current   = getTime;
+  // Playback smoothing: interpolate between audio.currentTime updates
+  const lastTimeRef       = useRef(0);
+  const lastTimeUpdateRef = useRef(Date.now());
+  const getIsPlayingRef   = useRef(getIsPlaying);
+
+  getTimeRef.current      = getTime;
+  getIsPlayingRef.current = getIsPlaying;
   ctRef.current        = currentTime;
   durRef.current       = duration;
   zoomRef.current      = zoom;
@@ -94,9 +101,25 @@ export default function DeckWaveformV2({
     displayZoomRef.current = zoomRef.current;
 
     function draw() {
-      const ct  = getTimeRef.current ? getTimeRef.current() : ctRef.current;
+      const rawTime = getTimeRef.current ? getTimeRef.current() : ctRef.current;
       const dur = durRef.current;
       const bds = bandsRef.current;
+
+      // Playback smoothing: interpolate between audio.currentTime updates (200-300ms intervals)
+      // Only interpolate when actively playing, not dragging, and time hasn't jumped (seek)
+      const now = Date.now();
+      const timeDelta = rawTime - lastTimeRef.current;
+      const isPlaying = getIsPlayingRef.current?.() ?? false;
+      let ct = rawTime;
+      if (isPlaying && !isDraggingRef.current && Math.abs(timeDelta) < 0.1) {
+        // Small time delta: interpolate from last known time using wall-clock elapsed
+        const wallDelta = (now - lastTimeUpdateRef.current) / 1000;
+        ct = Math.min(lastTimeRef.current + wallDelta, dur);
+      } else {
+        // Big time change or seek: reset interpolation baseline
+        lastTimeRef.current = rawTime;
+        lastTimeUpdateRef.current = now;
+      }
 
       // Black base — screen composite requires a dark ground
       ctx.fillStyle = "#000";
