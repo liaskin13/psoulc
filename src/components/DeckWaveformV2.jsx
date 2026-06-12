@@ -103,16 +103,16 @@ export default function DeckWaveformV2({
       const bds = bandsRef.current;
 
       // Playback smoothing: interpolate currentTime between audio engine updates
-      // If rawTime has changed by >100ms, it's a real update; otherwise estimate based on elapsed time
+      // Only interpolate when time is advancing (playing); use rawTime directly when paused/stopped
       const now = Date.now();
       const timeDelta = rawTime - lastTimeRef.current;
       let ct = rawTime;
-      if (Math.abs(timeDelta) < 0.1 && !isDraggingRef.current) {
-        // Small or no change: interpolate from last known time
+      if (timeDelta > 0 && timeDelta < 0.1 && !isDraggingRef.current) {
+        // Time is advancing but change is small: interpolate from last known time
         const wallDelta = (now - lastTimeUpdateRef.current) / 1000; // convert to seconds
         ct = lastTimeRef.current + wallDelta;
       } else {
-        // Big change or drag: reset interpolation baseline
+        // Paused, dragging, or big change: reset interpolation baseline, use rawTime
         lastTimeRef.current = rawTime;
         lastTimeUpdateRef.current = now;
         ct = rawTime;
