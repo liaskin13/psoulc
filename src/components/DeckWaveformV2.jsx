@@ -47,10 +47,6 @@ export default function DeckWaveformV2({
   const bpmRef       = useRef(bpm);
   const bandsRef     = useRef(null);
 
-  // Playback smoothing: interpolate between currentTime updates
-  const lastTimeRef       = useRef(0);
-  const lastTimeUpdateRef = useRef(Date.now());
-
   getTimeRef.current   = getTime;
   ctRef.current        = currentTime;
   durRef.current       = duration;
@@ -98,25 +94,9 @@ export default function DeckWaveformV2({
     displayZoomRef.current = zoomRef.current;
 
     function draw() {
-      const rawTime = getTimeRef.current ? getTimeRef.current() : ctRef.current;
+      const ct  = getTimeRef.current ? getTimeRef.current() : ctRef.current;
       const dur = durRef.current;
       const bds = bandsRef.current;
-
-      // Playback smoothing: interpolate currentTime between audio engine updates
-      // Only interpolate when time is advancing (playing); use rawTime directly when paused/stopped
-      const now = Date.now();
-      const timeDelta = rawTime - lastTimeRef.current;
-      let ct = rawTime;
-      if (timeDelta > 0 && timeDelta < 0.1 && !isDraggingRef.current) {
-        // Time is advancing but change is small: interpolate from last known time
-        const wallDelta = (now - lastTimeUpdateRef.current) / 1000; // convert to seconds
-        ct = lastTimeRef.current + wallDelta;
-      } else {
-        // Paused, dragging, or big change: reset interpolation baseline, use rawTime
-        lastTimeRef.current = rawTime;
-        lastTimeUpdateRef.current = now;
-        ct = rawTime;
-      }
 
       // Black base — screen composite requires a dark ground
       ctx.fillStyle = "#000";
