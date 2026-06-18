@@ -629,26 +629,17 @@ function drawVuNeedle(ctx, W, H, opts) {
   const ANGLE_MIN = 215; // degrees, -20 VU (upper-left ~7 o'clock)
   const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
 
-  // 1. Amber face radial gradient (edge dark #7a5210 → center bright #c8920a)
-  const gradient = ctx.createRadialGradient(pivotX, pivotY, 0, pivotX, pivotY, radius);
-  gradient.addColorStop(0, "#c8920a");
-  gradient.addColorStop(0.8, "#a67a0d");
-  gradient.addColorStop(1, "#7a5210");
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(pivotX, pivotY, radius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 2. Arc background stripe (faint darker amber along the scale)
-  ctx.strokeStyle = "rgba(122, 82, 16, 0.4)";
-  ctx.lineWidth = 2;
+  // Identity-color arc guide along scale radius
+  const isL = channel === "L";
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad = (ANGLE_MAX * Math.PI) / 180;
+  ctx.strokeStyle = isL ? "rgba(0,255,255,0.18)" : "rgba(20,220,20,0.18)";
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, radius * 0.75, startRad, endRad);
+  ctx.arc(pivotX, pivotY, radius * 0.78, startRad, endRad);
   ctx.stroke();
 
-  // 3. Scale ticks and labels (-20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3)
+  // 4. Scale ticks and labels (-20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3)
   const VU_LABELS = [-20, -10, -7, -5, -3, -2, -1, 0, 1, 2, 3];
   ctx.save();
   ctx.font = "500 7px 'Space Mono', monospace";
@@ -685,16 +676,16 @@ function drawVuNeedle(ctx, W, H, opts) {
   }
   ctx.restore();
 
-  // 4. "VU" label at top-center
+  // 3. "VU" label at top-center
   ctx.save();
   ctx.font = "600 10px 'Chakra Petch', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillStyle = "#3a2005";
+  ctx.fillStyle = "rgba(240,237,232,0.5)";
   ctx.fillText("VU", pivotX, 2);
   ctx.restore();
 
-  // 5 & 6. Needle with shadow
+  // 5 & 6. Needle with shadow (cream stroke from pivot to arc)
   const needleAngle = ANGLE_MIN + clamped * (ANGLE_MAX - ANGLE_MIN);
   const needleAngleRad = (needleAngle * Math.PI) / 180;
   const needleX = pivotX + radius * Math.cos(needleAngleRad);
@@ -718,13 +709,13 @@ function drawVuNeedle(ctx, W, H, opts) {
   ctx.lineTo(needleX, needleY);
   ctx.stroke();
 
-  // 7. Pivot cap (filled circle, cream color)
+  // 7. Pivot cap (small filled circle, cream color)
   ctx.fillStyle = "#f0e8c0";
   ctx.beginPath();
   ctx.arc(pivotX, pivotY, 3, 0, Math.PI * 2);
   ctx.fill();
 
-  // 8. Peak hold tick (bright arc segment at peak position, 1.5s hold)
+  // 8. Peak hold tick (white arc segment at peak position, 1.5s hold)
   if (peakClamped > 0.02) {
     const peakAngle = ANGLE_MIN + peakClamped * (ANGLE_MAX - ANGLE_MIN);
     const peakAngleRad = (peakAngle * Math.PI) / 180;

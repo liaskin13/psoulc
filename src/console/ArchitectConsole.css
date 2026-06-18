@@ -624,7 +624,7 @@
   image-rendering: auto;
   background: rgba(5, 5, 8, 0.97);
   width: calc(50% - 2px);
-  height: 140px;
+  height: 120px;
   flex-shrink: 0;
 }
 
@@ -651,7 +651,7 @@
   display: flex;
   align-items: stretch;
   gap: 8px;
-  height: 140px;
+  height: 120px;
   margin-top: 8px;
 }
 
@@ -663,7 +663,7 @@
 .arch-spectrum-deck {
   display: block;
   width: 100%;
-  height: 140px;
+  height: 120px;
   image-rendering: pixelated;
   border: 1px solid rgba(var(--arch-accent-rgb), 0.22);
   background: linear-gradient(180deg, rgba(5, 8, 15, 1) 0%, rgba(0, 0, 0, 1) 100%);
