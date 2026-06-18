@@ -694,8 +694,8 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.lineTo(x2, y2);
     ctx.stroke();
 
-    // Label (e.g., "-10", "+3") — positioned outside the arc with breathing room
-    const labelR = radius * 1.18;
+    // Label (e.g., "-10", "+3") — positioned near the arc for compact professional look
+    const labelR = radius * 0.94;
     const labelX = pivotX + labelR * Math.cos(angleRad);
     let labelY = pivotY + labelR * Math.sin(angleRad);
     // Small adjustment for "0" to center it visually between "-1" and "+1"
