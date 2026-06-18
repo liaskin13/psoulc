@@ -370,9 +370,14 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         phiEmaRef.current = phiEmaRef.current + alpha * (phiRaw - phiEmaRef.current);
       }
 
-      // Clip indicator: shows if within 2s of clip event
-      const clipShowL = clipHeldL.current > 0 && (now - clipHeldL.current) < CLIP_HOLD_TIME;
-      const clipShowR = clipHeldR.current > 0 && (now - clipHeldR.current) < CLIP_HOLD_TIME;
+      // Clip indicator: shows if within 2s of clip event, fades out in last 200ms
+      const CLIP_FADE_TIME = 200;
+      const timeSinceClipL = now - clipHeldL.current;
+      const timeSinceClipR = now - clipHeldR.current;
+      const clipShowL = clipHeldL.current > 0 && timeSinceClipL < CLIP_HOLD_TIME;
+      const clipShowR = clipHeldR.current > 0 && timeSinceClipR < CLIP_HOLD_TIME;
+      const clipOpacityL = clipShowL ? Math.max(0, 1 - Math.max(0, timeSinceClipL - (CLIP_HOLD_TIME - CLIP_FADE_TIME)) / CLIP_FADE_TIME) : 0;
+      const clipOpacityR = clipShowR ? Math.max(0, 1 - Math.max(0, timeSinceClipR - (CLIP_HOLD_TIME - CLIP_FADE_TIME)) / CLIP_FADE_TIME) : 0;
 
       const vu = vuRef.current;
       if (vu) {
@@ -382,7 +387,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawVuNeedle(ctx, vuW, vuH, { value: vuLEmaRef.current, peakValue: peakHeldL.current, showClip: clipShowL, channel: "L" });
+        drawVuNeedle(ctx, vuW, vuH, { value: vuLEmaRef.current, peakValue: peakHeldL.current, showClip: clipShowL, clipOpacity: clipOpacityL, channel: "L" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -392,7 +397,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawVuNeedle(ctx, vuW, vuH, { value: vuREmaRef.current, peakValue: peakHeldR.current, showClip: clipShowR, channel: "R" });
+        drawVuNeedle(ctx, vuW, vuH, { value: vuREmaRef.current, peakValue: peakHeldR.current, showClip: clipShowR, clipOpacity: clipOpacityR, channel: "R" });
       }
 
       // ── Phase Correlation Meter (φ) ───────────────────────────────────────
@@ -611,13 +616,19 @@ export function detectBpm(buffer, sampleRate = 60) {
 // Analog VU needle meter (Midnight Marauders inspired).
 // Arc-sweep needle from bottom-center pivot, colors from album palette.
 function drawVuNeedle(ctx, W, H, opts) {
-  const { value = 0, peakValue = 0, showClip = false, channel = "L" } = opts;
+  const { value = 0, peakValue = 0, showClip = false, clipOpacity = 1, channel = "L" } = opts;
   const clamped = Math.max(0, Math.min(1, value));
   const peakClamped = Math.max(0, Math.min(1, peakValue));
 
-  // Black background
+  // Black background with radial gradient depth
   ctx.fillStyle = "rgba(0,0,0,0.97)";
   ctx.fillRect(0, 0, W, H);
+
+  // Clipping indicator: red block at top when clipping
+  if (showClip) {
+    ctx.fillStyle = `rgba(255, 68, 68, ${clipOpacity * 0.95})`;
+    ctx.fillRect(0, 0, W, 12);
+  }
 
   // Pivot geometry
   const pivotX = W / 2;
@@ -630,20 +641,33 @@ function drawVuNeedle(ctx, W, H, opts) {
   const ANGLE_MIN = 215; // degrees, -20 VU (upper-left ~7 o'clock)
   const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
 
+  // Background gradient for depth (subtle radial fade)
+  const bgGradient = ctx.createRadialGradient(pivotX, pivotY, 0, pivotX, pivotY, radius * 1.2);
+  bgGradient.addColorStop(0, "rgba(20,20,20,1)");
+  bgGradient.addColorStop(1, "rgba(0,0,0,0.97)");
+  ctx.fillStyle = bgGradient;
+  ctx.fillRect(0, 0, W, H);
+
   // Identity-color arc guide along scale radius
   const isL = channel === "L";
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad = (ANGLE_MAX * Math.PI) / 180;
   ctx.strokeStyle = isL ? "rgba(0,255,255,0.18)" : "rgba(20,220,20,0.18)";
   ctx.lineWidth = 3;
+  ctx.lineCap = "round";
   ctx.beginPath();
   ctx.arc(pivotX, pivotY, radius * 0.78, startRad, endRad);
   ctx.stroke();
 
   // 4. Scale ticks and labels (-20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3)
   const VU_LABELS = [-20, -10, -7, -5, -3, -2, -1, 0, 1, 2, 3];
+
+  // Responsive font sizing for different viewport heights
+  const labelSize = Math.max(9, Math.min(11, H * 0.075));
+  const vuHeaderSize = Math.max(10, Math.min(12, H * 0.083));
+
   ctx.save();
-  ctx.font = "500 9px 'Space Mono', monospace";
+  ctx.font = `400 ${Math.round(labelSize)}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -663,6 +687,7 @@ function drawVuNeedle(ctx, W, H, opts) {
     const y2 = pivotY + tickEndR * Math.sin(angleRad);
     ctx.strokeStyle = tickColor;
     ctx.lineWidth = 1.5;
+    ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
@@ -681,7 +706,7 @@ function drawVuNeedle(ctx, W, H, opts) {
 
   // 3. "VU" label at top-center
   ctx.save();
-  ctx.font = "600 10px 'Chakra Petch', sans-serif";
+  ctx.font = `500 ${Math.round(vuHeaderSize)}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.fillStyle = "rgba(240,237,232,0.5)";
