@@ -203,7 +203,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawVuBar(ctx, vuW, vuH, { value: 0, peakValue: 0, showClip: false, channel: "L", barColor: "rgba(255,0,0,0.8)" });
+        drawVuNeedle(ctx, vuW, vuH, { value: 0, peakValue: 0, showClip: false, channel: "L" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -213,7 +213,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        drawVuBar(ctx, vuW, vuH, { value: 0, peakValue: 0, showClip: false, channel: "R", barColor: "rgba(0,255,255,0.8)" });
+        drawVuNeedle(ctx, vuW, vuH, { value: 0, peakValue: 0, showClip: false, channel: "R" });
       }
 
       // Idle phi meter
@@ -381,7 +381,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vu.width !== bsW || vu.height !== bsH) { vu.width = bsW; vu.height = bsH; }
         const ctx = vu.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawVuBar(ctx, vuW, vuH, { value: vuLEmaRef.current, peakValue: peakHeldL.current, showClip: clipShowL, channel: "L", barColor: "rgba(255,0,0,0.8)" });
+        drawVuNeedle(ctx, vuW, vuH, { value: vuLEmaRef.current, peakValue: peakHeldL.current, showClip: clipShowL, channel: "L" });
       }
       const vuR = vuRRef.current;
       if (vuR) {
@@ -391,7 +391,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
         if (vuR.width !== bsW || vuR.height !== bsH) { vuR.width = bsW; vuR.height = bsH; }
         const ctx = vuR.getContext("2d");
         ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0);
-        drawVuBar(ctx, vuW, vuH, { value: vuREmaRef.current, peakValue: peakHeldR.current, showClip: clipShowR, channel: "R", barColor: "rgba(0,255,255,0.8)" });
+        drawVuNeedle(ctx, vuW, vuH, { value: vuREmaRef.current, peakValue: peakHeldR.current, showClip: clipShowR, channel: "R" });
       }
 
       // ── Phase Correlation Meter (φ) ───────────────────────────────────────
@@ -607,71 +607,139 @@ export function detectBpm(buffer, sampleRate = 60) {
 
 // ── Drawing helpers ──────────────────────────────────────────────────────────
 
-// Screen-blend vertical bar with pro-grade dBFS scale, peak hold, and clip indicator.
-// Matches DeckWaveformV2 forward-thinking aesthetic.
-function drawVuBar(ctx, W, H, opts) {
-  const { value = 0, peakValue = 0, showClip = false, channel = "L", barColor = "rgba(255,0,0,0.8)" } = opts;
+// Analog VU needle meter (Midnight Marauders inspired).
+// Arc-sweep needle from bottom-center pivot, colors from album palette.
+function drawVuNeedle(ctx, W, H, opts) {
+  const { value = 0, peakValue = 0, showClip = false, channel = "L" } = opts;
   const clamped = Math.max(0, Math.min(1, value));
   const peakClamped = Math.max(0, Math.min(1, peakValue));
 
-  // Black background (screen composite requires dark ground)
+  // Black background
   ctx.fillStyle = "rgba(0,0,0,0.97)";
   ctx.fillRect(0, 0, W, H);
 
-  // dBFS scale markers and reference lines — drawn behind bars
-  const dBFS_MARKERS = [-24, -18, -12, -6, -3, 0]; // dBFS values
-  const SCALE_FLOOR = -60;
-  const SCALE_RANGE = 0 - SCALE_FLOOR; // 60 dB
+  // Pivot geometry
+  const pivotX = W / 2;
+  const pivotY = H * 0.90;
+  const radius = H * 0.82;
 
+  // VU scale: -20 to +3 VU (23 range)
+  const VU_MIN = -20;
+  const VU_MAX = 3;
+  const ANGLE_MIN = 215; // degrees, -20 VU (upper-left ~7 o'clock)
+  const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
+
+  // 1. Amber face radial gradient (edge dark #7a5210 → center bright #c8920a)
+  const gradient = ctx.createRadialGradient(pivotX, pivotY, 0, pivotX, pivotY, radius);
+  gradient.addColorStop(0, "#c8920a");
+  gradient.addColorStop(0.8, "#a67a0d");
+  gradient.addColorStop(1, "#7a5210");
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Arc background stripe (faint darker amber along the scale)
+  ctx.strokeStyle = "rgba(122, 82, 16, 0.4)";
+  ctx.lineWidth = 2;
+  const startRad = (ANGLE_MIN * Math.PI) / 180;
+  const endRad = (ANGLE_MAX * Math.PI) / 180;
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, radius * 0.75, startRad, endRad);
+  ctx.stroke();
+
+  // 3. Scale ticks and labels (-20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3)
+  const VU_LABELS = [-20, -10, -7, -5, -3, -2, -1, 0, 1, 2, 3];
   ctx.save();
-  ctx.font = "500 6px 'Space Mono', monospace";
-  ctx.textAlign = "right";
+  ctx.font = "500 7px 'Space Mono', monospace";
+  ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "rgba(185,185,185,0.30)";
-  ctx.lineWidth = 0.5;
-  ctx.strokeStyle = "rgba(255,255,255,0.05)";
 
-  for (const dbVal of dBFS_MARKERS) {
-    const norm = (dbVal - SCALE_FLOOR) / SCALE_RANGE; // normalize to 0..1
-    const y = H - norm * H * 0.85; // inverted: 0 dB at top
-    // Grid line
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    // Label (e.g., "-12")
-    ctx.fillText(String(dbVal), W - 2, y);
+  for (const vuVal of VU_LABELS) {
+    const normVal = (vuVal - VU_MIN) / (VU_MAX - VU_MIN);
+    const angle = ANGLE_MIN + normVal * (ANGLE_MAX - ANGLE_MIN);
+    const angleRad = (angle * Math.PI) / 180;
+    const isHot = vuVal > 0;
+    const tickColor = isHot ? "#cc2200" : "#14dc14";
+
+    // Tick mark (short line radiating outward)
+    const tickStartR = radius * 0.65;
+    const tickEndR = radius * 0.75;
+    const x1 = pivotX + tickStartR * Math.cos(angleRad);
+    const y1 = pivotY + tickStartR * Math.sin(angleRad);
+    const x2 = pivotX + tickEndR * Math.cos(angleRad);
+    const y2 = pivotY + tickEndR * Math.sin(angleRad);
+    ctx.strokeStyle = tickColor;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    // Label (e.g., "-10", "+3")
+    const labelR = radius * 0.55;
+    const labelX = pivotX + labelR * Math.cos(angleRad);
+    const labelY = pivotY + labelR * Math.sin(angleRad);
+    ctx.fillStyle = tickColor;
+    ctx.fillText(String(vuVal), labelX, labelY);
   }
   ctx.restore();
 
-  // Ghost bar outline (idle state indicator) — faint segments at each dB marker
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
-  const ghostBH = Math.round(H * 0.85 / dBFS_MARKERS.length); // height per marker
-  for (let i = 0; i < dBFS_MARKERS.length; i++) {
-    const segY = H - (i + 1) * ghostBH;
-    ctx.fillRect(0, segY, W, Math.max(1, ghostBH - 1));
-  }
+  // 4. "VU" label at top-center
+  ctx.save();
+  ctx.font = "600 10px 'Chakra Petch', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#3a2005";
+  ctx.fillText("VU", pivotX, 2);
+  ctx.restore();
 
-  // Current bar fill height (inverted: grows upward from bottom)
-  const barH = Math.round(clamped * H * 0.85);
-  const barY = H - barH;
+  // 5 & 6. Needle with shadow
+  const needleAngle = ANGLE_MIN + clamped * (ANGLE_MAX - ANGLE_MIN);
+  const needleAngleRad = (needleAngle * Math.PI) / 180;
+  const needleX = pivotX + radius * Math.cos(needleAngleRad);
+  const needleY = pivotY + radius * Math.sin(needleAngleRad);
 
-  // Screen-blend bar (grows from white at peaks)
-  ctx.globalCompositeOperation = "screen";
-  ctx.fillStyle = barColor;
-  if (barH > 0) ctx.fillRect(0, barY, W, barH);
-  ctx.globalCompositeOperation = "source-over";
+  // Needle shadow (thicker, darker, offset)
+  ctx.strokeStyle = "rgba(0,0,0,0.3)";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(pivotX + 1, pivotY + 1);
+  ctx.lineTo(needleX + 1, needleY + 1);
+  ctx.stroke();
 
-  // Peak hold tick (white line at peak position, separate from current bar)
+  // Needle (cream/white, thin)
+  ctx.strokeStyle = "#f0e8c0";
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(pivotX, pivotY);
+  ctx.lineTo(needleX, needleY);
+  ctx.stroke();
+
+  // 7. Pivot cap (filled circle, cream color)
+  ctx.fillStyle = "#f0e8c0";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 8. Peak hold tick (bright arc segment at peak position, 1.5s hold)
   if (peakClamped > 0.02) {
-    const peakH = Math.round(peakClamped * H * 0.85);
-    const peakY = H - peakH;
-    ctx.fillStyle = "rgba(240,237,232,0.85)";
-    ctx.fillRect(0, peakY - 1, W, 2);
-  }
-
-  // Clip indicator (block above 0 dBFS when clipped)
-  if (showClip) {
-    const clipY = H - H * 0.85; // just above the top of scale
-    ctx.fillStyle = "rgba(255,100,100,0.9)";
-    ctx.fillRect(0, clipY - 6, W, 5);
+    const peakAngle = ANGLE_MIN + peakClamped * (ANGLE_MAX - ANGLE_MIN);
+    const peakAngleRad = (peakAngle * Math.PI) / 180;
+    const peakTickLength = radius * 0.08;
+    const peakX1 = pivotX + (radius - peakTickLength) * Math.cos(peakAngleRad);
+    const peakY1 = pivotY + (radius - peakTickLength) * Math.sin(peakAngleRad);
+    const peakX2 = pivotX + radius * Math.cos(peakAngleRad);
+    const peakY2 = pivotY + radius * Math.sin(peakAngleRad);
+    ctx.strokeStyle = "rgba(240,237,232,0.9)";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(peakX1, peakY1);
+    ctx.lineTo(peakX2, peakY2);
+    ctx.stroke();
   }
 
   // Channel label at bottom

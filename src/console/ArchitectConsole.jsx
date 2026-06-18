@@ -2210,9 +2210,6 @@ function ArchitectConsole({
           <div className="arch-sa-col">
             <canvas ref={specRef} className="arch-spectrum-deck" aria-label="Spectrum analyzer (frequency distribution)" />
           </div>
-          <div className="arch-phi-col">
-            <canvas ref={phiRef} className="arch-phi-meter" aria-label="Phase correlation meter (mono compatibility)" />
-          </div>
         </div>
       </section>
 

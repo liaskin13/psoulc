@@ -113,7 +113,7 @@ export default function DeckWaveformV2({
       let ct = rawTime;
       if (isPlaying && !isDraggingRef.current && Math.abs(timeDelta) < 0.1) {
         // Small time delta: interpolate from last known time using wall-clock elapsed
-        const wallDelta = (now - lastTimeUpdateRef.current) / 1000;
+        const wallDelta = Math.min((now - lastTimeUpdateRef.current) / 1000, 0.35);
         ct = Math.min(lastTimeRef.current + wallDelta, dur);
       } else {
         // Big time change or seek: reset interpolation baseline
