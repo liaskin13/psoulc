@@ -624,7 +624,7 @@
   image-rendering: auto;
   background: rgba(5, 5, 8, 0.97);
   width: calc(50% - 2px);
-  height: 100px;
+  height: 100%;
   flex-shrink: 0;
 }
 

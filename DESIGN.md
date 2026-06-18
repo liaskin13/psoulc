@@ -539,11 +539,12 @@ This is a deliberate risk. We're not emulating hardware constraints — we're ta
   - Text anchor: center, middle baseline
   - Small adjustment: "0" nudged +1.5px vertically for optical centering
 
-**Arc Guide:**
-- Faint identity-color arc at **0.78×radius**, 3px stroke width
-- L channel: `rgba(0,255,255,0.18)` (cyan guide)
-- R channel: `rgba(20,220,20,0.18)` (green guide)
+**Arc Guide (Scale Line):**
+- Solid cream arc at **0.78×radius**, 4.5px stroke width
+- Color: `rgba(240, 237, 232, 0.45)` (cream, matching needle)
+- Both L and R channels use same cream color (neutral scale line, not identity-color)
 - `lineCap: "round"` for smooth ends
+- Reads as a design element and visual anchor, not a faint guide
 
 **Needle (Mechanical Pointer):**
 - **Anatomy:** Shadow layer + bright layer (classical analog gauges)

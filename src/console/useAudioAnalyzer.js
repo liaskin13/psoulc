@@ -654,9 +654,9 @@ function drawVuNeedle(ctx, W, H, opts) {
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad = (ANGLE_MAX * Math.PI) / 180;
 
-  // Draw solid scale line (the arc itself)
-  ctx.strokeStyle = "rgba(100,100,100,0.25)";  // slightly more visible
-  ctx.lineWidth = 2;
+  // Draw solid scale line (the arc itself) — cream, prominent (hardware meter aesthetic)
+  ctx.strokeStyle = "rgba(240, 237, 232, 0.45)";  // cream, matches needle, reads as design anchor
+  ctx.lineWidth = 4.5;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
