@@ -671,7 +671,9 @@ function drawVuNeedle(ctx, W, H, opts) {
     // Label (e.g., "-10", "+3") — positioned outside the arc
     const labelR = radius * 0.90;
     const labelX = pivotX + labelR * Math.cos(angleRad);
-    const labelY = pivotY + labelR * Math.sin(angleRad);
+    let labelY = pivotY + labelR * Math.sin(angleRad);
+    // Small adjustment for "0" to center it visually between "-1" and "+1"
+    if (vuVal === 0) labelY += 0.5;
     ctx.fillStyle = tickColor;
     ctx.fillText(String(vuVal), labelX, labelY);
   }
