@@ -620,8 +620,14 @@ function drawVuNeedle(ctx, W, H, opts) {
   const clamped = Math.max(0, Math.min(1, value));
   const peakClamped = Math.max(0, Math.min(1, peakValue));
 
-  // Black background with radial gradient depth
+  // Black canvas background
   ctx.fillStyle = "rgba(0,0,0,0.97)";
+  ctx.fillRect(0, 0, W, H);
+
+  // Colored instrument face (NEW) — cyan for L, green for R
+  const isL = channel === "L";
+  const faceColor = isL ? "rgba(0,255,255,0.25)" : "rgba(20,220,20,0.25)";
+  ctx.fillStyle = faceColor;
   ctx.fillRect(0, 0, W, H);
 
   // Clipping indicator: red block at top when clipping
@@ -641,16 +647,7 @@ function drawVuNeedle(ctx, W, H, opts) {
   const ANGLE_MIN = 215; // degrees, -20 VU (upper-left ~7 o'clock)
   const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
 
-  // Background gradient for depth (pronounced radial glow)
-  const bgGradient = ctx.createRadialGradient(pivotX, pivotY, 0, pivotX, pivotY, radius * 1.4);
-  bgGradient.addColorStop(0, "rgba(40,40,40,1)");
-  bgGradient.addColorStop(0.6, "rgba(15,15,15,1)");
-  bgGradient.addColorStop(1, "rgba(0,0,0,1)");
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, W, H);
-
   // Identity-color arc guide along scale radius
-  const isL = channel === "L";
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad = (ANGLE_MAX * Math.PI) / 180;
   ctx.strokeStyle = isL ? "rgba(0,255,255,0.18)" : "rgba(20,220,20,0.18)";

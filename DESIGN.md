@@ -516,9 +516,13 @@ This is a deliberate risk. We're not emulating hardware constraints — we're ta
   - 270° = 0 VU (straight-right, reference mark)
   - 325° = +3 VU (right extreme, upper-right)
 
-**Background & Depth:**
-- **Base fill:** `rgba(0,0,0,0.97)` (black canvas)
-- **Radial gradient (depth):** Center `rgba(40,40,40,1)` → 0.6 ratio `rgba(15,15,15,1)` → edges `rgba(0,0,0,1)`. Subtle vignette adds visual weight without clutter.
+**Background & Depth (Redesigned with Colored Face):**
+- **Base fill:** Black `rgba(0,0,0,0.97)` (canvas background)
+- **Colored instrument face (NEW):** 
+  - L meter: Cyan `rgba(0,255,255,0.25)` — identity color, subtle tint
+  - R meter: Green `rgba(20,220,20,0.25)` — identity color, subtle tint
+  - Fills entire canvas, provides visual presence and defines instrument boundary
+- **Radial gradient (depth):** Optional vignette on top of colored face. If used: Center `rgba(0,0,0,0.1)` → edges `rgba(0,0,0,0.25)`. Adds subtle depth without overwhelming the colored face.
 
 **Scale Ticks & Labels (Fixed Marks):**
 - **VU marks:** -20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3 (11 marks)
@@ -638,14 +642,27 @@ Single canvas, remaining width × 120px tall. Live FFT or pre-analyzed fallback.
 
 **Visual language coherence:** The 3-band RGB model (red/green/cyan) directly mirrors DeckWaveformV2 waveform bands, making the spectrum and waveform speak the same visual dialect. Kicks hitting the red section of both waveform and spectrum reinforce each other. Cyan hi-hats spike both. This unified language replaces the old rainbow spectrum and positions the console as a coherent instrument, not a patchwork interface.
 
-### Analyzer Row Layout & Proportions
+### Analyzer Row Layout & Proportions (Redesigned 2026-06-18)
+
+**New layout: Colored instrument faces + primary focus on VU meters**
 
 | Element | Width | Height | Reason |
 |---------|-------|--------|--------|
-| `.arch-vu-col` (L+R) | ~42% | 120px | VU is primary meter for audio engineers |
-| `.arch-phi-meter` | ~16% | 120px | Narrow vertical bar (mono compatibility check) |
-| `.arch-spectrum-deck` | ~42% | 120px | Context indicator (full frequency picture) |
-| Total deck height | — | 120px | Pro DJ software proportion (waveform:meter = 1.33:1) |
+| `.arch-vu-col` (L+R) | 60% (30% each) | 100px | Primary meter for DJs; cyan (L) + green (R) faces dominate |
+| `.arch-spectrum-deck` | 40% | 100px | Context/reference indicator (reduced from 42% for visual priority) |
+| Total deck height | — | 100px | Compact, bold (was 120px); colored faces provide visual weight |
+
+**Responsive scaling:**
+- Height formula: `clamp(80px, 12vh, 140px)` — scales with viewport, stays readable
+- Desktop (120px+): Full 100px meter height, proportional spectrum
+- Tablet (768px): Scales to 90px smoothly
+- Mobile (360px): Scales to 80px, still readable with bold faces
+
+**VU meter face design (NEW):**
+- **L meter background:** Solid cyan face `rgba(0,255,255,0.25)` — identity color, subtle depth
+- **R meter background:** Solid green face `rgba(20,220,20,0.25)` — identity color, subtle depth
+- **Geometry:** Horizontal landscape (wider than tall), arc sweep still 215°–325°
+- **Visual effect:** Colored face makes needles feel like they sweep across an instrument, not float on black
 
 ---
 
