@@ -500,7 +500,9 @@ Two side-by-side canvases in `.arch-vu-col`. Each canvas is `calc(50% - 2px)` wi
 - **Clip indicator:** Red block above 0 dBFS, holds 2s after clipping event (value > 0.99)
 - **dBFS labels:** Monospace text at each marker (-24, -18, -12, -6, -3, 0), muted gray
 
-**Signal routing:** L = bass-frequency energy (FFT bins 0-40 or waveform `.bass` field). R = high-frequency energy (FFT bins 500-900 or waveform `.high` field).
+**Signal routing:** L = left stereo channel RMS (live FFT time-domain), R = right stereo channel RMS (live FFT time-domain). Fallback when paused: symmetric RMS approximation from overall peak.
+
+**VU Calibration:** 0 VU = -18 dBFS (SMPTE/AES standard). Display range: -20 to +3 VU. A well-mastered track at -18 dBFS average RMS reads exactly 0 VU; 0 dBFS (clipping threshold) reads +18 VU (off-scale).
 
 **DPR scaling:** Canvas backing store = `canvas.width = dispW * dprLive`, then `ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0)` for sharp retina rendering.
 

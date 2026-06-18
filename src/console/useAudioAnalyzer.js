@@ -279,46 +279,48 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       const alpha = 1 - Math.exp(-dt / 300);
 
       // ── VU needle gauges (L + R) ─────────────────────────────────────────
+      // Stereo channel measurement (true left/right RMS), not frequency-band energy
       const dprLive = window.devicePixelRatio || 1;
       let rL = 0, rR = 0;
-      if (freqBins) {
-        const bassEnd   = Math.min(40, freqBins.length);
-        const highStart = Math.min(500, freqBins.length - 1);
-        const highEnd   = Math.min(900, freqBins.length);
-        let bassSum = 0;
-        for (let i = 0; i < bassEnd; i++) bassSum += freqBins[i];
-        rL = bassSum / (bassEnd * 255);
-        let highSum = 0;
-        for (let i = highStart; i < highEnd; i++) highSum += freqBins[i];
-        rR = highSum / ((highEnd - highStart) * 255);
+      if (lChannelAnalyserRef.current && rChannelAnalyserRef.current
+          && lChannelDataRef.current && rChannelDataRef.current) {
+        // Live FFT: true stereo channel RMS measurement
+        lChannelAnalyserRef.current.getFloatTimeDomainData(lChannelDataRef.current);
+        rChannelAnalyserRef.current.getFloatTimeDomainData(rChannelDataRef.current);
+        const lData = lChannelDataRef.current;
+        const rData = rChannelDataRef.current;
+        let lSumSq = 0, rSumSq = 0;
+        for (let i = 0; i < lData.length; i++) {
+          lSumSq += lData[i] * lData[i];
+          rSumSq += rData[i] * rData[i];
+        }
+        rL = Math.sqrt(lSumSq / lData.length);  // true RMS: 0..1
+        rR = Math.sqrt(rSumSq / rData.length);
       } else if (hasPreAnalyzed) {
+        // Pre-analyzed fallback: use overall peak as symmetric RMS approximation
         const barIndex   = Math.min(Math.floor((t / dur) * bars.length), bars.length - 1);
         const W_HALF     = 7;
         const windowBars = bars.slice(Math.max(0, barIndex - W_HALF), Math.min(bars.length, barIndex + W_HALF + 1));
         const avgPeak    = windowBars.reduce((s, b) => s + b.peak, 0) / (windowBars.length || 1);
-        if (windowBars[0]?.bass !== undefined) {
-          rL = windowBars.reduce((s, b) => s + b.bass, 0) / windowBars.length;
-          rR = windowBars.reduce((s, b) => s + b.high, 0) / windowBars.length;
-        } else {
-          let bassSum = 0, bassCount = 0, highSum = 0, highCount = 0;
-          for (const b of windowBars) {
-            if (b.freq === BASS_HEX) { bassSum += b.peak; bassCount++; }
-            else if (b.freq !== MID_HEX) { highSum += b.peak; highCount++; }
-          }
-          rL = bassCount > 0 ? bassSum / bassCount : avgPeak * 0.85;
-          rR = highCount > 0 ? highSum / highCount : avgPeak * 0.70;
-        }
+        rL = rR = avgPeak * 0.707;  // RMS ≈ peak / sqrt(2) ≈ peak * 0.707
       }
 
       peakL.current = Math.max(peakL.current * 0.97, rL);
       peakR.current = Math.max(peakR.current * 0.97, rR);
 
+      // Pro VU calibration: 0 VU = -18 dBFS (SMPTE standard), display -20 to +3 VU
+      const VU_CALIBRATION = -18;  // dBFS where needle reads exactly 0 VU
+      const VU_MIN_DISPLAY = -20;  // left end of needle arc
+      const VU_MAX_DISPLAY = 3;    // right end of needle arc
+
       const vuLDb   = amplitudeTodBFS(rL, -60);
-      const vuLNorm = (vuLDb - (-60)) / (0 - (-60)); // maps -60..0 dBFS to 0..1 screen height
+      const vuLVu   = vuLDb - VU_CALIBRATION;  // convert dBFS to VU offset
+      const vuLNorm = Math.max(0, Math.min(1, (vuLVu - VU_MIN_DISPLAY) / (VU_MAX_DISPLAY - VU_MIN_DISPLAY)));
       vuLEmaRef.current = vuLEmaRef.current + alpha * (vuLNorm - vuLEmaRef.current);
 
       const vuRDb   = amplitudeTodBFS(rR, -60);
-      const vuRNorm = (vuRDb - (-60)) / (0 - (-60));
+      const vuRVu   = vuRDb - VU_CALIBRATION;
+      const vuRNorm = Math.max(0, Math.min(1, (vuRVu - VU_MIN_DISPLAY) / (VU_MAX_DISPLAY - VU_MIN_DISPLAY)));
       vuREmaRef.current = vuREmaRef.current + alpha * (vuRNorm - vuREmaRef.current);
 
       // ── Peak hold logic (1.5s hold, then ~8dB/sec decay) ────────────────────
@@ -349,10 +351,9 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       if (rR > 0.99) clipHeldR.current = now;
 
       // ── Phase correlation (mono compatibility, -1 to +1) ─────────────────────
+      // Note: L/R time-domain data already read above for VU measurement; reuse those buffers
       let phiRaw = 0;
       if (lChannelAnalyserRef.current && rChannelAnalyserRef.current && lChannelDataRef.current && rChannelDataRef.current) {
-        lChannelAnalyserRef.current.getFloatTimeDomainData(lChannelDataRef.current);
-        rChannelAnalyserRef.current.getFloatTimeDomainData(rChannelDataRef.current);
         const lData = lChannelDataRef.current;
         const rData = rChannelDataRef.current;
         let dotProd = 0, lNorm = 0, rNorm = 0;
