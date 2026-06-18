@@ -650,13 +650,13 @@ function drawVuNeedle(ctx, W, H, opts) {
   const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
 
   // Flattened scale line (less arc-y, more like a horizontal gauge) with integrated ticks
-  const arcRadius = radius * 0.70;  // closer to scale line position
+  const arcRadius = radius * 0.82;  // matches needle radius — arc is the needle tip path
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad = (ANGLE_MAX * Math.PI) / 180;
 
-  // Draw solid scale line (the arc itself) — cream, prominent (hardware meter aesthetic)
-  ctx.strokeStyle = "rgba(240, 237, 232, 0.45)";  // cream, matches needle, reads as design anchor
-  ctx.lineWidth = 4.5;
+  // Draw solid scale line (the arc itself) — cream wire, not dominant
+  ctx.strokeStyle = "rgba(240, 237, 232, 0.55)";  // cream, slightly more opaque
+  ctx.lineWidth = 1.5;  // thin guide wire
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
@@ -682,16 +682,15 @@ function drawVuNeedle(ctx, W, H, opts) {
     const isHot = vuVal > 0;
     const tickColor = isHot ? "#cc2200" : "#14dc14";
 
-    // Tick mark (connected perpendicular lines from scale line) — less arc-y style
-    const tickStartR = arcRadius;  // starts at scale line
-    const tickLength = 8;  // short perpendicular lines
-    const perpAngle = angleRad + Math.PI / 2;  // perpendicular to arc
-    const x1 = pivotX + tickStartR * Math.cos(angleRad);
-    const y1 = pivotY + tickStartR * Math.sin(angleRad);
-    const x2 = x1 + tickLength * Math.cos(perpAngle);
-    const y2 = y1 + tickLength * Math.sin(perpAngle);
+    // Tick mark — radial inward from arc toward pivot (not tangent)
+    const outerR = arcRadius + 3;   // just outside the arc
+    const innerR = arcRadius - 10;  // extends inward toward pivot
+    const x1 = pivotX + outerR * Math.cos(angleRad);
+    const y1 = pivotY + outerR * Math.sin(angleRad);
+    const x2 = pivotX + innerR * Math.cos(angleRad);
+    const y2 = pivotY + innerR * Math.sin(angleRad);
     ctx.strokeStyle = tickColor;
-    ctx.lineWidth = 1.3;
+    ctx.lineWidth = 2.0;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
