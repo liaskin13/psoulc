@@ -482,21 +482,97 @@ INTAKE is a console-level action. The button lives in the browser utility bar (`
 
 The analyzer row holds three instruments: **VU meters** (left), **Phase Correlation** (center), **Spectrum** (right). All three are canvas-drawn at 120px height, using screen-blend compositing for cinematic PSC aesthetic.
 
-### VU Meter — Stereo L + R (Pro DJ Level Display)
+### VU Meter — Stereo Analog Needle Gauges L + R
 
-Two side-by-side canvases in `.arch-vu-col`. Each canvas is `calc(50% - 2px)` wide, 120px tall.
+Two side-by-side canvases in `.arch-vu-col`. Each canvas is `calc(50% - 2px)` width, 120px height. Professional-grade analog VU meter rendering with mechanical needle, matching broadcast/DJ reference standard.
 
-**Scale:** dBFS reference (0 dBFS = amplitude 1.0), floor at -60 dBFS.
-- Maps linear amplitude → dBFS: `db = 20*log10(max(v, 1e-6))`
-- On-screen: -60 dBFS at bottom, 0 dBFS at top of scale (85% of canvas height)
+**Calibration & Range:**
+- Pro standard: **0 VU = -18 dBFS** (SMPTE/AES)
+- Display range: **-20 VU to +3 VU** (23 VU total)
+- Amplitude conversion: `db = 20*log10(max(amplitude, 1e-6))`; `vu = db - (-18)`
+- Clipping threshold: **> 0.99 amplitude** (just before digital hard clip)
 
-**Visual components:**
-- **Background:** Black (rgba(0,0,0,0.97)) to support screen-blend composite
-- **Ghost bar outline:** Faint segments (rgba(255,255,255,0.08)) at each dB marker (-24, -18, -12, -6, -3, 0) — idle state indicator
-- **Current level bar:** Screen-blend fill (globalCompositeOperation='screen')
-  - L channel: rgba(255,0,0,0.8) — red (bass energy)
-  - R channel: rgba(0,255,255,0.8) — cyan (high energy)
-- **Peak hold tick:** White line (rgba(240,237,232,0.85)) at peak level, held 1.5s then decay ~8dB/sec
+**Geometry (Canvas-relative, DPR-aware):**
+- **Pivot point:** `(W/2, H*0.90)` — lower center, typical analog gauge position
+- **Needle radius:** `r = H*0.82` — arc sweeps from pivot across ~110° angle
+- **Arc sweep:** 215° → 325° (110° total, 7 o'clock to 5 o'clock)
+  - 215° = -20 VU (left extreme, lower-left)
+  - 270° = 0 VU (straight-right, reference mark)
+  - 325° = +3 VU (right extreme, upper-right)
+
+**Background & Depth:**
+- **Base fill:** `rgba(0,0,0,0.97)` (black canvas)
+- **Radial gradient (depth):** Center `rgba(40,40,40,1)` → 0.6 ratio `rgba(15,15,15,1)` → edges `rgba(0,0,0,1)`. Subtle vignette adds visual weight without clutter.
+
+**Scale Ticks & Labels (Fixed Marks):**
+- **VU marks:** -20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3 (11 marks)
+- **Tick marks:** Short radiating lines at each mark
+  - Safe zone (-20 to 0 VU): `#14dc14` (D's Serato green)
+  - Hot zone (+1 to +3 VU): `#cc2200` (system record-red)
+  - Line width: 1.5px, `lineCap: "round"`
+- **Tick positioning:** Start radius 0.65×r, end radius 0.75×r
+- **Scale labels:** Positioned at **0.94×radius** (close to arc, compact professional spacing)
+  - Font: Chakra Petch 400 (regular weight), **8px** responsive size
+  - Size formula: `clamp(8px, H*0.067, 9px)` (scales with container height)
+  - Color: Match tick color (green safe / red hot)
+  - Text anchor: center, middle baseline
+  - Small adjustment: "0" nudged +1.5px vertically for optical centering
+
+**Arc Guide:**
+- Faint identity-color arc at **0.78×radius**, 3px stroke width
+- L channel: `rgba(0,255,255,0.18)` (cyan guide)
+- R channel: `rgba(20,220,20,0.18)` (green guide)
+- `lineCap: "round"` for smooth ends
+
+**Needle (Mechanical Pointer):**
+- **Anatomy:** Shadow layer + bright layer (classical analog gauges)
+- **Shadow:** 2px dark stroke `rgba(0,0,0,0.4)`, offset +1px (x and y)
+- **Bright:** 1.5px cream stroke `#f0e8c0` (warm white, legible on dark background)
+- Both: `lineCap: "round"` for soft points, full radius from pivot to arc
+- **Pivot cap:** 3px filled circle `#f0e8c0` at pivot point
+
+**VU Header Label:**
+- Text: "VU" (uppercase)
+- Position: Top-center, 2px from top
+- Font: Chakra Petch 500 (medium weight), **responsive size** = `clamp(10px, H*0.083, 12px)`
+- Color: `rgba(240,237,232,0.5)` (cream, muted, non-intrusive)
+
+**Peak Hold Indicator:**
+- White arc segment at peak level position, 1.5s hold, then ~8dB/sec decay
+- Thickness: 2px, color `rgba(240,237,232,0.85)`, `lineCap: "round"`
+- Length: ~8% of arc radius
+
+**Channel Label (Bottom):**
+- Text: "L" (left canvas) or "R" (right canvas)
+- Position: Bottom-center, 2px from bottom
+- Font: Chakra Petch 500, 9px
+- Color: `rgba(185,185,185,0.50)` (muted gray)
+
+**Clipping Indicator (Emergency State):**
+- Appears when peak amplitude > 0.99 (pre-clip headroom gone)
+- Visual: Bright red block `rgba(255, 68, 68, α)` spanning canvas width at top, 12px tall
+- Animation: 2-second hold at full opacity, then 200ms fade-out
+  - `opacity = 1.0` for first 1800ms
+  - `opacity = linear fade` from 1800ms → 2000ms
+- Purpose: Unmissable emergency indicator; persistent enough to catch eye but not overwhelming
+
+**EMA Needle Smoothing:**
+- Time constant: 300ms (IEC 268-17 VU ballistic standard)
+- Formula: `alpha = 1 - exp(-dt / 300)`
+- Applies to both L and R needles independently
+- Result: Mechanical-feeling response, not jittery or sluggish
+
+**DPR Handling:**
+- Canvas backing store: `width = dispWidth × devicePixelRatio`, `height = dispHeight × devicePixelRatio`
+- Transform: `ctx.setTransform(dpr, 0, 0, dpr, 0, 0)` before all drawing
+- Coordinate math: Always in CSS pixels (W, H passed as display dimensions)
+- Result: Crisp, anti-aliased rendering on Retina and standard displays
+
+**Responsive Behavior (Mobile):**
+- Canvas maintains 1:1 aspect ratio (square)
+- Height drives scaling: 70px (mobile) → 90px (tablet) → 120px (desktop)
+- All proportional values (radii, font sizes, line widths) scale via percentage formulas
+- Never use fixed px values except where explicitly specified (e.g., 3px pivot cap → `max(3px, H*0.025)` on mobile)
 - **Clip indicator:** Red block above 0 dBFS, holds 2s after clipping event (value > 0.99)
 - **dBFS labels:** Monospace text at each marker (-24, -18, -12, -6, -3, 0), muted gray
 
