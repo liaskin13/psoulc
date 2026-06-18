@@ -643,7 +643,7 @@ function drawVuNeedle(ctx, W, H, opts) {
   // 4. Scale ticks and labels (-20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3)
   const VU_LABELS = [-20, -10, -7, -5, -3, -2, -1, 0, 1, 2, 3];
   ctx.save();
-  ctx.font = "500 7px 'Space Mono', monospace";
+  ctx.font = "500 10px 'Space Mono', monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
