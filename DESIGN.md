@@ -516,13 +516,14 @@ This is a deliberate risk. We're not emulating hardware constraints — we're ta
   - 270° = 0 VU (straight-right, reference mark)
   - 325° = +3 VU (right extreme, upper-right)
 
-**Background & Depth (Redesigned with Colored Face):**
+**Background & Depth (Warm Gold Glow from Below):**
 - **Base fill:** Black `rgba(0,0,0,0.97)` (canvas background)
-- **Colored instrument face (NEW):** 
-  - L meter: Cyan `rgba(0,255,255,0.25)` — identity color, subtle tint
-  - R meter: Green `rgba(20,220,20,0.25)` — identity color, subtle tint
-  - Fills entire canvas, provides visual presence and defines instrument boundary
-- **Radial gradient (depth):** Optional vignette on top of colored face. If used: Center `rgba(0,0,0,0.1)` → edges `rgba(0,0,0,0.25)`. Adds subtle depth without overwhelming the colored face.
+- **Warm gold glow (NEW):** Radial gradient radiating from bottom-center (below canvas)
+  - Center (bottom-middle): Warm amber-gold `rgba(184, 134, 11, 0.35)`
+  - Mid-fade: Darker amber `rgba(139, 90, 0, 0.15)`
+  - Edge fade: Transparent `rgba(0,0,0,0)` — fades to black at edges
+  - Effect: Backlighting aesthetic from below, like hardware VU meter glow
+  - Same glow for both L and R meters
 
 **Scale Ticks & Labels (Fixed Marks):**
 - **VU marks:** -20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3 (11 marks)
@@ -546,10 +547,10 @@ This is a deliberate risk. We're not emulating hardware constraints — we're ta
 
 **Needle (Mechanical Pointer):**
 - **Anatomy:** Shadow layer + bright layer (classical analog gauges)
-- **Shadow:** 2px dark stroke `rgba(0,0,0,0.4)`, offset +1px (x and y)
-- **Bright:** 1.5px cream stroke `#f0e8c0` (warm white, legible on dark background)
+- **Shadow:** 2.5px dark stroke `rgba(0,0,0,0.5)`, offset +1px (x and y) — deeper shadow for white contrast
+- **Bright:** 1.8px white stroke `#ffffff` (pure white, maximum contrast on gold glow background)
 - Both: `lineCap: "round"` for soft points, full radius from pivot to arc
-- **Pivot cap:** 3px filled circle `#f0e8c0` at pivot point
+- **Pivot cap:** 3px filled circle `#ffffff` at pivot point — white to match needle
 
 **VU Header Label:**
 - Text: "VU" (uppercase)

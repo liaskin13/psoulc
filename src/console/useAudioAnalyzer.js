@@ -624,10 +624,12 @@ function drawVuNeedle(ctx, W, H, opts) {
   ctx.fillStyle = "rgba(0,0,0,0.97)";
   ctx.fillRect(0, 0, W, H);
 
-  // Colored instrument face (NEW) — cyan for L, green for R
-  const isL = channel === "L";
-  const faceColor = isL ? "rgba(0,255,255,0.25)" : "rgba(20,220,20,0.25)";
-  ctx.fillStyle = faceColor;
+  // Warm gold glow radiating from bottom-center (hardware meter aesthetic)
+  const glowGradient = ctx.createRadialGradient(W / 2, H * 1.1, 0, W / 2, H * 1.1, W * 0.8);
+  glowGradient.addColorStop(0, "rgba(184, 134, 11, 0.35)");  // warm gold center
+  glowGradient.addColorStop(0.5, "rgba(139, 90, 0, 0.15)");   // fade to darker amber
+  glowGradient.addColorStop(1, "rgba(0,0,0,0)");              // fade to transparent
+  ctx.fillStyle = glowGradient;
   ctx.fillRect(0, 0, W, H);
 
   // Clipping indicator: red block at top when clipping
@@ -647,11 +649,11 @@ function drawVuNeedle(ctx, W, H, opts) {
   const ANGLE_MIN = 215; // degrees, -20 VU (upper-left ~7 o'clock)
   const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
 
-  // Identity-color arc guide along scale radius
+  // Faint arc guide (reduced opacity for flattened aesthetic)
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad = (ANGLE_MAX * Math.PI) / 180;
-  ctx.strokeStyle = isL ? "rgba(0,255,255,0.18)" : "rgba(20,220,20,0.18)";
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(100,100,100,0.12)";  // muted gray, very faint
+  ctx.lineWidth = 2;
   ctx.lineCap = "round";
   ctx.beginPath();
   ctx.arc(pivotX, pivotY, radius * 0.78, startRad, endRad);
@@ -718,25 +720,25 @@ function drawVuNeedle(ctx, W, H, opts) {
   const needleY = pivotY + radius * Math.sin(needleAngleRad);
 
   // Needle shadow (darker, offset +1px for depth)
-  ctx.strokeStyle = "rgba(0,0,0,0.4)";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(0,0,0,0.5)";
+  ctx.lineWidth = 2.5;
   ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(pivotX + 1, pivotY + 1);
   ctx.lineTo(needleX + 1, needleY + 1);
   ctx.stroke();
 
-  // Needle (cream/white, bright)
-  ctx.strokeStyle = "#f0e8c0";
-  ctx.lineWidth = 1.5;
+  // Needle (white, bright) — hardware meter aesthetic
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.8;
   ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(pivotX, pivotY);
   ctx.lineTo(needleX, needleY);
   ctx.stroke();
 
-  // 7. Pivot cap (small filled circle, cream color)
-  ctx.fillStyle = "#f0e8c0";
+  // 7. Pivot cap (small filled circle, white)
+  ctx.fillStyle = "#ffffff";
   ctx.beginPath();
   ctx.arc(pivotX, pivotY, 3, 0, Math.PI * 2);
   ctx.fill();
