@@ -679,8 +679,8 @@ function drawVuNeedle(ctx, W, H, opts) {
     const normVal = (vuVal - VU_MIN) / (VU_MAX - VU_MIN);
     const angle = ANGLE_MIN + normVal * (ANGLE_MAX - ANGLE_MIN);
     const angleRad = (angle * Math.PI) / 180;
-    const isL = channel === "L";
-    const tickColor = isL ? "rgba(0,255,255,0.85)" : "rgba(20,220,20,0.85)";
+    const isHot = vuVal > 0;
+    const tickColor = isHot ? "#cc2200" : "#14dc14";
 
     // Tick mark — radial inward from arc toward pivot (not tangent)
     const outerR = arcRadius + 3;   // just outside the arc
