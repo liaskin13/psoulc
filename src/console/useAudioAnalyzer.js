@@ -668,8 +668,8 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.lineTo(x2, y2);
     ctx.stroke();
 
-    // Label (e.g., "-10", "+3") — positioned outside the arc
-    const labelR = radius * 0.90;
+    // Label (e.g., "-10", "+3") — positioned outside the arc with breathing room
+    const labelR = radius * 1.05;
     const labelX = pivotX + labelR * Math.cos(angleRad);
     let labelY = pivotY + labelR * Math.sin(angleRad);
     // Small adjustment for "0" to center it visually between "-1" and "+1"
@@ -694,16 +694,16 @@ function drawVuNeedle(ctx, W, H, opts) {
   const needleX = pivotX + radius * Math.cos(needleAngleRad);
   const needleY = pivotY + radius * Math.sin(needleAngleRad);
 
-  // Needle shadow (thicker, darker, offset)
-  ctx.strokeStyle = "rgba(0,0,0,0.3)";
-  ctx.lineWidth = 3;
+  // Needle shadow (darker, offset +1px for depth)
+  ctx.strokeStyle = "rgba(0,0,0,0.4)";
+  ctx.lineWidth = 2;
   ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(pivotX + 1, pivotY + 1);
   ctx.lineTo(needleX + 1, needleY + 1);
   ctx.stroke();
 
-  // Needle (cream/white, thin)
+  // Needle (cream/white, bright)
   ctx.strokeStyle = "#f0e8c0";
   ctx.lineWidth = 1.5;
   ctx.lineCap = "round";
