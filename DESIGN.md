@@ -486,6 +486,22 @@ The analyzer row holds three instruments: **VU meters** (left), **Phase Correlat
 
 Two side-by-side canvases in `.arch-vu-col`. Each canvas is `calc(50% - 2px)` width, 120px height. Professional-grade analog VU meter rendering with mechanical needle, matching broadcast/DJ reference standard.
 
+**Design Direction & Rationale (locked 2026-06-18):**
+
+This is a deliberate risk. We're not emulating hardware constraints — we're taking what hardware does well (mechanical precision, proven ballistic response) and adding what software does well (cinematic depth, responsive rendering, identity color integration).
+
+*Why this matters:* Pro DJ software (Serato, Pioneer, Traktor) has settled on either hardware-like mechanical needles (beautiful but limited in rendering) or flat LED bargraphs (accurate but utilitarian). PSC combines both: mechanical needle AESTHETICS with software precision and cinematic depth. The 300ms ballistic response is real (IEC 60268-17 standard), not faked. The shadow layers and screen-blend compositing add professional visual weight that hardware cannot achieve.
+
+*The three strategic bets:*
+
+1. **Software-rendered mechanical needle with shadow depth** — We render a classic analog needle with shadow layers using canvas 2D compositing. This looks more professional and precise than both hardware and flat software meters. Browsers handle this at 60fps effortlessly.
+
+2. **Identity color system (cyan L / green R) instead of generic red/yellow/green** — Every DJ software uses red/yellow/green because they copied hardware standards. PSC uses cyan (L channel) and green (R channel) because this is D's console language. The VU meters reinforce that this is not Serato or Pioneer — this is PSC. Color consistency across waveform, spectrum, and meters = visual coherence.
+
+3. **Broadcast-standard compact spacing (0.94×radius for scale labels)** — Scale labels sit at professional broadcast meter spacing, optimized for instant reading without parsing. This is borrowed from 50+ years of proven broadcast audio engineering, not made up. The compactness signals precision.
+
+*The payoff:* When D opens the console, the cyan/green needles immediately signal "this is my world." The mechanical response feels responsive and precise. The shadow depth makes the needle feel like a real instrument. And the whole meter set reinforces PSC's visual identity without sacrificing professional standards.
+
 **Calibration & Range:**
 - Pro standard: **0 VU = -18 dBFS** (SMPTE/AES)
 - Display range: **-20 VU to +3 VU** (23 VU total)
