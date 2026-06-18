@@ -673,7 +673,7 @@ function drawVuNeedle(ctx, W, H, opts) {
     const labelX = pivotX + labelR * Math.cos(angleRad);
     let labelY = pivotY + labelR * Math.sin(angleRad);
     // Small adjustment for "0" to center it visually between "-1" and "+1"
-    if (vuVal === 0) labelY += 0.5;
+    if (vuVal === 0) labelY += 1.5;
     ctx.fillStyle = tickColor;
     ctx.fillText(String(vuVal), labelX, labelY);
   }
