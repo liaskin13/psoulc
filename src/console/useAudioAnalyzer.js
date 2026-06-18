@@ -467,7 +467,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
             let sum = 0;
             for (let b = binStart; b < binEnd; b++) sum += freqBins[b];
             const avg    = sum / (binEnd - binStart || 1);
-            const liveH  = Math.max(Math.round((avg / 255) * H), FLOOR);
+            const liveH  = Math.max(Math.round((avg / 255) * H * 0.90), FLOOR);
             const normH  = liveH / H;
 
             peakArr[i]   = Math.max(peakArr[i] * 0.985, liveH);
@@ -495,7 +495,7 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
 
           for (let i = 0; i < SPEC_N; i++) {
             const b     = bars[specStart + i];
-            const liveH = b ? Math.max(Math.round(b.peak * H), FLOOR) : FLOOR;
+            const liveH = b ? Math.max(Math.round(b.peak * H * 0.90), FLOOR) : FLOOR;
             const normH = liveH / H;
 
             peakArr[i]  = Math.max(peakArr[i] * 0.985, liveH);
@@ -646,11 +646,11 @@ function drawVuNeedle(ctx, W, H, opts) {
   // VU scale: -20 to +3 VU (23 range)
   const VU_MIN = -20;
   const VU_MAX = 3;
-  const ANGLE_MIN = 215; // degrees, -20 VU (upper-left ~7 o'clock)
-  const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
+  const ANGLE_MIN = 230; // degrees, -20 VU (narrowed from 215 for flatter arc)
+  const ANGLE_MAX = 310; // degrees, +3 VU (narrowed from 325 for flatter arc)
 
   // Flattened scale line (less arc-y, more like a horizontal gauge) with integrated ticks
-  const arcRadius = radius * 0.82;  // matches needle radius — arc is the needle tip path
+  const arcRadius = radius * 0.93;  // increased from 0.82 to reduce headroom clip on tight canvas
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad = (ANGLE_MAX * Math.PI) / 180;
 
