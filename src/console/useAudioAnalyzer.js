@@ -624,10 +624,10 @@ function drawVuNeedle(ctx, W, H, opts) {
   ctx.fillStyle = "rgba(0,0,0,0.97)";
   ctx.fillRect(0, 0, W, H);
 
-  // Warm gold glow radiating from bottom-center (hardware meter aesthetic)
+  // Warm gold glow radiating from bottom-center (hardware meter aesthetic) — BOOSTED
   const glowGradient = ctx.createRadialGradient(W / 2, H * 1.1, 0, W / 2, H * 1.1, W * 0.8);
-  glowGradient.addColorStop(0, "rgba(184, 134, 11, 0.35)");  // warm gold center
-  glowGradient.addColorStop(0.5, "rgba(139, 90, 0, 0.15)");   // fade to darker amber
+  glowGradient.addColorStop(0, "rgba(184, 134, 11, 0.55)");  // warm gold center — BOOSTED from 0.35
+  glowGradient.addColorStop(0.5, "rgba(139, 90, 0, 0.25)");   // fade to darker amber — BOOSTED from 0.15
   glowGradient.addColorStop(1, "rgba(0,0,0,0)");              // fade to transparent
   ctx.fillStyle = glowGradient;
   ctx.fillRect(0, 0, W, H);
@@ -649,14 +649,18 @@ function drawVuNeedle(ctx, W, H, opts) {
   const ANGLE_MIN = 215; // degrees, -20 VU (upper-left ~7 o'clock)
   const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
 
-  // Faint arc guide (reduced opacity for flattened aesthetic)
+  // Flattened scale line (less arc-y, more like a horizontal gauge) with integrated ticks
+  const arcRadius = radius * 0.70;  // closer to scale line position
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad = (ANGLE_MAX * Math.PI) / 180;
-  ctx.strokeStyle = "rgba(100,100,100,0.12)";  // muted gray, very faint
+
+  // Draw solid scale line (the arc itself)
+  ctx.strokeStyle = "rgba(100,100,100,0.25)";  // slightly more visible
   ctx.lineWidth = 2;
   ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, radius * 0.78, startRad, endRad);
+  ctx.arc(pivotX, pivotY, arcRadius, startRad, endRad);
   ctx.stroke();
 
   // 4. Scale ticks and labels (-20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3)
@@ -678,16 +682,18 @@ function drawVuNeedle(ctx, W, H, opts) {
     const isHot = vuVal > 0;
     const tickColor = isHot ? "#cc2200" : "#14dc14";
 
-    // Tick mark (short line radiating outward)
-    const tickStartR = radius * 0.65;
-    const tickEndR = radius * 0.75;
+    // Tick mark (connected perpendicular lines from scale line) — less arc-y style
+    const tickStartR = arcRadius;  // starts at scale line
+    const tickLength = 8;  // short perpendicular lines
+    const perpAngle = angleRad + Math.PI / 2;  // perpendicular to arc
     const x1 = pivotX + tickStartR * Math.cos(angleRad);
     const y1 = pivotY + tickStartR * Math.sin(angleRad);
-    const x2 = pivotX + tickEndR * Math.cos(angleRad);
-    const y2 = pivotY + tickEndR * Math.sin(angleRad);
+    const x2 = x1 + tickLength * Math.cos(perpAngle);
+    const y2 = y1 + tickLength * Math.sin(perpAngle);
     ctx.strokeStyle = tickColor;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.3;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
@@ -761,13 +767,19 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.stroke();
   }
 
-  // Channel label at bottom
+  // Channel label at bottom corner (L = left, R = right)
   ctx.save();
   ctx.font = "500 9px 'Chakra Petch', sans-serif";
-  ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  ctx.fillStyle = "rgba(185,185,185,0.50)";
-  ctx.fillText(channel, W / 2, H - 2);
+  ctx.fillStyle = "rgba(185,185,185,0.60)";
+  const isL = channel === "L";
+  if (isL) {
+    ctx.textAlign = "left";
+    ctx.fillText(channel, 4, H - 2);  // bottom-left
+  } else {
+    ctx.textAlign = "right";
+    ctx.fillText(channel, W - 4, H - 2);  // bottom-right
+  }
   ctx.restore();
 }
 
