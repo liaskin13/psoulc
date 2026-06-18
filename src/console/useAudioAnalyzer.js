@@ -641,10 +641,11 @@ function drawVuNeedle(ctx, W, H, opts) {
   const ANGLE_MIN = 215; // degrees, -20 VU (upper-left ~7 o'clock)
   const ANGLE_MAX = 325; // degrees, +3 VU (upper-right ~5 o'clock)
 
-  // Background gradient for depth (subtle radial fade)
-  const bgGradient = ctx.createRadialGradient(pivotX, pivotY, 0, pivotX, pivotY, radius * 1.2);
-  bgGradient.addColorStop(0, "rgba(20,20,20,1)");
-  bgGradient.addColorStop(1, "rgba(0,0,0,0.97)");
+  // Background gradient for depth (pronounced radial glow)
+  const bgGradient = ctx.createRadialGradient(pivotX, pivotY, 0, pivotX, pivotY, radius * 1.4);
+  bgGradient.addColorStop(0, "rgba(40,40,40,1)");
+  bgGradient.addColorStop(0.6, "rgba(15,15,15,1)");
+  bgGradient.addColorStop(1, "rgba(0,0,0,1)");
   ctx.fillStyle = bgGradient;
   ctx.fillRect(0, 0, W, H);
 
@@ -663,7 +664,7 @@ function drawVuNeedle(ctx, W, H, opts) {
   const VU_LABELS = [-20, -10, -7, -5, -3, -2, -1, 0, 1, 2, 3];
 
   // Responsive font sizing for different viewport heights
-  const labelSize = Math.max(9, Math.min(11, H * 0.075));
+  const labelSize = Math.max(8, Math.min(9, H * 0.067));
   const vuHeaderSize = Math.max(10, Math.min(12, H * 0.083));
 
   ctx.save();
@@ -694,7 +695,7 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.stroke();
 
     // Label (e.g., "-10", "+3") — positioned outside the arc with breathing room
-    const labelR = radius * 1.05;
+    const labelR = radius * 1.18;
     const labelX = pivotX + labelR * Math.cos(angleRad);
     let labelY = pivotY + labelR * Math.sin(angleRad);
     // Small adjustment for "0" to center it visually between "-1" and "+1"
