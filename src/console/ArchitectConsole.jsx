@@ -35,6 +35,8 @@ import {
   saveWaveform,
   WAVEFORM_V2_SENTINEL,
 } from "../lib/waveformAnalyzer";
+import { useDragDropBatch } from "../hooks/useDragDropBatch";
+import { BatchUploadQueue } from "../components/BatchUploadQueue";
 
 // D1 stores waveform_data as JSON.stringify(value), so "v2" is stored as '"v2"'.
 // This helper checks both the raw sentinel and the JSON-encoded form.
@@ -409,6 +411,19 @@ function ArchitectConsole({
   const waveformBarsCache = useRef({}); // trackId → decoded bars array
   const loadedDeckIdRef = useRef(null);
   const loopActiveRef = useRef(false);
+
+  // Batch upload state
+  const {
+    queue: batchQueue,
+    addFiles: addBatchFiles,
+    retry: retryBatchUpload,
+    dismiss: dismissBatchUpload,
+    isDraggingOver,
+    onDragEnter,
+    onDragOver,
+    onDragLeave,
+    onDrop,
+  } = useDragDropBatch(activeLibVault, viewer);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
   const retractTimerRef = useRef(null);
@@ -2653,7 +2668,60 @@ function ArchitectConsole({
         </aside>
 
         {/* LIBRARY PANEL */}
-        <main className="arch-library" aria-label="Vault library">
+        <main
+          className="arch-library"
+          aria-label="Vault library"
+          onDragEnter={onDragEnter}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+        >
+          {/* Drag overlay */}
+          <AnimatePresence>
+            {isDraggingOver && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: "rgba(0, 200, 255, 0.08)",
+                  borderRadius: "2px",
+                  border: "2px dashed rgba(0, 200, 255, 0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 999,
+                  pointerEvents: "none",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    letterSpacing: "0.12em",
+                    color: "rgba(0, 200, 255, 0.7)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  DROP TRACKS
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Batch upload queue panel */}
+          <BatchUploadQueue
+            queue={batchQueue}
+            onRetry={retryBatchUpload}
+            onDismiss={dismissBatchUpload}
+          />
+
           {/* Unified library row: vault tabs LEFT | action buttons RIGHT | search FAR RIGHT */}
           <div
             className="arch-vault-tabs"
