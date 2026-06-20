@@ -17,6 +17,12 @@ const BPM_BUF_SIZE = 240; // 4 seconds × ~60 Hz rAF rate
 const VU_DISPLAY_MIN = -20;  // left end of arc (-20 VU)
 const VU_DISPLAY_MAX = 6;    // right end of arc (+6 VU)
 
+// D'Arsonval amplitude-linear normalization: needle deflection ∝ V_rms, not dB.
+// 0 VU = -18 dBFS, so the amplitude range for our display window is:
+const VU_AMP_MIN   = Math.pow(10, (VU_DISPLAY_MIN - 18) / 20);  // -38 dBFS ≈ 0.01259
+const VU_AMP_MAX   = Math.pow(10, (VU_DISPLAY_MAX - 18) / 20);  // -12 dBFS ≈ 0.25119
+const VU_AMP_RANGE = VU_AMP_MAX - VU_AMP_MIN;
+
 // Convert linear amplitude (0-1+) to decibels full-scale (dBFS).
 // reference=1.0: 0 dBFS = peak digital headroom
 // floor=-60: values below -60 dBFS clamp to floor (silence threshold)
@@ -314,19 +320,12 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       peakL.current = Math.max(peakL.current * 0.97, rL);
       peakR.current = Math.max(peakR.current * 0.97, rR);
 
-      // Pro VU calibration: 0 VU = -18 dBFS (SMPTE standard)
-      const VU_CALIBRATION = -18;  // dBFS where needle reads exactly 0 VU
-      const VU_MIN_DISPLAY = VU_DISPLAY_MIN;
-      const VU_MAX_DISPLAY = VU_DISPLAY_MAX;
-
-      const vuLDb   = amplitudeTodBFS(rL, -60);
-      const vuLVu   = vuLDb - VU_CALIBRATION;  // convert dBFS to VU offset
-      const vuLNorm = Math.max(0, Math.min(1, (vuLVu - VU_MIN_DISPLAY) / (VU_MAX_DISPLAY - VU_MIN_DISPLAY)));
+      // D'Arsonval: normalize rms amplitude directly — no log conversion needed.
+      // rL/rR are true RMS (0..1 linear), VU_AMP_MIN/MAX precomputed at module level.
+      const vuLNorm = Math.max(0, Math.min(1, (rL - VU_AMP_MIN) / VU_AMP_RANGE));
       vuLEmaRef.current = vuLEmaRef.current + alpha * (vuLNorm - vuLEmaRef.current);
 
-      const vuRDb   = amplitudeTodBFS(rR, -60);
-      const vuRVu   = vuRDb - VU_CALIBRATION;
-      const vuRNorm = Math.max(0, Math.min(1, (vuRVu - VU_MIN_DISPLAY) / (VU_MAX_DISPLAY - VU_MIN_DISPLAY)));
+      const vuRNorm = Math.max(0, Math.min(1, (rR - VU_AMP_MIN) / VU_AMP_RANGE));
       vuREmaRef.current = vuREmaRef.current + alpha * (vuRNorm - vuREmaRef.current);
 
       // ── Peak hold logic (1.5s hold, then ~8dB/sec decay) ────────────────────
@@ -642,25 +641,29 @@ function drawVuNeedle(ctx, W, H, opts) {
   const VU_MIN = VU_DISPLAY_MIN;
   const VU_MAX = VU_DISPLAY_MAX;
 
-  // 60° sweep centered at 270° (straight up). Both endpoints at same canvas height — bilateral symmetry.
-  // |cos(240°)| = 0.5, so radius = (W/2 - PADDING) / 0.5 = W - 12 fills the canvas width exactly.
-  const ANGLE_MIN = 240;  // degrees, -20 VU: upper-left
-  const ANGLE_MAX = 300;  // degrees, +6 VU:  upper-right
+  // 40° sweep: flatter arc, amplitude-linear label spacing (D'Arsonval — matches physical meter face)
+  const ANGLE_MIN = 250;  // -20 VU: upper-left
+  const ANGLE_MAX = 290;  // +6 VU:  upper-right
 
-  const PADDING = 6;
-  const radius = (W / 2 - PADDING) / 0.5;  // = W - 12; no H cap
+  const PADDING  = 6;
+  const COS_MIN  = 0.342;  // |cos(250°)| — determines radius needed to fill canvas width
+  const radius   = (W / 2 - PADDING) / COS_MIN;  // at W=200 → 274.9px
 
-  // Pivot sits below the canvas — the large radius relative to canvas height makes the arc appear flat.
-  const ARC_TOP_Y = 22;  // px from top where the arc peak lands (leaves room for outward ticks + labels)
-  const pivotX = W / 2;
-  const pivotY = ARC_TOP_Y + radius;  // e.g. at W=200: 22+188=210px (well below canvas bottom)
+  // Pin arc peak to ARC_PEAK_Y by computing pivotY from arcRadius (not radius)
+  const arcRadius  = radius * 0.93;
+  const ARC_PEAK_Y = 26;                   // px from top where arc peak sits
+  const pivotX     = W / 2;
+  const pivotY     = ARC_PEAK_Y + arcRadius;  // pivot well below canvas bottom
 
-  const arcRadius = radius * 0.93;
-  const startRad  = (ANGLE_MIN * Math.PI) / 180;
-  const endRad    = (ANGLE_MAX * Math.PI) / 180;
+  const startRad = (ANGLE_MIN * Math.PI) / 180;
+  const endRad   = (ANGLE_MAX * Math.PI) / 180;
 
-  // Two-color scale arc: cream for safe zone (−20→0 VU), glowing red for hot zone (0→+6 VU)
-  const zeroNorm   = (0 - VU_MIN) / (VU_MAX - VU_MIN);   // 20/26 ≈ 0.769
+  // Amplitude-linear normalization: same math as rAF loop (D'Arsonval — pow(10, vu/20))
+  const labelAmpMin = Math.pow(10, VU_MIN / 20);  // 0.1
+  const labelAmpMax = Math.pow(10, VU_MAX / 20);  // ~1.995
+
+  // Two-color arc split at 0 VU (amplitude-linear position ≈ 47.5%, not 76.9% linear-dB)
+  const zeroNorm   = (1.0 - labelAmpMin) / (labelAmpMax - labelAmpMin);
   const zeroAngDeg = ANGLE_MIN + zeroNorm * (ANGLE_MAX - ANGLE_MIN);
   const zeroAngRad = (zeroAngDeg * Math.PI) / 180;
 
@@ -688,56 +691,53 @@ function drawVuNeedle(ctx, W, H, opts) {
 
   // Scale ticks and labels: 20 10 7 5 3 0 (cream) | 3 6 (red) — unsigned, pro console style
   const VU_LABELS = [-20, -10, -7, -5, -3, 0, 3, 6];
-
-  // Responsive font sizing for different viewport heights
   const labelSize = Math.max(8, Math.min(9, H * 0.067));
-  const vuHeaderSize = Math.max(10, Math.min(12, H * 0.083));
+
+  // Fixed label row: all labels at the same Y regardless of where the arc is at each angle.
+  // Ticks grow downward from the row to the arc — longer at edges, shorter at center.
+  const FIXED_LABEL_Y = ARC_PEAK_Y - 10;  // label baseline (textBaseline=bottom)
+  const TICK_TIP_Y    = FIXED_LABEL_Y + 3; // top of tick (gap between tick and label)
 
   ctx.save();
-  ctx.font = `400 ${Math.round(labelSize)}px 'Chakra Petch', sans-serif`;
+  ctx.font = `600 ${Math.round(labelSize)}px 'Chakra Petch', sans-serif`;
   ctx.textBaseline = "bottom";
 
   for (const vuVal of VU_LABELS) {
-    const normVal = (vuVal - VU_MIN) / (VU_MAX - VU_MIN);
-    const angle = ANGLE_MIN + normVal * (ANGLE_MAX - ANGLE_MIN);
+    const normVal  = (Math.pow(10, vuVal / 20) - labelAmpMin) / (labelAmpMax - labelAmpMin);
+    const angle    = ANGLE_MIN + normVal * (ANGLE_MAX - ANGLE_MIN);
     const angleRad = (angle * Math.PI) / 180;
-    const isHot = vuVal > 0;
+    const isHot    = vuVal > 0;
     const tickColor = isHot ? "#cc2200" : "rgba(240, 237, 232, 0.85)";
 
-    // Tick mark — outward from arc (away from pivot = toward top of canvas)
-    const tickInnerR = arcRadius;        // tick base at the arc
-    const tickOuterR = arcRadius + 12;   // tick tip 12px above arc
-    const x1 = pivotX + tickInnerR * Math.cos(angleRad);
-    const y1 = pivotY + tickInnerR * Math.sin(angleRad);
-    const x2 = pivotX + tickOuterR * Math.cos(angleRad);
-    const y2 = pivotY + tickOuterR * Math.sin(angleRad);
+    // Arc point for this label
+    const arcX = pivotX + arcRadius * Math.cos(angleRad);
+    const arcY = pivotY + arcRadius * Math.sin(angleRad);
+
+    // Vertical tick from arc up to fixed tip row
     ctx.strokeStyle = tickColor;
-    ctx.lineWidth = 2.0;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    ctx.lineWidth   = 2.0;
+    ctx.lineCap     = "round";
     ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    ctx.moveTo(arcX, arcY);
+    ctx.lineTo(arcX, TICK_TIP_Y);
     ctx.stroke();
 
-    // Label above tick tip — screen-space offset, not radial
-    const labelX = x2;
-    const labelY = y2 - 2;
-    if (labelX < 18) ctx.textAlign = "left";
-    else if (labelX > W - 18) ctx.textAlign = "right";
-    else ctx.textAlign = "center";
+    // Label at fixed row — textAlign adjusts at canvas edges to prevent clipping
+    if (arcX < 18)       ctx.textAlign = "left";
+    else if (arcX > W - 18) ctx.textAlign = "right";
+    else                 ctx.textAlign = "center";
     ctx.fillStyle = tickColor;
-    ctx.fillText(String(Math.abs(vuVal)), labelX, labelY);
+    ctx.fillText(String(Math.abs(vuVal)), arcX, FIXED_LABEL_Y);
   }
   ctx.restore();
 
-  // "VU" label at lower-center — avoids collision with top labels
+  // "VU" — bigger and bolder, lower-center
   ctx.save();
-  ctx.font = `500 ${Math.round(vuHeaderSize)}px 'Chakra Petch', sans-serif`;
+  ctx.font      = `700 ${Math.max(13, Math.min(16, Math.round(H * 0.12)))}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "rgba(240,237,232,0.5)";
-  ctx.fillText("VU", pivotX, H * 0.72);
+  ctx.fillStyle = "rgba(240,237,232,0.6)";
+  ctx.fillText("VU", pivotX, H * 0.75);
   ctx.restore();
 
   // 5 & 6. Needle with shadow (cream stroke from pivot to arc)
