@@ -724,6 +724,24 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.fillStyle = tickColor;
     ctx.fillText(String(Math.abs(vuVal)), arcX, FIXED_LABEL_Y);
   }
+
+  // Minor ticks: -2, -1, +1, +2 — 4px hash marks, no label
+  const VU_MINOR = [-2, -1, 1, 2];
+  for (const vuVal of VU_MINOR) {
+    const normVal  = (Math.pow(10, vuVal / 20) - labelAmpMin) / (labelAmpMax - labelAmpMin);
+    const angle    = ANGLE_MIN + normVal * (ANGLE_MAX - ANGLE_MIN);
+    const angleRad = (angle * Math.PI) / 180;
+    const tickColor = vuVal > 0 ? "rgba(204, 34, 0, 0.7)" : "rgba(240, 237, 232, 0.7)";
+    const arcX = ellipseCX + rx * Math.cos(angleRad);
+    const arcY = ellipseCY + ry * Math.sin(angleRad);
+    ctx.strokeStyle = tickColor;
+    ctx.lineWidth   = 1.0;
+    ctx.lineCap     = "butt";
+    ctx.beginPath();
+    ctx.moveTo(arcX, arcY);
+    ctx.lineTo(arcX, arcY - 4);
+    ctx.stroke();
+  }
   ctx.restore();
 
   // "VU" — bolder, between arc and pivot
