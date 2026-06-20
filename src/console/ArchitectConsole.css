@@ -616,7 +616,7 @@
   flex: 0 0 auto;
   display: flex;
   gap: 3px;
-  width: clamp(280px, 30%, 400px);
+  width: clamp(380px, 38%, 520px);
 }
 
 .arch-vu-deck {
@@ -825,7 +825,7 @@
     height: 100px;
   }
 
-  .arch-vu-col { width: clamp(180px, 22%, 260px); }
+  .arch-vu-col { width: clamp(220px, 28%, 340px); }
   .arch-phi-col { width: clamp(55px, 7%, 80px); }
 }
 
@@ -850,7 +850,7 @@
     height: 84px;
   }
 
-  .arch-vu-col { width: clamp(150px, 20%, 220px); }
+  .arch-vu-col { width: clamp(180px, 26%, 270px); }
   .arch-phi-col { width: clamp(50px, 6%, 75px); }
 }
 

@@ -641,19 +641,14 @@ function drawVuNeedle(ctx, W, H, opts) {
   const VU_MIN = VU_DISPLAY_MIN;
   const VU_MAX = VU_DISPLAY_MAX;
 
-  // 40° sweep: flatter arc, amplitude-linear label spacing (D'Arsonval — matches physical meter face)
-  const ANGLE_MIN = 250;  // -20 VU: upper-left
-  const ANGLE_MAX = 290;  // +6 VU:  upper-right
+  // Ellipse arc: independent rx/ry gives wide sweep + flat arc — impossible with a circle
+  const ANGLE_MIN = 236.4;  // -20 VU: upper-left
+  const ANGLE_MAX = 303.6;  // +6 VU:  upper-right (67.2° sweep, symmetric around 270°)
 
-  const PADDING  = 6;
-  const COS_MIN  = 0.342;  // |cos(250°)| — determines radius needed to fill canvas width
-  const radius   = (W / 2 - PADDING) / COS_MIN;  // at W=200 → 274.9px
-
-  // Pin arc peak to ARC_PEAK_Y by computing pivotY from arcRadius (not radius)
-  const arcRadius  = radius * 0.93;
-  const ARC_PEAK_Y = 26;                   // px from top where arc peak sits
-  const pivotX     = W / 2;
-  const pivotY     = ARC_PEAK_Y + arcRadius;  // pivot well below canvas bottom
+  const ellipseCX = W / 2;
+  const ellipseCY = H * 0.88;   // pivot visible near bottom, like a real instrument
+  const rx        = W * 0.687;  // horizontal radius — fills canvas width
+  const ry        = H * 0.48;   // vertical radius — small relative to rx → flat arc
 
   const startRad = (ANGLE_MIN * Math.PI) / 180;
   const endRad   = (ANGLE_MAX * Math.PI) / 180;
@@ -662,7 +657,7 @@ function drawVuNeedle(ctx, W, H, opts) {
   const labelAmpMin = Math.pow(10, VU_MIN / 20);  // 0.1
   const labelAmpMax = Math.pow(10, VU_MAX / 20);  // ~1.995
 
-  // Two-color arc split at 0 VU (amplitude-linear position ≈ 47.5%, not 76.9% linear-dB)
+  // Two-color arc split at 0 VU
   const zeroNorm   = (1.0 - labelAmpMin) / (labelAmpMax - labelAmpMin);
   const zeroAngDeg = ANGLE_MIN + zeroNorm * (ANGLE_MAX - ANGLE_MIN);
   const zeroAngRad = (zeroAngDeg * Math.PI) / 180;
@@ -674,17 +669,17 @@ function drawVuNeedle(ctx, W, H, opts) {
   ctx.shadowColor    = "transparent";
   ctx.shadowBlur     = 0;
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, arcRadius, startRad, zeroAngRad);
+  ctx.ellipse(ellipseCX, ellipseCY, rx, ry, 0, startRad, zeroAngRad);
   ctx.stroke();
 
-  // Hot zone arc — glow pass then crisp line (hardware overload feel)
+  // Hot zone arc — glow pass then crisp line
   ctx.shadowColor    = "rgba(204, 34, 0, 0.60)";
   ctx.shadowBlur     = 6;
   ctx.strokeStyle    = "#cc2200";
   ctx.lineWidth      = 2.0;
   ctx.lineCap        = "round";
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, arcRadius, zeroAngRad, endRad);
+  ctx.ellipse(ellipseCX, ellipseCY, rx, ry, 0, zeroAngRad, endRad);
   ctx.stroke();
   ctx.shadowColor    = "transparent";
   ctx.shadowBlur     = 0;
@@ -693,10 +688,10 @@ function drawVuNeedle(ctx, W, H, opts) {
   const VU_LABELS = [-20, -10, -7, -5, -3, 0, 3, 6];
   const labelSize = Math.max(8, Math.min(9, H * 0.067));
 
-  // Fixed label row: all labels at the same Y regardless of where the arc is at each angle.
-  // Ticks grow downward from the row to the arc — longer at edges, shorter at center.
-  const FIXED_LABEL_Y = ARC_PEAK_Y - 10;  // label baseline (textBaseline=bottom)
-  const TICK_TIP_Y    = FIXED_LABEL_Y + 3; // top of tick (gap between tick and label)
+  // Arc peak Y at top of ellipse (270°), fixed label row above it
+  const arcPeakY      = ellipseCY - ry;
+  const FIXED_LABEL_Y = arcPeakY - 10;    // label baseline (textBaseline=bottom)
+  const TICK_TIP_Y    = FIXED_LABEL_Y + 3; // gap between tick top and label
 
   ctx.save();
   ctx.font = `600 ${Math.round(labelSize)}px 'Chakra Petch', sans-serif`;
@@ -709,9 +704,9 @@ function drawVuNeedle(ctx, W, H, opts) {
     const isHot    = vuVal > 0;
     const tickColor = isHot ? "#cc2200" : "rgba(240, 237, 232, 0.85)";
 
-    // Arc point for this label
-    const arcX = pivotX + arcRadius * Math.cos(angleRad);
-    const arcY = pivotY + arcRadius * Math.sin(angleRad);
+    // Ellipse point for this label
+    const arcX = ellipseCX + rx * Math.cos(angleRad);
+    const arcY = ellipseCY + ry * Math.sin(angleRad);
 
     // Vertical tick from arc up to fixed tip row
     ctx.strokeStyle = tickColor;
@@ -723,35 +718,35 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.stroke();
 
     // Label at fixed row — textAlign adjusts at canvas edges to prevent clipping
-    if (arcX < 18)       ctx.textAlign = "left";
+    if (arcX < 18)           ctx.textAlign = "left";
     else if (arcX > W - 18) ctx.textAlign = "right";
-    else                 ctx.textAlign = "center";
+    else                     ctx.textAlign = "center";
     ctx.fillStyle = tickColor;
     ctx.fillText(String(Math.abs(vuVal)), arcX, FIXED_LABEL_Y);
   }
   ctx.restore();
 
-  // "VU" — bigger and bolder, lower-center
+  // "VU" — bolder, between arc and pivot
   ctx.save();
   ctx.font      = `700 ${Math.max(13, Math.min(16, Math.round(H * 0.12)))}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "rgba(240,237,232,0.6)";
-  ctx.fillText("VU", pivotX, H * 0.75);
+  ctx.fillText("VU", ellipseCX, H * 0.65);
   ctx.restore();
 
-  // 5 & 6. Needle with shadow (cream stroke from pivot to arc)
+  // 5 & 6. Needle with shadow (from ellipse pivot to arc surface)
   const needleAngle = ANGLE_MIN + clamped * (ANGLE_MAX - ANGLE_MIN);
   const needleAngleRad = (needleAngle * Math.PI) / 180;
-  const needleX = pivotX + radius * Math.cos(needleAngleRad);
-  const needleY = pivotY + radius * Math.sin(needleAngleRad);
+  const needleX = ellipseCX + rx * Math.cos(needleAngleRad);
+  const needleY = ellipseCY + ry * Math.sin(needleAngleRad);
 
   // Needle shadow (darker, offset +1px for depth)
   ctx.strokeStyle = "rgba(0,0,0,0.5)";
   ctx.lineWidth = 2.5;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(pivotX + 1, pivotY + 1);
+  ctx.moveTo(ellipseCX + 1, ellipseCY + 1);
   ctx.lineTo(needleX + 1, needleY + 1);
   ctx.stroke();
 
@@ -760,25 +755,24 @@ function drawVuNeedle(ctx, W, H, opts) {
   ctx.lineWidth = 1.8;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(pivotX, pivotY);
+  ctx.moveTo(ellipseCX, ellipseCY);
   ctx.lineTo(needleX, needleY);
   ctx.stroke();
 
-  // 7. Pivot cap (small filled circle, white)
+  // 7. Pivot cap (small filled circle, white) — visible at H*0.88
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 3, 0, Math.PI * 2);
+  ctx.arc(ellipseCX, ellipseCY, 3, 0, Math.PI * 2);
   ctx.fill();
 
-  // 8. Peak hold tick (white arc segment at peak position, 1.5s hold)
+  // 8. Peak hold tick (short segment at peak position on ellipse arc, 1.5s hold)
   if (peakClamped > 0.02) {
     const peakAngle = ANGLE_MIN + peakClamped * (ANGLE_MAX - ANGLE_MIN);
     const peakAngleRad = (peakAngle * Math.PI) / 180;
-    const peakTickLength = radius * 0.08;
-    const peakX1 = pivotX + (radius - peakTickLength) * Math.cos(peakAngleRad);
-    const peakY1 = pivotY + (radius - peakTickLength) * Math.sin(peakAngleRad);
-    const peakX2 = pivotX + radius * Math.cos(peakAngleRad);
-    const peakY2 = pivotY + radius * Math.sin(peakAngleRad);
+    const peakX1 = ellipseCX + 0.92 * rx * Math.cos(peakAngleRad);
+    const peakY1 = ellipseCY + 0.92 * ry * Math.sin(peakAngleRad);
+    const peakX2 = ellipseCX + rx * Math.cos(peakAngleRad);
+    const peakY2 = ellipseCY + ry * Math.sin(peakAngleRad);
     ctx.strokeStyle = "rgba(240,237,232,0.9)";
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
