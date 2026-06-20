@@ -475,6 +475,10 @@ INTAKE is a console-level action. The button lives in the browser utility bar (`
 | 2026-05-27 | Waveform 200px → 160px, analyzer row 96px → 120px | Brings waveform:meters ratio from 2.08x to 1.33x, matching pro DJ software proportions. Net deck: −16px. |
 | 2026-05-27 | Arc geometry fix: r = min(cx×0.88, H×0.60) | Previous formula Math.min(W,H)×0.78 caused needle to clip off canvas edge at 205°/335° extremes. |
 | 2026-05-27 | DPR fix: canvas backing store × devicePixelRatio, ctx.setTransform(dpr,0,0,dpr,0,0) | All needle gauges were rendering at 1x on Retina displays. setTransform before draw; coordinates remain in CSS pixels. |
+| 2026-06-20 | VU arc: ctx.ellipse() replacing ctx.arc() — rx=W*0.687, ry=H*0.48, sweep 236.4°→303.6° | Circle cannot produce wide+flat arc on small canvas. Ellipse decouples horizontal/vertical extent. Pivot at H*0.88 (visible, like real instrument). |
+| 2026-06-20 | D'Arsonval amplitude-linear normalization — pow(10, vu/20) not linear-dB | Real VU needle deflects ∝ V_rms. This collapses the 20↔10 gap from 38.5% to 11.4% of sweep, matching analog reference. |
+| 2026-06-20 | Display range −20 to +6 VU (not +3) — 0 VU sits at center | D's mixes run hot; +6 gives earlier warning before clip. Side effect: 0 VU at 47.5% of sweep (center) vs 68.5% on standard face. Intentional. |
+| 2026-06-20 | VU col widened: clamp(380px,38%,520px) desktop | Each canvas ≈260px — enough width for label scale. SA col absorbs shrinkage via flex:1. |
 
 ---
 
@@ -498,23 +502,25 @@ This is a deliberate risk. We're not emulating hardware constraints — we're ta
 
 2. **Identity color system (cyan L / green R) instead of generic red/yellow/green** — Every DJ software uses red/yellow/green because they copied hardware standards. PSC uses cyan (L channel) and green (R channel) because this is D's console language. The VU meters reinforce that this is not Serato or Pioneer — this is PSC. Color consistency across waveform, spectrum, and meters = visual coherence.
 
-3. **Broadcast-standard compact spacing (0.94×radius for scale labels)** — Scale labels sit at professional broadcast meter spacing, optimized for instant reading without parsing. This is borrowed from 50+ years of proven broadcast audio engineering, not made up. The compactness signals precision.
+3. **Fixed-row label alignment matching analog meter faces** — All scale labels share a single horizontal baseline above the arc, with vertical ticks dropping down to meet the arc. This matches how real analog meter faces are printed (flat face, labels on a shared line) and makes every label readable at a glance regardless of where the arc curves beneath it.
 
 *The payoff:* When D opens the console, the cyan/green needles immediately signal "this is my world." The mechanical response feels responsive and precise. The shadow depth makes the needle feel like a real instrument. And the whole meter set reinforces PSC's visual identity without sacrificing professional standards.
 
 **Calibration & Range:**
 - Pro standard: **0 VU = -18 dBFS** (SMPTE/AES)
-- Display range: **-20 VU to +3 VU** (23 VU total)
-- Amplitude conversion: `db = 20*log10(max(amplitude, 1e-6))`; `vu = db - (-18)`
+- Display range: **-20 VU to +6 VU** (26 VU total — 3 dB wider than the standard ±3 face, deliberately, so D sees hot signals earlier before the clip LED fires)
 - Clipping threshold: **> 0.99 amplitude** (just before digital hard clip)
+- **Why "0 VU" sits near center (not right-of-center like a standard face):** Standard meters stop at +3 VU, so 0 lands at 68.5% of sweep. Our scale goes to +6, putting 0 at 47.5% — center. This is a feature, not a bug.
 
-**Geometry (Canvas-relative, DPR-aware):**
-- **Pivot point:** `(W/2, H*0.90)` — lower center, typical analog gauge position
-- **Needle radius:** `r = H*0.82` — arc sweeps from pivot across ~110° angle
-- **Arc sweep:** 215° → 325° (110° total, 7 o'clock to 5 o'clock)
-  - 215° = -20 VU (left extreme, lower-left)
-  - 270° = 0 VU (straight-right, reference mark)
-  - 325° = +3 VU (right extreme, upper-right)
+**Geometry (Canvas-relative, DPR-aware) — Ellipse Arc:**
+- **Why ellipse:** A circle cannot produce a wide sweep that is also visually flat on a small canvas — curvature is fixed. `ctx.ellipse()` decouples horizontal and vertical radii, making both possible simultaneously.
+- **Ellipse center (pivot):** `(W/2, H*0.88)` — visible near bottom of canvas, like a real D'Arsonval movement. Pivot cap: 3px white filled circle.
+- **Radii:** `rx = W*0.687` (horizontal, fills canvas width) · `ry = H*0.48` (vertical, shallow → flat arc)
+- **Arc sweep:** 236.4° → 303.6° (67.2° total, symmetric around 270° = straight up)
+  - 236.4° = -20 VU (upper-left) · 268.3° = 0 VU (near center) · 303.6° = +6 VU (upper-right)
+- **Point on arc at angle θ:** `(W/2 + rx·cos θ, H*0.88 + ry·sin θ)`
+- **D'Arsonval movement:** Needle deflects ∝ RMS amplitude (V), not dB. Normalization: `normVal = (pow(10, vu/20) − ampMin) / ampRange` where `ampMin = pow(10, −20/20)`, `ampMax = pow(10, 6/20)`. Same formula in rAF loop (EMA) and label positioning.
+- **Panel width:** `.arch-vu-col = clamp(380px, 38%, 520px)` desktop · `clamp(220px, 28%, 340px)` at 1100px · `clamp(180px, 26%, 270px)` at 900px
 
 **Background & Depth (Warm Gold Glow from Below):**
 - **Base fill:** Black `rgba(0,0,0,0.97)` (canvas background)
@@ -526,25 +532,18 @@ This is a deliberate risk. We're not emulating hardware constraints — we're ta
   - Same glow for both L and R meters
 
 **Scale Ticks & Labels (Fixed Marks):**
-- **VU marks:** -20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3 (11 marks)
-- **Tick marks:** Short radiating lines at each mark
-  - Safe zone (-20 to 0 VU): `#14dc14` (D's Serato green)
-  - Hot zone (+1 to +3 VU): `#cc2200` (system record-red)
-  - Line width: 1.5px, `lineCap: "round"`
-- **Tick positioning:** Start radius 0.65×r, end radius 0.75×r
-- **Scale labels:** Positioned at **0.94×radius** (close to arc, compact professional spacing)
-  - Font: Chakra Petch 400 (regular weight), **8px** responsive size
-  - Size formula: `clamp(8px, H*0.067, 9px)` (scales with container height)
-  - Color: Match tick color (green safe / red hot)
-  - Text anchor: center, middle baseline
-  - Small adjustment: "0" nudged +1.5px vertically for optical centering
+- **Major labels (with number):** `20  10  7  5  3  0` (cream) · `3  6` (red) — unsigned display
+- **Minor ticks (no label):** `-2  -1  +1  +2` — 4px vertical hash marks, 1px line width, 70% opacity
+- **Fixed label row:** All labels share `FIXED_LABEL_Y = (ellipseCY − ry) − 10`. Vertical ticks: `ctx.moveTo(arcX, arcY)` → `ctx.lineTo(arcX, TICK_TIP_Y)` where `TICK_TIP_Y = FIXED_LABEL_Y + 3`. Ticks are longer at edges (arc dips lower there), shorter at center.
+- **Colors:** Safe zone (≤0 VU): `rgba(240, 237, 232, 0.85)` cream · Hot zone (>0 VU): `#cc2200` red. NOT identity colors — arc markings are neutral instrument chrome.
+- **Font:** Chakra Petch 600, `clamp(8px, H*0.067, 9px)`, `textBaseline: "bottom"`, `textAlign: "center"` (flips to left/right at canvas edges to prevent clip)
 
-**Arc Guide (Scale Line):**
-- Solid cream arc at **0.78×radius**, 4.5px stroke width
-- Color: `rgba(240, 237, 232, 0.45)` (cream, matching needle)
-- Both L and R channels use same cream color (neutral scale line, not identity-color)
-- `lineCap: "round"` for smooth ends
-- Reads as a design element and visual anchor, not a faint guide
+**Arc (Two-Color Scale Line):**
+- The arc IS the scale line — drawn directly on the ellipse, no separate guide arc behind it.
+- **Safe zone** (−20 to 0 VU): `rgba(240, 237, 232, 0.80)` cream · 1.5px stroke · `ctx.ellipse(cx, cy, rx, ry, 0, startRad, zeroAngRad)`
+- **Hot zone** (0 to +6 VU): `#cc2200` red · 2.0px stroke · `shadowBlur: 6` glow · `ctx.ellipse(cx, cy, rx, ry, 0, zeroAngRad, endRad)`
+- Split point: amplitude-linear 0 VU position ≈ 268.3° (47.5% of sweep)
+- `lineCap: "round"` on both segments
 
 **Needle (Mechanical Pointer):**
 - **Anatomy:** Shadow layer + bright layer (classical analog gauges)
@@ -555,9 +554,9 @@ This is a deliberate risk. We're not emulating hardware constraints — we're ta
 
 **VU Header Label:**
 - Text: "VU" (uppercase)
-- Position: Top-center, 2px from top
-- Font: Chakra Petch 500 (medium weight), **responsive size** = `clamp(10px, H*0.083, 12px)`
-- Color: `rgba(240,237,232,0.5)` (cream, muted, non-intrusive)
+- Position: `(W/2, H*0.65)` — between arc peak and pivot, below needle sweep zone
+- Font: Chakra Petch 700 (bold), `clamp(13px, H*0.12, 16px)` — intentionally prominent
+- Color: `rgba(240,237,232,0.6)` (cream, muted)
 
 **Peak Hold Indicator:**
 - White arc segment at peak level position, 1.5s hold, then ~8dB/sec decay
@@ -600,7 +599,7 @@ This is a deliberate risk. We're not emulating hardware constraints — we're ta
 
 **Signal routing:** L = left stereo channel RMS (live FFT time-domain), R = right stereo channel RMS (live FFT time-domain). Fallback when paused: symmetric RMS approximation from overall peak.
 
-**VU Calibration:** 0 VU = -18 dBFS (SMPTE/AES standard). Display range: -20 to +3 VU. A well-mastered track at -18 dBFS average RMS reads exactly 0 VU; 0 dBFS (clipping threshold) reads +18 VU (off-scale).
+**VU Calibration:** 0 VU = -18 dBFS (SMPTE/AES standard). Display range: -20 to +6 VU. A well-mastered track at -18 dBFS average RMS reads exactly 0 VU; 0 dBFS (clipping threshold) reads +18 VU (far off-scale, LED fires at +0.99 amplitude).
 
 **DPR scaling:** Canvas backing store = `canvas.width = dispW * dprLive`, then `ctx.setTransform(dprLive, 0, 0, dprLive, 0, 0)` for sharp retina rendering.
 
