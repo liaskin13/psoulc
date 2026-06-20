@@ -638,22 +638,22 @@ function drawVuNeedle(ctx, W, H, opts) {
   ctx.fillStyle = glowGradient;
   ctx.fillRect(0, 0, W, H);
 
-  // Pivot geometry
-  const pivotX = W / 2;
-  const pivotY = H * 0.90;
-
   // VU scale — uses module-level constants so arc geometry stays in sync with needle normalization
   const VU_MIN = VU_DISPLAY_MIN;
   const VU_MAX = VU_DISPLAY_MAX;
-  const ANGLE_MIN = 215;  // degrees, -20 VU (restored to pre-flatten value)
-  const ANGLE_MAX = 325;  // degrees, +6 VU  (restored to pre-flatten value, extended for +6)
 
-  // Adaptive radius: cap by canvas WIDTH so arc endpoints never clip off-screen.
-  // |cos(215°)| = 0.819 — leftward reach of the arc at ANGLE_MIN.
-  // At ~900px viewport (W≈97px) the old fixed H*0.82 radius sent the endpoint to x≈-4px,
-  // creating a lopsided quarter-circle clip artifact. This formula prevents that.
-  const cos_min = Math.abs(Math.cos(ANGLE_MIN * Math.PI / 180));  // 0.819
-  const radius  = Math.min(H * 0.82, (W / 2 - 4) / cos_min);
+  // 60° sweep centered at 270° (straight up). Both endpoints at same canvas height — bilateral symmetry.
+  // |cos(240°)| = 0.5, so radius = (W/2 - PADDING) / 0.5 = W - 12 fills the canvas width exactly.
+  const ANGLE_MIN = 240;  // degrees, -20 VU: upper-left
+  const ANGLE_MAX = 300;  // degrees, +6 VU:  upper-right
+
+  const PADDING = 6;
+  const radius = (W / 2 - PADDING) / 0.5;  // = W - 12; no H cap
+
+  // Pivot sits below the canvas — the large radius relative to canvas height makes the arc appear flat.
+  const ARC_TOP_Y = 22;  // px from top where the arc peak lands (leaves room for outward ticks + labels)
+  const pivotX = W / 2;
+  const pivotY = ARC_TOP_Y + radius;  // e.g. at W=200: 22+188=210px (well below canvas bottom)
 
   const arcRadius = radius * 0.93;
   const startRad  = (ANGLE_MIN * Math.PI) / 180;
@@ -695,8 +695,7 @@ function drawVuNeedle(ctx, W, H, opts) {
 
   ctx.save();
   ctx.font = `400 ${Math.round(labelSize)}px 'Chakra Petch', sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+  ctx.textBaseline = "bottom";
 
   for (const vuVal of VU_LABELS) {
     const normVal = (vuVal - VU_MIN) / (VU_MAX - VU_MIN);
@@ -705,13 +704,13 @@ function drawVuNeedle(ctx, W, H, opts) {
     const isHot = vuVal > 0;
     const tickColor = isHot ? "#cc2200" : "rgba(240, 237, 232, 0.85)";
 
-    // Tick mark — radial inward from arc toward pivot (not tangent)
-    const outerR = arcRadius + 3;   // just outside the arc
-    const innerR = arcRadius - 10;  // extends inward toward pivot
-    const x1 = pivotX + outerR * Math.cos(angleRad);
-    const y1 = pivotY + outerR * Math.sin(angleRad);
-    const x2 = pivotX + innerR * Math.cos(angleRad);
-    const y2 = pivotY + innerR * Math.sin(angleRad);
+    // Tick mark — outward from arc (away from pivot = toward top of canvas)
+    const tickInnerR = arcRadius;        // tick base at the arc
+    const tickOuterR = arcRadius + 12;   // tick tip 12px above arc
+    const x1 = pivotX + tickInnerR * Math.cos(angleRad);
+    const y1 = pivotY + tickInnerR * Math.sin(angleRad);
+    const x2 = pivotX + tickOuterR * Math.cos(angleRad);
+    const y2 = pivotY + tickOuterR * Math.sin(angleRad);
     ctx.strokeStyle = tickColor;
     ctx.lineWidth = 2.0;
     ctx.lineCap = "round";
@@ -721,25 +720,24 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.lineTo(x2, y2);
     ctx.stroke();
 
-    // Label — unsigned (position on dial communicates sign, not the number)
-    const labelR = radius * 0.94;
-    const labelX = pivotX + labelR * Math.cos(angleRad);
-    const labelY = pivotY + labelR * Math.sin(angleRad);
+    // Label above tick tip — screen-space offset, not radial
+    const labelX = x2;
+    const labelY = y2 - 2;
+    if (labelX < 18) ctx.textAlign = "left";
+    else if (labelX > W - 18) ctx.textAlign = "right";
+    else ctx.textAlign = "center";
     ctx.fillStyle = tickColor;
     ctx.fillText(String(Math.abs(vuVal)), labelX, labelY);
   }
   ctx.restore();
 
-  // "VU" label at top-center + "dB" sub-label (pro console reference)
+  // "VU" label at lower-center — avoids collision with top labels
   ctx.save();
   ctx.font = `500 ${Math.round(vuHeaderSize)}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
-  ctx.textBaseline = "top";
+  ctx.textBaseline = "middle";
   ctx.fillStyle = "rgba(240,237,232,0.5)";
-  ctx.fillText("VU", pivotX, 2);
-  ctx.font = `400 ${Math.round(labelSize * 0.85)}px 'Chakra Petch', sans-serif`;
-  ctx.fillStyle = "rgba(240,237,232,0.30)";
-  ctx.fillText("dB", pivotX, 2 + vuHeaderSize + 1);
+  ctx.fillText("VU", pivotX, H * 0.72);
   ctx.restore();
 
   // 5 & 6. Needle with shadow (cream stroke from pivot to arc)
