@@ -328,4 +328,26 @@ Captures patterns, mistakes, and corrections to prevent "Shadow Gaps" from repea
 
 - **Lesson**: `ensureWaveformForTrack` tried Serato GEOB first (always fails for WAV), then just re-fetched tracks — `generateAndSaveWaveform` was imported but never called. D's waveforms never actually regenerated when the WVF button was clicked. This was invisible.
 - **Rule**: When a feature "does nothing" and there's no error, check whether the code path actually reaches the implementation or silently exits early.
+
+---
+
+### Session: VU Meter Ellipse Arc (June 20, 2026)
+
+#### Circle Cannot Give Wide+Flat Arc — Use ctx.ellipse
+
+- **Lesson**: Spent multiple attempts trying to flatten a VU meter arc with `ctx.arc` (circle). The curvature ratio (height/width) is fixed at ~13% for any sweep angle that fills the canvas width. No amount of sweep-angle tuning fixes this.
+- **Rule**: When you need a wide arc that is also visually flat, use `ctx.ellipse()` with a large `rx` (fills width) and small `ry` (limits height). Circle geometry simply cannot produce this shape.
+- **How to apply**: `ctx.ellipse(cx, cy, rx, ry, 0, startRad, endRad)`. Needle tip: `(cx + rx*cos(θ), cy + ry*sin(θ))`. Peak hold: `0.92*rx`/`0.92*ry` for inner point.
+
+#### D'Arsonval Normalization — Amplitude Not dB
+
+- **Lesson**: Real VU meter needles deflect proportional to RMS amplitude (V), not dB. Using linear-in-dB normalization caused the 20↔10 gap to be 38.5% of sweep (wrong). Amplitude-linear gives 11.4% (matches reference).
+- **Rule**: VU meter normalization: `normVal = (pow(10, vu/20) - ampMin) / (ampRange)`, where `ampMin = pow(10, VU_MIN/20)` and `ampMax = pow(10, VU_MAX/20)`.
+- **How to apply**: Both the rAF loop (EMA ballistics) and `drawVuNeedle()` label positions must use the same amplitude-linear math. Module-level constants `VU_AMP_MIN`, `VU_AMP_MAX`, `VU_AMP_RANGE` share values between both.
+
+#### Scale Range Shifts 0 VU Position — Know the Answer
+
+- **Lesson**: Our scale is −20 to +6 VU; reference meter goes to +3 VU. On D'Arsonval scale, "0 VU" lands at 47.5% of our sweep (centered) vs 68.5% on the standard face (right-of-center). L noticed and asked.
+- **Rule**: Any time the scale range differs from the reference, document why and have the answer ready. "We show 3 extra dB of headroom visibility" is a feature explanation, not a bug apology.
+- **How to apply**: If asked about 0 VU position — "Standard meter stops at +3 VU. We go to +6 so D sees hot signals earlier before the LED clips. That extra range pulls 0 to center."
 - **How to apply**: After any async operation that changes data, verify the data actually changed (check D1/R2 for the expected record before declaring success).
