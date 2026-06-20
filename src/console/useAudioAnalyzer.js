@@ -11,6 +11,12 @@ const SPEC_N      = 150;
 const FLOOR_PCT   = 0.06; // minimum bar height as fraction of canvas height
 const BPM_BUF_SIZE = 240; // 4 seconds × ~60 Hz rAF rate
 
+// VU meter scale: 0 VU = -18 dBFS (SMPTE standard). Single source of truth —
+// both the live rAF loop (needle normalization) and drawVuNeedle() (arc geometry
+// + color split) must use these same values or the needle will disagree with the arc.
+const VU_DISPLAY_MIN = -20;  // left end of arc (-20 VU)
+const VU_DISPLAY_MAX = 6;    // right end of arc (+6 VU)
+
 // Convert linear amplitude (0-1+) to decibels full-scale (dBFS).
 // reference=1.0: 0 dBFS = peak digital headroom
 // floor=-60: values below -60 dBFS clamp to floor (silence threshold)
@@ -308,10 +314,10 @@ export default function useAudioAnalyzer({ isPlaying, waveformData, currentTime,
       peakL.current = Math.max(peakL.current * 0.97, rL);
       peakR.current = Math.max(peakR.current * 0.97, rR);
 
-      // Pro VU calibration: 0 VU = -18 dBFS (SMPTE standard), display -20 to +3 VU
+      // Pro VU calibration: 0 VU = -18 dBFS (SMPTE standard)
       const VU_CALIBRATION = -18;  // dBFS where needle reads exactly 0 VU
-      const VU_MIN_DISPLAY = -20;  // left end of needle arc
-      const VU_MAX_DISPLAY = 3;    // right end of needle arc
+      const VU_MIN_DISPLAY = VU_DISPLAY_MIN;
+      const VU_MAX_DISPLAY = VU_DISPLAY_MAX;
 
       const vuLDb   = amplitudeTodBFS(rL, -60);
       const vuLVu   = vuLDb - VU_CALIBRATION;  // convert dBFS to VU offset
@@ -632,39 +638,56 @@ function drawVuNeedle(ctx, W, H, opts) {
   ctx.fillStyle = glowGradient;
   ctx.fillRect(0, 0, W, H);
 
-  // Clipping indicator: red block at top when clipping
-  if (showClip) {
-    ctx.fillStyle = `rgba(255, 68, 68, ${clipOpacity * 0.95})`;
-    ctx.fillRect(0, 0, W, 12);
-  }
-
   // Pivot geometry
   const pivotX = W / 2;
   const pivotY = H * 0.90;
-  const radius = H * 0.82;
 
-  // VU scale: -20 to +3 VU (23 range)
-  const VU_MIN = -20;
-  const VU_MAX = 3;
-  const ANGLE_MIN = 230; // degrees, -20 VU (narrowed from 215 for flatter arc)
-  const ANGLE_MAX = 310; // degrees, +3 VU (narrowed from 325 for flatter arc)
+  // VU scale — uses module-level constants so arc geometry stays in sync with needle normalization
+  const VU_MIN = VU_DISPLAY_MIN;
+  const VU_MAX = VU_DISPLAY_MAX;
+  const ANGLE_MIN = 215;  // degrees, -20 VU (restored to pre-flatten value)
+  const ANGLE_MAX = 325;  // degrees, +6 VU  (restored to pre-flatten value, extended for +6)
 
-  // Flattened scale line (less arc-y, more like a horizontal gauge) with integrated ticks
-  const arcRadius = radius * 0.93;  // increased from 0.82 to reduce headroom clip on tight canvas
-  const startRad = (ANGLE_MIN * Math.PI) / 180;
-  const endRad = (ANGLE_MAX * Math.PI) / 180;
+  // Adaptive radius: cap by canvas WIDTH so arc endpoints never clip off-screen.
+  // |cos(215°)| = 0.819 — leftward reach of the arc at ANGLE_MIN.
+  // At ~900px viewport (W≈97px) the old fixed H*0.82 radius sent the endpoint to x≈-4px,
+  // creating a lopsided quarter-circle clip artifact. This formula prevents that.
+  const cos_min = Math.abs(Math.cos(ANGLE_MIN * Math.PI / 180));  // 0.819
+  const radius  = Math.min(H * 0.82, (W / 2 - 4) / cos_min);
 
-  // Draw solid scale line (the arc itself) — cream wire, not dominant
-  ctx.strokeStyle = "rgba(240, 237, 232, 0.55)";  // cream, slightly more opaque
-  ctx.lineWidth = 1.5;  // thin guide wire
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
+  const arcRadius = radius * 0.93;
+  const startRad  = (ANGLE_MIN * Math.PI) / 180;
+  const endRad    = (ANGLE_MAX * Math.PI) / 180;
+
+  // Two-color scale arc: cream for safe zone (−20→0 VU), glowing red for hot zone (0→+6 VU)
+  const zeroNorm   = (0 - VU_MIN) / (VU_MAX - VU_MIN);   // 20/26 ≈ 0.769
+  const zeroAngDeg = ANGLE_MIN + zeroNorm * (ANGLE_MAX - ANGLE_MIN);
+  const zeroAngRad = (zeroAngDeg * Math.PI) / 180;
+
+  // Safe zone arc (cream wire)
+  ctx.strokeStyle    = "rgba(240, 237, 232, 0.80)";
+  ctx.lineWidth      = 1.5;
+  ctx.lineCap        = "round";
+  ctx.shadowColor    = "transparent";
+  ctx.shadowBlur     = 0;
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, arcRadius, startRad, endRad);
+  ctx.arc(pivotX, pivotY, arcRadius, startRad, zeroAngRad);
   ctx.stroke();
 
-  // 4. Scale ticks and labels (-20, -10, -7, -5, -3, -2, -1, 0, +1, +2, +3)
-  const VU_LABELS = [-20, -10, -7, -5, -3, -2, -1, 0, 1, 2, 3];
+  // Hot zone arc — glow pass then crisp line (hardware overload feel)
+  ctx.shadowColor    = "rgba(204, 34, 0, 0.60)";
+  ctx.shadowBlur     = 6;
+  ctx.strokeStyle    = "#cc2200";
+  ctx.lineWidth      = 2.0;
+  ctx.lineCap        = "round";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, arcRadius, zeroAngRad, endRad);
+  ctx.stroke();
+  ctx.shadowColor    = "transparent";
+  ctx.shadowBlur     = 0;
+
+  // Scale ticks and labels: 20 10 7 5 3 0 (cream) | 3 6 (red) — unsigned, pro console style
+  const VU_LABELS = [-20, -10, -7, -5, -3, 0, 3, 6];
 
   // Responsive font sizing for different viewport heights
   const labelSize = Math.max(8, Math.min(9, H * 0.067));
@@ -680,7 +703,7 @@ function drawVuNeedle(ctx, W, H, opts) {
     const angle = ANGLE_MIN + normVal * (ANGLE_MAX - ANGLE_MIN);
     const angleRad = (angle * Math.PI) / 180;
     const isHot = vuVal > 0;
-    const tickColor = isHot ? "#cc2200" : "#14dc14";
+    const tickColor = isHot ? "#cc2200" : "rgba(240, 237, 232, 0.85)";
 
     // Tick mark — radial inward from arc toward pivot (not tangent)
     const outerR = arcRadius + 3;   // just outside the arc
@@ -698,24 +721,25 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.lineTo(x2, y2);
     ctx.stroke();
 
-    // Label (e.g., "-10", "+3") — positioned at 0.94×radius (broadcast-standard compact spacing)
+    // Label — unsigned (position on dial communicates sign, not the number)
     const labelR = radius * 0.94;
     const labelX = pivotX + labelR * Math.cos(angleRad);
-    let labelY = pivotY + labelR * Math.sin(angleRad);
-    // Small adjustment for "0" to center it visually between "-1" and "+1"
-    if (vuVal === 0) labelY += 1.5;
+    const labelY = pivotY + labelR * Math.sin(angleRad);
     ctx.fillStyle = tickColor;
-    ctx.fillText(String(vuVal), labelX, labelY);
+    ctx.fillText(String(Math.abs(vuVal)), labelX, labelY);
   }
   ctx.restore();
 
-  // 3. "VU" label at top-center
+  // "VU" label at top-center + "dB" sub-label (pro console reference)
   ctx.save();
   ctx.font = `500 ${Math.round(vuHeaderSize)}px 'Chakra Petch', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.fillStyle = "rgba(240,237,232,0.5)";
   ctx.fillText("VU", pivotX, 2);
+  ctx.font = `400 ${Math.round(labelSize * 0.85)}px 'Chakra Petch', sans-serif`;
+  ctx.fillStyle = "rgba(240,237,232,0.30)";
+  ctx.fillText("dB", pivotX, 2 + vuHeaderSize + 1);
   ctx.restore();
 
   // 5 & 6. Needle with shadow (cream stroke from pivot to arc)
@@ -764,6 +788,31 @@ function drawVuNeedle(ctx, W, H, opts) {
     ctx.moveTo(peakX1, peakY1);
     ctx.lineTo(peakX2, peakY2);
     ctx.stroke();
+  }
+
+  // Clip indicator: red LED circle (bottom-right) — hardware overload indicator style
+  if (showClip) {
+    const ledR = Math.max(4, W * 0.065);
+    const ledX = W - ledR - 4;
+    const ledY = H - ledR - 4;
+    // Glow halo
+    const ledGlow = ctx.createRadialGradient(ledX, ledY, 0, ledX, ledY, ledR * 2.5);
+    ledGlow.addColorStop(0, `rgba(255, 68, 68, ${clipOpacity * 0.45})`);
+    ledGlow.addColorStop(1, "rgba(255, 68, 68, 0)");
+    ctx.fillStyle = ledGlow;
+    ctx.beginPath();
+    ctx.arc(ledX, ledY, ledR * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // LED body
+    ctx.fillStyle = `rgba(255, 68, 68, ${clipOpacity * 0.95})`;
+    ctx.beginPath();
+    ctx.arc(ledX, ledY, ledR, 0, Math.PI * 2);
+    ctx.fill();
+    // Specular highlight
+    ctx.fillStyle = `rgba(255, 200, 200, ${clipOpacity * 0.55})`;
+    ctx.beginPath();
+    ctx.arc(ledX - ledR * 0.28, ledY - ledR * 0.32, ledR * 0.38, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // Channel label at bottom corner (L = left, R = right)
