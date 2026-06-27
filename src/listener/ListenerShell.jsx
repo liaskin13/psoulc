@@ -92,8 +92,21 @@ function formatDurationHero(totalSecs) {
   return `${h}H ${m}M`;
 }
 
+const PSC_SESSION_KEY = 'psc_session';
+const SESSION_TTL_MS  = 20 * 24 * 60 * 60 * 1000; // 20 days
+
+function readPersistedSession() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PSC_SESSION_KEY) || 'null');
+    if (saved?.grantedTo && saved.savedAt && Date.now() - saved.savedAt < SESSION_TTL_MS) {
+      return saved;
+    }
+  } catch (_) {}
+  return null;
+}
+
 function ListenerShell({ onPowerDown, sessionMeta, code }) {
-  const [codeSession, setCodeSession] = useState(null);
+  const [codeSession, setCodeSession] = useState(() => readPersistedSession());
   const [showWelcome, setShowWelcome] = useState(false);
   const [vaults, setVaults] = useState(LISTENER_VAULTS_FALLBACK);
   const [selectedVaultId, setSelectedVaultId] = useState(LISTENER_VAULTS_FALLBACK[0].id);
@@ -162,9 +175,15 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
     return () => window.clearTimeout(t);
   }, [codeSession]);
 
+  const handleGranted = useCallback((data) => {
+    const session = { ...data, savedAt: Date.now() };
+    setCodeSession(session);
+    try { localStorage.setItem(PSC_SESSION_KEY, JSON.stringify(session)); } catch (_) {}
+  }, []);
+
   // ── CODE GATE — all hooks above, conditional return is safe here ───────────
   if (code && !codeSession) {
-    return <CodeGate code={code} onGranted={setCodeSession} />;
+    return <CodeGate code={code} onGranted={handleGranted} />;
   }
 
   const openVault = (vault) => {
