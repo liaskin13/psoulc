@@ -86,10 +86,10 @@ function CodeGate({ code, onGranted }) {
 }
 
 function formatDurationHero(totalSecs) {
-  if (!totalSecs) return '--:--';
+  if (!totalSecs) return '--';
   const h = Math.floor(totalSecs / 3600);
   const m = Math.floor((totalSecs % 3600) / 60);
-  return `${h}:${String(m).padStart(2, '0')}`;
+  return `${h}H ${m}M`;
 }
 
 function ListenerShell({ onPowerDown, sessionMeta, code }) {
@@ -311,7 +311,11 @@ function ListenerShell({ onPowerDown, sessionMeta, code }) {
               <p className="ls-duration-subtitle">
                 {selectedVault.label} · {vaultStats[selectedVaultId]?.count ?? '--'} SESSIONS
               </p>
-              <p className="ls-duration-meta">{selectedVault.copy}</p>
+              <p className="ls-duration-meta">
+                {selectedVault.copy.split(' · ').map((phrase, i, arr) => (
+                  <span key={i}>{phrase}{i < arr.length - 1 && <br />}</span>
+                ))}
+              </p>
               <div className="listener-stage-rule" aria-hidden="true" />
               <p className="ls-touch-hint">TOUCH ANYWHERE TO ENTER</p>
             </motion.div>
