@@ -167,6 +167,15 @@ function formatTime(seconds) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function parseDurationInput(str) {
+  if (!str || !str.trim()) return null;
+  const parts = str.trim().split(":").map(Number);
+  if (parts.some(isNaN) || parts.length < 1 || parts.length > 3) return null;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return parts[0] > 0 ? parts[0] : null;
+}
+
 function parseWaveformData(rawWaveform) {
   if (!rawWaveform) return null;
   try {
@@ -1297,6 +1306,7 @@ function ArchitectConsole({
       bpm_display:
         cleanBpm(track.bpm_display) ||
         (track.bpm ? Math.round(track.bpm).toString() : ""),
+      duration_display: track.duration ? formatTime(track.duration) : "",
     });
   };
 
@@ -1305,8 +1315,17 @@ function ArchitectConsole({
     const originalTrack = trackListData.find((t) => t.id === trackId);
     setEditingTrackId((curr) => (curr === trackId ? null : curr));
     setEditingValues({});
+
+    // Convert duration_display ("79:30" or "1:23:45") → duration in seconds
+    const patchVals = { ...vals };
+    if (patchVals.duration_display !== undefined) {
+      const parsed = parseDurationInput(patchVals.duration_display);
+      if (parsed != null) patchVals.duration = parsed;
+      delete patchVals.duration_display;
+    }
+
     setTrackListData((prev) =>
-      prev.map((t) => (t.id === trackId ? { ...t, ...vals } : t)),
+      prev.map((t) => (t.id === trackId ? { ...t, ...patchVals } : t)),
     );
     fetch(`${UPLOAD_WORKER_URL}/tracks/${trackId}`, {
       method: "PATCH",
@@ -1314,7 +1333,7 @@ function ArchitectConsole({
         "PSC-Secret": UPLOAD_SECRET,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(vals),
+      body: JSON.stringify(patchVals),
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`[PSC] edit PATCH ${res.status}`);
@@ -3089,7 +3108,30 @@ function ArchitectConsole({
                         {t.musical_key || "—"}
                       </span>
                       <span className="arch-track-len" role="cell">
-                        {t.duration ? formatTime(t.duration) : "—:——"}
+                        {isEditing ? (
+                          <input
+                            className="arch-track-edit-input"
+                            value={editingValues.duration_display ?? ""}
+                            placeholder="M:SS"
+                            onChange={(e) =>
+                              setEditingValues((v) => ({
+                                ...v,
+                                duration_display: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) => handleEditKeyDown(e, t.id)}
+                            onBlur={(e) => {
+                              if (e.relatedTarget?.classList?.contains("arch-track-edit-input")) return;
+                              handleEditSave(t.id);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            maxLength={8}
+                          />
+                        ) : (
+                          <span onDoubleClick={(e) => handleEditStart(e, t)} title="Double-click to edit">
+                            {t.duration ? formatTime(t.duration) : "—:——"}
+                          </span>
+                        )}
                       </span>
                       <span className="arch-track-date" role="cell">
                         {t.created_at
