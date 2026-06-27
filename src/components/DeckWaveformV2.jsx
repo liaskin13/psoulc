@@ -6,7 +6,12 @@
 import { useEffect, useMemo, useRef } from "react";
 
 const BARS_PER_SEC = 50;
-const BEAT_OFFSET_BARS = 0;  // Tune if beat grid appears offset from waveform. Positive = shift forward.
+// Display latency compensation: HTMLAudioElement.currentTime represents current
+// playback position, but the canvas frame won't appear on screen for ~16ms (one
+// rAF cycle + GPU flip). At 50 bars/sec, 1 bar = 20ms. Set to 1 to shift the
+// visible window 20ms ahead so the center line lands on the beat as it plays.
+// Tune: positive = shift forward (compensate for lag); negative = shift back.
+const BEAT_OFFSET_BARS = 1;
 const OFF_LOW  = 2;   // idle stacking offsets (px) — bass closest to center
 const OFF_MID  = 5;
 const OFF_HIGH = 9;   // high furthest out
@@ -100,14 +105,14 @@ export default function DeckWaveformV2({
     // Reset smooth-zoom state when a new track loads
     displayZoomRef.current = zoomRef.current;
 
-    function draw() {
+    function draw(now = performance.now()) {
       const rawTime = getTimeRef.current ? getTimeRef.current() : ctRef.current;
       const dur = durRef.current;
       const bds = bandsRef.current;
 
       // Playback smoothing: interpolate between audio.currentTime updates (200-300ms intervals)
       // Only interpolate when actively playing, not dragging, and time hasn't jumped (seek)
-      const now = Date.now();
+      // 'now' is the rAF high-res timestamp (milliseconds) — sub-ms precision vs Date.now()
       const timeDelta = rawTime - lastTimeRef.current;
       const isPlaying = getIsPlayingRef.current?.() ?? false;
       let ct = rawTime;
@@ -166,10 +171,14 @@ export default function DeckWaveformV2({
       const endTimeSec   = endBar   / BARS_PER_SEC;
 
       // ─── Band outlines — screen composite ────────────────────────────────
+      // Subsample: draw at most one point per canvas pixel — prevents 700K+
+      // canvas ops per frame when the full track is visible (zoomed out).
+      const step = Math.max(1, Math.floor((endBar - startBar) / w));
+
       function drawBand(amps, color, offset) {
         ctx.beginPath();
         let first = true;
-        for (let i = Math.floor(startBar); i <= Math.ceil(endBar); i++) {
+        for (let i = Math.floor(startBar); i <= Math.ceil(endBar); i += step) {
           if (i < 0 || i >= barCount) continue;
           const x   = ((i - startBar) / (endBar - startBar)) * w;
           const amp = amps[i] ?? 0;
@@ -177,7 +186,7 @@ export default function DeckWaveformV2({
           if (first) { ctx.moveTo(x, y); first = false; }
           else ctx.lineTo(x, y);
         }
-        for (let i = Math.ceil(endBar); i >= Math.floor(startBar); i--) {
+        for (let i = Math.ceil(endBar); i >= Math.floor(startBar); i -= step) {
           if (i < 0 || i >= barCount) continue;
           const x = ((i - startBar) / (endBar - startBar)) * w;
           ctx.lineTo(x, halfH + ((amps[i] ?? 0) * scale + offset));
@@ -327,7 +336,7 @@ export default function DeckWaveformV2({
 
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!prefersReduced) {
-      const loop = () => { draw(); rafRef.current = requestAnimationFrame(loop); };
+      const loop = (ts) => { draw(ts); rafRef.current = requestAnimationFrame(loop); };
       rafRef.current = requestAnimationFrame(loop);
     }
 
