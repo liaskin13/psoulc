@@ -1153,6 +1153,15 @@ function ArchitectConsole({
           waveform_generated_at: new Date().toISOString(),
           waveform_error: null,
         });
+        if (duration != null) {
+          setTrackListData((prev) =>
+            prev.map((t) =>
+              t.id === track.id
+                ? { ...t, duration, waveform_data: WAVEFORM_V2_SENTINEL }
+                : t,
+            ),
+          );
+        }
       } catch (_) {
         /* non-critical */
       }
