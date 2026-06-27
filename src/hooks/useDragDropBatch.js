@@ -58,7 +58,7 @@ export function useDragDropBatch(activeLibVault, consoleOwner) {
     // Start upload
     (async () => {
       try {
-        const result = await uploadTrack(
+        await uploadTrack(
           nextPending.file,
           {
             vault: activeLibVault,
@@ -78,12 +78,7 @@ export function useDragDropBatch(activeLibVault, consoleOwner) {
           },
         );
 
-        // Upload succeeded — dispatch event to trigger waveform gen
-        window.dispatchEvent(
-          new CustomEvent("psc:track-uploaded", {
-            detail: result,
-          }),
-        );
+        // tracks.js fires psc:track-uploaded internally — no need to re-dispatch here
 
         setQueue((current) =>
           current.map((item) =>

@@ -27,21 +27,184 @@ export const SERATO_COLORS = [
   "#E5E5E5", // white/grey
 ];
 
+const CHUNK_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB per Range request
+
+/**
+ * Chunked WAV analyzer — processes the file in 50 MB Range-request slices.
+ * Avoids loading the entire file into memory (critical for 800 MB+ WAVs).
+ * IIR filter state is carried across chunk boundaries so results are identical
+ * to a single-pass decode.
+ */
+async function analyzeAudioChunkedWav(audioUrl, barsPerSec = 50, onProgress) {
+  // Fetch first 4096 bytes to parse the WAV header (covers DAW LIST/INFO chunks)
+  const headerRes = await fetch(audioUrl, { headers: { Range: 'bytes=0-4095' } });
+  if (!headerRes.ok) throw new Error(`WAV header fetch failed: ${headerRes.status}`);
+  const headerBuf = await headerRes.arrayBuffer();
+  const headerU8  = new Uint8Array(headerBuf);
+  const headerDV  = new DataView(headerBuf);
+
+  const txt = (off, len) =>
+    Array.from({ length: len }, (_, i) => String.fromCharCode(headerU8[off + i])).join('');
+
+  if (txt(0, 4) !== 'RIFF' || txt(8, 4) !== 'WAVE') throw new Error('Not a RIFF/WAVE file');
+  if (headerDV.getUint32(4, true) === 0xFFFFFFFF)    throw new Error('RF64 WAV not supported');
+
+  let sampleRate, numChannels, bitsPerSample, dataOffset, dataSize;
+  let pos = 12;
+  while (pos + 8 <= headerBuf.byteLength) {
+    const id = txt(pos, 4);
+    const sz = headerDV.getUint32(pos + 4, true);
+    if (id === 'fmt ') {
+      const fmt = headerDV.getUint16(pos + 8, true);
+      if (fmt !== 1) throw new Error(`WAV format ${fmt} is not PCM`);
+      numChannels  = headerDV.getUint16(pos + 10, true);
+      sampleRate   = headerDV.getUint32(pos + 12, true);
+      bitsPerSample = headerDV.getUint16(pos + 22, true);
+    } else if (id === 'data') {
+      dataOffset = pos + 8;
+      dataSize   = sz;
+      break;
+    }
+    pos += 8 + sz + (sz % 2); // align to even byte boundary
+  }
+
+  if (dataOffset == null) throw new Error('WAV data chunk not found in first 4096 bytes');
+  if (!sampleRate)        throw new Error('WAV fmt chunk not found');
+  if (bitsPerSample !== 16 && bitsPerSample !== 24) {
+    throw new Error(`WAV ${bitsPerSample}-bit not supported — expected 16 or 24`);
+  }
+
+  const bytesPerSample  = bitsPerSample / 8;
+  const frameSize       = numChannels * bytesPerSample;
+  if (frameSize < 1) throw new Error('invalid WAV: zero frame size (corrupt header)');
+  const alignedChunkSize = Math.floor(CHUNK_SIZE_BYTES / frameSize) * frameSize;
+
+  const totalSamples = Math.floor(dataSize / frameSize);
+  const duration     = totalSamples / sampleRate;
+  const totalBars    = Math.min(Math.ceil(duration * barsPerSec), 250000);
+  const samplesPerBar = Math.max(1, Math.floor(totalSamples / totalBars));
+
+  // IIR coefficients — identical to generateWaveformDataBands
+  const aLow  = 1 - Math.exp(-2 * Math.PI * 200  / sampleRate);
+  const aHigh = 1 - Math.exp(-2 * Math.PI * 2500 / sampleRate);
+  let lpLowState = 0, lpHighState = 0;
+
+  const rawBars = [];
+  let cbSamples = 0, cbBass = 0, cbMid = 0, cbHigh = 0, cbPeak = 0;
+
+  const totalChunks = Math.ceil(dataSize / alignedChunkSize);
+  let chunkIdx = 0, bytePos = dataOffset, remaining = dataSize;
+
+  while (remaining > 0) {
+    const fetchBytes = Math.min(alignedChunkSize, remaining);
+    const chunkRes  = await fetch(audioUrl, {
+      headers: { Range: `bytes=${bytePos}-${bytePos + fetchBytes - 1}` },
+    });
+    if (!chunkRes.ok) {
+      throw new Error(`WAV chunk fetch failed at byte ${bytePos}: ${chunkRes.status}`);
+    }
+    const chunkU8 = new Uint8Array(await chunkRes.arrayBuffer());
+    const samplesInChunk = Math.floor(chunkU8.length / frameSize);
+
+    for (let s = 0; s < samplesInChunk; s++) {
+      let x = 0;
+      for (let ch = 0; ch < numChannels; ch++) {
+        const o = s * frameSize + ch * bytesPerSample;
+        if (bitsPerSample === 16) {
+          let v = (chunkU8[o + 1] << 8) | chunkU8[o];
+          if (v >= 0x8000) v -= 0x10000;
+          x += v / 32768.0;
+        } else { // 24-bit signed LE — sign-extend
+          let raw = chunkU8[o] | (chunkU8[o + 1] << 8) | (chunkU8[o + 2] << 16);
+          if (raw >= 0x800000) raw -= 0x1000000;
+          x += raw / 8388608.0;
+        }
+      }
+      x /= numChannels; // mono average
+
+      lpLowState  = aLow  * x + (1 - aLow)  * lpLowState;
+      lpHighState = aHigh * x + (1 - aHigh) * lpHighState;
+
+      const absBass = Math.abs(lpLowState);
+      const absMid  = Math.abs(lpHighState - lpLowState);
+      const absHigh = Math.abs(x - lpHighState);
+      const absAll  = Math.abs(x);
+
+      if (absBass > cbBass) cbBass = absBass;
+      if (absMid  > cbMid)  cbMid  = absMid;
+      if (absHigh > cbHigh) cbHigh = absHigh;
+      if (absAll  > cbPeak) cbPeak = absAll;
+
+      if (++cbSamples >= samplesPerBar) {
+        rawBars.push({ bass: cbBass, mid: cbMid, high: cbHigh, peak: cbPeak });
+        cbBass = 0; cbMid = 0; cbHigh = 0; cbPeak = 0; cbSamples = 0;
+      }
+    }
+
+    bytePos   += fetchBytes;
+    remaining -= fetchBytes;
+    chunkIdx++;
+    if (onProgress) onProgress(5 + Math.round((chunkIdx / totalChunks) * 50));
+  }
+
+  if (cbSamples > 0) rawBars.push({ bass: cbBass, mid: cbMid, high: cbHigh, peak: cbPeak });
+
+  // Normalization — identical to generateWaveformDataBands
+  let maxPeak = 0;
+  for (const b of rawBars) if (b.peak > maxPeak) maxPeak = b.peak;
+  maxPeak = Math.max(maxPeak, 0.0001);
+
+  let maxBass = 0, maxMid = 0, maxHigh = 0;
+  for (const b of rawBars) {
+    if (b.bass > maxBass) maxBass = b.bass;
+    if (b.mid  > maxMid)  maxMid  = b.mid;
+    if (b.high > maxHigh) maxHigh = b.high;
+  }
+  maxBass = Math.max(maxBass, maxPeak * 0.02);
+  maxMid  = Math.max(maxMid,  maxPeak * 0.02);
+  maxHigh = Math.max(maxHigh, maxPeak * 0.02);
+
+  return {
+    high: rawBars.map(b => ({
+      bass: Math.min(1, b.bass / maxBass),
+      mid:  Math.min(1, b.mid  / maxMid),
+      high: Math.min(1, b.high / maxHigh),
+      peak: Math.min(1, b.peak / maxPeak),
+    })),
+    duration,
+  };
+}
+
 /**
  * Analyze audio and generate 3-band waveform data.
- * Returns [{bass, mid, high, peak}] bars where all values are 0-1.
- *
- * Uses cascaded single-pole IIR lowpass filters:
- *   LP-200Hz  → bass
- *   LP-2500Hz → bass+mid; high = original − LP-2500Hz
- *   mid = LP-2500Hz − LP-200Hz
+ * WAV files use chunked Range requests; MP3/M4A use Web Audio decodeAudioData.
+ * Returns {high, low, duration} where high/low are [{bass,mid,high,peak}] bars 0-1.
  */
 export async function analyzeAudio(
   audioUrl,
   highResSamples = 1000,
   lowResSamples = 80,
   barsPerSec = null,
+  onProgress,
 ) {
+  // WAV: chunked Range-request path — avoids loading 800 MB+ into browser RAM
+  if (/\.wav$/i.test(audioUrl)) {
+    let fileSize = 0;
+    try {
+      const hr = await fetch(audioUrl, { method: 'HEAD' });
+      fileSize = parseInt(hr.headers.get('Content-Length') || '0', 10);
+    } catch (_) {}
+    try {
+      const result = await analyzeAudioChunkedWav(audioUrl, barsPerSec ?? 50, onProgress);
+      return { high: result.high, low: result.high, duration: result.duration };
+    } catch (err) {
+      if (fileSize > 200 * 1024 * 1024) {
+        throw new Error(`WAV too large for browser decode — chunked analysis failed: ${err.message}`);
+      }
+      console.warn('[PSC] chunked WAV analysis failed, falling back to full decode:', err.message);
+    }
+  }
+
   const response = await fetch(audioUrl);
   if (!response.ok)
     throw new Error(`Failed to fetch audio: ${response.status}`);

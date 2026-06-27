@@ -1126,7 +1126,7 @@ function ArchitectConsole({
       announce(`Analyzing waveform for ${track.title || "track"}…`);
 
     try {
-      const { bars } = await generateAndUploadWaveformV2(
+      const { bars, duration } = await generateAndUploadWaveformV2(
         track.id,
         url,
         (pct) => {
@@ -1149,7 +1149,7 @@ function ArchitectConsole({
       if (shouldAnnounce)
         announce(`Waveform ready for ${track.title || "track"}.`);
       try {
-        await saveWaveform(track.id, WAVEFORM_V2_SENTINEL, null, {
+        await saveWaveform(track.id, WAVEFORM_V2_SENTINEL, duration, {
           waveform_generated_at: new Date().toISOString(),
           waveform_error: null,
         });
