@@ -2219,6 +2219,7 @@ function ArchitectConsole({
                   bpm={resolveTrackBpm(deckTrack)}
                   getTime={loadedTrack?.id === deckTrack?.id ? () => audioEngine.getState().currentTime : null}
                   getIsPlaying={loadedTrack?.id === deckTrack?.id ? () => audioEngine.getState().isPlaying : null}
+                  getAudioLatency={loadedTrack?.id === deckTrack?.id ? () => { const ctx = audioEngine.getAudioContext(); return ctx ? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) : 0; } : null}
                 />
               )}
             </div>

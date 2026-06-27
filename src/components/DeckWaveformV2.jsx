@@ -6,12 +6,10 @@
 import { useEffect, useMemo, useRef } from "react";
 
 const BARS_PER_SEC = 50;
-// Display latency compensation: HTMLAudioElement.currentTime represents current
-// playback position, but the canvas frame won't appear on screen for ~16ms (one
-// rAF cycle + GPU flip). At 50 bars/sec, 1 bar = 20ms. Set to 1 to shift the
-// visible window 20ms ahead so the center line lands on the beat as it plays.
-// Tune: positive = shift forward (compensate for lag); negative = shift back.
-const BEAT_OFFSET_BARS = 1;
+// Manual fine-tune (bars). Dynamic latency compensation is computed per-frame
+// from audioCtx.outputLatency + baseLatency + rAF frame time — this is only
+// needed if the auto value is off on specific hardware. Positive = shift forward.
+const BEAT_OFFSET_BARS = 0;
 const OFF_LOW  = 2;   // idle stacking offsets (px) — bass closest to center
 const OFF_MID  = 5;
 const OFF_HIGH = 9;   // high furthest out
@@ -33,6 +31,7 @@ export default function DeckWaveformV2({
   bpm             = null,
   getTime         = null,
   getIsPlaying    = null,
+  getAudioLatency = null,
 }) {
   const canvasRef      = useRef(null);
   const rafRef         = useRef(null);
@@ -58,8 +57,11 @@ export default function DeckWaveformV2({
   const lastTimeUpdateRef = useRef(Date.now());
   const getIsPlayingRef   = useRef(getIsPlaying);
 
-  getTimeRef.current      = getTime;
-  getIsPlayingRef.current = getIsPlaying;
+  const getAudioLatencyRef = useRef(getAudioLatency);
+
+  getTimeRef.current        = getTime;
+  getIsPlayingRef.current   = getIsPlaying;
+  getAudioLatencyRef.current = getAudioLatency;
   ctRef.current        = currentTime;
   durRef.current       = duration;
   zoomRef.current      = zoom;
@@ -147,7 +149,15 @@ export default function DeckWaveformV2({
 
       const visibleBars = barCount / displayZoom;
       const playFrac    = dur > 0 ? ct / dur : 0;
-      const centerBar   = playFrac * barCount + BEAT_OFFSET_BARS;
+
+      // Auto latency compensation: shift the visible window forward by the
+      // total pipeline delay so the center line lands on the beat as it plays.
+      //   audioHwLatency = outputLatency (OS→DAC) + baseLatency (Web Audio buffer)
+      //   frameLatency   = one rAF cycle + GPU flip (~16.7ms at 60fps)
+      const audioHwLatency    = getAudioLatencyRef.current?.() ?? 0;
+      const frameLatency      = 1 / 60;
+      const latencyBars       = (audioHwLatency + frameLatency) * BARS_PER_SEC;
+      const centerBar         = playFrac * barCount + BEAT_OFFSET_BARS + latencyBars;
       const halfVisible = visibleBars / 2;
 
       // Serato-aware viewport: playhead drifts at track start/end rather than
