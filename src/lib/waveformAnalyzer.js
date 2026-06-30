@@ -179,6 +179,15 @@ async function analyzeAudioChunkedWav(audioUrl, barsPerSec = 50, onProgress) {
  * Analyze audio and generate 3-band waveform data.
  * WAV files use chunked Range requests; MP3/M4A use Web Audio decodeAudioData.
  * Returns {high, low, duration} where high/low are [{bass,mid,high,peak}] bars 0-1.
+ *
+ * ⚠️  NEVER bypass this function for WAV files. D's mixes are 800MB–1GB+ WAVs.
+ * The WAV branch below routes to analyzeAudioChunkedWav() which streams the file
+ * in 50MB Range-request slices — no full arrayBuffer() load, no OOM.
+ * Any new waveform analysis path MUST call analyzeAudio(), not arrayBuffer() directly.
+ * History: upload-time WAV streaming removed 2026-05-21 (1065606) when V2 post-upload
+ * pipeline replaced it. Double dispatch OOM exposed 2026-06-18 (d6af921) when batch
+ * upload triggered two concurrent analyses of the same 800MB WAV. Range-request chunking
+ * added 2026-06-27 (7c957ad) as the permanent fix. Do not remove it.
  */
 export async function analyzeAudio(
   audioUrl,

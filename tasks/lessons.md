@@ -1,5 +1,31 @@
 # PSC Universe — Lessons Learned
 
+---
+
+## CRITICAL: WAV Chunking in waveformAnalyzer.js — Never Remove (2026-06-30)
+
+**The rule:** Every waveform analysis path MUST go through `analyzeAudio()` in `src/lib/waveformAnalyzer.js`. Never call `response.arrayBuffer()` or `file.arrayBuffer()` directly on an audio URL for large files. D's mixes are 800MB–1GB+ WAVs. Full decode OOMs the browser.
+
+**The guard:** `analyzeAudio()` lines 191–206 detect `.wav` extension and route to `analyzeAudioChunkedWav()` which streams the file in 50MB Range-request slices. IIR state carries across chunk boundaries. For non-WAV formats, it falls back to `decodeAudioData` (safe for compressed formats — MP3/M4A are much smaller in memory after decode).
+
+**The history (so we never repeat it):**
+- `d38f577` (2026-05-08): First streaming WAV analysis added — `file.slice()` in 4MB chunks at upload time.
+- `1065606` (2026-05-21): Streaming removed. Reason: `file.arrayBuffer()` was blocking upload start. Chunking gone.
+- `d6af921` (2026-06-18): Batch upload shipped. Auto-triggered waveform gen on large WAVs → OOM. Root cause was missing chunking from `1065606`, not the batch upload itself.
+- `7c957ad` (2026-06-27): Range-request chunking restored as `analyzeAudioChunkedWav()`. This approach is BETTER than the old `file.slice()` — it works from a URL, so it handles both new uploads and regenerating waveforms for existing tracks.
+
+**What NOT to do:**
+- Do not add upload-time analysis that reads the File object into memory (`file.arrayBuffer()`).
+- Do not create a new waveform analysis function that calls `fetch(url).then(r => r.arrayBuffer())` directly.
+- Do not remove or bypass the `if (/\.wav$/i.test(audioUrl))` branch in `analyzeAudio()`.
+- Do not add a new entry point to `generateAndUploadWaveformV2` that skips `analyzeAudio()`.
+
+**What TO do:**
+- All waveform generation goes through `generateAndUploadWaveformV2()` → `analyzeAudio()` → chunked path for WAV.
+- The `analyzeAudio()` function has a warning comment. Read it before touching either function.
+
+---
+
 ## Agent Routing Calibration Log
 
 Use this template when an intent routes to the wrong custom agent.
