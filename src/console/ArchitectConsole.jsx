@@ -432,7 +432,7 @@ function ArchitectConsole({
     onDragOver,
     onDragLeave,
     onDrop,
-  } = useDragDropBatch(activeLibVault, viewer);
+  } = useDragDropBatch(activeLibVault);
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
   const retractTimerRef = useRef(null);

@@ -182,7 +182,6 @@ export async function uploadTrack(file, metadata, onProgress) {
 
     reportProgress("done", 100, "Upload complete");
 
-    window.dispatchEvent(new CustomEvent("psc:track-uploaded"));
     return completed;
   }
 
@@ -202,7 +201,6 @@ export async function uploadTrack(file, metadata, onProgress) {
   allTracks.push(newTrack);
   saveToStorage(allTracks);
   reportProgress("done", 100, "Upload complete");
-  window.dispatchEvent(new CustomEvent("psc:track-uploaded"));
   return newTrack;
 }
 

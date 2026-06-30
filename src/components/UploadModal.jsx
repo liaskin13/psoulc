@@ -185,7 +185,7 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
         setSuccess({ title: title.trim(), vault });
       } else {
         // Production mode: use worker
-        await uploadTrack(
+        const result = await uploadTrack(
           file,
           {
             vault,
@@ -200,6 +200,9 @@ function UploadModal({ onClose, defaultVault = "saturn" }) {
           },
         );
         dispatchCommand(CMD.UPLOAD_TRACK, { vault, title: title.trim() });
+        window.dispatchEvent(
+          new CustomEvent("psc:track-uploaded", { detail: result }),
+        );
         await withTimeout(
           Promise.all(VAULT_IDS.map((id) => loadVaultTracks(id))),
           25000,

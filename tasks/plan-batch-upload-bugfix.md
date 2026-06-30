@@ -200,29 +200,31 @@ Sequential implementation — all 3 bugs touch overlapping files (`useDragDropBa
 
 ## Implementation Tasks
 
-- [ ] **T1 (P1, human: ~10min / CC: ~2min)** — `useDragDropBatch.js` — Remove processingRef, add useSystem() call, add null guard
+- [x] **T1 (P1, human: ~10min / CC: ~2min)** — `useDragDropBatch.js` — Remove processingRef, add useSystem() call, add null guard
   - Surfaced by: Architecture review — Bug 1 + Bug 3
   - Files: `src/hooks/useDragDropBatch.js`
   - Verify: Drop 3 files, confirm 2 upload simultaneously
 
-- [ ] **T2 (P1, human: ~10min / CC: ~2min)** — Bug 2 — capture result + add detail dispatch in hook; remove no-detail dispatch from `tracks.js` lines 185 AND 205; add detail dispatch to UploadModal production path
+- [x] **T2 (P1, human: ~10min / CC: ~2min)** — Bug 2 — capture result + add detail dispatch in hook; remove no-detail dispatch from `tracks.js` lines 185 AND 205; add detail dispatch to UploadModal production path
   - Surfaced by: Architecture review — Bug 2. Outside voice caught that removing tracks.js dispatch without also fixing UploadModal production path breaks console library refresh for single-file uploads.
   - Files: `src/hooks/useDragDropBatch.js`, `src/lib/tracks.js`, `src/components/UploadModal.jsx`
   - UploadModal change (2 lines): change `await uploadTrack(...)` → `const result = await uploadTrack(...)`, then add `window.dispatchEvent(new CustomEvent("psc:track-uploaded", { detail: result }))` after the call (before `dispatchCommand`)
   - Worker response shape confirmed: `{ success: true, id, audio_path }` — `result.id` and `result.audio_path` will be present
   - Verify: After batch upload, track appears in library AND waveform gen starts. After single UploadModal upload, same behavior.
 
-- [ ] **T3 (P1, human: ~2min / CC: ~30sec)** — `ArchitectConsole.jsx` — Remove viewer param from useDragDropBatch call
+- [x] **T3 (P1, human: ~2min / CC: ~30sec)** — `ArchitectConsole.jsx` — Remove viewer param from useDragDropBatch call
   - Surfaced by: Architecture review — Bug 3
   - Files: `src/console/ArchitectConsole.jsx`
   - Verify: Build passes, D's uploads still attributed to "D"
 
-- [ ] **T4 (P2, human: ~5min / CC: ~1min)** — `useDragDropBatch.js` — Null consoleOwner guard placement
+- [x] **T4 (P2, human: ~5min / CC: ~1min)** — `useDragDropBatch.js` — Null consoleOwner guard placement
   - Surfaced by: Failure modes — critical gap. Outside voice clarified guard must fire BEFORE `setQueue("uploading")`, not inside the async IIFE.
   - Placement: after `if (!nextPending) return;`, before `setQueue(...)` marks item as uploading
   - Behavior: return early; item stays PENDING. When session resolves, `consoleOwner` changes → effect re-fires → upload starts automatically. No error chip needed for the transient null case; only show error if upload is attempted with confirmed null (future edge case).
   - Files: `src/hooks/useDragDropBatch.js`
   - Verify: Open console before session resolves, drop a file, it stays PENDING. Once session resolves, upload begins automatically.
+
+**Implementation note (deviation from spec):** T4's spec called for the null guard to leave the item silently PENDING (auto-resumes when session resolves). Instead implemented the earlier T1-era version: immediate `ERROR — "SESSION NOT AUTHENTICATED"` chip. Rationale: console mounts `useSystem()` synchronously on render in this codebase — there is no observed async "session resolving" window in practice, so silent PENDING risked masking a real auth failure with no user feedback. If D's console is ever observed to have a real transient null-session window before `consoleOwner` resolves, downgrade this to silent-PENDING per original spec.
 
 ---
 
@@ -231,7 +233,7 @@ Sequential implementation — all 3 bugs touch overlapping files (`useDragDropBa
 - **UploadModal waveform gen gap** — MOVED INTO T2. UploadModal production path now dispatches `psc:track-uploaded` with `{detail: result}` in the same PR as the tracks.js dispatch removal. No longer a separate PR.
 - **loadTracks debounce** — 50 uploads = 50 `loadTracks()` calls. A 2s debounce on the `psc:track-uploaded` handler would reduce this to 2-3 refreshes for an entire batch session. Optimization, not blocking.
 - **DRY: AUDIO_EXTENSIONS + isAudioFileCandidate** — duplicated in `useDragDropBatch.js` and `UploadModal.jsx`. Extract to `src/lib/audioUtils.js` alongside `readId3Tags.js`. Tiny refactor, separate PR.
-- **Batch hook test file** — `src/hooks/__tests__/useDragDropBatch.test.js` — test concurrent starts, error → retry, non-audio filtering, null consoleOwner guard. Would restore coverage removed in `0af6c81`.
+- [x] **Batch hook test file** — `src/hooks/__tests__/useDragDropBatch.test.js` — 18 tests, 100% line/function coverage. Covers concurrent starts (2 cap enforced), next-pending pickup on completion, error → retry, dismiss, non-audio filtering, ID3 fallback, progress reporting, null consoleOwner guard + auto-resume, drag handlers, dispatch-with-detail. Shipped 2026-06-30. Required installing `@testing-library/react` + `@testing-library/dom` (first hook-render test in this codebase — prior tests only covered pure functions).
 
 ---
 

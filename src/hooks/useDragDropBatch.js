@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { readId3Tags } from "../lib/readId3Tags";
 import { uploadTrack } from "../lib/tracks";
+import { useSystem } from "../state/SystemContext";
 
 const AUDIO_EXTENSIONS = new Set([
   "mp3",
@@ -30,23 +31,30 @@ function getFilenameTitle(filename) {
     .toUpperCase();
 }
 
-export function useDragDropBatch(activeLibVault, consoleOwner) {
+export function useDragDropBatch(activeLibVault) {
+  const { consoleOwner } = useSystem();
   const [queue, setQueue] = useState([]);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const uploadCounterRef = useRef(0);
-  const processingRef = useRef(false);
 
   // Auto-process queue whenever it changes
   useEffect(() => {
-    if (processingRef.current) return;
-
     const uploadingCount = queue.filter((i) => i.status === "uploading").length;
     if (uploadingCount >= CONCURRENT_UPLOADS) return;
 
     const nextPending = queue.find((i) => i.status === "pending");
     if (!nextPending) return;
 
-    processingRef.current = true;
+    if (!consoleOwner) {
+      setQueue((current) =>
+        current.map((i) =>
+          i.id === nextPending.id
+            ? { ...i, status: "error", error: "SESSION NOT AUTHENTICATED" }
+            : i,
+        ),
+      );
+      return;
+    }
 
     // Mark this item as uploading
     setQueue((current) =>
@@ -58,7 +66,7 @@ export function useDragDropBatch(activeLibVault, consoleOwner) {
     // Start upload
     (async () => {
       try {
-        await uploadTrack(
+        const result = await uploadTrack(
           nextPending.file,
           {
             vault: activeLibVault,
@@ -78,7 +86,9 @@ export function useDragDropBatch(activeLibVault, consoleOwner) {
           },
         );
 
-        // tracks.js fires psc:track-uploaded internally — no need to re-dispatch here
+        window.dispatchEvent(
+          new CustomEvent("psc:track-uploaded", { detail: result }),
+        );
 
         setQueue((current) =>
           current.map((item) =>
@@ -93,8 +103,6 @@ export function useDragDropBatch(activeLibVault, consoleOwner) {
               : item,
           ),
         );
-      } finally {
-        processingRef.current = false;
       }
     })();
   }, [queue, activeLibVault, consoleOwner]);
