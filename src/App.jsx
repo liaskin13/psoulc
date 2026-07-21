@@ -58,15 +58,6 @@ function App() {
   const [uploadVault, setUploadVault] = useState(null);
   const batchUpload = useDragDropBatch(uploadVault ?? sessionMeta?.vault ?? "saturn");
 
-  // Wipe the batch queue on every identity change (login/logout/switch owner).
-  // App.jsx never unmounts across a power-down/re-login cycle — without this,
-  // a queue left behind by one owner would render in the next owner's console.
-  useEffect(() => {
-    batchUpload.reset();
-    setUploadVault(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [consoleOwner]);
-
   // Apply identity theme to <body> based on authenticated owner
   useEffect(() => {
     const themeMap = { D: "d-soul", L: "l-architect" };
@@ -112,6 +103,18 @@ function App() {
     setOwner(ownerVal);
     setConsoleOwner(ownerVal);
     setSessionMeta(meta);
+    // Wipe the batch queue synchronously, in the same handler that flips
+    // consoleOwner — not in a useEffect keyed on it. A dependency-array
+    // effect runs after commit/paint (that's the documented difference from
+    // useLayoutEffect), which left a real, if sub-frame, window where React
+    // could paint the new owner's console with the previous owner's queued
+    // filenames still in it. Resetting here means the queue-wiped state is
+    // part of the very same batched update as the identity change — there is
+    // no separate render for a stale frame to exist in. Flagged by
+    // /security-review during the eng-review pass on this fix; see TODOS.md
+    // history / decision log for the full writeup.
+    batchUpload.reset();
+    setUploadVault(null);
 
     // Tier-based routing — Masters on mobile go to room (listener mode)
     if (tier === "A" && !isMobile) {
