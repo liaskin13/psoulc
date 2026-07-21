@@ -263,14 +263,14 @@ export default {
         return new Response(JSON.stringify({ success }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // PATCH /tracks/:id — update metadata (title, artist, bpm, bpm_display, musical_key)
+      // PATCH /tracks/:id — update metadata (title, artist, bpm, bpm_display, musical_key, vault)
       if (request.method === "PATCH" && url.pathname.match(/^\/tracks\/[^/]+$/) && !url.pathname.includes("/publish") && !url.pathname.includes("/retract")) {
         if (!isAuthenticated) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         const id = url.pathname.split("/")[2];
         const body = await request.json();
-        const allowed = ["title", "artist", "bpm", "bpm_display", "musical_key"];
+        const allowed = ["title", "artist", "bpm", "bpm_display", "musical_key", "vault"];
         const fields = Object.keys(body).filter(k => allowed.includes(k));
         if (fields.length === 0) {
           return new Response(JSON.stringify({ error: "No valid fields" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });

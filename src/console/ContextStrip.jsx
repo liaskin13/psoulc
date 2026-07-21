@@ -13,6 +13,8 @@ export default function ContextStrip({
   externalLoopOpen = 0,
   libSearch = "",
   onSearchChange,
+  matchCount = null,
+  systemStatus = null,
 }) {
   const [activeContext, setActiveContext] = useState(null);
   const [reachTrigger, setReachTrigger] = useState(0);
@@ -45,23 +47,44 @@ export default function ContextStrip({
           dp
         </button>
 
-        {/* SEARCH — flex:1, center of strip */}
-        <div className="arch-context-search">
-          <input
-            className="arch-context-search-input"
-            placeholder="SEARCH VAULT"
-            value={libSearch}
-            onChange={(e) => onSearchChange?.(e.target.value)}
-            aria-label="Search tracks"
-          />
-          {libSearch && (
-            <button
-              className="arch-context-search-clear"
-              onClick={() => onSearchChange?.("")}
-              aria-label="Clear search"
+        {/* COMMS — fixed LCD window, MPC III / Pioneer style, sibling to REACH.
+            Search (unchanged function) by default; transiently overlaid by
+            systemStatus (action-result feedback) when set. */}
+        <div
+          className={`arch-comms-lcd${systemStatus ? ` has-status status-${systemStatus.kind}` : ""}`}
+        >
+          <span className="arch-comms-lcd-label">COMMS</span>
+          {systemStatus ? (
+            <span
+              className="arch-comms-lcd-screen arch-comms-lcd-status"
+              role="status"
             >
-              ✕
-            </button>
+              {systemStatus.message}
+            </span>
+          ) : (
+            <span className="arch-comms-lcd-screen arch-context-search">
+              <input
+                className="arch-context-search-input"
+                placeholder="SEARCH VAULT"
+                value={libSearch}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                aria-label="Search tracks"
+              />
+              {libSearch && matchCount != null && (
+                <span className="arch-context-search-count">
+                  {matchCount} MATCH{matchCount === 1 ? "" : "ES"}
+                </span>
+              )}
+              {libSearch && (
+                <button
+                  className="arch-context-search-clear"
+                  onClick={() => onSearchChange?.("")}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </span>
           )}
         </div>
 

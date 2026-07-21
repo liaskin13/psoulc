@@ -152,6 +152,21 @@ const VAULT_ROUTES = [
   },
 ];
 
+// Extracted for unit testing — moves a single track to a different vault.
+// Throws on any non-2xx response so callers' Promise.all genuinely rejects
+// on failure (see the response.ok fix applied to publish/retract this pass).
+export async function moveTrackToVault(id, vault) {
+  const res = await fetch(`${UPLOAD_WORKER_URL}/tracks/${id}`, {
+    method: "PATCH",
+    headers: {
+      "PSC-Secret": UPLOAD_SECRET,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ vault }),
+  });
+  if (!res.ok) throw new Error(`Move failed for track ${id}: HTTP ${res.status}`);
+}
+
 function vaultLabel(id) {
   if (!id) return "—";
   if (id.startsWith(LOCKBOX_PREFIX))
@@ -358,6 +373,16 @@ function ArchitectConsole({
     status: "idle",
     count: 0,
   });
+  const [moveState, setMoveState] = useState({ status: "idle", count: 0 });
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
+  const [voidSelectedState, setVoidSelectedState] = useState({
+    status: "idle",
+    count: 0,
+  });
+  const [regenSelectedState, setRegenSelectedState] = useState({
+    status: "idle",
+    count: 0,
+  });
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingValues, setEditingValues] = useState({});
   const [rosterShowAdd, setRosterShowAdd] = useState(false);
@@ -374,6 +399,7 @@ function ArchitectConsole({
   const [matrixCommitted, setMatrixCommitted] = useState({});
   const [matrixHistory, setMatrixHistory] = useState([]);
   const [liveAnnouncement, setLiveAnnouncement] = useState("");
+  const [systemStatus, setSystemStatus] = useState(null); // { message, kind: 'success'|'error' } | null — visible comms-box readout
   const [libSearch, setLibSearch] = useState("");
   // Audio playback state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -425,6 +451,7 @@ function ArchitectConsole({
 
   const rafRef = useRef(null);
   const announceTimerRef = useRef(null);
+  const systemStatusTimerRef = useRef(null);
   const retractTimerRef = useRef(null);
   const cueClearTimers = useRef({});
   const kbRef = useRef({});
@@ -586,6 +613,21 @@ function ArchitectConsole({
     announceTimerRef.current = setTimeout(() => {
       setLiveAnnouncement(message);
     }, 20);
+  };
+
+  // Visible comms-box status readout — for action RESULTS only (save/publish/
+  // retract/move/void/regen), never for routine transport/navigation feedback.
+  // Also fires the screen-reader announcement via announce(). Timing matches
+  // the VU meter's clip-indicator hold (DESIGN.md: 1800ms hold + 200ms fade).
+  const SYSTEM_STATUS_HOLD_MS = 2000;
+  const announceStatus = (message, kind = "success") => {
+    if (!message) return;
+    announce(message);
+    if (systemStatusTimerRef.current) clearTimeout(systemStatusTimerRef.current);
+    setSystemStatus({ message, kind });
+    systemStatusTimerRef.current = setTimeout(() => {
+      setSystemStatus(null);
+    }, SYSTEM_STATUS_HOLD_MS);
   };
 
   // Magnetic glider — moves toward active tab
@@ -1222,12 +1264,13 @@ function ArchitectConsole({
     setPublishState({ status: "pending", count: ids.length });
     try {
       await Promise.all(
-        ids.map((id) =>
-          fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/publish`, {
+        ids.map(async (id) => {
+          const res = await fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/publish`, {
             method: "PUT",
             headers: { "PSC-Secret": UPLOAD_SECRET },
-          }),
-        ),
+          });
+          if (!res.ok) throw new Error(`Publish failed for track ${id}: HTTP ${res.status}`);
+        }),
       );
       setTrackListData((prev) =>
         prev.map((t) =>
@@ -1236,12 +1279,13 @@ function ArchitectConsole({
       );
       setSelectedTrackIds(new Set());
       setPublishState({ status: "success", count: ids.length });
-      announce(
+      announceStatus(
         `${ids.length} track${ids.length > 1 ? "s" : ""} published to vault.`,
       );
       setTimeout(() => setPublishState({ status: "idle", count: 0 }), 800);
-    } catch {
+    } catch (err) {
       setPublishState({ status: "error", count: ids.length });
+      announceStatus(`Publish failed — ${err.message}`, "error");
     }
   };
 
@@ -1264,12 +1308,13 @@ function ArchitectConsole({
     setRetractState({ status: "pending", count: ids.length });
     try {
       await Promise.all(
-        ids.map((id) =>
-          fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/retract`, {
+        ids.map(async (id) => {
+          const res = await fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/retract`, {
             method: "PUT",
             headers: { "PSC-Secret": UPLOAD_SECRET },
-          }),
-        ),
+          });
+          if (!res.ok) throw new Error(`Retract failed for track ${id}: HTTP ${res.status}`);
+        }),
       );
       setTrackListData((prev) =>
         prev.map((t) =>
@@ -1278,13 +1323,100 @@ function ArchitectConsole({
       );
       setSelectedTrackIds(new Set());
       setRetractState({ status: "success", count: ids.length });
-      announce(
+      announceStatus(
         `${ids.length} track${ids.length > 1 ? "s" : ""} retracted from vault.`,
       );
       setTimeout(() => setRetractState({ status: "idle", count: 0 }), 800);
-    } catch {
+    } catch (err) {
       setRetractState({ status: "error", count: ids.length });
+      announceStatus(`Retract failed — ${err.message}`, "error");
     }
+  };
+
+  const handleMoveSelected = async (targetVault) => {
+    const ids = [...selectedTrackIds];
+    setShowMoveMenu(false);
+    if (!ids.length || !targetVault) return;
+    setMoveState({ status: "pending", count: ids.length });
+    try {
+      await Promise.all(ids.map((id) => moveTrackToVault(id, targetVault)));
+      setTrackListData((prev) =>
+        prev.map((t) =>
+          selectedTrackIds.has(t.id) ? { ...t, vault: targetVault } : t,
+        ),
+      );
+      setSelectedTrackIds(new Set());
+      setMoveState({ status: "success", count: ids.length });
+      announceStatus(
+        `${ids.length} track${ids.length > 1 ? "s" : ""} moved → ${vaultLabel(targetVault)}.`,
+      );
+      setTimeout(() => setMoveState({ status: "idle", count: 0 }), 800);
+    } catch (err) {
+      setMoveState({ status: "error", count: ids.length });
+      announceStatus(`Move failed — ${err.message}`, "error");
+    }
+  };
+
+  const handleVoidSelected = async () => {
+    const ids = [...selectedTrackIds];
+    if (!ids.length) return;
+    setVoidSelectedState({ status: "pending", count: ids.length });
+    try {
+      await Promise.all(
+        ids.map(async (id) => {
+          const res = await fetch(`${UPLOAD_WORKER_URL}/tracks/${id}/void`, {
+            method: "PUT",
+            headers: { "PSC-Secret": UPLOAD_SECRET },
+          });
+          if (!res.ok) throw new Error(`Void failed for track ${id}: HTTP ${res.status}`);
+        }),
+      );
+      setTrackListData((prev) => prev.filter((t) => !selectedTrackIds.has(t.id)));
+      setSelectedTrackIds(new Set());
+      setVoidSelectedState({ status: "success", count: ids.length });
+      announceStatus(
+        `${ids.length} track${ids.length > 1 ? "s" : ""} voided.`,
+      );
+      setTimeout(() => setVoidSelectedState({ status: "idle", count: 0 }), 800);
+    } catch (err) {
+      setVoidSelectedState({ status: "error", count: ids.length });
+      announceStatus(`Void failed — ${err.message}`, "error");
+    }
+  };
+
+  const handleRegenSelected = async () => {
+    const ids = [...selectedTrackIds];
+    if (!ids.length) return;
+    const tracks = ids
+      .map((id) => trackListData.find((t) => t.id === id))
+      .filter(Boolean);
+    setRegenSelectedState({ status: "pending", count: tracks.length });
+    let failures = 0;
+    // Sequential, not Promise.all — concurrent waveform generation opens one
+    // AudioContext per track and doesn't close them (the exact bug behind
+    // this session's earlier "EncodingError: Decoding failed" investigation).
+    for (const track of tracks) {
+      try {
+        await ensureWaveformForTrack(track, false, true);
+      } catch (err) {
+        failures += 1;
+        console.error(`[PSC] regen failed for track ${track.id}:`, err);
+      }
+    }
+    setSelectedTrackIds(new Set());
+    if (failures === 0) {
+      setRegenSelectedState({ status: "success", count: tracks.length });
+      announceStatus(
+        `Regenerated waveform${tracks.length > 1 ? "s" : ""} for ${tracks.length} track${tracks.length > 1 ? "s" : ""}.`,
+      );
+    } else {
+      setRegenSelectedState({ status: "error", count: failures });
+      announceStatus(
+        `Regen failed for ${failures} of ${tracks.length} track${tracks.length > 1 ? "s" : ""}.`,
+        "error",
+      );
+    }
+    setTimeout(() => setRegenSelectedState({ status: "idle", count: 0 }), 800);
   };
 
   const handleEditStart = (e, track) => {
@@ -1329,6 +1461,7 @@ function ArchitectConsole({
         if (!res.ok) throw new Error(`[PSC] edit PATCH ${res.status}`);
         const result = await res.json().catch(() => ({}));
         if (!result.success) throw new Error("[PSC] edit save: D1 returned success=false");
+        announceStatus("Saved.");
       })
       .catch((err) => {
         console.error("[PSC] edit save failed:", err);
@@ -1337,7 +1470,7 @@ function ArchitectConsole({
             prev.map((t) => (t.id === trackId ? originalTrack : t)),
           );
         }
-        announce("Save failed — check console for details.");
+        announceStatus("Save failed — check console for details.", "error");
       });
   };
 
@@ -2836,6 +2969,75 @@ function ArchitectConsole({
                 </button>
               )}
               <div className="arch-display-divider" aria-hidden="true" />
+              <div className="arch-move-menu-wrap">
+                <button
+                  className={`arch-browser-btn ${showMoveMenu ? "active" : ""}`}
+                  onClick={() => setShowMoveMenu((prev) => !prev)}
+                  disabled={
+                    selectedTrackIds.size === 0 || moveState.status === "pending"
+                  }
+                  title="MOVE TO — reassign selected tracks to a different vault"
+                >
+                  {moveState.status === "pending"
+                    ? "MOVING…"
+                    : moveState.status === "success"
+                      ? `DONE (${moveState.count})`
+                      : moveState.status === "error"
+                        ? `MOVE FAILED (${moveState.count})`
+                        : `MOVE TO ▾${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
+                </button>
+                {showMoveMenu && (
+                  <div className="arch-move-menu" role="menu">
+                    {VAULT_ROUTES.filter((v) => v.id !== activeLibVault).map(
+                      (v) => (
+                        <button
+                          key={v.id}
+                          className="arch-move-menu-item"
+                          role="menuitem"
+                          onClick={() => handleMoveSelected(v.id)}
+                        >
+                          {v.label}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
+              <button
+                className="arch-browser-btn"
+                onClick={handleVoidSelected}
+                disabled={
+                  selectedTrackIds.size === 0 ||
+                  voidSelectedState.status === "pending"
+                }
+                title="VOID — soft-delete selected tracks (reversible)"
+              >
+                {voidSelectedState.status === "pending"
+                  ? "VOIDING…"
+                  : voidSelectedState.status === "success"
+                    ? `DONE (${voidSelectedState.count})`
+                    : voidSelectedState.status === "error"
+                      ? `VOID FAILED (${voidSelectedState.count})`
+                      : `VOID${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
+              </button>
+              <button
+                className="arch-browser-btn"
+                onClick={handleRegenSelected}
+                disabled={
+                  selectedTrackIds.size === 0 ||
+                  regenSelectedState.status === "pending"
+                }
+                title="REGEN — force-regenerate waveforms for selected tracks"
+              >
+                {regenSelectedState.status === "pending"
+                  ? "REGENERATING…"
+                  : regenSelectedState.status === "success"
+                    ? `DONE (${regenSelectedState.count})`
+                    : regenSelectedState.status === "error"
+                      ? `REGEN FAILED (${regenSelectedState.count})`
+                      : `REGEN${selectedTrackIds.size > 0 ? ` (${selectedTrackIds.size})` : ""}`}
+              </button>
+              <div className="arch-display-divider" aria-hidden="true" />
               <button
                 className="arch-browser-btn"
                 onClick={handlePrepareSelected}
@@ -3161,6 +3363,8 @@ function ArchitectConsole({
         externalLoopOpen={loopPanelTrigger}
         libSearch={libSearch}
         onSearchChange={setLibSearch}
+        matchCount={libSearch ? filteredTracks.length : null}
+        systemStatus={systemStatus}
       />
 
       {/* ── PANELS (overlays from right) ──────────────────────────────── */}
