@@ -3220,7 +3220,8 @@ h3,
 }
 
 .upload-dropzone:hover,
-.upload-dropzone.has-file {
+.upload-dropzone.has-file,
+.upload-dropzone.is-dragging-over {
   border-color: rgba(240, 237, 232, 0.25);
   background: rgba(255, 255, 255, 0.02);
 }

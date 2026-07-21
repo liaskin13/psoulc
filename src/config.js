@@ -80,6 +80,8 @@ export const VAULT_DISPLAY_NAMES = {
   earth: "SONIC ARCH",
 };
 
+export const VAULT_IDS = ["saturn", "venus", "mercury", "earth"];
+
 // Cloudflare Stream HLS URL for The Signal live broadcast
 export const SIGNAL_HLS_URL = import.meta.env.VITE_SIGNAL_HLS_URL || "";
 

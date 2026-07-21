@@ -18,10 +18,15 @@ const CONCURRENT_UPLOADS = 2;
 
 function isAudioFileCandidate(file) {
   if (!file) return false;
+  if (file.name?.startsWith(".")) return false; // .DS_Store, ._AppleDouble, etc.
   if (typeof file.type === "string" && file.type.startsWith("audio/"))
     return true;
   const ext = file.name?.split(".").pop()?.toLowerCase();
   return Boolean(ext && AUDIO_EXTENSIONS.has(ext));
+}
+
+function dedupeKey(file) {
+  return `${file.name}::${file.size}`;
 }
 
 function getFilenameTitle(filename) {
@@ -35,6 +40,7 @@ export function useDragDropBatch(activeLibVault) {
   const { consoleOwner } = useSystem();
   const [queue, setQueue] = useState([]);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [duplicateCount, setDuplicateCount] = useState(0);
   const uploadCounterRef = useRef(0);
 
   // Auto-process queue whenever it changes
@@ -149,10 +155,30 @@ export function useDragDropBatch(activeLibVault) {
         }
       }
 
-      setQueue((current) => [...current, ...newItems]);
+      setQueue((current) => {
+        const existing = new Set(current.map((i) => dedupeKey(i.file)));
+        const deduped = [];
+        let skipped = 0;
+        for (const item of newItems) {
+          const key = dedupeKey(item.file);
+          if (existing.has(key)) {
+            skipped += 1;
+            continue;
+          }
+          existing.add(key);
+          deduped.push(item);
+        }
+        setDuplicateCount(skipped);
+        return [...current, ...deduped];
+      });
     },
     [],
   );
+
+  const reset = useCallback(() => {
+    setQueue([]);
+    setDuplicateCount(0);
+  }, []);
 
   const retry = useCallback((itemId) => {
     setQueue((current) =>
@@ -203,6 +229,8 @@ export function useDragDropBatch(activeLibVault) {
     addFiles,
     retry,
     dismiss,
+    reset,
+    duplicateCount,
     isDraggingOver,
     onDragEnter,
     onDragOver,

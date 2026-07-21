@@ -371,3 +371,108 @@ describe("drag handlers", () => {
     expect(result.current.queue).toHaveLength(1);
   });
 });
+
+describe("hidden/resource-fork file filtering", () => {
+  it("filters out dotfiles and AppleDouble resource-fork files even with an audio extension", async () => {
+    const { result } = renderHook(() => useDragDropBatch("venus"));
+
+    await act(async () => {
+      await result.current.addFiles([
+        makeFile("track.mp3"),
+        makeFile(".DS_Store", ""),
+        makeFile("._track.mp3", "audio/mpeg"),
+      ]);
+    });
+
+    expect(result.current.queue).toHaveLength(1);
+    expect(result.current.queue[0].file.name).toBe("track.mp3");
+  });
+});
+
+describe("duplicate prevention", () => {
+  it("drops a duplicate within the same addFiles call (same name + size)", async () => {
+    const { result } = renderHook(() => useDragDropBatch("venus"));
+
+    await act(async () => {
+      await result.current.addFiles([
+        makeFile("track.mp3"),
+        makeFile("track.mp3"),
+      ]);
+    });
+
+    expect(result.current.queue).toHaveLength(1);
+    expect(result.current.duplicateCount).toBe(1);
+  });
+
+  it("drops a duplicate against files already in the queue from an earlier drop", async () => {
+    uploadTrack.mockImplementation(neverResolves);
+    const { result } = renderHook(() => useDragDropBatch("venus"));
+
+    await act(async () => {
+      await result.current.addFiles([makeFile("track.mp3")]);
+    });
+    expect(result.current.queue).toHaveLength(1);
+
+    await act(async () => {
+      await result.current.addFiles([makeFile("track.mp3")]);
+    });
+
+    expect(result.current.queue).toHaveLength(1);
+    expect(result.current.duplicateCount).toBe(1);
+  });
+
+  it("does not treat two different files with the same name but different size as duplicates", async () => {
+    const { result } = renderHook(() => useDragDropBatch("venus"));
+
+    const small = new File([new Uint8Array(4)], "track.mp3", { type: "audio/mpeg" });
+    const big = new File([new Uint8Array(40)], "track.mp3", { type: "audio/mpeg" });
+
+    await act(async () => {
+      await result.current.addFiles([small, big]);
+    });
+
+    expect(result.current.queue).toHaveLength(2);
+    expect(result.current.duplicateCount).toBe(0);
+  });
+});
+
+describe("reset", () => {
+  it("clears the queue and duplicate count", async () => {
+    uploadTrack.mockImplementation(neverResolves);
+    const { result } = renderHook(() => useDragDropBatch("venus"));
+
+    await act(async () => {
+      await result.current.addFiles([makeFile("a.mp3"), makeFile("a.mp3")]);
+    });
+    expect(result.current.queue).toHaveLength(1);
+    expect(result.current.duplicateCount).toBe(1);
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.queue).toHaveLength(0);
+    expect(result.current.duplicateCount).toBe(0);
+  });
+
+  it("allows re-adding a previously-queued file after reset (dedupe state is cleared too)", async () => {
+    uploadTrack.mockResolvedValue({ success: true, id: 1, audio_path: "x" });
+    const { result } = renderHook(() => useDragDropBatch("venus"));
+
+    await act(async () => {
+      await result.current.addFiles([makeFile("a.mp3")]);
+    });
+    await waitFor(() => expect(result.current.queue[0].status).toBe("done"));
+
+    act(() => {
+      result.current.reset();
+    });
+
+    await act(async () => {
+      await result.current.addFiles([makeFile("a.mp3")]);
+    });
+
+    expect(result.current.queue).toHaveLength(1);
+    expect(result.current.duplicateCount).toBe(0);
+  });
+});

@@ -3,9 +3,10 @@ import { motion, useReducedMotion } from "framer-motion";
 import "./App.css";
 
 import { useSystem } from "./state/SystemContext";
-import { SESSION_KEY } from "./config";
+import { SESSION_KEY, VAULT_IDS } from "./config";
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import { useBreakpoint } from "./hooks/useBreakpoint";
+import { useDragDropBatch } from "./hooks/useDragDropBatch";
 
 // ── STATIC IMPORTS ───────────────────────────────────────────────────────────
 import EntrySequence from "./entry/EntrySequence";
@@ -41,7 +42,8 @@ function refreshSessionMeta() {
 
 // Stages: 'entry' | 'console' | 'architect' | 'room' | 'code-entry'
 function App() {
-  const { setConsoleOwner, sessionMeta, setSessionMeta } = useSystem();
+  const { setConsoleOwner, consoleOwner, sessionMeta, setSessionMeta } =
+    useSystem();
   const online = useNetworkStatus();
   const { isMobile } = useBreakpoint();
   const prefersReduced = useReducedMotion();
@@ -53,6 +55,17 @@ function App() {
   const [activeNode, setActiveNode] = useState(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadVault, setUploadVault] = useState(null);
+  const batchUpload = useDragDropBatch(uploadVault ?? sessionMeta?.vault ?? "saturn");
+
+  // Wipe the batch queue on every identity change (login/logout/switch owner).
+  // App.jsx never unmounts across a power-down/re-login cycle — without this,
+  // a queue left behind by one owner would render in the next owner's console.
+  useEffect(() => {
+    batchUpload.reset();
+    setUploadVault(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consoleOwner]);
 
   // Apply identity theme to <body> based on authenticated owner
   useEffect(() => {
@@ -207,11 +220,33 @@ function App() {
               onExplorePlanet={handleArchitectExplore}
               onBroadcast={handleBroadcast}
               onIntake={() => setShowUploadModal(true)}
+              batchQueue={batchUpload.queue}
+              onBatchRetry={batchUpload.retry}
+              onBatchDismiss={batchUpload.dismiss}
             />
           </Suspense>
           {showUploadModal && (
             <Suspense fallback={null}>
-              <UploadModal onClose={() => setShowUploadModal(false)} />
+              <UploadModal
+                onClose={() => setShowUploadModal(false)}
+                vault={
+                  uploadVault ??
+                  (VAULT_IDS.includes(sessionMeta?.vault)
+                    ? sessionMeta.vault
+                    : "saturn")
+                }
+                setVault={setUploadVault}
+                queue={batchUpload.queue}
+                addFiles={batchUpload.addFiles}
+                retry={batchUpload.retry}
+                dismiss={batchUpload.dismiss}
+                duplicateCount={batchUpload.duplicateCount}
+                isDraggingOver={batchUpload.isDraggingOver}
+                onDragEnter={batchUpload.onDragEnter}
+                onDragOver={batchUpload.onDragOver}
+                onDragLeave={batchUpload.onDragLeave}
+                onDrop={batchUpload.onDrop}
+              />
             </Suspense>
           )}
           <div className="psc-wordmark-footer" aria-hidden="true">
@@ -262,13 +297,35 @@ function App() {
               onBroadcast={handleBroadcast}
               onIntake={() => setShowUploadModal(true)}
               onPowerDown={handlePowerDown}
+              batchQueue={batchUpload.queue}
+              onBatchRetry={batchUpload.retry}
+              onBatchDismiss={batchUpload.dismiss}
             />
           </Suspense>
         </motion.div>
 
         {showUploadModal && (
           <Suspense fallback={null}>
-            <UploadModal onClose={() => setShowUploadModal(false)} defaultVault="venus" />
+            <UploadModal
+              onClose={() => setShowUploadModal(false)}
+              vault={
+                uploadVault ??
+                (VAULT_IDS.includes(sessionMeta?.vault)
+                  ? sessionMeta.vault
+                  : "venus")
+              }
+              setVault={setUploadVault}
+              queue={batchUpload.queue}
+              addFiles={batchUpload.addFiles}
+              retry={batchUpload.retry}
+              dismiss={batchUpload.dismiss}
+              duplicateCount={batchUpload.duplicateCount}
+              isDraggingOver={batchUpload.isDraggingOver}
+              onDragEnter={batchUpload.onDragEnter}
+              onDragOver={batchUpload.onDragOver}
+              onDragLeave={batchUpload.onDragLeave}
+              onDrop={batchUpload.onDrop}
+            />
           </Suspense>
         )}
 
