@@ -9,7 +9,22 @@ const BARS_PER_SEC = 50;
 // Manual fine-tune (bars). Dynamic latency compensation is computed per-frame
 // from audioCtx.outputLatency + baseLatency + rAF frame time — this is only
 // needed if the auto value is off on specific hardware. Positive = shift forward.
-const BEAT_OFFSET_BARS = 0;
+const BEAT_OFFSET_BARS_DEFAULT = 0;
+
+// Live-tunable override — no redeploy needed to test a value. In the browser
+// console: localStorage.setItem('psc_beat_offset_bars', '12'); then reload.
+// 1 bar = 20ms at BARS_PER_SEC=50, so a quarter second ≈ 12-13 bars.
+// Clear with: localStorage.removeItem('psc_beat_offset_bars')
+function getBeatOffsetBars() {
+  try {
+    const raw = localStorage.getItem("psc_beat_offset_bars");
+    if (raw === null) return BEAT_OFFSET_BARS_DEFAULT;
+    const parsed = parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : BEAT_OFFSET_BARS_DEFAULT;
+  } catch (_) {
+    return BEAT_OFFSET_BARS_DEFAULT;
+  }
+}
 const OFF_LOW  = 2;   // idle stacking offsets (px) — bass closest to center
 const OFF_MID  = 5;
 const OFF_HIGH = 9;   // high furthest out
@@ -58,6 +73,8 @@ export default function DeckWaveformV2({
   const getIsPlayingRef   = useRef(getIsPlaying);
 
   const getAudioLatencyRef = useRef(getAudioLatency);
+  // Read once per mount — re-read localStorage by reloading the page between tests.
+  const beatOffsetBarsRef  = useRef(getBeatOffsetBars());
 
   getTimeRef.current        = getTime;
   getIsPlayingRef.current   = getIsPlaying;
@@ -157,7 +174,7 @@ export default function DeckWaveformV2({
       const audioHwLatency    = getAudioLatencyRef.current?.() ?? 0;
       const frameLatency      = 1 / 60;
       const latencyBars       = (audioHwLatency + frameLatency) * BARS_PER_SEC;
-      const centerBar         = playFrac * barCount + BEAT_OFFSET_BARS + latencyBars;
+      const centerBar         = playFrac * barCount + beatOffsetBarsRef.current + latencyBars;
       const halfVisible = visibleBars / 2;
 
       // Serato-aware viewport: playhead drifts at track start/end rather than
