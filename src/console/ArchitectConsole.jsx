@@ -2890,6 +2890,13 @@ function ArchitectConsole({
             >
               <div className="arch-display-divider" aria-hidden="true" />
               <button
+                className={`arch-browser-btn ${loadedDeckId && selectedTrackId === loadedDeckId ? "active" : ""}`}
+                onClick={handleLoadDeck}
+                title="LOAD DECK — load selected track to the deck (or double-click a track row)"
+              >
+                LOAD DECK
+              </button>
+              <button
                 className={`arch-browser-btn ${publishFilter === "staged" ? "active" : ""}`}
                 onClick={() =>
                   setPublishFilter((p) => (p === "staged" ? "all" : "staged"))
@@ -3045,13 +3052,6 @@ function ArchitectConsole({
               >
                 PREPARE
                 {prepareQueue.length > 0 ? ` (${prepareQueue.length})` : ""}
-              </button>
-              <button
-                className={`arch-browser-btn ${loadedDeckId && selectedTrackId === loadedDeckId ? "active" : ""}`}
-                onClick={handleLoadDeck}
-                title="LOAD DECK — load selected track to the deck (or double-click a track row)"
-              >
-                LOAD DECK
               </button>
             </div>
           </div>
